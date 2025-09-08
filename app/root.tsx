@@ -7,10 +7,19 @@ import {
   ScrollRestoration,
 } from "react-router";
 
+import { LoaderProvider } from "~/hooks/use-loading";
+import { ModalProvider } from "~/provider/modal-provider";
+import { Toaster } from "sonner";
+
 import type { Route } from "./+types/root";
 import "./app.css";
 import "./tailwind.css";
+import RootLayout from "./components/layout/manage";
 // import stylesheet from "./tailwind.css";
+
+export function meta({}: Route.MetaArgs) {
+  return [{ title: "KINAU ID" }, { name: "description", content: "" }];
+}
 
 export const links = (): any[] => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -32,15 +41,36 @@ export const links = (): any[] => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
       </head>
-      <body>
-        {children}
+      <body className="antialiased">
+        <LoaderProvider>
+          <ModalProvider>
+            <RootLayout session={null}>
+              <div>{children}</div>
+            </RootLayout>
+          </ModalProvider>
+        </LoaderProvider>
+
+        <Toaster
+          closeButton
+          richColors
+          position="top-right"
+          toastOptions={{
+            classNames: {
+              success: "!bg-green-600 !text-white !border-0",
+              warning: "!bg-orange-500 !text-white !border-0",
+              error: "!bg-red-700 !text-white !border-0",
+              closeButton: "!bg-gray-200 !text-black !border-gray-200",
+            },
+          }}
+        />
+
         <ScrollRestoration />
         <Scripts />
       </body>

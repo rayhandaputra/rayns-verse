@@ -1,41 +1,73 @@
-// import type { Route } from "./+types/_index";
-// import { Welcome } from "../welcome/welcome";
-// import { Link } from "react-router";
-// import { Link } from "@remix-run/react";
+import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router";
+import { CONFIG } from "~/config";
+import ComingSoon from "./pre-launch/_index";
+import { Button } from "~/components/ui/button";
+import HeroSection from "~/components/section/hero-section";
+import { db } from "~/config/supabase";
+import FloatingWhatsApp from "~/components/FloatingWhatsapp";
+import CardFeatureSection from "~/components/section/feature-section";
+import CardTestimoniSection from "~/components/section/testimoni-seection";
+import { SlideInModal } from "~/components/modal/SlideInModal";
+import { useState } from "react";
 
-// export function meta({}: Route.MetaArgs) {
-//   return [
-//     { title: "New React Router App" },
-//     { name: "description", content: "Welcome to React Router!" },
-//   ];
-// }
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  const url = new URL(request.url);
+  const search = url.searchParams.get("q") ?? "";
 
-import { motion } from "framer-motion";
+  return { search, APP_CONFIG: CONFIG };
+}
 
-export default function ComingSoon() {
+export default function LandingPage() {
+  const { APP_CONFIG } = useLoaderData();
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6 }}
-        className="text-center text-white p-8"
-      >
-        <h1 className="text-5xl md:text-7xl font-extrabold drop-shadow-lg">
-          🚀 Coming Soon
-        </h1>
-        <p className="mt-4 text-lg md:text-2xl font-medium opacity-90">
-          Website <span className="font-bold">Kinau.id</span> sedang dalam pengembangan
-        </p>
-        <div className="mt-8">
-          <button
-            className="px-6 py-3 inline-flex items-center gap-2 cursor-pointer bg-white text-indigo-600 font-semibold rounded-full shadow-lg hover:scale-105 transition-transform"
-            onClick={() => window.open("https://wa.me/6285219337474", "_blank")}
-          >
-            <img src="/whatsapp-icon.svg" className="w-4 h-4" /> Hubungi Admin
-          </button>
+    <section>
+      <div className="w-full">
+        <LandingPageDesign />
+      </div>
+      {/* {APP_CONFIG.env === "development" ? (
+        <div className="w-full">
+          <LandingPageDesign />
         </div>
-      </motion.div>
-    </div>
+      ) : (
+        <ComingSoon />
+      )} */}
+    </section>
   );
 }
+
+const LandingPageDesign = () => {
+  return (
+    <div className="flex flex-col">
+      <HeroSection isAuthenticated={false} isAdmin={false} isCustomer={false} />
+
+      <CardFeatureSection />
+
+      <section className="w-full bg-blue-600 py-16">
+        <div className="container max-w-7xl mx-auto px-4 md:px-6">
+          <div className="text-center max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Siap Mengubah Cara Anda Mengelola Acara?
+            </h2>
+            <p className="text-white/90 mb-8">
+              Bergabunglah dengan ribuan penyelenggara yang telah menggunakan
+              platform kami untuk menciptakan acara yang lebih baik dan
+              mendapatkan wawasan berharga dari para anggotanya.
+            </p>
+            <Button
+              size="lg"
+              variant="secondary"
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800"
+              asChild
+            >
+              <Link to="/login">Mulai Sekarang</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <CardTestimoniSection />
+
+      <FloatingWhatsApp />
+    </div>
+  );
+};

@@ -1,0 +1,446 @@
+import { db } from "~/config/supabase";
+import { getOffset } from "./pagination";
+
+export const generateHeader: any = (session: any) => ({
+  "Content-Type": "application/json",
+  "x-auth-token": session?.session?.auth_session || "",
+  "x-auth-role": session?.role || "",
+});
+
+interface IApi {
+  session: any;
+  method: "POST" | "PATCH" | "DELETE" | "GET";
+  body?: any;
+  url: string;
+  headers?: any;
+}
+
+export const API = {
+  FETCH: async ({ session, method, url, headers, body }: IApi) => {
+    const res = await fetch(url, {
+      method: method || "GET",
+      ...(body ? { body: JSON.stringify(body) } : {}),
+      headers: {
+        ...generateHeader(session),
+        ...(headers || {}),
+      },
+      cache: "no-store",
+    });
+
+    const data = await res.json();
+
+    if (data?.status === "error") throw data;
+
+    return data;
+  },
+  USER: {
+    //   get: async ({
+    //     session,
+    //     req,
+    //   }: {
+    //     session: any;
+    //     req: { query?: any; body?: any; header?: any };
+    //   }) => {
+    //     const {
+    //       pagination = "true",
+    //       page = 0,
+    //       size = 10,
+    //       search,
+    //       email,
+    //     } = req.query || {};
+
+    //     let query = db.from("users").select("*");
+
+    //     if (email) {
+    //       query = query.eq("email", email);
+    //     }
+
+    //     if (search) {
+    //       query = query.ilike("name", `%${search}%`);
+    //     }
+
+    //     if (pagination === "true") {
+    //       const { offset } = getOffset(page, size);
+    //       const from = offset;
+    //       const to = offset + size - 1;
+    //       query = query.range(from, to);
+    //     }
+
+    //     const { data: response, error } = await query;
+
+    //     return { response, error };
+    //   },
+    // },
+    get: async ({
+      session,
+      req,
+    }: {
+      session: any;
+      req: { query?: any; body?: any; header?: any };
+    }) => {
+      const {
+        pagination = "true",
+        page = 0,
+        size = 10,
+        search,
+        email,
+      } = req.query || {};
+
+      // Base query
+      let query = db.from("users").select("*", { count: "exact" });
+      query = query.eq("deleted", 0);
+
+      // Filter by email
+      if (email) {
+        query = query.eq("email", email);
+      }
+
+      // Filter by search
+      if (search) {
+        query = query.ilike("name", `%${search}%`);
+      }
+
+      // Total count (Supabase akan otomatis memberi count jika { count: "exact" })
+      let total_items = 0;
+
+      if (pagination === "true") {
+        // Pagination logic
+        const pageNumber = Number(page) || 0;
+        const pageSize = Number(size) || 10;
+        const from = pageNumber * pageSize;
+        const to = from + pageSize - 1;
+
+        const { data: items, count, error } = await query.range(from, to);
+
+        if (error) {
+          return {
+            total_items: 0,
+            items: [],
+            current_page: pageNumber,
+            total_pages: 0,
+            error,
+          };
+        }
+
+        total_items = count || 0;
+        const total_pages = Math.ceil(total_items / pageSize);
+
+        return {
+          total_items,
+          items: items || [],
+          current_page: pageNumber,
+          total_pages,
+        };
+      } else {
+        // No pagination: return all data
+        const { data: items, count, error } = await query;
+
+        if (error) {
+          return {
+            total_items: 0,
+            items: [],
+            current_page: 0,
+            total_pages: 0,
+            error,
+          };
+        }
+
+        return {
+          total_items: count || 0,
+          items: items || [],
+          current_page: 0,
+          total_pages: 1,
+        };
+      }
+    },
+    create: async ({
+      session,
+      req,
+    }: {
+      session: any;
+      req: {
+        body: {
+          fullname: string;
+          email: string;
+          role?: string;
+          is_active?: number;
+          deleted?: number;
+          session_token?: string;
+          session_expired?: string;
+        };
+      };
+    }) => {
+      const {
+        fullname,
+        email,
+        role = "customer", // default jika tidak dikirim
+        is_active = 1,
+        deleted = 0,
+        session_token = null,
+        session_expired = null,
+      } = req.body || {};
+
+      if (!email || !fullname) {
+        return {
+          success: false,
+          message: "Email dan fullname wajib diisi",
+        };
+      }
+
+      const newUser = {
+        fullname,
+        email,
+        role,
+        is_active,
+        deleted,
+        session_token,
+        session_expired,
+        created_on: new Date().toISOString(),
+        modified_on: new Date().toISOString(),
+      };
+
+      const { data, error } = await db
+        .from("users")
+        .insert(newUser)
+        .select("*")
+        .single();
+
+      if (error) {
+        return {
+          success: false,
+          message: error.message,
+          error,
+        };
+      }
+
+      return {
+        success: true,
+        message: "User berhasil dibuat",
+        user: data,
+      };
+    },
+    findOrCreate: async ({
+      session,
+      req,
+    }: {
+      session: any;
+      req: {
+        body: {
+          fullname: string;
+          email: string;
+          role?: string;
+          is_active?: number;
+          deleted?: number;
+          session_token?: string;
+          session_expired?: string;
+        };
+      };
+    }) => {
+      const {
+        fullname,
+        email,
+        role = "customer", // default jika tidak dikirim
+        is_active = 1,
+        deleted = 0,
+        session_token = null,
+        session_expired = null,
+      } = req.body || {};
+
+      if (!email || !fullname) {
+        return {
+          success: false,
+          message: "Email dan fullname wajib diisi",
+        };
+      }
+
+      // 1. Cek apakah email sudah ada
+      const { data: existingUser, error: findError } = await db
+        .from("users")
+        .select("*")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (findError) {
+        return {
+          success: false,
+          message: findError.message,
+          error: findError,
+        };
+      }
+
+      // 2. Jika user ditemukan
+      if (existingUser) {
+        if (existingUser.deleted === 1) {
+          // Update user lama (restore + update data baru)
+          const { data: updatedUser, error: updateError } = await db
+            .from("users")
+            .update({
+              fullname,
+              email,
+              role,
+              is_active,
+              deleted: 0, // restore
+              session_token,
+              session_expired,
+              modified_on: new Date().toISOString(),
+            })
+            .eq("id", existingUser.id)
+            .select("*")
+            .single();
+
+          if (updateError) {
+            return {
+              success: false,
+              message: updateError.message,
+              error: updateError,
+            };
+          }
+
+          return {
+            success: true,
+            message: "User berhasil dipulihkan dan diperbarui",
+            user: updatedUser,
+          };
+        } else {
+          // Jika user sudah aktif (deleted = 0)
+          return {
+            success: false,
+            message: "Email sudah terdaftar",
+          };
+        }
+      }
+
+      // 3. Jika user tidak ditemukan → buat baru
+      const newUser = {
+        fullname,
+        email,
+        role,
+        is_active,
+        deleted,
+        session_token,
+        session_expired,
+        created_on: new Date().toISOString(),
+        modified_on: new Date().toISOString(),
+      };
+
+      const { data, error } = await db
+        .from("users")
+        .insert(newUser)
+        .select("*")
+        .single();
+
+      if (error) {
+        return {
+          success: false,
+          message: error.message,
+          error,
+        };
+      }
+
+      return {
+        success: true,
+        message: "User baru berhasil dibuat",
+        user: data,
+      };
+    },
+    update: async ({
+      session,
+      req,
+    }: {
+      session: any;
+      req: {
+        body: {
+          id: string; // id user wajib untuk update
+          fullname?: string;
+          email?: string;
+          role?: string;
+          is_active?: number;
+          deleted?: number; // soft delete jika dikirim
+          session_token?: string | null;
+          session_expired?: string | null;
+        };
+      };
+    }) => {
+      const {
+        id,
+        fullname,
+        email,
+        role,
+        is_active,
+        deleted,
+        session_token,
+        session_expired,
+      } = req.body || {};
+
+      if (!id) {
+        return {
+          success: false,
+          message: "ID user wajib diisi untuk update",
+        };
+      }
+
+      // Jika hanya ingin soft delete (deleted = 1)
+      if (deleted === 1) {
+        const { data, error } = await db
+          .from("users")
+          .update({
+            deleted: 1,
+            modified_on: new Date().toISOString(),
+          })
+          .eq("id", id)
+          .select("*")
+          .single();
+
+        if (error) {
+          return {
+            success: false,
+            message: error.message,
+            error,
+          };
+        }
+
+        return {
+          success: true,
+          message: "User berhasil di-soft delete",
+          user: data,
+        };
+      }
+
+      // Update biasa (jika deleted tidak dikirim)
+      const updatedUser: Record<string, any> = {
+        modified_on: new Date().toISOString(),
+      };
+
+      if (fullname !== undefined) updatedUser.fullname = fullname;
+      if (email !== undefined) updatedUser.email = email;
+      if (role !== undefined) updatedUser.role = role;
+      if (is_active !== undefined) updatedUser.is_active = is_active;
+      if (deleted !== undefined) updatedUser.deleted = deleted;
+      if (session_token !== undefined)
+        updatedUser.session_token = session_token;
+      if (session_expired !== undefined)
+        updatedUser.session_expired = session_expired;
+
+      const { data, error } = await db
+        .from("users")
+        .update(updatedUser)
+        .eq("id", id)
+        .select("*")
+        .single();
+
+      if (error) {
+        return {
+          success: false,
+          message: error.message,
+          error,
+        };
+      }
+
+      return {
+        success: true,
+        message: "User berhasil diperbarui",
+        user: data,
+      };
+    },
+  },
+};

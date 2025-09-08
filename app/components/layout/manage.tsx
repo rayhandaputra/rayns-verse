@@ -1,10 +1,49 @@
-interface NavbarProps {
-  sidebar?: {
-    open: boolean;
-    setOpen: (open: boolean) => void;
-  };
-}
+import { useLocation } from "react-router";
+import Navbar from "./public/navbar";
+// import AdminNavbar from "./admin/navbar";
+import { Sidebar } from "./admin/sidebar";
+import { navigation } from "~/constants/navigation";
+import Topbar from "./admin/topbar";
+import Footer from "./public/footer";
 
-export default function Navbar({ sidebar }: NavbarProps) {
-  return <div>use Layout Component for Manage Layout</div>;
+export default function RootLayout({
+  session,
+  children,
+}: {
+  session: any;
+  children: React.ReactNode;
+}) {
+  const location = useLocation();
+  const isAppArea = location.pathname.startsWith("/app");
+
+  return (
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
+      {" "}
+      {/* Cegah scroll horizontal global */}
+      {isAppArea ? (
+        <div className="flex min-h-screen bg-gray-100">
+          {/* Sidebar jadi fixed supaya tidak ikut layout flow */}
+          <Sidebar
+            className="hidden md:block fixed left-0 top-0 h-full w-[256px] bg-[#1e1e1e]"
+            navigation={navigation}
+          />
+          <div className="flex-1 flex flex-col bg-white md:pl-[256px] pt-[64px] overflow-x-hidden">
+            <Topbar />
+            <main
+              className="overflow-y-auto bg-gray-50 text-gray-600 rounded-tl-3xl py-2 px-4"
+              style={{ height: "calc(100vh - 64px)" }}
+            >
+              {children}
+            </main>
+          </div>
+        </div>
+      ) : (
+        <>
+          <Navbar session={session} />
+          <main className="pt-[64px]">{children}</main>
+          <Footer />
+        </>
+      )}
+    </div>
+  );
 }
