@@ -23,3 +23,10 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none; /* Safari and Chrome */
 }
+
+@layer base {
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.5); /* bikin icon terlihat di dark/light mode */
+    cursor: pointer;
+  }
+}

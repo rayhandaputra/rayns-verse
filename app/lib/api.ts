@@ -443,4 +443,327 @@ export const API = {
       };
     },
   },
+  orders: {
+    get: async ({
+      session,
+      req,
+    }: {
+      session: any;
+      req: { query?: any; body?: any; header?: any };
+    }) => {
+      const {
+        pagination = "true",
+        page = 0,
+        size = 10,
+        search,
+        institution_id,
+        status,
+      } = req.query || {};
+
+      // Base query
+      let query = db.from("orders").select("*", { count: "exact" });
+
+      // Filter by institution
+      if (institution_id) {
+        query = query.eq("institution_id", institution_id);
+      }
+
+      // Filter by status
+      if (status) {
+        query = query.eq("status", status);
+      }
+
+      // Search by institution_name
+      if (search) {
+        query = query.ilike("institution_name", `%${search}%`);
+      }
+
+      let total_items = 0;
+
+      if (pagination === "true") {
+        const pageNumber = Number(page) || 0;
+        const pageSize = Number(size) || 10;
+        const from = pageNumber * pageSize;
+        const to = from + pageSize - 1;
+
+        const { data: items, count, error } = await query.range(from, to);
+
+        if (error) {
+          return {
+            total_items: 0,
+            items: [],
+            current_page: pageNumber,
+            total_pages: 0,
+            error,
+          };
+        }
+
+        total_items = count || 0;
+        const total_pages = Math.ceil(total_items / pageSize);
+
+        return {
+          total_items,
+          items: items || [],
+          current_page: pageNumber,
+          total_pages,
+        };
+      } else {
+        const { data: items, count, error } = await query;
+
+        if (error) {
+          return {
+            total_items: 0,
+            items: [],
+            current_page: 0,
+            total_pages: 0,
+            error,
+          };
+        }
+
+        return {
+          total_items: count || 0,
+          items: items || [],
+          current_page: 0,
+          total_pages: 1,
+        };
+      }
+    },
+
+    create: async ({
+      session,
+      req,
+    }: {
+      session: any;
+      req: {
+        body: {
+          institution_id: number;
+          institution_name: string;
+          institution_abbr?: string;
+          institution_domain?: string;
+          order_type?: string;
+          quantity?: number;
+          deadline?: string;
+          payment_type?: string;
+          status?: string;
+        };
+      };
+    }) => {
+      const {
+        institution_id,
+        institution_name,
+        institution_abbr = null,
+        institution_domain = null,
+        order_type = null,
+        quantity = 0,
+        deadline = null,
+        payment_type = null,
+        status = "pending",
+      } = req.body || {};
+
+      if (!institution_id || !institution_name) {
+        return {
+          success: false,
+          message: "institution_id dan institution_name wajib diisi",
+        };
+      }
+
+      const newOrder = {
+        institution_id,
+        institution_name,
+        institution_abbr,
+        institution_domain,
+        order_type,
+        quantity,
+        deadline,
+        payment_type,
+        status,
+        created_on: new Date().toISOString(),
+        modified_on: new Date().toISOString(),
+      };
+
+      const { data, error } = await db
+        .from("orders")
+        .insert(newOrder)
+        .select("*")
+        .single();
+
+      if (error) {
+        return {
+          success: false,
+          message: error.message,
+          error,
+        };
+      }
+
+      return {
+        success: true,
+        message: "Order berhasil dibuat",
+        order: data,
+      };
+    },
+
+    findOrCreate: async ({
+      session,
+      req,
+    }: {
+      session: any;
+      req: {
+        body: {
+          uid?: string;
+          institution_id: number;
+          institution_name: string;
+          order_type?: string;
+          status?: string;
+        };
+      };
+    }) => {
+      const { uid, institution_id, institution_name, order_type, status } =
+        req.body || {};
+
+      if (!institution_id || !institution_name) {
+        return {
+          success: false,
+          message: "institution_id dan institution_name wajib diisi",
+        };
+      }
+
+      // Cek berdasarkan uid (jika dikirim)
+      if (uid) {
+        const { data: existingOrder, error: findError } = await db
+          .from("orders")
+          .select("*")
+          .eq("uid", uid)
+          .maybeSingle();
+
+        if (findError) {
+          return {
+            success: false,
+            message: findError.message,
+            error: findError,
+          };
+        }
+
+        if (existingOrder) {
+          return {
+            success: true,
+            message: "Order sudah ada",
+            order: existingOrder,
+          };
+        }
+      }
+
+      // Jika tidak ada → buat baru
+      const newOrder = {
+        institution_id,
+        institution_name,
+        order_type,
+        status: status || "pending",
+        created_on: new Date().toISOString(),
+        modified_on: new Date().toISOString(),
+      };
+
+      const { data, error } = await db
+        .from("orders")
+        .insert(newOrder)
+        .select("*")
+        .single();
+
+      if (error) {
+        return {
+          success: false,
+          message: error.message,
+          error,
+        };
+      }
+
+      return {
+        success: true,
+        message: "Order baru berhasil dibuat",
+        order: data,
+      };
+    },
+
+    update: async ({
+      session,
+      req,
+    }: {
+      session: any;
+      req: {
+        body: {
+          id: number;
+          institution_name?: string;
+          institution_abbr?: string;
+          institution_domain?: string;
+          order_type?: string;
+          quantity?: number;
+          deadline?: string;
+          payment_type?: string;
+          status?: string;
+          deleted?: number;
+        };
+      };
+    }) => {
+      const {
+        id,
+        institution_name,
+        institution_abbr,
+        institution_domain,
+        order_type,
+        quantity,
+        deadline,
+        payment_type,
+        status,
+        deleted,
+      } = req.body || {};
+
+      if (!id) {
+        return {
+          success: false,
+          message: "ID order wajib diisi untuk update",
+        };
+      }
+
+      const updatedOrder: Record<string, any> = {
+        modified_on: new Date().toISOString(),
+      };
+
+      if (institution_name !== undefined)
+        updatedOrder.institution_name = institution_name;
+      if (institution_abbr !== undefined)
+        updatedOrder.institution_abbr = institution_abbr;
+      if (institution_domain !== undefined)
+        updatedOrder.institution_domain = institution_domain;
+      if (order_type !== undefined) updatedOrder.order_type = order_type;
+      if (quantity !== undefined) updatedOrder.quantity = quantity;
+      if (deadline !== undefined) updatedOrder.deadline = deadline;
+      if (payment_type !== undefined) updatedOrder.payment_type = payment_type;
+      if (status !== undefined) updatedOrder.status = status;
+
+      // Soft delete
+      if (deleted === 1) {
+        updatedOrder.deleted_on = new Date().toISOString();
+      }
+
+      const { data, error } = await db
+        .from("orders")
+        .update(updatedOrder)
+        .eq("id", id)
+        .select("*")
+        .single();
+
+      if (error) {
+        return {
+          success: false,
+          message: error.message,
+          error,
+        };
+      }
+
+      return {
+        success: true,
+        message: "Order berhasil diperbarui",
+        order: data,
+      };
+    },
+  },
 };
