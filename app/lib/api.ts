@@ -459,9 +459,11 @@ export const API = {
         institution_id,
         status,
       } = req.query || {};
+      console.log(status);
 
       // Base query
       let query = db.from("orders").select("*", { count: "exact" });
+      query.order("created_on", { ascending: false });
 
       // Filter by institution
       if (institution_id) {
@@ -557,7 +559,7 @@ export const API = {
         quantity = 0,
         deadline = null,
         payment_type = null,
-        status = "pending",
+        status = "ordered",
       } = req.body || {};
 
       if (!institution_id || !institution_name) {

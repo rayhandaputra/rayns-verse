@@ -49,9 +49,9 @@ export const navigation: NavItem[] = [
     children: [
       {
         name: "Semua Pesanan",
-        href: "/app/order",
+        href: "/app/order/ordered",
         // icon: "FileText",
-        active: ["/app/order"],
+        active: ["/app/order/ordered"],
       },
       // {
       //   name: "Detail Item Custom",

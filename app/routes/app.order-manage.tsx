@@ -58,7 +58,7 @@ export default function CreatePesanan() {
 
   useEffect(() => {
     if (actionData?.flash) {
-      navigate("/app/order", {
+      navigate("/app/order/ordered", {
         state: { flash: actionData?.flash },
         replace: true,
       });
@@ -93,7 +93,7 @@ export default function CreatePesanan() {
         actions={
           <Button
             className="text-blue-700"
-            onClick={() => navigate("/app/order")}
+            onClick={() => navigate("/app/order/ordered")}
             variant="outline"
           >
             <ChevronLeft className="w-4" />

@@ -124,7 +124,11 @@ export default function TableComponent<T>({
         highlightOnHover
         pagination={pagination}
         paginationServer={pagination}
-        paginationDefaultPage={paginationDefaultPage ?? 1}
+        paginationDefaultPage={
+          (paginationDefaultPage ?? data?.current_page)
+            ? (data?.current_page ?? 0) + 1
+            : 1
+        }
         paginationTotalRows={paginationTotalRows ?? data?.total_items}
         striped
         responsive
@@ -143,7 +147,14 @@ export default function TableComponent<T>({
         //     }).toString();
         //     navigate(`?${queryFilter}`);
         // }}
-        onChangeRowsPerPage={onChangeRowsPerPage}
+        onChangeRowsPerPage={
+          onChangeRowsPerPage ??
+          ((currentRowsPerPage: number, currentPage: number) => {
+            navigate(
+              `?${new URLSearchParams({ ...paramsObject, page: 0, size: currentRowsPerPage } as any)}`
+            );
+          })
+        }
         // onChangeRowsPerPage={(currentRowsPerPage: any, currentPage: any) => {
         //     const queryFilter = new URLSearchParams({
         //         ...table.filter,
