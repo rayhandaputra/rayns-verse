@@ -2,7 +2,7 @@
 // // import { ActionFunctionArgs, redirect } from "@remix-run/node";
 // // import { Form, useActionData } from "@remix-run/react";
 import { CheckCircle2Icon, ChevronLeft } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Form,
   redirect,
@@ -18,28 +18,31 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import moment from "moment";
 import { API } from "~/lib/api";
+import { getSession } from "~/lib/session";
 
 export const action: ActionFunction = async ({ request }) => {
+  const session = await getSession(request.headers.get("Cookie"));
   const formData = await request.formData();
   let { id, state, ...payload } = Object.fromEntries(
     formData.entries()
   ) as Record<string, any>;
 
-  state = state ? JSON.parse(state) : {};
-
-  const result = await API.orders.create({
-    session: {},
-    req: {
-      body: state,
-    },
-  });
-  console.log(result);
-
   try {
-    return {
-      success: true,
-      message: "Berhasil memubat Pesanan",
-    };
+    state = state ? JSON.parse(state) : {};
+
+    await API.orders.create({
+      session: {},
+      req: {
+        body: state,
+      },
+    });
+
+    return Response.json({
+      flash: {
+        success: true,
+        message: "Pesanan Berhasil Dibuat",
+      },
+    });
   } catch (error) {
     console.log(error);
     return {
@@ -47,14 +50,20 @@ export const action: ActionFunction = async ({ request }) => {
       error_message: "Terjadi Kesalahan",
     };
   }
-
-  // Redirect ke halaman daftar pesanan setelah simpan
-  return redirect("/app/order");
 };
 
 export default function CreatePesanan() {
   const actionData = useActionData();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (actionData?.flash) {
+      navigate("/app/order", {
+        state: { flash: actionData?.flash },
+        replace: true,
+      });
+    }
+  }, [actionData]);
 
   const defaultState = {
     institution_id: 1,
@@ -193,7 +202,14 @@ export default function CreatePesanan() {
 
         {/* Buttons */}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" className="text-gray-700">
+          <Button
+            type="button"
+            variant="outline"
+            className="text-gray-700"
+            onClick={() => {
+              setState(defaultState);
+            }}
+          >
             Reset
           </Button>
           <Button

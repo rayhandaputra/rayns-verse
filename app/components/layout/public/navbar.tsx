@@ -7,7 +7,7 @@ import {
 } from "../../ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { Loader2, Menu } from "lucide-react";
-import { useFetcher, useNavigate } from "react-router";
+import { useFetcher, useLocation, useNavigate } from "react-router";
 import { abbreviation } from "~/lib/utils";
 import { Button } from "../../ui/button";
 import { useEffect, useState } from "react";
@@ -31,6 +31,7 @@ interface NavbarProps {
 const Navbar = ({ session, sidebar }: NavbarProps) => {
   const navigate = useNavigate();
   const fetcher = useFetcher();
+  const location = useLocation();
   const [openLogin, setOpenLogin] = useState<boolean>(false);
   // const [alert, setAlert] = useState<boolean>(false);
   const isLoading = fetcher.state === "submitting";
@@ -47,6 +48,15 @@ const Navbar = ({ session, sidebar }: NavbarProps) => {
       console.error("Google sign-in error:", error);
     }
   };
+
+  useEffect(() => {
+    if (fetcher.data) {
+      navigate("/app/overview", {
+        state: { flash: fetcher.data },
+        replace: true,
+      });
+    }
+  }, [fetcher.data]);
 
   const toggleMobileMenu = () => {
     sidebar?.setMobileMenuOpen?.(!sidebar?.mobileMenuOpen);

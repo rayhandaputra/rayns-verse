@@ -15,12 +15,16 @@ import { API } from "~/lib/api";
 import moment from "moment";
 import "moment/locale/id";
 import { dateFormat, formatDate } from "~/lib/dateFormatter";
+import { commitSession, getSession } from "~/lib/session";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   // const session = await unsealSession(request);
   // const session = await getSession(request);
   // const url = new URL(request.url);
   // const search = url.searchParams.get("q") ?? "";
+  // const session = await getSession(request.headers.get("Cookie"));
+  // const flash = session.get("flash");
+  // session.unset("flash");
 
   const list = await API.orders.get({
     // session,
@@ -31,6 +35,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       size: 10,
     } as any,
   });
+  console.log(list);
 
   return {
     // search,
@@ -40,6 +45,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       page: 0,
       size: 10,
     },
+    // flash,
+    // headers: {
+    //   "Set-Cookie": await commitSession(session),
+    // },
   };
 };
 

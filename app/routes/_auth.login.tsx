@@ -33,20 +33,11 @@ export const action: ActionFunction = async ({ request }) => {
 
     const session = await getSession(request.headers.get("Cookie"));
     session.set("user", { ...res });
-    session.set("flash", {
-      type: "success",
-      message: `Berhasil Login 🎉, selamat datang ${email}`,
-    });
 
-    // return Response.json({
-    //   success: true,
-    //   message: "Berhasil Login",
-    //   user: res,
-    // });
-    return redirect("/app/overview", {
-      headers: {
-        "Set-Cookie": await commitSession(session),
-      },
+    return Response.json({
+      success: true,
+      message: `Berhasil Login 🎉, selamat datang ${email}`,
+      user: res,
     });
   } catch (err: any) {
     console.log(err);

@@ -7,6 +7,7 @@ import DataTable, {
   type ExpanderComponentProps,
   type TableColumn,
 } from "react-data-table-component";
+import { useNavigate, useSearchParams } from "react-router";
 
 type PaginatedData<T> = {
   total_items: number;
@@ -45,6 +46,9 @@ export default function TableComponent<T>({
   expandableRowsData,
   className = "",
 }: CustomTableProps<T>) {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const paramsObject = Object.fromEntries(searchParams.entries());
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -120,11 +124,18 @@ export default function TableComponent<T>({
         highlightOnHover
         pagination={pagination}
         paginationServer={pagination}
-        paginationDefaultPage={paginationDefaultPage}
-        paginationTotalRows={paginationTotalRows}
+        paginationDefaultPage={paginationDefaultPage ?? 1}
+        paginationTotalRows={paginationTotalRows ?? data?.total_items}
         striped
         responsive
-        onChangePage={onChangePage}
+        onChangePage={
+          onChangePage ??
+          ((page: number, totalRows: number) => {
+            navigate(
+              `?${new URLSearchParams({ ...paramsObject, page: page - 1 } as any)}`
+            );
+          })
+        }
         // onChangePage={(page: any, totalRows: any) => {
         //     const queryFilter = new URLSearchParams({
         //         ...table.filter,
