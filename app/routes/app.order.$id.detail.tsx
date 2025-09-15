@@ -4,19 +4,30 @@ import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
 import { DescriptionComponent } from "~/components/card/DescriptionCard";
 import { TitleHeader } from "~/components/TitleHedaer";
 import { Button } from "~/components/ui/button";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ReceiptTemplate } from "~/components/print/order/ReceiptTemplate";
-// import ReactToPdf from "react-to-pdf";
-// import { generatePdf } from "react-to-pdf";
-// import html2pdf from "html2pdf.js";
+import { usePrintJS } from "~/hooks/usePrintJS";
 
 export default function DetailOrder() {
   const navigate = useNavigate();
   const printRef = useRef<HTMLDivElement>(null);
+  const { printElement } = usePrintJS();
 
-  const handleDownload = () => {};
-
-  const invoiceData = {
+  // const invoiceData = {
+  //   invoiceNumber: "KIN-INV-0001",
+  //   date: "13/09/2025",
+  //   time: "15:09:30",
+  //   customerName: "Nama PIC Contoh",
+  //   customerPhone: "0852-1933-7474",
+  //   institution: "Institut Teknologi Sumatera",
+  //   admin: "Rizki",
+  //   paymentType: "DP",
+  //   subtotal: 200000,
+  //   dp: 50000,
+  //   remaining: 150000,
+  //   items: [{ product: "Paket ID Card + Lanyard", price: 20000, quantity: 10 }],
+  // };
+  const invoiceData: any = {
     invoiceNumber: "KIN-INV-0001",
     date: "13/09/2025",
     time: "15:09:30",
@@ -29,6 +40,9 @@ export default function DetailOrder() {
     dp: 50000,
     remaining: 150000,
     items: [{ product: "Paket ID Card + Lanyard", price: 20000, quantity: 10 }],
+    domainUrl: "https://kinau.id",
+    // qrCodeUrl: "/qrcode-example.png", // contoh aja
+    qrCodeUrl: "/kinau-logo.png", // contoh aja
   };
 
   return (
@@ -61,7 +75,7 @@ export default function DetailOrder() {
         description="Informasi lengkap pesanan #12345"
         actionRight={
           <Button
-            onClick={handleDownload}
+            onClick={() => printElement("printable-content")}
             className="bg-gray-600 hover:bg-gray-500 text-white text-xs"
           >
             <Printer className="w-4" />

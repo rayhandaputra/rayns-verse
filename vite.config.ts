@@ -5,4 +5,10 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
+  // optimizeDeps: {
+  //   include: ["react-to-print"], // pastikan di-scan untuk prebundle
+  // },
+  // ssr: {
+  //   noExternal: ["react-to-print"], // paksa bundle, biar resolve ke ESM
+  // },
 });

@@ -5,6 +5,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
 } from "react-router";
 
 import { LoaderProvider } from "~/hooks/use-loading";
@@ -39,7 +40,10 @@ export const links = (): any[] => [
   },
 ];
 
+export const RootLayoutPageNames = ["/", "/app"]
+
 export function Layout({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -48,12 +52,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body className="antialiased">
+      <body className="antialiased bg-gray-50 min-h-screen">
         <LoaderProvider>
           <ModalProvider>
-            <RootLayout session={null}>
+            {RootLayoutPageNames.includes(location.pathname) ? (
+              <RootLayout session={null}>
+                <div>{children}</div>
+              </RootLayout>
+            ) : (
               <div>{children}</div>
-            </RootLayout>
+            )}
           </ModalProvider>
         </LoaderProvider>
 
