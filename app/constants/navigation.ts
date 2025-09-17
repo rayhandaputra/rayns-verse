@@ -115,6 +115,30 @@ export const navigation: NavItem[] = [
         // icon: "FileText",
         active: ["/app/production/stock"],
       },
+      {
+        name: "Penyesuaian Stok",
+        href: "/app/production/stock",
+        // icon: "FileText",
+        active: ["/app/production/stock"],
+      },
+      // {
+      //   name: "Distribusi Toko",
+      //   href: "/app/production/stock",
+      //   // icon: "FileText",
+      //   active: ["/app/production/stock"],
+      // },
+      {
+        name: "Retur / Rusak",
+        href: "/app/production/stock",
+        // icon: "FileText",
+        active: ["/app/production/stock"],
+      },
+      {
+        name: "Pembelian",
+        href: "/app/production/stock",
+        // icon: "FileText",
+        active: ["/app/production/stock"],
+      },
     ],
   },
   {
@@ -128,12 +152,12 @@ export const navigation: NavItem[] = [
         active: ["/app/master/institution"],
       },
       {
-        name: "Customer",
+        name: "Pelanggan",
         href: "/app/master/customer",
         active: ["/app/master/customer"],
       },
       {
-        name: "Supplier",
+        name: "Toko",
         href: "/app/master/supplier",
         active: ["/app/master/supplier"],
       },
