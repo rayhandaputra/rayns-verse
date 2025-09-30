@@ -23,13 +23,6 @@ export default function TabsComponent({
   const navigate = useNavigate();
   const currentTab = tabs?.find((t) => t.current) ?? tabs?.[0];
 
-  const onSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedTab = tabs?.find((t) => String(t.id) === e.target.value);
-    if (selectedTab?.href) {
-      navigate(selectedTab.href);
-    }
-  };
-
   return (
     <div className={className}>
       {/* Mobile (select) */}
@@ -37,16 +30,16 @@ export default function TabsComponent({
         <select
           id="tabs"
           name="tabs"
-          value={String(currentTab?.id ?? "")}
-          onChange={onSelectChange}
+          value={currentTab?.href ?? ""}
+          onChange={(e) => navigate(e.target.value)}
           className="block w-full pl-3 pr-10 py-2 text-base border-gray-300
-            focus:outline-none focus:ring-blue-500 focus:border-blue-500
-            sm:text-sm rounded-md"
+      focus:outline-none focus:ring-blue-500 focus:border-blue-500
+      sm:text-sm rounded-md"
         >
           {tabs
             ?.filter((tab) => !tab.hidden)
             ?.map((tab) => (
-              <option key={tab.id} value={tab.id}>
+              <option key={tab.id} value={tab.href}>
                 {tab.name}
               </option>
             ))}
