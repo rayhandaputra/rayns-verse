@@ -1,5 +1,6 @@
 import { db } from "~/config/supabase";
 import { getOffset } from "./pagination";
+import { CONFIG } from "~/config";
 
 export const generateHeader: any = (session: any) => ({
   "Content-Type": "application/json",
@@ -13,6 +14,27 @@ interface IApi {
   body?: any;
   url: string;
   headers?: any;
+}
+
+const API_URL = CONFIG.apiBaseUrl.server_api_url; // ganti dengan lokasi file PHP
+const API_KEY = "REPLACE_WITH_STRONG_KEY"; // harus sama dgn $API_KEY di PHP
+
+async function callApi(payload: any) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${API_KEY}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`API error: ${res.status} ${err}`);
+  }
+
+  return res.json();
 }
 
 export const API = {
@@ -34,43 +56,6 @@ export const API = {
     return data;
   },
   USER: {
-    //   get: async ({
-    //     session,
-    //     req,
-    //   }: {
-    //     session: any;
-    //     req: { query?: any; body?: any; header?: any };
-    //   }) => {
-    //     const {
-    //       pagination = "true",
-    //       page = 0,
-    //       size = 10,
-    //       search,
-    //       email,
-    //     } = req.query || {};
-
-    //     let query = db.from("users").select("*");
-
-    //     if (email) {
-    //       query = query.eq("email", email);
-    //     }
-
-    //     if (search) {
-    //       query = query.ilike("name", `%${search}%`);
-    //     }
-
-    //     if (pagination === "true") {
-    //       const { offset } = getOffset(page, size);
-    //       const from = offset;
-    //       const to = offset + size - 1;
-    //       query = query.range(from, to);
-    //     }
-
-    //     const { data: response, error } = await query;
-
-    //     return { response, error };
-    //   },
-    // },
     get: async ({
       session,
       req,
@@ -86,371 +71,173 @@ export const API = {
         email,
       } = req.query || {};
 
-      // Base query
-      let query = db.from("users").select("*", { count: "exact" });
-      query = query.eq("deleted", 0);
-
-      // Filter by email
-      if (email) {
-        query = query.eq("email", email);
-      }
-
-      // Filter by search
-      if (search) {
-        query = query.ilike("name", `%${search}%`);
-      }
-
-      // Total count (Supabase akan otomatis memberi count jika { count: "exact" })
-      let total_items = 0;
-
-      if (pagination === "true") {
-        // Pagination logic
-        const pageNumber = Number(page) || 0;
-        const pageSize = Number(size) || 10;
-        const from = pageNumber * pageSize;
-        const to = from + pageSize - 1;
-
-        const { data: items, count, error } = await query.range(from, to);
-
-        if (error) {
-          return {
-            total_items: 0,
-            items: [],
-            current_page: pageNumber,
-            total_pages: 0,
-            error,
-          };
-        }
-
-        total_items = count || 0;
-        const total_pages = Math.ceil(total_items / pageSize);
-
-        return {
-          total_items,
-          items: items || [],
-          current_page: pageNumber,
-          total_pages,
-        };
-      } else {
-        // No pagination: return all data
-        const { data: items, count, error } = await query;
-
-        if (error) {
-          return {
-            total_items: 0,
-            items: [],
-            current_page: 0,
-            total_pages: 0,
-            error,
-          };
-        }
-
-        return {
-          total_items: count || 0,
-          items: items || [],
-          current_page: 0,
-          total_pages: 1,
-        };
-      }
+      const res = await fetch(CONFIG.apiBaseUrl.server_api_url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer REPLACE_WITH_STRONG_KEY",
+        },
+        body: JSON.stringify({
+          action: "select",
+          table: "users",
+          columns: ["id", "fullname", "email", "role"],
+          where: { deleted: 0 },
+          search,
+          page: 0,
+          size: 10,
+        }),
+      });
+      const result = await res.json();
+      return result;
     },
-    create: async ({
-      session,
-      req,
-    }: {
-      session: any;
-      req: {
-        body: {
-          fullname: string;
-          email: string;
-          role?: string;
-          is_active?: number;
-          deleted?: number;
-          session_token?: string;
-          session_expired?: string;
-        };
-      };
-    }) => {
+    create: async ({ req }: any) => {
       const {
         fullname,
         email,
-        role = "customer", // default jika tidak dikirim
+        role = "customer",
         is_active = 1,
         deleted = 0,
-        session_token = null,
-        session_expired = null,
       } = req.body || {};
 
-      if (!email || !fullname) {
-        return {
-          success: false,
-          message: "Email dan fullname wajib diisi",
-        };
+      if (!fullname || !email) {
+        return { success: false, message: "Email dan fullname wajib diisi" };
       }
 
       const newUser = {
         fullname,
         email,
         role,
-        is_active,
-        deleted,
-        session_token,
-        session_expired,
-        created_on: new Date().toISOString(),
-        modified_on: new Date().toISOString(),
+        // is_active,
+        // deleted,
+        // created_on: new Date().toISOString(),
+        // modified_on: new Date().toISOString(),
       };
 
-      const { data, error } = await db
-        .from("users")
-        .insert(newUser)
-        .select("*")
-        .single();
-
-      if (error) {
-        return {
-          success: false,
-          message: error.message,
-          error,
-        };
-      }
-
-      return {
-        success: true,
-        message: "User berhasil dibuat",
-        user: data,
-      };
-    },
-    findOrCreate: async ({
-      session,
-      req,
-    }: {
-      session: any;
-      req: {
-        body: {
-          fullname: string;
-          email: string;
-          role?: string;
-          is_active?: number;
-          deleted?: number;
-          session_token?: string;
-          session_expired?: string;
-        };
-      };
-    }) => {
-      const {
-        fullname,
-        email,
-        role = "customer", // default jika tidak dikirim
-        is_active = 1,
-        deleted = 0,
-        session_token = null,
-        session_expired = null,
-      } = req.body || {};
-
-      if (!email || !fullname) {
-        return {
-          success: false,
-          message: "Email dan fullname wajib diisi",
-        };
-      }
-
-      // 1. Cek apakah email sudah ada
-      const { data: existingUser, error: findError } = await db
-        .from("users")
-        .select("*")
-        .eq("email", email)
-        .maybeSingle();
-
-      if (findError) {
-        return {
-          success: false,
-          message: findError.message,
-          error: findError,
-        };
-      }
-
-      // 2. Jika user ditemukan
-      if (existingUser) {
-        if (existingUser.deleted === 1) {
-          // Update user lama (restore + update data baru)
-          const { data: updatedUser, error: updateError } = await db
-            .from("users")
-            .update({
-              fullname,
-              email,
-              role,
-              is_active,
-              deleted: 0, // restore
-              session_token,
-              session_expired,
-              modified_on: new Date().toISOString(),
-            })
-            .eq("id", existingUser.id)
-            .select("*")
-            .single();
-
-          if (updateError) {
-            return {
-              success: false,
-              message: updateError.message,
-              error: updateError,
-            };
-          }
-
-          return {
-            success: true,
-            message: "User berhasil dipulihkan dan diperbarui",
-            user: updatedUser,
-          };
-        } else {
-          // Jika user sudah aktif (deleted = 0)
-          return {
-            success: false,
-            message: "Email sudah terdaftar",
-          };
-        }
-      }
-
-      // 3. Jika user tidak ditemukan → buat baru
-      const newUser = {
-        fullname,
-        email,
-        role,
-        is_active,
-        deleted,
-        session_token,
-        session_expired,
-        created_on: new Date().toISOString(),
-        modified_on: new Date().toISOString(),
-      };
-
-      const { data, error } = await db
-        .from("users")
-        .insert(newUser)
-        .select("*")
-        .single();
-
-      if (error) {
-        return {
-          success: false,
-          message: error.message,
-          error,
-        };
-      }
-
-      return {
-        success: true,
-        message: "User baru berhasil dibuat",
-        user: data,
-      };
-    },
-    update: async ({
-      session,
-      req,
-    }: {
-      session: any;
-      req: {
-        body: {
-          id: string; // id user wajib untuk update
-          fullname?: string;
-          email?: string;
-          role?: string;
-          is_active?: number;
-          deleted?: number; // soft delete jika dikirim
-          session_token?: string | null;
-          session_expired?: string | null;
-        };
-      };
-    }) => {
-      const {
-        id,
-        fullname,
-        email,
-        role,
-        is_active,
-        deleted,
-        session_token,
-        session_expired,
-      } = req.body || {};
-
-      if (!id) {
-        return {
-          success: false,
-          message: "ID user wajib diisi untuk update",
-        };
-      }
-
-      // Jika hanya ingin soft delete (deleted = 1)
-      if (deleted === 1) {
-        const { data, error } = await db
-          .from("users")
-          .update({
-            deleted: 1,
-            modified_on: new Date().toISOString(),
-          })
-          .eq("id", id)
-          .select("*")
-          .single();
-
-        if (error) {
-          return {
-            success: false,
-            message: error.message,
-            error,
-          };
-        }
+      try {
+        const result = await callApi({
+          action: "insert",
+          table: "users",
+          data: newUser,
+        });
 
         return {
           success: true,
-          message: "User berhasil di-soft delete",
-          user: data,
+          message: "User berhasil dibuat",
+          user: { id: result.insert_id, ...newUser },
         };
+      } catch (err: any) {
+        console.log(err);
+        return { success: false, message: err.message };
+      }
+    },
+    findOrCreate: async ({ req }: any) => {
+      const {
+        fullname,
+        email,
+        role = "customer",
+        is_active = 1,
+        deleted = 0,
+      } = req.body || {};
+
+      if (!fullname || !email) {
+        return { success: false, message: "Email dan fullname wajib diisi" };
       }
 
-      // Update biasa (jika deleted tidak dikirim)
-      const updatedUser: Record<string, any> = {
+      try {
+        // cek existing
+        const existing = await callApi({
+          action: "select",
+          table: "users",
+          columns: ["*"],
+          where: { email },
+          size: 1,
+        });
+
+        if (existing.items.length > 0) {
+          const user = existing.items[0];
+          if (user.deleted === 1) {
+            // restore + update
+            const updated = await callApi({
+              action: "update",
+              table: "users",
+              data: {
+                fullname,
+                email,
+                role,
+                is_active,
+                deleted: 0,
+                modified_on: new Date().toISOString(),
+              },
+              where: { id: user.id },
+            });
+
+            return {
+              success: true,
+              message: "User berhasil dipulihkan dan diperbarui",
+              user: { ...user, ...updated },
+            };
+          }
+          return { success: false, message: "Email sudah terdaftar" };
+        }
+
+        // jika belum ada → insert baru
+        const newUser = {
+          fullname,
+          email,
+          role,
+          is_active,
+          deleted,
+          created_on: new Date().toISOString(),
+          modified_on: new Date().toISOString(),
+        };
+
+        const result = await callApi({
+          action: "insert",
+          table: "users",
+          data: newUser,
+        });
+
+        return {
+          success: true,
+          message: "User baru berhasil dibuat",
+          user: { id: result.insert_id, ...newUser },
+        };
+      } catch (err: any) {
+        return { success: false, message: err.message };
+      }
+    },
+    update: async ({ req }: any) => {
+      const { id, ...fields } = req.body || {};
+
+      if (!id) {
+        return { success: false, message: "ID user wajib diisi" };
+      }
+
+      const updatedData: Record<string, any> = {
+        ...fields,
         modified_on: new Date().toISOString(),
       };
 
-      if (fullname !== undefined) updatedUser.fullname = fullname;
-      if (email !== undefined) updatedUser.email = email;
-      if (role !== undefined) updatedUser.role = role;
-      if (is_active !== undefined) updatedUser.is_active = is_active;
-      if (deleted !== undefined) updatedUser.deleted = deleted;
-      if (session_token !== undefined)
-        updatedUser.session_token = session_token;
-      if (session_expired !== undefined)
-        updatedUser.session_expired = session_expired;
+      try {
+        const result = await callApi({
+          action: "update",
+          table: "users",
+          data: updatedData,
+          where: { id },
+        });
 
-      const { data, error } = await db
-        .from("users")
-        .update(updatedUser)
-        .eq("id", id)
-        .select("*")
-        .single();
-
-      if (error) {
         return {
-          success: false,
-          message: error.message,
-          error,
+          success: true,
+          message: "User berhasil diperbarui",
+          affected: result.affected_rows,
         };
+      } catch (err: any) {
+        return { success: false, message: err.message };
       }
-
-      return {
-        success: true,
-        message: "User berhasil diperbarui",
-        user: data,
-      };
     },
   },
   orders: {
-    get: async ({
-      session,
-      req,
-    }: {
-      session: any;
-      req: { query?: any; body?: any; header?: any };
-    }) => {
+    get: async ({ req }: any) => {
       const {
         pagination = "true",
         page = 0,
@@ -459,106 +246,65 @@ export const API = {
         institution_id,
         status,
       } = req.query || {};
-      console.log(status);
 
-      // Base query
-      let query = db.from("orders").select("*", { count: "exact" });
-      query.order("created_on", { ascending: false });
+      const where: any = {};
+      // if (institution_id) where.institution_id = institution_id;
+      if (status) where.status = status;
 
-      // Filter by institution
-      if (institution_id) {
-        query = query.eq("institution_id", institution_id);
-      }
-
-      // Filter by status
-      if (status) {
-        query = query.eq("status", status);
-      }
-
-      // Search by institution_name
-      if (search) {
-        query = query.ilike("institution_name", `%${search}%`);
-      }
-
-      let total_items = 0;
-
-      if (pagination === "true") {
-        const pageNumber = Number(page) || 0;
-        const pageSize = Number(size) || 10;
-        const from = pageNumber * pageSize;
-        const to = from + pageSize - 1;
-
-        const { data: items, count, error } = await query.range(from, to);
-
-        if (error) {
-          return {
-            total_items: 0,
-            items: [],
-            current_page: pageNumber,
-            total_pages: 0,
-            error,
-          };
-        }
-
-        total_items = count || 0;
-        const total_pages = Math.ceil(total_items / pageSize);
+      try {
+        const result = await callApi({
+          action: "select",
+          table: "orders",
+          columns: [
+            "id",
+            "institution_id",
+            "institution_name",
+            "institution_abbr",
+            "institution_domain",
+            "order_type",
+            "quantity",
+            "deadline",
+            "payment_type",
+            "status",
+          ],
+          where,
+          search: search
+            ? { field: "institution_name", keyword: search }
+            : undefined,
+          pagination,
+          page: +page || 0,
+          size: +size || 10,
+          order_by: { created_on: "desc" },
+        });
 
         return {
-          total_items,
-          items: items || [],
-          current_page: pageNumber,
-          total_pages,
+          total_items: result.total_items || 0,
+          items: result.items || [],
+          current_page: Number(page),
+          total_pages: result.total_pages || 1,
         };
-      } else {
-        const { data: items, count, error } = await query;
-
-        if (error) {
-          return {
-            total_items: 0,
-            items: [],
-            current_page: 0,
-            total_pages: 0,
-            error,
-          };
-        }
-
+      } catch (err: any) {
+        console.log(err);
         return {
-          total_items: count || 0,
-          items: items || [],
-          current_page: 0,
-          total_pages: 1,
+          total_items: 0,
+          items: [],
+          current_page: Number(page),
+          total_pages: 0,
+          error: err.message,
         };
       }
     },
 
-    create: async ({
-      session,
-      req,
-    }: {
-      session: any;
-      req: {
-        body: {
-          institution_id: number;
-          institution_name: string;
-          institution_abbr?: string;
-          institution_domain?: string;
-          order_type?: string;
-          quantity?: number;
-          deadline?: string;
-          payment_type?: string;
-          status?: string;
-        };
-      };
-    }) => {
+    create: async ({ req }: any) => {
       const {
         institution_id,
         institution_name,
         institution_abbr = null,
         institution_domain = null,
-        order_type = null,
+        order_type = "package",
         quantity = 0,
         deadline = null,
-        payment_type = null,
+        payment_type = "down_payment",
         status = "ordered",
       } = req.body || {};
 
@@ -583,42 +329,24 @@ export const API = {
         modified_on: new Date().toISOString(),
       };
 
-      const { data, error } = await db
-        .from("orders")
-        .insert(newOrder)
-        .select("*")
-        .single();
+      try {
+        const result = await callApi({
+          action: "insert",
+          table: "orders",
+          data: newOrder,
+        });
 
-      if (error) {
         return {
-          success: false,
-          message: error.message,
-          error,
+          success: true,
+          message: "Order berhasil dibuat",
+          order: { id: result.insert_id, ...newOrder },
         };
+      } catch (err: any) {
+        return { success: false, message: err.message };
       }
-
-      return {
-        success: true,
-        message: "Order berhasil dibuat",
-        order: data,
-      };
     },
 
-    findOrCreate: async ({
-      session,
-      req,
-    }: {
-      session: any;
-      req: {
-        body: {
-          uid?: string;
-          institution_id: number;
-          institution_name: string;
-          order_type?: string;
-          status?: string;
-        };
-      };
-    }) => {
+    findOrCreate: async ({ req }: any) => {
       const { uid, institution_id, institution_name, order_type, status } =
         req.body || {};
 
@@ -629,82 +357,52 @@ export const API = {
         };
       }
 
-      // Cek berdasarkan uid (jika dikirim)
-      if (uid) {
-        const { data: existingOrder, error: findError } = await db
-          .from("orders")
-          .select("*")
-          .eq("uid", uid)
-          .maybeSingle();
+      try {
+        if (uid) {
+          const existing = await callApi({
+            action: "select",
+            table: "orders",
+            columns: ["*"],
+            where: { uid },
+            size: 1,
+          });
 
-        if (findError) {
-          return {
-            success: false,
-            message: findError.message,
-            error: findError,
-          };
+          if (existing.items && existing.items.length > 0) {
+            return {
+              success: true,
+              message: "Order sudah ada",
+              order: existing.items[0],
+            };
+          }
         }
 
-        if (existingOrder) {
-          return {
-            success: true,
-            message: "Order sudah ada",
-            order: existingOrder,
-          };
-        }
-      }
-
-      // Jika tidak ada → buat baru
-      const newOrder = {
-        institution_id,
-        institution_name,
-        order_type,
-        status: status || "pending",
-        created_on: new Date().toISOString(),
-        modified_on: new Date().toISOString(),
-      };
-
-      const { data, error } = await db
-        .from("orders")
-        .insert(newOrder)
-        .select("*")
-        .single();
-
-      if (error) {
-        return {
-          success: false,
-          message: error.message,
-          error,
+        const newOrder = {
+          uid,
+          institution_id,
+          institution_name,
+          order_type,
+          status: status || "pending",
+          created_on: new Date().toISOString(),
+          modified_on: new Date().toISOString(),
         };
-      }
 
-      return {
-        success: true,
-        message: "Order baru berhasil dibuat",
-        order: data,
-      };
+        const result = await callApi({
+          action: "insert",
+          table: "orders",
+          data: newOrder,
+        });
+
+        return {
+          success: true,
+          message: "Order baru berhasil dibuat",
+          order: { id: result.insert_id, ...newOrder },
+        };
+      } catch (err: any) {
+        return { success: false, message: err.message };
+      }
     },
 
-    update: async ({
-      session,
-      req,
-    }: {
-      session: any;
-      req: {
-        body: {
-          id: number;
-          institution_name?: string;
-          institution_abbr?: string;
-          institution_domain?: string;
-          order_type?: string;
-          quantity?: number;
-          deadline?: string;
-          payment_type?: string;
-          status?: string;
-          deleted?: number;
-        };
-      };
-    }) => {
+    update: async ({ req }: any) => {
       const {
         id,
         institution_name,
@@ -719,10 +417,7 @@ export const API = {
       } = req.body || {};
 
       if (!id) {
-        return {
-          success: false,
-          message: "ID order wajib diisi untuk update",
-        };
+        return { success: false, message: "ID order wajib diisi untuk update" };
       }
 
       const updatedOrder: Record<string, any> = {
@@ -740,32 +435,497 @@ export const API = {
       if (deadline !== undefined) updatedOrder.deadline = deadline;
       if (payment_type !== undefined) updatedOrder.payment_type = payment_type;
       if (status !== undefined) updatedOrder.status = status;
+      if (deleted === 1) updatedOrder.deleted_on = new Date().toISOString();
 
-      // Soft delete
-      if (deleted === 1) {
-        updatedOrder.deleted_on = new Date().toISOString();
+      try {
+        const result = await callApi({
+          action: "update",
+          table: "orders",
+          data: updatedOrder,
+          where: { id },
+        });
+
+        return {
+          success: true,
+          message: "Order berhasil diperbarui",
+          affected: result.affected_rows,
+        };
+      } catch (err: any) {
+        return { success: false, message: err.message };
+      }
+    },
+  },
+  commodity: {
+    get: async ({
+      session,
+      req,
+    }: {
+      session: any;
+      req: { query?: any; body?: any; header?: any };
+    }) => {
+      const {
+        pagination = "true",
+        page = 0,
+        size = 10,
+        search,
+        email,
+      } = req.query || {};
+
+      const res = await fetch(CONFIG.apiBaseUrl.server_api_url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer REPLACE_WITH_STRONG_KEY",
+        },
+        body: JSON.stringify({
+          action: "select",
+          table: "commodities",
+          columns: ["id", "code", "name", "unit"],
+          where: { deleted_on: "null" },
+          search,
+          page,
+          size,
+        }),
+      });
+      const result = await res.json();
+      return result;
+    },
+    create: async ({ req }: any) => {
+      const { code, name, unit = "pcs", deleted = 0 } = req.body || {};
+
+      if (!code || !name) {
+        return { success: false, message: "Kode dan Nama wajib diisi" };
       }
 
-      const { data, error } = await db
-        .from("orders")
-        .update(updatedOrder)
-        .eq("id", id)
-        .select("*")
-        .single();
+      const newCommodity = {
+        code,
+        name,
+        unit,
+      };
 
-      if (error) {
+      try {
+        const result = await callApi({
+          action: "insert",
+          table: "commodities",
+          data: newCommodity,
+        });
+
+        return {
+          success: true,
+          message: "Komponen berhasil dibuat",
+          user: { id: result.insert_id, ...newCommodity },
+        };
+      } catch (err: any) {
+        console.log(err);
+        return { success: false, message: err.message };
+      }
+    },
+    update: async ({ req }: any) => {
+      const { id, ...fields } = req.body || {};
+
+      if (!id) {
+        return { success: false, message: "ID wajib diisi" };
+      }
+
+      const updatedData: Record<string, any> = {
+        ...fields,
+        modified_on: new Date().toISOString(),
+      };
+
+      try {
+        const result = await callApi({
+          action: "update",
+          table: "commodities",
+          data: updatedData,
+          where: { id },
+        });
+
+        return {
+          success: true,
+          message: "Komponen berhasil diperbarui",
+          affected: result.affected_rows,
+        };
+      } catch (err: any) {
+        return { success: false, message: err.message };
+      }
+    },
+  },
+  commodity_stock: {
+    // === GET STOCK LIST ===
+    get: async ({ req }: any) => {
+      const { page = 0, size = 10, search } = req.query || {};
+
+      try {
+        const result = await callApi({
+          table: "commodities",
+          action: "get_stock", // pakai endpoint custom di PHP
+          page: +page || 0,
+          size: +size || 10,
+          search: search || null,
+        });
+
+        return {
+          total_items: result.total_items || result.items?.length || 0,
+          items: result.items || [],
+          current_page: Number(page),
+          total_pages: result.total_pages || 1,
+        };
+      } catch (err: any) {
+        console.error(err);
+        return {
+          total_items: 0,
+          items: [],
+          current_page: Number(page),
+          total_pages: 0,
+          error: err.message,
+        };
+      }
+    },
+
+    // === RESTOCK ITEM ===
+    restock: async ({ req }: any) => {
+      const { supplier_id, commodity_id, qty } = req.body || {};
+
+      if (!supplier_id || !commodity_id || !qty) {
         return {
           success: false,
-          message: error.message,
-          error,
+          message: "supplier_id, commodity_id, dan qty wajib diisi",
         };
       }
 
-      return {
-        success: true,
-        message: "Order berhasil diperbarui",
-        order: data,
+      try {
+        const result = await callApi({
+          action: "restock",
+          supplier_id,
+          commodity_id,
+          qty,
+        });
+
+        return {
+          success: true,
+          message: "Restock berhasil",
+          restock_id: result.restock_id,
+        };
+      } catch (err: any) {
+        return { success: false, message: err.message };
+      }
+    },
+
+    // === CONSUME STOCK (Produksi) ===
+    consume: async ({ req }: any) => {
+      const { commodity_id, qty } = req.body || {};
+
+      if (!commodity_id || !qty) {
+        return {
+          success: false,
+          message: "commodity_id dan qty wajib diisi",
+        };
+      }
+
+      try {
+        const result = await callApi({
+          action: "consume",
+          commodity_id,
+          qty,
+        });
+
+        return {
+          success: true,
+          message: "Stok berhasil dikurangi",
+          consumed_id: result.consumed_id,
+        };
+      } catch (err: any) {
+        return { success: false, message: err.message };
+      }
+    },
+
+    // === GET LOGS ===
+    logs: async ({ req }: any) => {
+      const { commodity_id, supplier_id } = req.query || {};
+
+      try {
+        const result = await callApi({
+          action: "get_logs",
+          commodity_id,
+          supplier_id,
+        });
+
+        return {
+          success: true,
+          items: result.items || [],
+        };
+      } catch (err: any) {
+        return { success: false, message: err.message };
+      }
+    },
+
+    // === CREATE ITEM (Commodity) ===
+    createCommodity: async ({ req }: any) => {
+      const { code, name, unit } = req.body || {};
+
+      if (!code || !name || !unit) {
+        return {
+          success: false,
+          message: "code, name, dan unit wajib diisi",
+        };
+      }
+
+      const newCommodity = {
+        code,
+        name,
+        unit,
+        created_on: new Date().toISOString(),
       };
+
+      try {
+        const result = await callApi({
+          action: "insert",
+          table: "commodities",
+          data: newCommodity,
+        });
+
+        return {
+          success: true,
+          message: "Commodity berhasil dibuat",
+          commodity: { id: result.insert_id, ...newCommodity },
+        };
+      } catch (err: any) {
+        return { success: false, message: err.message };
+      }
+    },
+
+    // === UPDATE ITEM (Commodity) ===
+    updateCommodity: async ({ req }: any) => {
+      const { id, code, name, unit } = req.body || {};
+
+      if (!id) {
+        return { success: false, message: "id wajib diisi" };
+      }
+
+      const updateData: any = {};
+      if (code) updateData.code = code;
+      if (name) updateData.name = name;
+      if (unit) updateData.unit = unit;
+      updateData.modified_on = new Date().toISOString();
+
+      try {
+        await callApi({
+          action: "update",
+          table: "commodities",
+          data: updateData,
+          where: { id },
+        });
+
+        return { success: true, message: "Commodity berhasil diupdate" };
+      } catch (err: any) {
+        return { success: false, message: err.message };
+      }
+    },
+  },
+  supplier: {
+    get: async ({
+      session,
+      req,
+    }: {
+      session: any;
+      req: { query?: any; body?: any; header?: any };
+    }) => {
+      const {
+        pagination = "true",
+        page = 0,
+        size = 10,
+        search,
+        email,
+      } = req.query || {};
+
+      const res = await fetch(CONFIG.apiBaseUrl.server_api_url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer REPLACE_WITH_STRONG_KEY",
+        },
+        body: JSON.stringify({
+          action: "select",
+          table: "suppliers",
+          columns: ["id", "name", "phone", "address"],
+          where: { deleted_on: "null" },
+          search,
+          page,
+          size,
+        }),
+      });
+      const result = await res.json();
+      return result;
+    },
+    create: async ({ req }: any) => {
+      const { name, phone, address } = req.body || {};
+
+      if (!name || !phone) {
+        return { success: false, message: "Nama dan Telepon wajib diisi" };
+      }
+
+      const newCommodity = {
+        phone,
+        name,
+        address,
+      };
+
+      try {
+        const result = await callApi({
+          action: "insert",
+          table: "suppliers",
+          data: newCommodity,
+        });
+
+        return {
+          success: true,
+          message: "Toko berhasil ditambahkan",
+          user: { id: result.insert_id, ...newCommodity },
+        };
+      } catch (err: any) {
+        console.log(err);
+        return { success: false, message: err.message };
+      }
+    },
+    update: async ({ req }: any) => {
+      const { id, ...fields } = req.body || {};
+
+      if (!id) {
+        return { success: false, message: "ID wajib diisi" };
+      }
+
+      const updatedData: Record<string, any> = {
+        ...fields,
+        modified_on: new Date().toISOString(),
+      };
+
+      try {
+        const result = await callApi({
+          action: "update",
+          table: "suppliers",
+          data: updatedData,
+          where: { id },
+        });
+
+        return {
+          success: true,
+          message: "Toko berhasil diperbarui",
+          affected: result.affected_rows,
+        };
+      } catch (err: any) {
+        return { success: false, message: err.message };
+      }
+    },
+  },
+  institution: {
+    get: async ({
+      session,
+      req,
+    }: {
+      session: any;
+      req: { query?: any; body?: any; header?: any };
+    }) => {
+      const {
+        pagination = "true",
+        page = 0,
+        size = 10,
+        search,
+        email,
+      } = req.query || {};
+
+      const res = await fetch(CONFIG.apiBaseUrl.server_api_url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer REPLACE_WITH_STRONG_KEY",
+        },
+        body: JSON.stringify({
+          action: "select",
+          table: "institutions",
+          columns: ["id", "name", "abbr"],
+          where: { deleted_on: "null" },
+          search,
+          page,
+          size,
+        }),
+      });
+      const result = await res.json();
+      return result;
+    },
+    create: async ({ req }: any) => {
+      const { name } = req.body || {};
+
+      if (!name) {
+        return { success: false, message: "Nama wajib diisi" };
+      }
+
+      const newCommodity = {
+        name,
+      };
+
+      try {
+        const result = await callApi({
+          action: "insert",
+          table: "institutions",
+          data: newCommodity,
+        });
+
+        return {
+          success: true,
+          message: "Institusi berhasil ditambahkan",
+          user: { id: result.insert_id, ...newCommodity },
+        };
+      } catch (err: any) {
+        console.log(err);
+        return { success: false, message: err.message };
+      }
+    },
+    update: async ({ req }: any) => {
+      const { id, ...fields } = req.body || {};
+
+      if (!id) {
+        return { success: false, message: "ID wajib diisi" };
+      }
+
+      const updatedData: Record<string, any> = {
+        ...fields,
+        modified_on: new Date().toISOString(),
+      };
+
+      try {
+        const result = await callApi({
+          action: "update",
+          table: "institutions",
+          data: updatedData,
+          where: { id },
+        });
+
+        return {
+          success: true,
+          message: "Institusi berhasil diperbarui",
+          affected: result.affected_rows,
+        };
+      } catch (err: any) {
+        return { success: false, message: err.message };
+      }
+    },
+  },
+  asset: {
+    upload: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(CONFIG.apiBaseUrl.server_api_url, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer REPLACE_WITH_STRONG_KEY",
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+      return data;
+      // data.url => link publik gambar
     },
   },
 };

@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
 import { Modal } from "~/components/modal/Modal";
-import SelectBasic from "~/components/select/SelectBasic";
 import TableComponent from "~/components/table/Table";
 import { TitleHeader } from "~/components/TitleHedaer";
 import { Badge } from "~/components/ui/badge";
@@ -29,7 +28,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     url.searchParams.entries()
   );
   try {
-    const supplier = await API.supplier.get({
+    const supplier = await API.institution.get({
       // session,
       session: {},
       req: {
@@ -62,7 +61,7 @@ export const action: ActionFunction = async ({ request }) => {
   try {
     let res: any = {};
     if (request.method === "DELETE") {
-      res = await API.supplier.update({
+      res = await API.institution.update({
         session: {},
         req: {
           body: {
@@ -74,7 +73,7 @@ export const action: ActionFunction = async ({ request }) => {
     }
     if (request.method === "POST") {
       if (id) {
-        res = await API.supplier.update({
+        res = await API.institution.update({
           session: {},
           req: {
             body: {
@@ -84,7 +83,7 @@ export const action: ActionFunction = async ({ request }) => {
           },
         });
       } else {
-        res = await API.supplier.create({
+        res = await API.institution.create({
           session: {},
           req: {
             body: payload as any,
@@ -143,14 +142,14 @@ export default function AccountPage() {
         { id: data?.id, deleted_on: moment().format("YYYY-MM-DD HH:mm:ss") },
         {
           method: "delete",
-          action: "/app/master/supplier",
+          action: "/app/master/institution",
         }
       );
 
       // console.log("HASIL FETCHER => ", fetcher);
       toast.success("Berhasil", {
         // description: fetcher.data.message,
-        description: "Berhasil menghapus Toko",
+        description: "Berhasil menghapus Institusi",
       });
     }
   };
@@ -183,12 +182,8 @@ export default function AccountPage() {
       cell: (row: any) => row?.name || "-",
     },
     {
-      name: "Telepon",
-      cell: (row: any) => row?.phone || "-",
-    },
-    {
-      name: "Alamat",
-      cell: (row: any) => row?.address || "-",
+      name: "Domain Utama",
+      cell: (row: any) => row?.abbr || "-",
     },
     {
       name: "Aksi",
@@ -225,13 +220,13 @@ export default function AccountPage() {
   return (
     <div className="space-y-3">
       <TitleHeader
-        title="Daftar Mitra Toko"
-        description="Kelola data mitra toko Anda."
+        title="Daftar Mitra Institusi"
+        description="Kelola data mitra Institusi."
         breadcrumb={
           <AppBreadcrumb
             pages={[
               { label: "Master Data", href: "/" },
-              { label: "Toko", active: true },
+              { label: "Institusi", active: true },
             ]}
           />
         }
@@ -248,7 +243,7 @@ export default function AccountPage() {
             }
           >
             <PlusCircleIcon className="w-4" />
-            Toko Baru
+            Institusi Baru
           </Button>
         }
       />
@@ -259,38 +254,18 @@ export default function AccountPage() {
         <Modal
           open={modal?.open}
           onClose={() => setModal({ ...modal, open: false })}
-          title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Toko`}
+          title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Institusi`}
         >
           <Form method="post" className="space-y-3">
             <input type="hidden" name="id" value={modal?.data?.id} />
             <div className="space-y-1">
-              <Label>Nama Toko</Label>
+              <Label>Nama Institusi</Label>
               <Input
                 required
                 type="text"
                 name="name"
-                placeholder="Masukkan Nama Toko"
+                placeholder="Masukkan Nama Institusi"
                 defaultValue={modal?.data?.name}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>No Telepon</Label>
-              <Input
-                required
-                type="text"
-                name="phone"
-                placeholder="Masukkan No Telepon"
-                defaultValue={modal?.data?.phone}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Alamat</Label>
-              <Input
-                required
-                type="text"
-                name="address"
-                placeholder="Masukkan Alamat"
-                defaultValue={modal?.data?.address}
               />
             </div>
             <div className="flex justify-end gap-2">

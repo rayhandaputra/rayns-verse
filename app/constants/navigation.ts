@@ -107,7 +107,13 @@ export const navigation: NavItem[] = [
   {
     name: "Produksi",
     icon: "CalendarCheck",
-    active: ["/app/production/stock"],
+    active: [],
+    // active: [
+    //   "/app/production/stock",
+    //   "/app/production/stock-adjustment",
+    //   "/app/production/retur-order",
+    //   "/app/production/purchase-order",
+    // ],
     children: [
       {
         name: "Manajemen Stok",
@@ -117,9 +123,9 @@ export const navigation: NavItem[] = [
       },
       {
         name: "Penyesuaian Stok",
-        href: "/app/production/stock",
+        href: "/app/production/adjustment-stock",
         // icon: "FileText",
-        active: ["/app/production/stock"],
+        active: ["/app/production/adjustment-stock"],
       },
       // {
       //   name: "Distribusi Toko",
@@ -129,15 +135,15 @@ export const navigation: NavItem[] = [
       // },
       {
         name: "Retur / Rusak",
-        href: "/app/production/stock",
+        href: "/app/production/retur-order",
         // icon: "FileText",
-        active: ["/app/production/stock"],
+        active: ["/app/production/retur-order"],
       },
       {
         name: "Pembelian",
-        href: "/app/production/stock",
+        href: "/app/production/purchase-order",
         // icon: "FileText",
-        active: ["/app/production/stock"],
+        active: ["/app/production/purchase-order"],
       },
     ],
   },
@@ -151,15 +157,20 @@ export const navigation: NavItem[] = [
         href: "/app/master/institution",
         active: ["/app/master/institution"],
       },
-      {
-        name: "Pelanggan",
-        href: "/app/master/customer",
-        active: ["/app/master/customer"],
-      },
+      // {
+      //   name: "Pelanggan",
+      //   href: "/app/master/customer",
+      //   active: ["/app/master/customer"],
+      // },
       {
         name: "Toko",
         href: "/app/master/supplier",
         active: ["/app/master/supplier"],
+      },
+      {
+        name: "Komponen",
+        href: "/app/master/commodity",
+        active: ["/app/master/commodity"],
       },
     ],
   },

@@ -36,34 +36,41 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   let url = new URL(request.url);
   let { search, page = 0, size = 10 } = Object.fromEntries(url.searchParams);
 
-  const filters = {
-    pagination: "true",
-    page: page || 0,
-    size: size || 10,
-    status: params.status || "",
-  };
-  const list = await API.orders.get({
-    // session,
-    session: {},
-    req: {
-      query: filters,
-    } as any,
-  });
-
-  return {
-    // search,
-    // APP_CONFIG: CONFIG,
-    table: {
-      ...list,
+  try {
+    const filters = {
+      pagination: "true",
       page: page || 0,
       size: size || 10,
-      filter: filters,
-    },
-    // flash,
-    // headers: {
-    //   "Set-Cookie": await commitSession(session),
-    // },
-  };
+      status: params.status || "",
+    };
+    const list = await API.orders.get({
+      // session,
+      session: {},
+      req: {
+        query: filters,
+      } as any,
+    });
+
+    return {
+      // search,
+      // APP_CONFIG: CONFIG,
+      table: {
+        ...list,
+        page: page || 0,
+        size: size || 10,
+        filter: filters,
+      },
+      // flash,
+      // headers: {
+      //   "Set-Cookie": await commitSession(session),
+      // },
+    };
+  } catch (err) {
+    console.log(err);
+    return {
+      error_message: err,
+    };
+  }
 };
 
 export default function AppOrder() {

@@ -1,28 +1,75 @@
-import { PlusCircleIcon } from "lucide-react";
-import { useNavigate } from "react-router";
+// src/routes/StockManagement.tsx
+import {
+  Package,
+  Store,
+  PlusCircle,
+  LogIn,
+  Layers3,
+  RefreshCcw,
+  PlusCircleIcon,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { useLoaderData, useNavigate, type LoaderFunction } from "react-router";
 import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
+import SelectBasic from "~/components/select/SelectBasic";
 import { TitleHeader } from "~/components/TitleHedaer";
 import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
+import { useLoader } from "~/hooks/use-loading";
+import { API } from "~/lib/api";
 
-export default function StockOpnamePage() {
+export const loader: LoaderFunction = async ({ request, params }) => {
+  // const session = await unsealSession(request);
+  // const session = await getSession(request);
+  // const url = new URL(request.url);
+  // const search = url.searchParams.get("q") ?? "";
+
+  try {
+    const suppliers = await API.supplier.get({
+      session: {},
+      req: {},
+    });
+    const commodity = await API.commodity_stock.get({
+      // session,
+      session: {},
+      req: {
+        pagination: "false",
+        // page: 0,
+        // size: 10,
+      } as any,
+    });
+
+    return {
+      // search,
+      // APP_CONFIG: CONFIG,
+      suppliers: suppliers?.items,
+      table: {
+        data: commodity,
+        page: 0,
+        size: 10,
+      },
+    };
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export default function StockManagement() {
+  const { table, suppliers } = useLoaderData();
   const navigate = useNavigate();
+  const [selectedStore, setSelectedStore] = useState("Toko A");
 
-  const stockItems = [
-    { name: "Id Card", qty: 0, unit: "pack" },
-    { name: "Case", qty: 35 },
-    { name: "Lanyard", qty: 0, unit: "pack" },
-    { name: "Stopper", qty: 80, unit: "pack" },
-    { name: "Cantelan", qty: 30 },
-    { name: "Rivet", qty: 0, unit: "pack" },
-    { name: "Kertas A4 (lembar)", qty: 81, unit: "pack" },
-    { name: "Kertas Roll (100 m/roll)", qty: 37, extra: "(= 3700 m)" },
-    { name: "Solasi (gulung)", qty: 23 },
-    { name: "Tinta (liter)", qty: 11.89 },
-  ];
+  const listSupplier = useMemo(() => {
+    return (
+      suppliers?.map((v: any) => ({
+        ...v,
+        value: v?.id,
+        label: v?.name,
+      })) ?? []
+    );
+  }, [suppliers]);
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col h-full w-full">
       <TitleHeader
         title="Manajemen Stok"
         description="Kelola dan pantau stok bahan produksi."
@@ -45,74 +92,95 @@ export default function StockOpnamePage() {
         }
       />
 
-      <div className="grid gap-4">
-        <Card className="p-4">
-          <h2 className="font-semibold text-gray-800 mb-2">
-            Perkiraan Kapasitas Produksi
-          </h2>
-          <p className="text-sm text-gray-500 mb-3">
-            1 roll kertas ≈ 754 lanyard (8 lanyard / 1.06 m), 1 lembar A4 = 9
-            ID, 1 gulung solasi = 100 paket, estimasi tinta = 0.0007 L/ID.
+      {/* Header */}
+      {/* <div className="flex items-center justify-between p-4 border-b bg-white shadow-sm">
+        <h1 className="text-xl font-bold flex items-center gap-2">
+          <Layers3 className="w-6 h-6 text-blue-500" />
+          Manajemen Stok
+        </h1>
+        <button className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700">
+          <PlusCircle className="w-5 h-5" />
+          Restock
+        </button>
+      </div> */}
+
+      {/* Body */}
+      <div className="py-4 space-y-6 overflow-y-auto">
+        {/* Ringkasan Kapasitas Produksi */}
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl p-4 shadow">
+          <h2 className="font-semibold">Perkiraan Kapasitas Produksi</h2>
+          <p className="text-sm opacity-80">
+            Estimasi maksimal produksi berdasarkan bahan tersedia.
           </p>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-gray-50 p-2 rounded-md text-center">
-              <p className="text-xs text-gray-500">Maks ID Card</p>
-              <p className="text-lg font-bold">0</p>
+          <div className="grid grid-cols-3 gap-4 mt-3 text-center">
+            <div>
+              <p className="text-2xl font-bold">0</p>
+              <p className="text-xs">Maks ID Card</p>
             </div>
-            <div className="bg-gray-50 p-2 rounded-md text-center">
-              <p className="text-xs text-gray-500">Maks Lanyard</p>
-              <p className="text-lg font-bold">0</p>
+            <div>
+              <p className="text-2xl font-bold">0</p>
+              <p className="text-xs">Maks Lanyard</p>
             </div>
-            <div className="bg-gray-50 p-2 rounded-md text-center">
-              <p className="text-xs text-gray-500">Maks Paket</p>
-              <p className="text-lg font-bold">0</p>
+            <div>
+              <p className="text-2xl font-bold">0</p>
+              <p className="text-xs">Maks Paket</p>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-4">
-          <h2 className="font-semibold text-gray-800 mb-2">Stok Item</h2>
-          <div className="space-y-2">
-            {stockItems.map((item, i) => (
+        {/* Filter per Toko */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white p-4 rounded-xl shadow">
+          <label className="font-medium flex items-center gap-2">
+            <Store className="w-5 h-5 text-gray-500" />
+            Pilih Toko:
+          </label>
+          {/* <select
+            value={selectedStore}
+            onChange={(e) => setSelectedStore(e.target.value)}
+            className="border rounded-lg px-3 py-2 w-full sm:w-48"
+          >
+            <option>Toko A</option>
+            <option>Toko B</option>
+            <option>Toko C</option>
+          </select> */}
+          <SelectBasic options={listSupplier} placeholder="Semua Toko" />
+        </div>
+
+        {/* List Stok Item */}
+        <div className="bg-white p-4 rounded-xl shadow">
+          <h2 className="font-semibold mb-3">Stok Item</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {table?.data?.items?.map((item: any, i: number) => (
               <div
                 key={i}
-                className="flex items-center justify-between border rounded-md p-2 bg-white"
+                className="p-3 border rounded-lg flex justify-between items-center hover:shadow-md transition"
               >
                 <div>
-                  <p className="font-medium text-gray-700">{item.name}</p>
-                  <p className="text-xs text-gray-400">Restock terakhir: -</p>
+                  <p className="font-medium">{item.name}</p>
+                  <p className="text-xs text-gray-500">Restock terakhir: -</p>
                 </div>
-                <p className="font-semibold text-gray-800">
-                  {item.qty}
-                  {item.unit ? ` ${item.unit}` : ""}
-                </p>
+                <div className="text-right">
+                  <p className="font-bold">
+                    {item.stock} {item.unit}
+                  </p>
+                  <button className="text-xs text-blue-600 flex items-center gap-1 hover:underline">
+                    <RefreshCcw className="w-3 h-3" /> Update
+                  </button>
+                </div>
               </div>
             ))}
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-4">
-          <h2 className="font-semibold text-gray-800 mb-2">Restock Item</h2>
-          <form className="space-y-3">
-            <div className="flex gap-2">
-              <select className="border p-2 rounded-md w-1/2">
-                {stockItems.map((item, i) => (
-                  <option key={i} value={item.name}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                className="border p-2 rounded-md w-1/2"
-                placeholder="Contoh: 100"
-              />
-            </div>
-            <Button className="bg-green-600 hover:bg-green-500 text-white">
-              Restock
-            </Button>
-          </form>
-        </Card>
+        {/* Log Pembelian / Restock */}
+        <div className="bg-white p-4 rounded-xl shadow">
+          <h2 className="font-semibold mb-3 flex items-center gap-2">
+            <LogIn className="w-5 h-5 text-gray-600" /> Log Pembelian / Restock
+          </h2>
+          <div className="text-sm text-gray-500">
+            Belum ada riwayat restock ditampilkan.
+          </div>
+        </div>
       </div>
     </div>
   );

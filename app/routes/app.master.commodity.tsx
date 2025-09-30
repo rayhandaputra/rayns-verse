@@ -1,3 +1,10 @@
+// import { useLoaderData, type LoaderFunction } from "react-router";
+// import { CONFIG } from "~/config";
+// import { API } from "~/lib/api";
+// import { unsealSession } from "~/lib/session";
+// import { getSession } from "~/lib/session.server";
+// import DataTable from "react-data-table-component";
+
 import { PencilLineIcon, PlusCircleIcon, Trash2Icon } from "lucide-react";
 import moment from "moment";
 import { useEffect } from "react";
@@ -14,6 +21,8 @@ import Swal from "sweetalert2";
 import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
 import { Modal } from "~/components/modal/Modal";
 import SelectBasic from "~/components/select/SelectBasic";
+// import { SelectBasic } from "~/components/select/SelectBasic";
+// import SelectBasic from "~/components/select/SelectBasic";
 import TableComponent from "~/components/table/Table";
 import { TitleHeader } from "~/components/TitleHedaer";
 import { Badge } from "~/components/ui/badge";
@@ -24,18 +33,21 @@ import { useModal } from "~/hooks/use-modal";
 import { API } from "~/lib/api";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
+  // const session = await unsealSession(request);
+  // const session = await getSession(request);
   const url = new URL(request.url);
-  const { page = 0, size = 10 } = Object.fromEntries(
-    url.searchParams.entries()
-  );
+  const { page = 0, size = 10 } = Object.fromEntries(url.searchParams.entries());
+
   try {
-    const supplier = await API.supplier.get({
+    const user = await API.commodity.get({
       // session,
       session: {},
       req: {
-        pagination: "true",
-        page: 0,
-        size: 10,
+        query: {
+          pagination: "true",
+          page: +page || 0, 
+          size: +size || 10,
+        }
       } as any,
     });
 
@@ -43,9 +55,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       // search,
       // APP_CONFIG: CONFIG,
       table: {
-        ...supplier,
-        page: 0,
-        size: 10,
+        ...user,
+        page,
+        size,
       },
     };
   } catch (err) {
@@ -62,7 +74,7 @@ export const action: ActionFunction = async ({ request }) => {
   try {
     let res: any = {};
     if (request.method === "DELETE") {
-      res = await API.supplier.update({
+      res = await API.commodity.update({
         session: {},
         req: {
           body: {
@@ -74,7 +86,7 @@ export const action: ActionFunction = async ({ request }) => {
     }
     if (request.method === "POST") {
       if (id) {
-        res = await API.supplier.update({
+        res = await API.commodity.update({
           session: {},
           req: {
             body: {
@@ -84,10 +96,12 @@ export const action: ActionFunction = async ({ request }) => {
           },
         });
       } else {
-        res = await API.supplier.create({
+        res = await API.commodity.create({
           session: {},
           req: {
-            body: payload as any,
+            body: {
+              ...(payload as any),
+            },
           },
         });
       }
@@ -110,7 +124,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 };
 
-export default function AccountPage() {
+export default function CommodityPage() {
   const { table } = useLoaderData();
   const actionData = useActionData();
   const [modal, setModal] = useModal();
@@ -143,14 +157,12 @@ export default function AccountPage() {
         { id: data?.id, deleted_on: moment().format("YYYY-MM-DD HH:mm:ss") },
         {
           method: "delete",
-          action: "/app/master/supplier",
+          action: "/app/master/commodity",
         }
       );
 
-      // console.log("HASIL FETCHER => ", fetcher);
       toast.success("Berhasil", {
-        // description: fetcher.data.message,
-        description: "Berhasil menghapus Toko",
+        description: "Berhasil menghapus Komponen",
       });
     }
   };
@@ -179,16 +191,16 @@ export default function AccountPage() {
       cell: (_: any, index: number) => index + 1,
     },
     {
-      name: "Nama",
+      name: "Kode",
+      cell: (row: any) => row?.code || "-",
+    },
+    {
+      name: "Komponen",
       cell: (row: any) => row?.name || "-",
     },
     {
-      name: "Telepon",
-      cell: (row: any) => row?.phone || "-",
-    },
-    {
-      name: "Alamat",
-      cell: (row: any) => row?.address || "-",
+      name: "Satuan",
+      cell: (row: any) => row?.unit || "-",
     },
     {
       name: "Aksi",
@@ -225,13 +237,13 @@ export default function AccountPage() {
   return (
     <div className="space-y-3">
       <TitleHeader
-        title="Daftar Mitra Toko"
-        description="Kelola data mitra toko Anda."
+        title="Komponen Produksi"
+        description="Kelola data komponen produksi."
         breadcrumb={
           <AppBreadcrumb
             pages={[
               { label: "Master Data", href: "/" },
-              { label: "Toko", active: true },
+              { label: "Komponen", active: true },
             ]}
           />
         }
@@ -248,7 +260,7 @@ export default function AccountPage() {
             }
           >
             <PlusCircleIcon className="w-4" />
-            Toko Baru
+            Komponen
           </Button>
         }
       />
@@ -259,38 +271,38 @@ export default function AccountPage() {
         <Modal
           open={modal?.open}
           onClose={() => setModal({ ...modal, open: false })}
-          title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Toko`}
+          title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Komponen`}
         >
           <Form method="post" className="space-y-3">
             <input type="hidden" name="id" value={modal?.data?.id} />
             <div className="space-y-1">
-              <Label>Nama Toko</Label>
+              <Label>Kode</Label>
+              <Input
+                required
+                type="text"
+                name="code"
+                placeholder="Masukkan Kode"
+                defaultValue={modal?.data?.code}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Nama</Label>
               <Input
                 required
                 type="text"
                 name="name"
-                placeholder="Masukkan Nama Toko"
+                placeholder="Masukkan Nama"
                 defaultValue={modal?.data?.name}
               />
             </div>
             <div className="space-y-1">
-              <Label>No Telepon</Label>
+              <Label>Satuan</Label>
               <Input
                 required
                 type="text"
-                name="phone"
-                placeholder="Masukkan No Telepon"
-                defaultValue={modal?.data?.phone}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Alamat</Label>
-              <Input
-                required
-                type="text"
-                name="address"
-                placeholder="Masukkan Alamat"
-                defaultValue={modal?.data?.address}
+                name="unit"
+                placeholder="Masukkan Satuan"
+                defaultValue={modal?.data?.unit}
               />
             </div>
             <div className="flex justify-end gap-2">

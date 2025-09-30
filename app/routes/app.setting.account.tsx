@@ -90,10 +90,23 @@ export const action: ActionFunction = async ({ request }) => {
           },
         });
       } else {
-        res = await API.USER.findOrCreate({
+        // res = await API.USER.findOrCreate({
+        //   session: {},
+        //   req: {
+        //     body: {
+        //       ...(payload as any),
+        //     },
+        //     role: "admin",
+        //   },
+        // });
+        console.log("CREATE USER");
+        res = await API.USER.create({
           session: {},
           req: {
-            body: payload as any,
+            body: {
+              ...(payload as any),
+              role: "admin",
+            },
           },
         });
       }

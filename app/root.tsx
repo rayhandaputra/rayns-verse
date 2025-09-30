@@ -40,11 +40,10 @@ export const links = (): any[] => [
   },
 ];
 
-export const RootLayoutPageNames = ["/", "/app"]
+// export const RootLayoutPageNames = ["/", "/app"];
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const location = useLocation()
-  console.log(location.pathname)
+  const location = useLocation();
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -56,13 +55,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body className="antialiased bg-gray-50 min-h-screen">
         <LoaderProvider>
           <ModalProvider>
-            {RootLayoutPageNames.some((p) => location.pathname.startsWith(location.pathname)) ? (
-              <RootLayout session={null}>
-                <div>{children}</div>
-              </RootLayout>
-            ) : (
+            <RootLayout session={null}>
               <div>{children}</div>
-            )}
+            </RootLayout>
           </ModalProvider>
         </LoaderProvider>
 

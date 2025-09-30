@@ -23,31 +23,35 @@ export default function RootLayout({
     <div className="min-h-screen flex flex-col overflow-x-hidden">
       {" "}
       {/* Cegah scroll horizontal global */}
-      {isAppArea ? (
-        <div className="flex min-h-screen bg-gray-100">
-          {/* Sidebar jadi fixed supaya tidak ikut layout flow */}
-          <Sidebar
-            // className="hidden md:block fixed left-0 top-0 h-full w-[256px] bg-[#1e1e1e]"
-            navigation={navigation}
-            isMobileSidebarOpen={mobileMenuOpen}
-            setMobileSidebarOpen={setMobileMenuOpen}
-          />
-          <div className="flex-1 flex flex-col bg-white md:pl-[256px] pt-[64px] overflow-x-hidden">
-            <Topbar sidebar={{ mobileMenuOpen, setMobileMenuOpen }} />
-            <main
-              className="overflow-y-auto bg-gray-50 text-gray-600 rounded-tl-3xl py-2 px-4"
-              style={{ height: "calc(100vh - 64px)" }}
-            >
-              {children}
-            </main>
+      {location.pathname === "/" || location.pathname.startsWith("/app") ? (
+        isAppArea ? (
+          <div className="flex min-h-screen bg-gray-100">
+            {/* Sidebar jadi fixed supaya tidak ikut layout flow */}
+            <Sidebar
+              // className="hidden md:block fixed left-0 top-0 h-full w-[256px] bg-[#1e1e1e]"
+              navigation={navigation}
+              isMobileSidebarOpen={mobileMenuOpen}
+              setMobileSidebarOpen={setMobileMenuOpen}
+            />
+            <div className="flex-1 flex flex-col bg-white md:pl-[256px] pt-[64px] overflow-x-hidden">
+              <Topbar sidebar={{ mobileMenuOpen, setMobileMenuOpen }} />
+              <main
+                className="overflow-y-auto bg-gray-50 text-gray-600 rounded-tl-3xl py-2 px-4"
+                style={{ height: "calc(100vh - 64px)" }}
+              >
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
+        ) : (
+          <>
+            <Navbar session={session} />
+            <main className="pt-[64px]">{children}</main>
+            <Footer />
+          </>
+        )
       ) : (
-        <>
-          <Navbar session={session} />
-          <main className="pt-[64px]">{children}</main>
-          <Footer />
-        </>
+        <div>{children}</div>
       )}
     </div>
   );
