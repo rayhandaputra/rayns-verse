@@ -50,12 +50,12 @@ const Navbar = ({ session, sidebar }: NavbarProps) => {
   };
 
   useEffect(() => {
-    if (fetcher.data) {
+    if (fetcher.state === "idle" && fetcher.data) {
       navigate("/app/overview", {
         state: { flash: fetcher.data }
       });
     }
-  }, [fetcher.data]);
+  }, [fetcher.state, fetcher.data, navigate]);
 
   const toggleMobileMenu = () => {
     sidebar?.setMobileMenuOpen?.(!sidebar?.mobileMenuOpen);
