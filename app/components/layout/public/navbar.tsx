@@ -52,8 +52,7 @@ const Navbar = ({ session, sidebar }: NavbarProps) => {
   useEffect(() => {
     if (fetcher.data) {
       navigate("/app/overview", {
-        state: { flash: fetcher.data },
-        replace: true,
+        state: { flash: fetcher.data }
       });
     }
   }, [fetcher.data]);
