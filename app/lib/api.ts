@@ -16,8 +16,8 @@ interface IApi {
   headers?: any;
 }
 
-const API_URL = CONFIG.apiBaseUrl.server_api_url; // ganti dengan lokasi file PHP
-const API_KEY = "REPLACE_WITH_STRONG_KEY"; // harus sama dgn $API_KEY di PHP
+export const API_URL = CONFIG.apiBaseUrl.server_api_url; // ganti dengan lokasi file PHP
+export const API_KEY = "REPLACE_WITH_STRONG_KEY"; // harus sama dgn $API_KEY di PHP
 
 async function callApi(payload: any) {
   const res = await fetch(API_URL, {
@@ -814,6 +814,45 @@ export const API = {
         };
       } catch (err: any) {
         return { success: false, message: err.message };
+      }
+    },
+  },
+  supplier_commodity: {
+    get: async ({ req }: any) => {
+      const { page = 0, size = 10, search } = req.query || {};
+
+      try {
+        const result = await callApi({
+          table: "supplier_commodities",
+          action: "select", // pakai endpoint custom di PHP
+          columns: [
+            "id",
+            "supplier_id",
+            "commodity_id",
+            "commodity_name",
+            "qty",
+          ],
+          where: { deleted_on: "null" },
+          page: +page || 0,
+          size: +size || 10,
+          search: search || null,
+        });
+
+        return {
+          total_items: result.total_items || result.items?.length || 0,
+          items: result.items || [],
+          current_page: Number(page),
+          total_pages: result.total_pages || 1,
+        };
+      } catch (err: any) {
+        console.error(err);
+        return {
+          total_items: 0,
+          items: [],
+          current_page: Number(page),
+          total_pages: 0,
+          error: err.message,
+        };
       }
     },
   },
