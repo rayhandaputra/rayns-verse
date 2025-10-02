@@ -39,3 +39,11 @@ export function getPaymentLabel(value: PaymentType): string {
   const found = PAYMENT_TYPE_OPTIONS.find((opt) => opt.value === value);
   return found ? found.label : value;
 }
+
+export function toMoney(value: number, locale: string = "id-ID"): string {
+  if (isNaN(value)) return "0";
+  return new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}

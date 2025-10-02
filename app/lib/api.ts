@@ -831,6 +831,7 @@ export const API = {
             "commodity_id",
             "commodity_name",
             "qty",
+            "price",
           ],
           where: { deleted_on: "null" },
           page: +page || 0,
@@ -853,6 +854,31 @@ export const API = {
           total_pages: 0,
           error: err.message,
         };
+      }
+    },
+    bulkCreate: async ({ req }: any) => {
+      const { commodities } = req.body || {};
+
+      if (!commodities) {
+        return { success: false, message: "Komponen wajib diisi" };
+      }
+
+      try {
+        const result = await callApi({
+          action: "bulk_insert",
+          table: "supplier_commodities",
+          updateOnDuplicate: true,
+          rows: commodities,
+        });
+
+        return {
+          success: true,
+          message: "Stok Toko berhasil diperbaharui",
+          user: { id: result.insert_id, ...commodities },
+        };
+      } catch (err: any) {
+        console.log(err);
+        return { success: false, message: err.message };
       }
     },
   },
