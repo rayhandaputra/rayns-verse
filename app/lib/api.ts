@@ -819,7 +819,7 @@ export const API = {
   },
   supplier_commodity: {
     get: async ({ req }: any) => {
-      const { page = 0, size = 10, search } = req.query || {};
+      const { page = 0, size = 10, supplier_id, search } = req.query || {};
 
       try {
         const result = await callApi({
@@ -833,7 +833,10 @@ export const API = {
             "qty",
             "price",
           ],
-          where: { deleted_on: "null" },
+          where: {
+            ...(supplier_id && { supplier_id: supplier_id }),
+            deleted_on: "null",
+          },
           page: +page || 0,
           size: +size || 10,
           search: search || null,

@@ -16,11 +16,19 @@ import {
   SelectItem,
 } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
-import { Trash2, PlusCircle, Package, Store } from "lucide-react";
+import {
+  Trash2,
+  PlusCircle,
+  Package,
+  Store,
+  PlusCircleIcon,
+  ChevronLeft,
+} from "lucide-react";
 import {
   Form,
   useActionData,
   useLoaderData,
+  useNavigate,
   type ActionFunction,
   type LoaderFunction,
 } from "react-router";
@@ -30,6 +38,8 @@ import AsyncReactSelect from "react-select/async";
 import { CONFIG } from "~/config";
 import { toast } from "sonner";
 import { toMoney } from "~/lib/utils";
+import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
+import { TitleHeader } from "~/components/TitleHedaer";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   // const session = await unsealSession(request);
@@ -40,6 +50,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   );
 
   try {
+    const filters = {
+      supplier_id,
+    };
     const suppliers = await API.supplier.get({
       session: {},
       req: {},
@@ -51,7 +64,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       session: {},
       req: {
         query: {
-          supplier_id: supplier?.id,
+          supplier_id: supplier_id,
         },
       },
     });
@@ -62,11 +75,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       APP_CONFIG: CONFIG,
       suppliers: suppliers?.items,
       supplierCommodity: supplierCommodity?.items,
-      // table: {
-      //   data: commodity,
-      //   page: 0,
-      //   size: 10,
-      // },
+      table: {
+        // data: commodity,
+        // page: 0,
+        // size: 10,
+        filter: filters,
+      },
     };
   } catch (err) {
     console.log(err);
@@ -115,24 +129,30 @@ export default function RestockForm() {
   const { table, supplier, suppliers, supplierCommodity, APP_CONFIG } =
     useLoaderData();
   const actionData = useActionData();
+  const navigate = useNavigate();
 
   const defCommodity = {
-    supplier_id: supplier?.id,
+    supplier_id: table?.filter?.supplier_id,
     commodity_id: "",
     commodity_name: "",
     qty: 0,
     price: 0,
   };
-  const [commodity, setCommodity] = useState<any[]>(
-    !supplierCommodity.length ? [defCommodity] : supplierCommodity
-  );
+  const [commodity, setCommodity] = useState<any[]>([]);
 
-  const [state, setState] = useState<any>({
-    supplier_id: supplier?.id,
+  useEffect(() => {
+    setCommodity(
+      !supplierCommodity.length ? [defCommodity] : supplierCommodity
+    );
+  }, [supplierCommodity]);
+
+  const defState = {
+    supplier_id: table?.filter?.supplier_id,
     shipping: 0,
     admin: 0,
     discount: 0,
-  });
+  };
+  const [state, setState] = useState<any>(defState);
 
   const listSupplier = useMemo(() => {
     return (
@@ -179,6 +199,8 @@ export default function RestockForm() {
         toast.success("Berhasil", {
           description: actionData.message,
         });
+
+        setState(defState);
       } else {
         toast.error("Terjadi Kesalahan", {
           description:
@@ -194,16 +216,38 @@ export default function RestockForm() {
   );
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Title */}
-      <div>
+      <TitleHeader
+        title="Restock per Toko"
+        description="Tambah atau perbarui stok per toko dengan mudah."
+        breadcrumb={
+          <AppBreadcrumb
+            pages={[
+              { label: "Produksi", href: "/app/production" },
+              { label: "Manajemen Stok", active: true },
+            ]}
+          />
+        }
+        actions={
+          <Button
+            className="border border-blue-700 text-blue-700 hover:text-blue-600"
+            onClick={() => navigate(`/app/production/stock`)}
+          >
+            <ChevronLeft className="w-4" />
+            Kembali
+          </Button>
+        }
+      />
+
+      {/* <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Package className="w-6 h-6 text-primary" /> Restock Stok
         </h1>
         <p className="text-sm text-muted-foreground">
           Tambah atau perbarui stok per toko dengan mudah.
         </p>
-      </div>
+      </div> */}
 
       {/* Card Utama */}
       <Card className="bg-white">
@@ -214,8 +258,13 @@ export default function RestockForm() {
             </Label>
             <SelectBasic
               options={listSupplier}
-              defaultValue={supplier.id}
+              value={supplier.id}
               placeholder="Semua Toko"
+              onChange={(value) => {
+                navigate(
+                  `/app/production/restock?${new URLSearchParams({ ...table?.filter, supplier_id: value })}`
+                );
+              }}
             />
           </div>
         </CardHeader>
