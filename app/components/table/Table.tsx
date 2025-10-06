@@ -30,6 +30,7 @@ type CustomTableProps<T> = {
     name: string;
     cell: (row: any, index: number) => React.ReactNode;
   }[];
+  expandableLabel?: string;
   className?: string;
 };
 
@@ -44,6 +45,7 @@ export default function TableComponent<T>({
   onChangeRowsPerPage,
   expandableRows = false,
   expandableRowsData,
+  expandableLabel = "Detail",
   className = "",
 }: CustomTableProps<T>) {
   const navigate = useNavigate();
@@ -97,10 +99,10 @@ export default function TableComponent<T>({
   }) => {
     return (
       <div className="mb-6 w-full rounded-lg bg-white p-6 shadow">
-        <h1 className="text-sm font-medium text-gray-400">Detail Prestasi</h1>
+        <h1 className="text-sm font-medium text-gray-400">{expandableLabel}</h1>
         <div className="mt-2 grid grid-cols-4 gap-3">
           {expandableRowsData?.map((val, index) => (
-            <div className="border-b pb-2" key={index}>
+            <div className="space-y-1" key={index}>
               <p className="text-xs font-medium text-gray-500">
                 {val?.name || ""}
               </p>

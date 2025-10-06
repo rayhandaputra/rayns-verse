@@ -1,72 +1,56 @@
+import moment from "moment";
 import { forwardRef } from "react";
+import { toMoney } from "~/lib/utils";
 
 type InvoiceItem = {
-  product: string;
-  price: number;
-  quantity: number;
-  image?: string; // optional: untuk product thumbnail
+  product_name: string;
+  product_price: number;
+  qty: number;
 };
 
 type ReceiptProps = {
-  invoiceNumber: string;
-  status: string;
-  date: string;
-  time: string;
-  customerName: string;
-  institution: string;
-  admin: string;
-  subtotal: number;
-  tax?: number;
-  shippingFee?: number;
-  total: number;
+  order: {
+    order_number: string;
+    institution_abbr: string;
+    institution_name: string;
+    status: string;
+    total_tax: number;
+    shipping_fee: number;
+    created_by: any;
+    created_on: string;
+  };
   items: InvoiceItem[];
   qrCodeUrl?: string;
-  domainUrl: string;
 };
 
 export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptProps>(
-  (
-    {
-      invoiceNumber,
-      status,
-      date,
-      time,
-      customerName,
-      institution,
-      admin,
-      subtotal,
-      tax = 0,
-      shippingFee = 0,
-      total,
-      items,
-      qrCodeUrl,
-      domainUrl,
-    },
-    ref
-  ) => {
+  ({ order, items, qrCodeUrl }, ref) => {
     return (
       <div
         ref={ref}
         id="printable-content"
-        className="w-[700px] bg-white text-gray-900 font-sans p-8 rounded-2xl shadow-lg border border-gray-200"
+        // className="w-[700px] bg-white text-gray-900 font-sans p-8 rounded-2xl shadow-lg border border-gray-200"
+        className="w-[700px] bg-white text-gray-900 font-sans p-8"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <img src="/kinau-logo.png" alt="Logo" className="h-10" />
           <div className="text-right">
-            <h2 className="text-xl font-bold">{status}</h2>
+            <h2 className="text-xl font-bold">{order?.status}</h2>
             <p className="text-gray-500 text-sm">
-              Order #{invoiceNumber} • {date} {time}
+              Order #{order?.order_number} •{" "}
+              {moment(order?.created_on).format("DD/MM/YYYY")}{" "}
+              {moment(order?.created_on).format("HH:mm:ss")}
             </p>
           </div>
         </div>
 
         {/* Customer Greeting */}
         <div className="mb-6">
-          <p className="font-medium">Hi {customerName},</p>
+          <p className="font-medium">Halo {order?.institution_abbr},</p>
           <p className="text-gray-600 text-sm">
-            Thank you for your purchase! Your order has been verified and will
-            be processed shortly.
+            Terima kasih atas pembelian Anda! Pesanan Anda telah diverifikasi
+            dan akan segera diproses.
           </p>
         </div>
 
@@ -75,27 +59,19 @@ export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptProps>(
           <thead>
             <tr className="text-left text-gray-500">
               <th className="py-3">Item</th>
-              <th className="py-3">Qty</th>
-              <th className="py-3 text-right">Price</th>
+              <th className="py-3">Jumlah</th>
+              <th className="py-3 text-right">Harga</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item, i) => (
               <tr key={i} className="border-t border-gray-100">
                 <td className="py-3 flex items-center gap-3">
-                  {item.image && (
-                    <img
-                      src={item.image}
-                      alt={item.product}
-                      className="h-12 w-12 rounded object-cover border"
-                    />
-                  )}
-                  <span>{item.product}</span>
+                  <span>{item?.product_name}</span>
                 </td>
-                <td className="py-3">{item.quantity}</td>
+                <td className="py-3">{item?.qty ?? 0}</td>
                 <td className="py-3 text-right">
-                  {/* Rp. {item.price.toLocaleString("id-ID")} */}
-                  Rp. {1000000}
+                  Rp. {toMoney(item?.product_price ?? 0)}
                 </td>
               </tr>
             ))}
@@ -105,53 +81,61 @@ export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptProps>(
         {/* Summary */}
         <div className="flex justify-between text-sm mb-6">
           <div>
-            <p className="text-gray-500">Admin: {admin}</p>
-            <p className="text-gray-500">Institution: {institution}</p>
+            <p className="text-gray-500">Admin: {order?.created_by?.name}</p>
+            <p className="text-gray-500">Instansi: {order?.institution_name}</p>
           </div>
           <div className="w-1/3 space-y-1">
             <div className="flex justify-between">
               <span className="text-gray-600">Subtotal</span>
-              {/* <span>Rp. {subtotal.toLocaleString("id-ID")}</span> */}
-              <span>Rp. {100000}</span>
+              <span>
+                Rp.{" "}
+                {toMoney(
+                  items?.reduce(
+                    (acc: number, item: any) =>
+                      acc + +(+item?.product_price * +item?.qty),
+                    0
+                  )
+                )}
+              </span>
             </div>
-            {tax > 0 && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Tax</span>
-                {/* <span>Rp. {tax.toLocaleString("id-ID")}</span> */}
-                <span>Rp. {100000}</span>
-              </div>
-            )}
-            {shippingFee > 0 && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Shipping</span>
-                {/* <span>Rp. {shippingFee.toLocaleString("id-ID")}</span> */}
-                <span>Rp. {100000}</span>
-              </div>
-            )}
+            <div className="flex justify-between">
+              <span className="text-gray-600">Pajak</span>
+              <span>Rp. {toMoney(order?.total_tax ?? 0)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Ongkir</span>
+              <span>Rp. {toMoney(order?.shipping_fee ?? 0)}</span>
+            </div>
             <div className="flex justify-between border-t pt-2 font-semibold">
               <span>Total</span>
-              {/* <span>Rp. {total.toLocaleString("id-ID")}</span> */}
-              <span>Rp. {100000}</span>
+              <span>
+                Rp.{" "}
+                {items?.reduce(
+                  (acc: number, item: any) =>
+                    acc + +(+item?.product_price * +item?.qty),
+                  0
+                ) -
+                  +(order?.total_tax ?? 0) -
+                  +(order?.shipping_fee ?? 0)}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-8">
+        <div className="flex items-end justify-between mt-8">
           {qrCodeUrl && (
-            <div className="text-center">
-              <img
-                src={qrCodeUrl}
-                alt="QR Code"
-                className="h-28 w-28 mx-auto mb-2"
-              />
-              <p className="text-xs text-gray-600">Scan to track your order</p>
+            <div className="text-left">
+              <img src={qrCodeUrl} alt="QR Code" className="h-28 w-28 mb-2" />
+              <p className="text-xs text-gray-600">
+                Pindai untuk melacak pesanan Anda
+              </p>
             </div>
           )}
           <div className="text-right text-xs text-gray-500">
             <p>
-              Visit us:{" "}
-              <span className="text-blue-600 underline">{domainUrl}</span>
+              Kunjungi kami:{" "}
+              <span className="text-blue-600 underline">kinau.id</span>
             </p>
           </div>
         </div>

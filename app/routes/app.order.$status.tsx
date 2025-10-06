@@ -3,8 +3,9 @@ import {
   CopyIcon,
   EyeIcon,
   PlusCircleIcon,
+  Printer,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useLoaderData,
   useLocation,
@@ -21,9 +22,13 @@ import moment from "moment";
 import "moment/locale/id";
 import { dateFormat, formatDate } from "~/lib/dateFormatter";
 import { commitSession, getSession } from "~/lib/session";
-import { getOrderLabel, getPaymentLabel } from "~/lib/utils";
+import { getOrderLabel, getPaymentLabel, toMoney } from "~/lib/utils";
 import { Badge } from "~/components/ui/badge";
 import { toast } from "sonner";
+import { ReceiptTemplate } from "~/components/print/order/ReceiptTemplate";
+import QRCode from "qrcode";
+import { useModal } from "~/hooks/use-modal";
+// import { useModal } from "~/provider/modal-provider";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   // const session = await unsealSession(request);
@@ -43,7 +48,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       size: size || 10,
       status: params.status || "",
     };
-    const list = await API.orders.get({
+    const list = await API.ORDERS.get({
       // session,
       session: {},
       req: {
@@ -78,6 +83,35 @@ export default function AppOrder() {
   const navigate = useNavigate();
   const [tabs, setTabs] = useState<any>();
   const location = useLocation();
+  const printRef = useRef<HTMLDivElement>(null);
+  const [PrintButton, setPrintButton] =
+    useState<React.ComponentType<any> | null>(null);
+  const [client, setClient] = useState<boolean>(false);
+  const [modal, setModal] = useModal();
+
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (modal?.data?.order?.order_number) {
+      console.log(modal?.data?.order);
+      const qrContent = `https://kinau.id/track/${modal?.data?.order?.order_number}`;
+
+      QRCode.toDataURL(qrContent, { width: 200, margin: 1 })
+        .then((url) => setQrCodeUrl(url))
+        .catch((err) => console.error("QR generation failed", err));
+    }
+  }, [modal?.data?.order?.order_number]);
+
+  useEffect(() => {
+    setClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!client) return;
+    import("~/components/PrintButton.client").then((mod) =>
+      setPrintButton(() => mod.PrintButton)
+    );
+  }, [client]);
 
   useEffect(() => {
     setTabs([
@@ -137,6 +171,11 @@ export default function AppOrder() {
         table?.current_page * table?.size + (index + 1),
     },
     {
+      name: "Kode Pesanan",
+      width: "120px",
+      cell: (_: any, index: number) => table?.order_number ?? "-",
+    },
+    {
       name: "Instansi",
       cell: (row: any) => (
         <div className="flex flex-col">
@@ -168,39 +207,6 @@ export default function AppOrder() {
     {
       name: "Jenis Pembayaran",
       cell: (row: any) => getPaymentLabel(row?.payment_type),
-    },
-    {
-      name: "Domain",
-      width: "200px",
-      cell: (row: any) =>
-        row?.institution_domain ? (
-          <div className="flex gap-3">
-            <CopyIcon
-              onClick={async () => {
-                await navigator.clipboard.writeText(row?.institution_domain);
-                toast.success("Berhasil", {
-                  description: "Berhasil menyalin Domain",
-                });
-              }}
-              className="w-4 cursor-pointer"
-            />
-
-            <a
-              href={
-                row.institution_domain.startsWith("http")
-                  ? row.institution_domain
-                  : `https://${row.institution_domain}`
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {row.institution_domain}
-            </a>
-          </div>
-        ) : (
-          "-"
-        ),
     },
     ...(table?.filter?.status === "ordered"
       ? [
@@ -240,13 +246,10 @@ export default function AppOrder() {
         ]
       : []),
     {
-      name: "Pembayaran",
-      cell: (row: any) => getPaymentLabel(row?.payment_type),
-    },
-    {
       name: "Aksi",
+      width: "200px",
       cell: (row: any, index: number) => (
-        <div className="flex gap-2">
+        <div className="w-full flex gap-2">
           <Button
             size="sm"
             className="bg-gray-600 hover:bg-gray-500 text-white text-xs"
@@ -269,6 +272,8 @@ export default function AppOrder() {
       ),
     },
   ];
+
+  if (!client) return null;
 
   return (
     <div className="space-y-3">
@@ -296,7 +301,106 @@ export default function AppOrder() {
 
       <TabsComponent tabs={tabs} />
 
-      <TableComponent columns={columns} data={table} />
+      <TableComponent
+        columns={columns}
+        data={table}
+        expandableRows
+        expandableLabel="Detail Pesanan"
+        expandableRowsData={[
+          {
+            name: "Domain",
+            cell: (row, index) =>
+              row?.institution_domain ? (
+                <div className="flex items-center gap-3">
+                  <CopyIcon
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(
+                        row?.institution_domain
+                      );
+                      toast.success("Berhasil", {
+                        description: "Berhasil menyalin Domain",
+                      });
+                    }}
+                    className="w-4 cursor-pointer"
+                  />
+
+                  <a
+                    href={
+                      row.institution_domain.startsWith("http")
+                        ? row.institution_domain
+                        : `https://${row.institution_domain}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {row.institution_domain}
+                  </a>
+                </div>
+              ) : (
+                "-"
+              ),
+          },
+          {
+            name: "Pajak",
+            cell: (row, index) => `Rp ${toMoney(row?.total_tax ?? 0)}`,
+          },
+          {
+            name: "Ongkir",
+            cell: (row, index) => `Rp ${toMoney(row?.shipping_fee ?? 0)}`,
+          },
+          {
+            name: "Total Tagihan",
+            cell: (row, index) => `Rp ${toMoney(row?.total_amount ?? 0)}`,
+          },
+          {
+            name: "Nota",
+            cell: (row: any) => (
+              <div className="inline-flex flex-col gap-1.5">
+                {PrintButton ? (
+                  <PrintButton contentRef={printRef}>
+                    {({ handlePrint }: any) => (
+                      <Button
+                        onClick={() => {
+                          handlePrint();
+                        }}
+                        className="bg-gray-600 hover:bg-gray-500 text-white text-xs"
+                      >
+                        <Printer className="w-4" />
+                        Cetak Nota
+                      </Button>
+                    )}
+                  </PrintButton>
+                ) : (
+                  <button
+                    disabled
+                    className="bg-gray-300 text-gray-600 px-4 py-2 rounded cursor-not-allowed"
+                  >
+                    Loading Print...
+                  </button>
+                )}
+              </div>
+            ),
+          },
+        ]}
+      />
+
+      <div className="hidden">
+        <ReceiptTemplate
+          ref={printRef}
+          {...{
+            order: {} as any,
+            items: [
+              {
+                product_name: "",
+                product_price: 10000,
+                qty: 10,
+              },
+            ],
+            qrCodeUrl: qrCodeUrl ?? undefined,
+          }}
+        />
+      </div>
     </div>
   );
 }

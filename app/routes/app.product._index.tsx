@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
 import { Modal } from "~/components/modal/Modal";
+import SelectBasic from "~/components/select/SelectBasic";
 import TableComponent from "~/components/table/Table";
 import { TitleHeader } from "~/components/TitleHedaer";
 import { Badge } from "~/components/ui/badge";
@@ -20,7 +21,9 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { useModal } from "~/hooks/use-modal";
-import { API } from "~/lib/api";
+import { API } from "../lib/api";
+// import { API } from "~/lib/api";
+// import { API } from "~/lib/api";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const url = new URL(request.url);
@@ -28,7 +31,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     url.searchParams.entries()
   );
   try {
-    const supplier = await API.INSTITUTION.get({
+    const supplier = await API.PRODUCT.get({
       // session,
       session: {},
       req: {
@@ -61,7 +64,7 @@ export const action: ActionFunction = async ({ request }) => {
   try {
     let res: any = {};
     if (request.method === "DELETE") {
-      res = await API.INSTITUTION.update({
+      res = await API.PRODUCT.update({
         session: {},
         req: {
           body: {
@@ -73,7 +76,7 @@ export const action: ActionFunction = async ({ request }) => {
     }
     if (request.method === "POST") {
       if (id) {
-        res = await API.INSTITUTION.update({
+        res = await API.PRODUCT.update({
           session: {},
           req: {
             body: {
@@ -83,7 +86,7 @@ export const action: ActionFunction = async ({ request }) => {
           },
         });
       } else {
-        res = await API.INSTITUTION.create({
+        res = await API.PRODUCT.create({
           session: {},
           req: {
             body: payload as any,
@@ -142,14 +145,14 @@ export default function AccountPage() {
         { id: data?.id, deleted_on: moment().format("YYYY-MM-DD HH:mm:ss") },
         {
           method: "delete",
-          action: "/app/master/institution",
+          action: "/app/master/supplier",
         }
       );
 
       // console.log("HASIL FETCHER => ", fetcher);
       toast.success("Berhasil", {
         // description: fetcher.data.message,
-        description: "Berhasil menghapus Institusi",
+        description: "Berhasil menghapus Produk",
       });
     }
   };
@@ -182,8 +185,12 @@ export default function AccountPage() {
       cell: (row: any) => row?.name || "-",
     },
     {
-      name: "Domain Utama",
-      cell: (row: any) => row?.abbr || "-",
+      name: "Jenis",
+      cell: (row: any) => row?.type || "-",
+    },
+    {
+      name: "Deskripsi",
+      cell: (row: any) => row?.description || "-",
     },
     {
       name: "Aksi",
@@ -220,13 +227,13 @@ export default function AccountPage() {
   return (
     <div className="space-y-3">
       <TitleHeader
-        title="Daftar Mitra Institusi"
-        description="Kelola data mitra Institusi."
+        title="Daftar Produk"
+        description="Kelola data Produk."
         breadcrumb={
           <AppBreadcrumb
             pages={[
-              { label: "Master Data", href: "/" },
-              { label: "Institusi", active: true },
+              { label: "Produk", href: "/" },
+              { label: "Daftar Produk", active: true },
             ]}
           />
         }
@@ -243,7 +250,7 @@ export default function AccountPage() {
             }
           >
             <PlusCircleIcon className="w-4" />
-            Institusi Baru
+            Produk Baru
           </Button>
         }
       />
@@ -254,18 +261,38 @@ export default function AccountPage() {
         <Modal
           open={modal?.open}
           onClose={() => setModal({ ...modal, open: false })}
-          title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Institusi`}
+          title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Toko`}
         >
           <Form method="post" className="space-y-3">
             <input type="hidden" name="id" value={modal?.data?.id} />
             <div className="space-y-1">
-              <Label>Nama Institusi</Label>
+              <Label>Nama Produk</Label>
               <Input
                 required
                 type="text"
                 name="name"
-                placeholder="Masukkan Nama Institusi"
+                placeholder="Masukkan Nama Produk"
                 defaultValue={modal?.data?.name}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Jenis Produk</Label>
+              <Input
+                required
+                type="text"
+                name="type"
+                placeholder="Masukkan Jenis Produk"
+                defaultValue={modal?.data?.type}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Deskripsi</Label>
+              <Input
+                required
+                type="text"
+                name="description"
+                placeholder="Masukkan Alamat"
+                defaultValue={modal?.data?.description}
               />
             </div>
             <div className="flex justify-end gap-2">

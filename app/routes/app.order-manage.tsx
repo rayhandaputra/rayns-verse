@@ -17,8 +17,9 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import moment from "moment";
-import { API } from "~/lib/api";
+import { API, API_KEY, API_URL } from "~/lib/api";
 import { getSession } from "~/lib/session";
+import AsyncReactSelect from "react-select/async";
 
 export const action: ActionFunction = async ({ request }) => {
   const session = await getSession(request.headers.get("Cookie"));
@@ -30,7 +31,7 @@ export const action: ActionFunction = async ({ request }) => {
   try {
     state = state ? JSON.parse(state) : {};
 
-    await API.orders.create({
+    await API.ORDERS.create({
       session: {},
       req: {
         body: state,
@@ -66,7 +67,7 @@ export default function CreatePesanan() {
   }, [actionData]);
 
   const defaultState = {
-    institution_id: 1,
+    institution_id: "",
     institution_name: "",
     institution_abbr: "",
     institution_domain: "",
@@ -76,6 +77,35 @@ export default function CreatePesanan() {
     deadline: moment().format("YYYY-MM-DD"),
   };
   const [state, setState] = useState<any>(defaultState);
+
+  const loadOptionInstitution = async (search: string) => {
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${API_KEY}`,
+        },
+        body: JSON.stringify({
+          action: "select",
+          table: "institutions",
+          columns: ["id", "name", "abbr"],
+          where: { deleted_on: "null" },
+          search,
+          page: 0,
+          size: 50,
+        }),
+      });
+      const result = await response.json();
+      return result?.items?.map((v: any) => ({
+        ...v,
+        value: v?.id,
+        label: `${v?.abbr ? v?.abbr + "- " : ""}${v?.name}`,
+      }));
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -107,7 +137,7 @@ export default function CreatePesanan() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div className="space-y-1">
             <Label>Nama Instansi</Label>
-            <Input
+            {/* <Input
               required
               type="text"
               placeholder="Masukkan Nama Instansi"
@@ -115,6 +145,30 @@ export default function CreatePesanan() {
               onChange={(e) =>
                 setState({ ...state, institution_name: e.target.value })
               }
+            /> */}
+            <AsyncReactSelect
+              name=""
+              value={
+                state?.institution_id
+                  ? {
+                      value: state?.institution_id,
+                      label: state?.institution_name,
+                    }
+                  : null
+              }
+              maxMenuHeight={175}
+              loadOptions={loadOptionInstitution}
+              cacheOptions
+              defaultOptions
+              placeholder="Cari dan Pilih Instansi"
+              onChange={(val: any) => {
+                setState({
+                  ...state,
+                  institution_id: val.value,
+                  institution_name: val.label,
+                });
+              }}
+              className="w-full text-xs font-light capitalize !text-black placeholder:text-xs"
             />
           </div>
           <div className="space-y-1">

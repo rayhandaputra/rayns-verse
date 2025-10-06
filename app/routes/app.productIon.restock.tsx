@@ -53,14 +53,14 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     const filters = {
       supplier_id,
     };
-    const suppliers = await API.supplier.get({
+    const suppliers = await API.SUPPLIER.get({
       session: {},
       req: {},
     });
     const supplier = supplier_id
       ? suppliers?.items?.find((v: any) => +v?.id === +supplier_id)
       : suppliers?.items?.[0];
-    const supplierCommodity = await API.supplier_commodity.get({
+    const supplierCommodity = await API.SUPPLIER_COMMODITY.get({
       session: {},
       req: {
         query: {
@@ -96,7 +96,7 @@ export const action: ActionFunction = async ({ request }) => {
   try {
     let res: any = {};
     if (request.method === "POST") {
-      res = await API.supplier_commodity.bulkCreate({
+      res = await API.SUPPLIER_COMMODITY.bulkCreate({
         session: {},
         req: {
           body: {

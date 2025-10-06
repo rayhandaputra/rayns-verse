@@ -15,33 +15,38 @@ export const navigation: NavItem[] = [
     icon: "LayoutDashboard",
     active: ["/app/overview"],
   },
-  // {
-  //   name: "Produk & Inventaris",
-  //   icon: "Package",
-  //   active: ["/manage/product", "/manage/category"],
-  //   children: [
-  //     {
-  //       name: "Daftar Produk",
-  //       href: "/manage/product",
-  //       active: ["/manage/product"],
-  //     },
-  //     {
-  //       name: "Kategori & Variasi",
-  //       href: "/manage/category",
-  //       active: ["/manage/category"],
-  //     },
-  //     {
-  //       name: "Stok & Ketersediaan",
-  //       href: "/users/list",
-  //       active: ["/users/list"],
-  //     },
-  //     {
-  //       name: "Harga & Biaya Produksi",
-  //       href: "/users/list",
-  //       active: ["/users/list"],
-  //     },
-  //   ],
-  // },
+  {
+    name: "Produk",
+    icon: "Package",
+    active: ["/app/product", "/app/product/manage"],
+    children: [
+      {
+        name: "Daftar Produk",
+        href: "/app/product",
+        active: ["/app/product"],
+      },
+      {
+        name: "Paket Produk",
+        href: "/app/product/package",
+        active: ["/app/product/package"],
+      },
+      {
+        name: "Kategori & Variasi",
+        href: "/app/product/category",
+        active: ["/app/product/category"],
+      },
+      // {
+      //   name: "Stok & Ketersediaan",
+      //   href: "/users/list",
+      //   active: ["/users/list"],
+      // },
+      // {
+      //   name: "Harga & Biaya Produksi",
+      //   href: "/users/list",
+      //   active: ["/users/list"],
+      // },
+    ],
+  },
   {
     name: "Pesanan",
     icon: "ShoppingCart",
@@ -249,12 +254,48 @@ export const navigation: NavItem[] = [
   //     },
   //   ],
   // },
-  // {
-  //   name: "Keuangan & Tagihan", // Tagihan dan Pembayaran, Status Pembayaran, Download Invoice / Nota
-  //   href: "/finance",
-  //   icon: "Wallet",
-  //   active: ["/finance"],
-  // },
+  {
+    name: "Keuangan",
+    href: "/app/finance",
+    icon: "Wallet",
+    active: ["/app/finance"],
+    children: [
+      {
+        name: "Laporan Keuangan",
+        href: "/app/master/institution",
+        active: ["/app/master/institution"],
+      },
+      {
+        name: "Pajak",
+        href: "/app/master/institution",
+        active: ["/app/master/institution"],
+      },
+      {
+        name: "Tagihan & Pembayaran",
+        href: "/app/master/institution",
+        active: ["/app/master/institution"],
+      },
+    ],
+  },
+  {
+    name: "Inventaris", // Laporan Penjualan per Acara, Statistik Produk Terlaris, Riwayat Kolaborasi Panitia
+    href: "/app/asset",
+    icon: "FileText",
+    active: ["/app/asset"],
+  },
+  {
+    name: "Kepegawaian", // Laporan Penjualan per Acara, Statistik Produk Terlaris, Riwayat Kolaborasi Panitia
+    href: "/app/employee",
+    icon: "Users",
+    active: ["/app/employee"],
+    children: [
+      {
+        name: "Penggajian",
+        href: "/app/employee/salary",
+        active: ["/app/employee/salary"],
+      },
+    ],
+  },
   // {
   //   name: "Laporan & Statistik", // Laporan Penjualan per Acara, Statistik Produk Terlaris, Riwayat Kolaborasi Panitia
   //   href: "/report",

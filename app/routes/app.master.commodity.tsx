@@ -39,7 +39,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const { page = 0, size = 10 } = Object.fromEntries(url.searchParams.entries());
 
   try {
-    const user = await API.commodity.get({
+    const user = await API.COMMODITY.get({
       // session,
       session: {},
       req: {
@@ -74,7 +74,7 @@ export const action: ActionFunction = async ({ request }) => {
   try {
     let res: any = {};
     if (request.method === "DELETE") {
-      res = await API.commodity.update({
+      res = await API.COMMODITY.update({
         session: {},
         req: {
           body: {
@@ -86,7 +86,7 @@ export const action: ActionFunction = async ({ request }) => {
     }
     if (request.method === "POST") {
       if (id) {
-        res = await API.commodity.update({
+        res = await API.COMMODITY.update({
           session: {},
           req: {
             body: {
@@ -96,7 +96,7 @@ export const action: ActionFunction = async ({ request }) => {
           },
         });
       } else {
-        res = await API.commodity.create({
+        res = await API.COMMODITY.create({
           session: {},
           req: {
             body: {

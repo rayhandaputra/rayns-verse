@@ -37,7 +37,7 @@ export default function UploadPage() {
   ) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const response = await API.asset.upload(file);
+      const response = await API.ASSET.upload(file);
 
       const index = folders.findIndex((f) => f.id === folderId);
       if (index !== -1) {

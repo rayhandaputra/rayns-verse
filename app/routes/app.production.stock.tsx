@@ -24,11 +24,11 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   // const search = url.searchParams.get("q") ?? "";
 
   try {
-    const suppliers = await API.supplier.get({
+    const suppliers = await API.SUPPLIER.get({
       session: {},
       req: {},
     });
-    const commodity = await API.commodity_stock.get({
+    const commodity = await API.COMMODITY_STOCK.get({
       // session,
       session: {},
       req: {

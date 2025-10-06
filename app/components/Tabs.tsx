@@ -38,8 +38,8 @@ export default function TabsComponent({
         >
           {tabs
             ?.filter((tab) => !tab.hidden)
-            ?.map((tab) => (
-              <option key={tab.id} value={tab.href}>
+            ?.map((tab: any, idx: number) => (
+              <option key={idx} value={tab.href}>
                 {tab.name}
               </option>
             ))}
@@ -55,9 +55,9 @@ export default function TabsComponent({
           >
             {tabs
               ?.filter((tab) => !tab.hidden)
-              ?.map((tab) => (
+              ?.map((tab: any, idx: number) => (
                 <Link
-                  key={tab.id}
+                  key={idx}
                   to={tab.href}
                   role="tab"
                   aria-selected={tab.current}

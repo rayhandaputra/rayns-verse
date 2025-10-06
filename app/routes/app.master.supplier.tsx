@@ -29,7 +29,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     url.searchParams.entries()
   );
   try {
-    const supplier = await API.supplier.get({
+    const supplier = await API.SUPPLIER.get({
       // session,
       session: {},
       req: {
@@ -62,7 +62,7 @@ export const action: ActionFunction = async ({ request }) => {
   try {
     let res: any = {};
     if (request.method === "DELETE") {
-      res = await API.supplier.update({
+      res = await API.SUPPLIER.update({
         session: {},
         req: {
           body: {
@@ -74,7 +74,7 @@ export const action: ActionFunction = async ({ request }) => {
     }
     if (request.method === "POST") {
       if (id) {
-        res = await API.supplier.update({
+        res = await API.SUPPLIER.update({
           session: {},
           req: {
             body: {
@@ -84,7 +84,7 @@ export const action: ActionFunction = async ({ request }) => {
           },
         });
       } else {
-        res = await API.supplier.create({
+        res = await API.SUPPLIER.create({
           session: {},
           req: {
             body: payload as any,

@@ -1,0 +1,31 @@
+export * from "./core/callApi";
+export * from "./core/config";
+export * from "./core/helpers";
+export * from "./core/types";
+
+import { AssetAPI } from "./modules/asset";
+import { CommodityAPI } from "./modules/commodity";
+import { CommodityStockAPI } from "./modules/commodity_stock";
+import { InstitutionAPI } from "./modules/institution";
+import { OrderAPI } from "./modules/order";
+import { ProductAPI } from "./modules/product";
+import { ProductCategoryAPI } from "./modules/product_category";
+import { ProductPackageItemsAPI } from "./modules/product_package_item";
+import { SupplierAPI } from "./modules/supplier";
+import { SupplierCommodityAPI } from "./modules/supplier_commodity";
+import { UserAPI } from "./modules/user";
+
+// optional: unified API wrapper
+export const API = {
+  USER: UserAPI,
+  ORDERS: OrderAPI,
+  COMMODITY: CommodityAPI,
+  COMMODITY_STOCK: CommodityStockAPI,
+  SUPPLIER: SupplierAPI,
+  SUPPLIER_COMMODITY: SupplierCommodityAPI,
+  INSTITUTION: InstitutionAPI,
+  ASSET: AssetAPI,
+  PRODUCT: ProductAPI,
+  PRODUCT_CATEGORY: ProductCategoryAPI,
+  PRODUCT_PACKAGE_ITEM: ProductPackageItemsAPI,
+};

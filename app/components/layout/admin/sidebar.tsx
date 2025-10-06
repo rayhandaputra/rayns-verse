@@ -55,6 +55,18 @@ export function Sidebar({
     // eslint-disable-next-line
   }, [currentPath]);
 
+  useEffect(() => {
+    // buka parent secara otomatis kalau anak aktif
+    navigation.forEach((item) => {
+      if (item.children?.some((child) => currentPath === child.href)) {
+        setNavLevel((prev) => ({
+          ...prev,
+          level1: [...new Set([...prev.level1, item.name])],
+        }));
+      }
+    });
+  }, [currentPath]);
+
   const renderNav = (
     items: NavItem[],
     level = 1,
@@ -62,9 +74,39 @@ export function Sidebar({
   ): React.ReactNode[] =>
     items.flatMap((item) => {
       const Icon = item.icon ? Icons[item.icon] : Icons.File;
+
+      const isChildActive = item.children?.some((child) => {
+        // Jika anak punya children lagi (nested 3+), cek rekursif
+        return (
+          child.href === currentPath ||
+          child.active?.includes(currentPath) ||
+          child.children?.some((grand) =>
+            [grand.href, ...(grand.active || [])].includes(currentPath)
+          )
+        );
+      });
+
+      // Cek apakah salah satu anak (atau cucu) aktif
+      // const isChildActiveRecursive = (children: NavItem[] = []): boolean => {
+      //   return children.some((child) => {
+      //     if (
+      //       child.href === currentPath ||
+      //       child.active?.includes(currentPath)
+      //     ) {
+      //       return true;
+      //     }
+      //     return child.children
+      //       ? isChildActiveRecursive(child.children)
+      //       : false;
+      //   });
+      // };
+
       const isActive =
-        item.active?.some((p) => currentPath.startsWith(p)) ??
-        currentPath.startsWith(item.href || "");
+        [item.href, ...(item.active || [])].includes(currentPath) ||
+        isChildActive;
+
+      // const isGroupActive = isActive || isChildActiveRecursive(item.children);
+
       const isOpen = navLevel[`level${level}`]?.includes(item.name);
       const hasChildren = item.children && item.children.length > 0;
       const paddingLeft = 2 + level * 2 + (hasChildren ? 0 : 2);
@@ -79,6 +121,9 @@ export function Sidebar({
           className={cn(
             "w-full text-left flex gap-3 items-center justify-between",
             sharedClasses,
+            // isActive
+            //   ? "border-l-4 border-l-cyan-600 bg-cyan-50 text-cyan-600 -pl-2"
+            //   : "border-t border-gray-100 hover:bg-cyan-50 hover:text-cyan-600"
             isActive
               ? "border-l-4 border-l-cyan-600 bg-cyan-50 text-cyan-600 -pl-2"
               : "border-t border-gray-100 hover:bg-cyan-50 hover:text-cyan-600"
@@ -107,7 +152,11 @@ export function Sidebar({
             className={cn(
               "gap-2",
               sharedClasses,
-              parentActive || isActive
+              // parentActive || isActive
+              // isActive
+              //   ? "border-l-4 border-l-cyan-600 bg-cyan-50 text-cyan-600"
+              //   : "border-t border-gray-100 hover:bg-cyan-50 hover:text-cyan-600"
+              isActive
                 ? "border-l-4 border-l-cyan-600 bg-cyan-50 text-cyan-600"
                 : "border-t border-gray-100 hover:bg-cyan-50 hover:text-cyan-600"
             )}
