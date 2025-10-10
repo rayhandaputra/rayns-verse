@@ -6,6 +6,7 @@ import {
   useActionData,
   useFetcher,
   useLoaderData,
+  useNavigate,
   type ActionFunction,
   type LoaderFunction,
 } from "react-router";
@@ -31,21 +32,25 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     url.searchParams.entries()
   );
   try {
-    const supplier = await API.PRODUCT_PACKAGE_ITEM.get({
+    const packageList = await API.PRODUCT.get({
       // session,
       session: {},
       req: {
-        pagination: "true",
-        page: 0,
-        size: 10,
+        query: {
+          pagination: "true",
+          type: "package",
+          page: 0,
+          size: 10,
+        },
       } as any,
     });
+    console.log(packageList);
 
     return {
       // search,
       // APP_CONFIG: CONFIG,
       table: {
-        ...supplier,
+        ...packageList,
         page: 0,
         size: 10,
       },
@@ -115,6 +120,7 @@ export const action: ActionFunction = async ({ request }) => {
 export default function AccountPage() {
   const { table } = useLoaderData();
   const actionData = useActionData();
+  const navigate = useNavigate();
   const [modal, setModal] = useModal();
 
   const fetcher = useFetcher();
@@ -174,38 +180,41 @@ export default function AccountPage() {
     }
   }, [actionData]);
 
- const columns = [
-  { name: "No", width: "50px", cell: (_: any, index: number) => index + 1 },
-  { name: "Nama Paket", cell: (row: any) => row?.package_name || "-" },
-  { name: "Jumlah Produk", cell: (row: any) => row?.product_name || "-" },
-  { name: "Qty", cell: (row: any) => row?.qty || 0 },
-//   { name: "Harga Paket", cell: (row: any) => Number(row?.unit_price).toLocaleString() },
-//   { name: "Subtotal", cell: (row: any) => Number(row?.subtotal).toLocaleString() },
-  { name: "Aksi", cell: (row: any) => (
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          className="text-blue-700 hover:text-blue-500"
-          onClick={() =>
-            setModal({ ...modal, open: true, key: "update", data: row })
-          }
-        >
-          <PencilLineIcon className="w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="text-red-700 hover:text-red-500"
-          onClick={() => handleDelete(row)}
-        >
-          <Trash2Icon className="w-4" />
-        </Button>
-      </div>
-    ),
-  },
-];
-
+  const columns = [
+    { name: "No", width: "50px", cell: (_: any, index: number) => index + 1 },
+    { name: "Kode", cell: (row: any) => row?.code || "-" },
+    { name: "Nama Paket", cell: (row: any) => row?.name || "-" },
+    { name: "Deskripsi", cell: (row: any) => row?.description || "-" },
+    { name: "Jumlah Produk", cell: (row: any) => 0 },
+    // { name: "Qty", cell: (row: any) => row?.qty || 0 },
+    //   { name: "Harga Paket", cell: (row: any) => Number(row?.unit_price).toLocaleString() },
+    //   { name: "Subtotal", cell: (row: any) => Number(row?.subtotal).toLocaleString() },
+    {
+      name: "Aksi",
+      cell: (row: any) => (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="text-blue-700 hover:text-blue-500"
+            onClick={() =>
+              setModal({ ...modal, open: true, key: "update", data: row })
+            }
+          >
+            <PencilLineIcon className="w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="text-red-700 hover:text-red-500"
+            onClick={() => handleDelete(row)}
+          >
+            <Trash2Icon className="w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-3">
@@ -223,17 +232,10 @@ export default function AccountPage() {
         actions={
           <Button
             className="bg-blue-700 hover:bg-blue-600 text-white"
-            onClick={() =>
-              setModal({
-                ...modal,
-                open: true,
-                key: "create",
-                data: null,
-              })
-            }
+            onClick={() => navigate(`/app/product/package/manage`)}
           >
             <PlusCircleIcon className="w-4" />
-            Kategori Baru
+            Paket Baru
           </Button>
         }
       />
@@ -242,102 +244,101 @@ export default function AccountPage() {
 
       {(modal?.key === "create" || modal?.key === "update") && (
         <Modal
-  open={modal?.open}
-  onClose={() => setModal({ ...modal, open: false })}
-  title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Item Paket Produk`}
->
-  <Form method="post" className="space-y-3">
-    <input type="hidden" name="id" value={modal?.data?.id} />
+          open={modal?.open}
+          onClose={() => setModal({ ...modal, open: false })}
+          title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Item Paket Produk`}
+        >
+          <Form method="post" className="space-y-3">
+            <input type="hidden" name="id" value={modal?.data?.id} />
 
-    <div className="space-y-1">
-      <Label>Package Name</Label>
-      <Input
-        required
-        name="package_name"
-        placeholder="Masukkan Nama Paket"
-        defaultValue={modal?.data?.package_name}
-      />
-    </div>
+            <div className="space-y-1">
+              <Label>Package Name</Label>
+              <Input
+                required
+                name="package_name"
+                placeholder="Masukkan Nama Paket"
+                defaultValue={modal?.data?.package_name}
+              />
+            </div>
 
-    <div className="space-y-1">
-      <Label>Product Name</Label>
-      <Input
-        required
-        name="product_name"
-        placeholder="Masukkan Nama Produk"
-        defaultValue={modal?.data?.product_name}
-      />
-    </div>
+            <div className="space-y-1">
+              <Label>Product Name</Label>
+              <Input
+                required
+                name="product_name"
+                placeholder="Masukkan Nama Produk"
+                defaultValue={modal?.data?.product_name}
+              />
+            </div>
 
-    <div className="grid grid-cols-3 gap-2">
-      <div className="space-y-1">
-        <Label>Qty</Label>
-        <Input
-          type="number"
-          name="qty"
-          min={1}
-          required
-          defaultValue={modal?.data?.qty || 1}
-        />
-      </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1">
+                <Label>Qty</Label>
+                <Input
+                  type="number"
+                  name="qty"
+                  min={1}
+                  required
+                  defaultValue={modal?.data?.qty || 1}
+                />
+              </div>
 
-      <div className="space-y-1">
-        <Label>Unit Price</Label>
-        <Input
-          type="number"
-          step="0.01"
-          name="unit_price"
-          required
-          defaultValue={modal?.data?.unit_price || 0}
-        />
-      </div>
+              <div className="space-y-1">
+                <Label>Unit Price</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  name="unit_price"
+                  required
+                  defaultValue={modal?.data?.unit_price || 0}
+                />
+              </div>
 
-      <div className="space-y-1">
-        <Label>Subtotal</Label>
-        <Input
-          type="number"
-          step="0.01"
-          name="subtotal"
-          disabled
-          value={
-            modal?.data?.qty && modal?.data?.unit_price
-              ? modal?.data.qty * modal?.data.unit_price
-              : 0
-          }
-        />
-      </div>
-    </div>
+              <div className="space-y-1">
+                <Label>Subtotal</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  name="subtotal"
+                  disabled
+                  value={
+                    modal?.data?.qty && modal?.data?.unit_price
+                      ? modal?.data.qty * modal?.data.unit_price
+                      : 0
+                  }
+                />
+              </div>
+            </div>
 
-    <div className="space-y-1">
-      <Label>Deskripsi</Label>
-      <Input
-        name="description"
-        placeholder="Deskripsi tambahan (opsional)"
-        defaultValue={modal?.data?.description}
-      />
-    </div>
+            <div className="space-y-1">
+              <Label>Deskripsi</Label>
+              <Input
+                name="description"
+                placeholder="Deskripsi tambahan (opsional)"
+                defaultValue={modal?.data?.description}
+              />
+            </div>
 
-    <div className="flex justify-end gap-2">
-      <Button
-        size="sm"
-        type="button"
-        variant="outline"
-        className="text-gray-600"
-        onClick={() => setModal({ ...modal, open: false })}
-      >
-        Batal
-      </Button>
-      <Button
-        size="sm"
-        type="submit"
-        className="bg-blue-600 hover:bg-blue-500 text-white"
-      >
-        Simpan
-      </Button>
-    </div>
-  </Form>
-</Modal>
-
+            <div className="flex justify-end gap-2">
+              <Button
+                size="sm"
+                type="button"
+                variant="outline"
+                className="text-gray-600"
+                onClick={() => setModal({ ...modal, open: false })}
+              >
+                Batal
+              </Button>
+              <Button
+                size="sm"
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-500 text-white"
+              >
+                Simpan
+              </Button>
+            </div>
+          </Form>
+        </Modal>
       )}
     </div>
   );

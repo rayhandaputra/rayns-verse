@@ -65,42 +65,66 @@ export const ProductPackageItemsAPI = {
   // === CREATE ===
   create: async ({ req }: any) => {
     const {
-      package_id,
-      package_name,
-      product_id,
-      product_name,
-      qty = 1,
-      unit_price = 0,
-      note,
-      seq = 0,
+      code,
+      name,
+      description,
+      // package_id,
+      // package_name,
+      // product_id,
+      // product_name,
+      // qty = 1,
+      // unit_price = 0,
+      // note,
+      // seq = 0,
+      products,
     } = req.body || {};
 
-    if (!package_id || !product_id) {
-      return { success: false, message: "Package ID dan Product ID wajib diisi" };
+    if (!code || !name) {
+      return {
+        success: false,
+        message: "Kode dan Nama Paket wajib diisi",
+      };
     }
 
     const newItem = {
-      app_id: "id.siesta.app.campusqu.unisma",
-      package_id,
-      package_name,
-      product_id,
-      product_name,
-      qty,
-      unit_price,
-      note,
-      seq,
+      // app_id: "id.siesta.app.campusqu.unisma",
+      // package_id,
+      // package_name,
+      // product_id,
+      // product_name,
+      // qty,
+      // unit_price,
+      // note,
+      // seq,
+      code,
+      name,
+      description,
+      type: "package",
     };
 
     try {
       const result = await callApi({
         action: "insert",
-        table: "product_package_items",
+        table: "products",
         data: newItem,
       });
 
+      if (products && products?.length > 0) {
+        await callApi({
+          action: "bulk_insert",
+          table: "product_package_items",
+          updateOnDuplicate: true,
+          rows: products.map((v: any) => ({
+            ...v,
+            package_id: result.insert_id,
+            package_name: name,
+          })),
+        });
+      }
+
       return {
         success: true,
-        message: "Item paket berhasil ditambahkan",
+        message: "Paket Produk berhasil dibuat",
         data: { id: result.insert_id, ...newItem },
       };
     } catch (err: any) {

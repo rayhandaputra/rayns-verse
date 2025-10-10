@@ -92,15 +92,16 @@ export default function AppOrder() {
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (modal?.data?.order?.order_number) {
-      console.log(modal?.data?.order);
-      const qrContent = `https://kinau.id/track/${modal?.data?.order?.order_number}`;
+    const order_number =
+      modal?.data?.order?.order_number || "ORD-27369677796923678AB";
+    if (order_number) {
+      const qrContent = `https://kinau.id/track/${order_number}`;
 
       QRCode.toDataURL(qrContent, { width: 200, margin: 1 })
         .then((url) => setQrCodeUrl(url))
         .catch((err) => console.error("QR generation failed", err));
     }
-  }, [modal?.data?.order?.order_number]);
+  }, [modal?.data?.order]);
 
   useEffect(() => {
     setClient(true);

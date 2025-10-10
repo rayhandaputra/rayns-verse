@@ -2,97 +2,108 @@ import { callApi } from "../core/callApi";
 import { CONFIG } from "~/config";
 
 export const ProductAPI = {
-    get: async ({
-      session,
-      req,
-    }: {
-      session: any;
-      req: { query?: any; body?: any; header?: any };
-    }) => {
-      const {
-        pagination = "true",
-        page = 0,
-        size = 10,
+  get: async ({
+    session,
+    req,
+  }: {
+    session: any;
+    req: { query?: any; body?: any; header?: any };
+  }) => {
+    const {
+      pagination = "true",
+      page = 0,
+      size = 10,
+      search,
+      type = "",
+      email,
+    } = req.query || {};
+
+    const res = await fetch(CONFIG.apiBaseUrl.server_api_url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer REPLACE_WITH_STRONG_KEY",
+      },
+      body: JSON.stringify({
+        action: "select",
+        table: "products",
+        columns: ["id", "code", "name", "type", "description"],
+        where: { deleted_on: "null", type },
         search,
-        email,
-      } = req.query || {};
+        page,
+        size,
+      }),
+    });
+    const result = await res.json();
+    return result;
+  },
+  create: async ({ req }: any) => {
+    const { code, name, type, description, items = [] } = req.body || {};
 
-      const res = await fetch(CONFIG.apiBaseUrl.server_api_url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer REPLACE_WITH_STRONG_KEY",
-        },
-        body: JSON.stringify({
-          action: "select",
-          table: "products",
-          columns: ["id", "name", "type", "decsription"],
-          where: { deleted_on: "null" },
-          search,
-          page,
-          size,
-        }),
+    if (!name || !code) {
+      return { success: false, message: "Nama dan Kode wajib diisi" };
+    }
+
+    const newProduct = {
+      code,
+      name,
+      type,
+      description,
+    };
+
+    try {
+      const result = await callApi({
+        action: "insert",
+        table: "products",
+        data: newProduct,
       });
-      const result = await res.json();
-      return result;
-    },
-    create: async ({ req }: any) => {
-      const { name, phone, address } = req.body || {};
 
-      if (!name || !phone) {
-        return { success: false, message: "Nama dan Telepon wajib diisi" };
-      }
-
-      const newCommodity = {
-        phone,
-        name,
-        address,
-      };
-
-      try {
-        const result = await callApi({
-          action: "insert",
-          table: "products",
-          data: newCommodity,
+      if (items && items?.length > 0) {
+        await callApi({
+          action: "bulk_insert",
+          table: "product_components",
+          updateOnDuplicate: true,
+          rows: items,
         });
-
-        return {
-          success: true,
-          message: "Produk berhasil ditambahkan",
-          user: { id: result.insert_id, ...newCommodity },
-        };
-      } catch (err: any) {
-        console.log(err);
-        return { success: false, message: err.message };
-      }
-    },
-    update: async ({ req }: any) => {
-      const { id, ...fields } = req.body || {};
-
-      if (!id) {
-        return { success: false, message: "ID wajib diisi" };
       }
 
-      const updatedData: Record<string, any> = {
-        ...fields,
-        modified_on: new Date().toISOString(),
+      return {
+        success: true,
+        message: "Produk berhasil ditambahkan",
+        user: { id: result.insert_id, ...newProduct },
       };
+    } catch (err: any) {
+      console.log(err);
+      return { success: false, message: err.message };
+    }
+  },
+  update: async ({ req }: any) => {
+    const { id, ...fields } = req.body || {};
 
-      try {
-        const result = await callApi({
-          action: "update",
-          table: "products",
-          data: updatedData,
-          where: { id },
-        });
+    if (!id) {
+      return { success: false, message: "ID wajib diisi" };
+    }
 
-        return {
-          success: true,
-          message: "Produk berhasil diperbarui",
-          affected: result.affected_rows,
-        };
-      } catch (err: any) {
-        return { success: false, message: err.message };
-      }
-    },
-  }
+    const updatedData: Record<string, any> = {
+      ...fields,
+      modified_on: new Date().toISOString(),
+    };
+
+    try {
+      const result = await callApi({
+        action: "update",
+        table: "products",
+        data: updatedData,
+        where: { id },
+      });
+
+      return {
+        success: true,
+        message: "Produk berhasil diperbarui",
+        affected: result.affected_rows,
+      };
+    } catch (err: any) {
+      return { success: false, message: err.message };
+    }
+  },
+};

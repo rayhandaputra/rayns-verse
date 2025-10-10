@@ -6,6 +6,7 @@ import {
   useActionData,
   useFetcher,
   useLoaderData,
+  useNavigate,
   type ActionFunction,
   type LoaderFunction,
 } from "react-router";
@@ -35,9 +36,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       // session,
       session: {},
       req: {
-        pagination: "true",
-        page: 0,
-        size: 10,
+        query: {
+          pagination: "true",
+          type: "single",
+          page: 0,
+          size: 10,
+        },
       } as any,
     });
 
@@ -115,6 +119,7 @@ export const action: ActionFunction = async ({ request }) => {
 export default function AccountPage() {
   const { table } = useLoaderData();
   const actionData = useActionData();
+  const navigate = useNavigate();
   const [modal, setModal] = useModal();
 
   const fetcher = useFetcher();
@@ -240,14 +245,7 @@ export default function AccountPage() {
         actions={
           <Button
             className="bg-blue-700 hover:bg-blue-600 text-white"
-            onClick={() =>
-              setModal({
-                ...modal,
-                open: true,
-                key: "create",
-                data: null,
-              })
-            }
+            onClick={() => navigate(`/app/product/manage`)}
           >
             <PlusCircleIcon className="w-4" />
             Produk Baru
