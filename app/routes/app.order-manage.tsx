@@ -25,7 +25,8 @@ import moment from "moment";
 import { API, API_KEY, API_URL } from "~/lib/api";
 import { getSession } from "~/lib/session";
 import AsyncReactSelect from "react-select/async";
-import { CardContent } from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { toMoney } from "~/lib/utils";
 
 export const action: ActionFunction = async ({ request }) => {
   const session = await getSession(request.headers.get("Cookie"));
@@ -66,6 +67,8 @@ export default function CreatePesanan() {
   const defItem = {
     product_id: "",
     product_name: "",
+    product_type: "",
+    unit_price: 0,
     qty: 0,
   };
   const [items, setItems] = useState<any[]>([defItem]);
@@ -95,6 +98,9 @@ export default function CreatePesanan() {
     payment_type: "",
     quantity: 0,
     deadline: moment().format("YYYY-MM-DD"),
+    discount: 0,
+    tax_percent: 0,
+    extra_fee: 0,
   };
   const [state, setState] = useState<any>(defaultState);
 
@@ -138,7 +144,7 @@ export default function CreatePesanan() {
         body: JSON.stringify({
           action: "select",
           table: "products",
-          columns: ["id", "name"],
+          columns: ["id", "name", "type", "price"],
           where: { deleted_on: "null" },
           search,
           page: 0,
@@ -149,7 +155,7 @@ export default function CreatePesanan() {
       return result?.items?.map((v: any) => ({
         ...v,
         value: v?.id,
-        label: `${v?.abbr ? v?.abbr + "- " : ""}${v?.name}`,
+        label: `${v?.type === "package" ? `[PAKET] ` : ""}${v?.name} - Rp${toMoney(v?.price)}`,
       }));
     } catch (error) {
       console.log(error);
@@ -157,10 +163,11 @@ export default function CreatePesanan() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
+      {/* Header */}
       <TitleHeader
         title="Form Pemesanan"
-        description="Kelola data Pesanan."
+        description="Kelola data pesanan."
         breadcrumb={
           <AppBreadcrumb
             pages={[
@@ -181,206 +188,321 @@ export default function CreatePesanan() {
         }
       />
 
-      <Form method="post" className="space-y-4 bg-white rounded-lg p-4">
+      {/* FORM */}
+      <Form
+        method="post"
+        className="space-y-6 bg-white rounded-xl shadow-sm p-6 border border-slate-200"
+      >
         <input type="hidden" name="state" value={JSON.stringify(state)} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div className="space-y-1">
-            <Label>Nama Instansi</Label>
-            {/* <Input
-              required
-              type="text"
-              placeholder="Masukkan Nama Instansi"
-              value={state?.institution_name}
-              onChange={(e) =>
-                setState({ ...state, institution_name: e.target.value })
-              }
-            /> */}
-            <AsyncReactSelect
-              name=""
-              value={
-                state?.institution_id
-                  ? {
-                      value: state?.institution_id,
-                      label: state?.institution_name,
-                    }
-                  : null
-              }
-              maxMenuHeight={175}
-              loadOptions={loadOptionInstitution}
-              cacheOptions
-              defaultOptions
-              placeholder="Cari dan Pilih Instansi"
-              onChange={(val: any) => {
-                setState({
-                  ...state,
-                  institution_id: val.value,
-                  institution_name: val.label,
-                });
-              }}
-              className="w-full text-xs font-light capitalize !text-black placeholder:text-xs"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label>Singkatan Instansi</Label>
-            <Input
-              required
-              type="text"
-              placeholder="Masukkan Singkatan Instansi"
-              value={state?.institution_abbr}
-              onChange={(e) => {
-                const value = e.target.value
-                  .toUpperCase() // otomatis jadi huruf besar
-                  .replace(/\s+/g, "");
-                setState({
-                  ...state,
-                  institution_abbr: value, // hapus semua spasi
-                  institution_domain: `kinau.id/${value?.toLowerCase()}`,
-                });
-              }}
-            />
-          </div>
-        </div>
-        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div className="space-y-1">
-            <Label>Jenis Pesanan</Label>
-            <SelectBasic
-              required
-              options={[
-                { label: "Paket", value: "package" },
-                { label: "ID Card", value: "id_card" },
-                { label: "Lanyard", value: "lanyard" },
-              ]}
-              placeholder="Pilih Jenis Pesanan"
-              value={state?.order_type}
-              onChange={(value) => setState({ ...state, order_type: value })}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label>Jumlah</Label>
-            <Input
-              required
-              type="number"
-              placeholder="Masukkan Jumlah Pesanan"
-              value={state?.quantity}
-              onChange={(e) => setState({ ...state, quantity: e.target.value })}
-            />
-          </div>
-        </div> */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div className="space-y-1">
-            <Label>Deadline</Label>
-            <Input
-              required
-              type="date"
-              className="text-gray-700"
-              value={state?.deadline}
-              onChange={(e) => setState({ ...state, deadline: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label>Pembayaran</Label>
-            <SelectBasic
-              required
-              options={[
-                { label: "DP", value: "down_payment" },
-                { label: "Lunas", value: "paid" },
-              ]}
-              placeholder="Pilih Jenis Pesanan"
-              value={state?.payment_type}
-              onChange={(value) => setState({ ...state, payment_type: value })}
-            />
-          </div>
-        </div>
-        <div className="space-y-1">
-          <Label>Domain Institusi</Label>
-          <Input
-            required
-            readOnly
-            type="text"
-            placeholder="Generate Otomatis"
-            className="bg-gray-100"
-            value={state?.institution_domain}
-          />
-        </div>
 
-        <Label>Produk</Label>
-        <CardContent className="bg-slate-50 space-y-3 py-3">
-          {items.map((item: any, index: number) => (
-            <div className="flex gap-2">
+        {/* === DATA INSTANSI === */}
+        <div className="space-y-4">
+          <h3 className="text-slate-700 font-semibold text-base border-b pb-1">
+            Data Instansi
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Nama Instansi */}
+            <div className="space-y-1">
+              <Label>Nama Instansi</Label>
               <AsyncReactSelect
-                name=""
                 value={
-                  item?.commodity_id
+                  state?.institution_id
                     ? {
-                        value: item?.commodity_id,
-                        label: item?.commodity_name,
+                        value: state?.institution_id,
+                        label: state?.institution_name,
                       }
                     : null
                 }
                 maxMenuHeight={175}
-                loadOptions={loadOptionProduct}
+                loadOptions={loadOptionInstitution}
                 cacheOptions
                 defaultOptions
-                placeholder="Cari dan Pilih Produk"
-                onChange={(val: any) => {
-                  let tmp = [...items];
-                  tmp[index] = {
-                    ...item,
-                    product_id: val.value,
-                    product_name: val.label,
-                  };
-                  setItems(tmp);
-                }}
-                className="w-full text-xs font-light capitalize !text-black placeholder:text-xs"
+                placeholder="Cari dan Pilih Instansi"
+                onChange={(val: any) =>
+                  setState({
+                    ...state,
+                    institution_id: val.value,
+                    institution_name: val.label,
+                  })
+                }
+                className="w-full text-xs font-light !text-black placeholder:text-xs"
               />
+            </div>
+
+            {/* Singkatan */}
+            <div className="space-y-1">
+              <Label>Singkatan Instansi</Label>
               <Input
-                placeholder="Jumlah"
-                value={item?.qty}
+                required
+                type="text"
+                placeholder="Masukkan Singkatan Instansi"
+                value={state?.institution_abbr}
                 onChange={(e) => {
-                  let tmp = [...items];
-                  tmp[index] = {
-                    ...item,
-                    qty: e.target.value,
-                  };
-                  setItems(tmp);
+                  const value = e.target.value
+                    .toUpperCase()
+                    .replace(/\s+/g, "");
+                  setState({
+                    ...state,
+                    institution_abbr: value,
+                    institution_domain: `kinau.id/${value?.toLowerCase()}`,
+                  });
                 }}
               />
-              <Button
-                size="icon"
-                type="button"
-                className="text-red-700 hover:text-red-600"
-                onClick={() => {
-                  let tmp = [...items];
-                  tmp.splice(index, 1);
-                  setItems(tmp);
-                }}
+            </div>
+          </div>
+
+          {/* Domain */}
+          <div className="space-y-1">
+            <Label>Domain Institusi</Label>
+            <Input
+              required
+              readOnly
+              type="text"
+              placeholder="Generate Otomatis"
+              className="bg-gray-100"
+              value={state?.institution_domain}
+            />
+          </div>
+        </div>
+
+        {/* === DETAIL PESANAN === */}
+        <div className="space-y-4">
+          <h3 className="text-slate-700 font-semibold text-base border-b pb-1">
+            Detail Pesanan
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label>Deadline</Label>
+              <Input
+                required
+                type="date"
+                className="text-gray-700"
+                value={state?.deadline}
+                onChange={(e) =>
+                  setState({ ...state, deadline: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label>Pembayaran</Label>
+              <SelectBasic
+                required
+                options={[
+                  { label: "DP", value: "down_payment" },
+                  { label: "Lunas", value: "paid" },
+                ]}
+                placeholder="Pilih Jenis Pembayaran"
+                value={state?.payment_type}
+                onChange={(value) =>
+                  setState({ ...state, payment_type: value })
+                }
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* === PRODUK === */}
+        <div className="space-y-4">
+          <h3 className="text-slate-700 font-semibold text-base border-b pb-1">
+            Produk Dipesan
+          </h3>
+
+          <CardContent className="bg-slate-50 space-y-3 py-4 rounded-lg border border-slate-200">
+            {items.map((item: any, index: number) => (
+              <div
+                key={index}
+                className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-lg border border-slate-200"
               >
-                <Trash2Icon className="w-4" />
+                {/* Produk */}
+                <div className="col-span-5">
+                  <AsyncReactSelect
+                    value={
+                      item?.product_id
+                        ? { value: item?.product_id, label: item?.product_name }
+                        : null
+                    }
+                    maxMenuHeight={175}
+                    loadOptions={loadOptionProduct}
+                    cacheOptions
+                    defaultOptions
+                    placeholder="Cari dan Pilih Produk"
+                    onChange={(val: any) => {
+                      let tmp = [...items];
+                      const unitPrice = val?.price ?? 0;
+                      tmp[index] = {
+                        ...item,
+                        product_id: val.value,
+                        product_name: val.label,
+                        product_type: val.type,
+                        unit_price: unitPrice,
+                        subtotal: unitPrice * (item?.qty ?? 0),
+                      };
+                      setItems(tmp);
+                    }}
+                    className="w-full text-xs font-light !text-black placeholder:text-xs"
+                  />
+                </div>
+
+                {/* Jumlah */}
+                <div className="col-span-2">
+                  <Input
+                    placeholder="Jumlah"
+                    value={item?.qty}
+                    onChange={(e) => {
+                      let tmp = [...items];
+                      tmp[index] = {
+                        ...item,
+                        qty: +e.target.value,
+                        subtotal: +e.target.value * (item?.unit_price ?? 0),
+                      };
+                      setItems(tmp);
+                    }}
+                    className="text-center"
+                  />
+                </div>
+
+                {/* Subtotal */}
+                <div className="col-span-4 text-right">
+                  <p className="text-sm font-semibold text-slate-700">
+                    Rp {toMoney(item?.subtotal)}
+                  </p>
+                </div>
+
+                {/* Hapus */}
+                <div className="col-span-1 flex justify-end">
+                  <Button
+                    size="icon"
+                    type="button"
+                    variant="ghost"
+                    className="text-red-600 hover:text-red-500"
+                    onClick={() => {
+                      let tmp = [...items];
+                      tmp.splice(index, 1);
+                      setItems(tmp);
+                    }}
+                  >
+                    <Trash2Icon className="w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+
+            <div>
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                className="text-gray-800 hover:text-gray-700"
+                onClick={() => setItems([...items, defItem])}
+              >
+                <PlusCircleIcon className="w-4 mr-1" />
+                Tambah Produk
               </Button>
             </div>
-          ))}
-          <div className="inline-flex">
-            <Button
-              size="sm"
-              variant="outline"
-              type="button"
-              className="text-gray-800 hover:text-gray-700"
-              onClick={() => setItems([...items, defItem])}
-            >
-              <PlusCircleIcon className="w-4" />
-              Produk
-            </Button>
-          </div>
-        </CardContent>
+          </CardContent>
+        </div>
 
-        {/* Buttons */}
-        <div className="flex justify-end gap-2">
+        {/* === RINCIAN HARGA PESANAN === */}
+        <Card className="bg-white border border-slate-200 rounded-lg shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-slate-700 text-base font-semibold">
+              Rincian Harga Pesanan
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            {/* Subtotal */}
+            <div className="flex justify-between items-center">
+              <span className="text-slate-600">Subtotal</span>
+              <span className="font-semibold text-slate-800">
+                Rp {toMoney(items.reduce((a, b) => a + (b.subtotal || 0), 0))}
+              </span>
+            </div>
+
+            {/* Diskon */}
+            <div className="flex justify-between items-center gap-3">
+              <span className="text-slate-600 flex-1">Potongan / Diskon</span>
+              <Input
+                type="number"
+                placeholder="Nominal (Rp)"
+                value={state.discount || ""}
+                onChange={(e) => {
+                  const val = +e.target.value;
+                  setState({ ...state, discount: isNaN(val) ? 0 : val });
+                }}
+                className="w-40 text-right"
+              />
+            </div>
+
+            {/* Pajak */}
+            <div className="flex justify-between items-center gap-3">
+              <span className="text-slate-600 flex-1">Pajak (%)</span>
+              <Input
+                type="number"
+                placeholder="Misal 10"
+                value={state.tax_percent || ""}
+                onChange={(e) => {
+                  const val = +e.target.value;
+                  setState({ ...state, tax_percent: isNaN(val) ? 0 : val });
+                }}
+                className="w-40 text-right"
+              />
+            </div>
+
+            {/* Biaya Lain */}
+            <div className="flex justify-between items-center gap-3">
+              <span className="text-slate-600 flex-1">
+                Biaya Lain (opsional)
+              </span>
+              <Input
+                type="number"
+                placeholder="Nominal (Rp)"
+                value={state.extra_fee || ""}
+                onChange={(e) => {
+                  const val = +e.target.value;
+                  setState({ ...state, extra_fee: isNaN(val) ? 0 : val });
+                }}
+                className="w-40 text-right"
+              />
+            </div>
+
+            <div className="border-t border-slate-200 my-3" />
+
+            {/* Total Akhir */}
+            {(() => {
+              const subtotal = items.reduce((a, b) => a + (b.subtotal || 0), 0);
+              const discount = state.discount || 0;
+              const taxPercent = state.tax_percent || 0;
+              const extraFee = state.extra_fee || 0;
+              const afterDiscount = subtotal - discount;
+              const tax = (afterDiscount * taxPercent) / 100;
+              const total = afterDiscount + tax + extraFee;
+
+              return (
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-700 font-semibold text-base">
+                    Total Akhir
+                  </span>
+                  <span className="text-blue-600 font-bold text-lg">
+                    Rp {toMoney(total)}
+                  </span>
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
+
+        {/* === BUTTONS === */}
+        <div className="flex justify-end gap-2 pt-2">
           <Button
             type="button"
             variant="outline"
             className="text-gray-700"
             onClick={() => {
               setState(defaultState);
+              setItems([defItem]);
             }}
           >
             Reset
@@ -389,7 +511,7 @@ export default function CreatePesanan() {
             type="submit"
             className="bg-blue-600 hover:bg-blue-500 text-white"
           >
-            <CheckCircle2Icon className="w-4" />
+            <CheckCircle2Icon className="w-4 mr-1" />
             Buat Pesanan
           </Button>
         </div>

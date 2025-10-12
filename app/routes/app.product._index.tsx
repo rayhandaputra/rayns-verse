@@ -205,14 +205,7 @@ export default function AccountPage() {
             variant="outline"
             size="icon"
             className="text-blue-700 hover:text-blue-500"
-            onClick={() =>
-              setModal({
-                ...modal,
-                open: true,
-                key: "update",
-                data: row,
-              })
-            }
+            onClick={() => navigate(`/app/product/manage?id=${row?.id}`)}
           >
             <PencilLineIcon className="w-4" />
           </Button>
@@ -254,66 +247,6 @@ export default function AccountPage() {
       />
 
       <TableComponent columns={columns} data={table} />
-
-      {(modal?.key === "create" || modal?.key === "update") && (
-        <Modal
-          open={modal?.open}
-          onClose={() => setModal({ ...modal, open: false })}
-          title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Toko`}
-        >
-          <Form method="post" className="space-y-3">
-            <input type="hidden" name="id" value={modal?.data?.id} />
-            <div className="space-y-1">
-              <Label>Nama Produk</Label>
-              <Input
-                required
-                type="text"
-                name="name"
-                placeholder="Masukkan Nama Produk"
-                defaultValue={modal?.data?.name}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Jenis Produk</Label>
-              <Input
-                required
-                type="text"
-                name="type"
-                placeholder="Masukkan Jenis Produk"
-                defaultValue={modal?.data?.type}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Deskripsi</Label>
-              <Input
-                required
-                type="text"
-                name="description"
-                placeholder="Masukkan Alamat"
-                defaultValue={modal?.data?.description}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                size="sm"
-                type="button"
-                variant="outline"
-                className="text-gray-600"
-                onClick={() => setModal({ ...modal, open: false })}
-              >
-                Batal
-              </Button>
-              <Button
-                size="sm"
-                type="submit"
-                className="bg-blue-600 hover:bg-blue-500 text-white"
-              >
-                Simpan
-              </Button>
-            </div>
-          </Form>
-        </Modal>
-      )}
     </div>
   );
 }

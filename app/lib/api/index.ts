@@ -10,6 +10,7 @@ import { InstitutionAPI } from "./modules/institution";
 import { OrderAPI } from "./modules/order";
 import { ProductAPI } from "./modules/product";
 import { ProductCategoryAPI } from "./modules/product_category";
+import { ProductComponentAPI } from "./modules/product_component";
 import { ProductPackageItemsAPI } from "./modules/product_package_item";
 import { SupplierAPI } from "./modules/supplier";
 import { SupplierCommodityAPI } from "./modules/supplier_commodity";
@@ -26,6 +27,7 @@ export const API = {
   INSTITUTION: InstitutionAPI,
   ASSET: AssetAPI,
   PRODUCT: ProductAPI,
+  PRODUCT_COMPONENT: ProductComponentAPI,
   PRODUCT_CATEGORY: ProductCategoryAPI,
   PRODUCT_PACKAGE_ITEM: ProductPackageItemsAPI,
 };

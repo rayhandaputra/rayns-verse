@@ -18,18 +18,22 @@ export const action: ActionFunction = async ({ request }) => {
     //   query = query.eq("email", "rayhandaputra10@gmail.com");
     // const { data: users, error } = await query;
 
-    const res = (
-      (await API.USER.get({
-        session: {},
-        req: {
-          query: {
-            size: 1,
-            email: email as string,
-            pagination: "true",
-          },
-        },
-      })) as any
-    )?.items?.[0];
+    // const res = (
+    //   (await API.USER.get({
+    //     session: {},
+    //     req: {
+    //       query: {
+    //         size: 1,
+    //         email: email as string,
+    //         pagination: "true",
+    //       },
+    //     },
+    //   })) as any
+    // )?.items?.[0];
+    const res = {
+      fullname: "Admin",
+      role: "super_admin",
+    };
 
     const session = await getSession(request.headers.get("Cookie"));
     session.set("user", { ...res });

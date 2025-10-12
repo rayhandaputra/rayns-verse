@@ -15,9 +15,9 @@ export const ProductAPI = {
       size = 10,
       search,
       type = "",
+      id = "",
       email,
     } = req.query || {};
-
     const res = await fetch(CONFIG.apiBaseUrl.server_api_url, {
       method: "POST",
       headers: {
@@ -27,8 +27,17 @@ export const ProductAPI = {
       body: JSON.stringify({
         action: "select",
         table: "products",
-        columns: ["id", "code", "name", "type", "description"],
-        where: { deleted_on: "null", type },
+        columns: [
+          "id",
+          "code",
+          "name",
+          "type",
+          "description",
+          "discount_value",
+          "tax_fee",
+          "other_fee",
+        ],
+        where: { deleted_on: "null", ...(type && { type }), ...(id && { id }) },
         search,
         page,
         size,
@@ -38,7 +47,18 @@ export const ProductAPI = {
     return result;
   },
   create: async ({ req }: any) => {
-    const { code, name, type, description, items = [] } = req.body || {};
+    const {
+      code,
+      name,
+      type,
+      description,
+      discount_value = 0,
+      tax_fee = 0,
+      other_fee = 0,
+      subtotal = 0,
+      total_price = 0,
+      items = [],
+    } = req.body || {};
 
     if (!name || !code) {
       return { success: false, message: "Nama dan Kode wajib diisi" };
@@ -49,6 +69,11 @@ export const ProductAPI = {
       name,
       type,
       description,
+      subtotal,
+      total_price,
+      discount_value,
+      tax_fee,
+      other_fee,
     };
 
     try {
@@ -63,7 +88,10 @@ export const ProductAPI = {
           action: "bulk_insert",
           table: "product_components",
           updateOnDuplicate: true,
-          rows: items,
+          rows: items.map((item: any) => ({
+            ...item,
+            product_id: result.insert_id,
+          })),
         });
       }
 

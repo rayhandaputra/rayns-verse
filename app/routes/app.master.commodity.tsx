@@ -31,12 +31,15 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { useModal } from "~/hooks/use-modal";
 import { API } from "~/lib/api";
+import { toMoney } from "~/lib/utils";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   // const session = await unsealSession(request);
   // const session = await getSession(request);
   const url = new URL(request.url);
-  const { page = 0, size = 10 } = Object.fromEntries(url.searchParams.entries());
+  const { page = 0, size = 10 } = Object.fromEntries(
+    url.searchParams.entries()
+  );
 
   try {
     const user = await API.COMMODITY.get({
@@ -45,9 +48,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       req: {
         query: {
           pagination: "true",
-          page: +page || 0, 
+          page: +page || 0,
           size: +size || 10,
-        }
+        },
       } as any,
     });
 
@@ -188,7 +191,8 @@ export default function CommodityPage() {
     {
       name: "No",
       width: "50px",
-      cell: (_: any, index: number) => index + 1,
+      cell: (_: any, index: number) =>
+        table?.current_page * table?.size + (index + 1),
     },
     {
       name: "Kode",
@@ -201,6 +205,10 @@ export default function CommodityPage() {
     {
       name: "Satuan",
       cell: (row: any) => row?.unit || "-",
+    },
+    {
+      name: "Harga Dasar",
+      cell: (row: any) => toMoney(row?.base_price ?? 0),
     },
     {
       name: "Aksi",
@@ -303,6 +311,16 @@ export default function CommodityPage() {
                 name="unit"
                 placeholder="Masukkan Satuan"
                 defaultValue={modal?.data?.unit}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Harga Dasar</Label>
+              <Input
+                required
+                type="number"
+                name="base_price"
+                placeholder="Masukkan Harga Dasar"
+                defaultValue={modal?.data?.base_price}
               />
             </div>
             <div className="flex justify-end gap-2">
