@@ -47,3 +47,45 @@ export function toMoney(value: number, locale: string = "id-ID"): string {
     maximumFractionDigits: 0,
   }).format(value);
 }
+
+export const getPaymentStatusLabel = (status: string) => {
+  switch (status) {
+    case "paid":
+      return "Lunas";
+    case "down_payment":
+      return "DP";
+    case "unpaid":
+      return "Belum Dibayar";
+    case "cancelled":
+      return "Dibatalkan";
+    default:
+      return "-";
+  }
+};
+
+export const getOrderStatusLabel = (status: string) => {
+  switch (status) {
+    case "ordered":
+      return "Dipesan";
+    case "confirmed":
+      return "Dikonfirmasi";
+    case "in_production":
+      return "Produksi";
+    case "ready":
+      return "Siap";
+    case "shipped":
+      return "Dikirim";
+    case "delivered":
+      return "Diterima";
+    case "done":
+      return "Selesai";
+    case "rejected":
+      return "Ditolak";
+    case "cancelled":
+      return "Dibatalkan";
+    case "pending":
+      return "Menunggu";
+    default:
+      return "-";
+  }
+};

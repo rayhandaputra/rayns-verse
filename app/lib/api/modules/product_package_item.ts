@@ -44,7 +44,7 @@ export const ProductPackageItemsAPI = {
             "modified_on",
           ],
           where: {
-            deleted: 0,
+            deleted_on: "null",
             ...(package_id ? { package_id } : {}),
             ...(product_id ? { product_id } : {}),
           },

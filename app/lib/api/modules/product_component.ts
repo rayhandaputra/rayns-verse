@@ -16,6 +16,7 @@ export const ProductComponentAPI = {
       search,
       type = "",
       id = "",
+      product_id = "",
       email,
     } = req.query || {};
     const res = await fetch(CONFIG.apiBaseUrl.server_api_url, {
@@ -27,8 +28,21 @@ export const ProductComponentAPI = {
       body: JSON.stringify({
         action: "select",
         table: "product_components",
-        columns: ["id", "product_id", "commodity_id", "commodity_name"],
-        where: { deleted_on: "null", ...(type && { type }), ...(id && { id }) },
+        columns: [
+          "id",
+          "product_id",
+          "commodity_id",
+          "commodity_name",
+          "qty",
+          "unit_price",
+          "subtotal",
+        ],
+        where: {
+          deleted_on: "null",
+          ...(type && { type }),
+          ...(id && { id }),
+          ...(product_id && { product_id }),
+        },
         search,
         page,
         size,

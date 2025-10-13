@@ -1,6 +1,4 @@
-// // app/routes/pesanan.new.tsx
-// // import { ActionFunctionArgs, redirect } from "@remix-run/node";
-// // import { Form, useActionData } from "@remix-run/react";
+// app/routes/pesanan.new.tsx
 import {
   CheckCircle2Icon,
   ChevronLeft,
@@ -28,38 +26,44 @@ import AsyncReactSelect from "react-select/async";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { toMoney } from "~/lib/utils";
 
+// === ACTION ===
 export const action: ActionFunction = async ({ request }) => {
   const session = await getSession(request.headers.get("Cookie"));
   const formData = await request.formData();
-  let { id, state, ...payload } = Object.fromEntries(
+  let { id, state, items, ...payload } = Object.fromEntries(
     formData.entries()
   ) as Record<string, any>;
 
   try {
     state = state ? JSON.parse(state) : {};
+    items = items ? JSON.parse(items) : {};
 
     await API.ORDERS.create({
       session: {},
       req: {
-        body: state,
+        body: {
+          ...state,
+          items,
+        },
       },
     });
 
     return Response.json({
       flash: {
         success: true,
-        message: "Pesanan Berhasil Dibuat",
+        message: "Pesanan berhasil dibuat",
       },
     });
   } catch (error) {
     console.log(error);
     return {
       success: false,
-      error_message: "Terjadi Kesalahan",
+      error_message: "Terjadi kesalahan saat menyimpan pesanan",
     };
   }
 };
 
+// === COMPONENT ===
 export default function CreatePesanan() {
   const actionData = useActionData();
   const navigate = useNavigate();
@@ -67,22 +71,16 @@ export default function CreatePesanan() {
   const defItem = {
     product_id: "",
     product_name: "",
-    product_type: "",
+    product_type: "single",
     unit_price: 0,
-    qty: 0,
+    qty: 1,
+    subtotal: 0,
   };
   const [items, setItems] = useState<any[]>([defItem]);
-  // const defState = {
-  //   code: "",
-  //   name: "",
-  //   type: "package",
-  //   description: "",
-  // };
-  // const [state, setState] = useState<any>([defState]);
 
   useEffect(() => {
     if (actionData?.flash) {
-      navigate("/app/order/ordered", {
+      navigate("/app/order/pending", {
         state: { flash: actionData?.flash },
         replace: true,
       });
@@ -94,16 +92,29 @@ export default function CreatePesanan() {
     institution_name: "",
     institution_abbr: "",
     institution_domain: "",
-    order_type: "",
-    payment_type: "",
-    quantity: 0,
-    deadline: moment().format("YYYY-MM-DD"),
-    discount: 0,
+    order_type: "package",
+    payment_status: "unpaid",
+    payment_method: "manual_transfer",
+    discount_value: 0,
     tax_percent: 0,
-    extra_fee: 0,
+    shipping_fee: 0,
+    other_fee: 0,
+    deadline: moment().format("YYYY-MM-DD"),
   };
   const [state, setState] = useState<any>(defaultState);
 
+  // === HITUNG TOTALS ===
+  const subtotal = items.reduce((a, b) => a + (b.subtotal || 0), 0);
+  const discount = parseFloat(state.discount_value) || 0;
+  const taxPercent = parseFloat(state.tax_percent) || 0;
+  const shippingFee = parseFloat(state.shipping_fee) || 0;
+  const otherFee = parseFloat(state.other_fee) || 0;
+
+  const afterDiscount = Math.max(subtotal - discount, 0);
+  const tax = (afterDiscount * taxPercent) / 100;
+  const grandTotal = afterDiscount + tax + shippingFee + otherFee;
+
+  // === LOAD OPTIONS ===
   const loadOptionInstitution = async (search: string) => {
     try {
       const response = await fetch(API_URL, {
@@ -126,7 +137,7 @@ export default function CreatePesanan() {
       return result?.items?.map((v: any) => ({
         ...v,
         value: v?.id,
-        label: `${v?.abbr ? v?.abbr + "- " : ""}${v?.name}`,
+        label: `${v?.abbr ? v?.abbr + " - " : ""}${v?.name}`,
       }));
     } catch (error) {
       console.log(error);
@@ -144,7 +155,7 @@ export default function CreatePesanan() {
         body: JSON.stringify({
           action: "select",
           table: "products",
-          columns: ["id", "name", "type", "price"],
+          columns: ["id", "name", "type", "total_price"],
           where: { deleted_on: "null" },
           search,
           page: 0,
@@ -155,23 +166,23 @@ export default function CreatePesanan() {
       return result?.items?.map((v: any) => ({
         ...v,
         value: v?.id,
-        label: `${v?.type === "package" ? `[PAKET] ` : ""}${v?.name} - Rp${toMoney(v?.price)}`,
+        label: `${v?.type === "package" ? "[PAKET] " : ""}${v?.name} - Rp${toMoney(v?.total_price)}`,
       }));
     } catch (error) {
       console.log(error);
     }
   };
 
+  // === RENDER ===
   return (
     <div className="space-y-6">
-      {/* Header */}
       <TitleHeader
         title="Form Pemesanan"
-        description="Kelola data pesanan."
+        description="Buat pesanan baru untuk instansi"
         breadcrumb={
           <AppBreadcrumb
             pages={[
-              { label: "Pesanan", href: "/" },
+              { label: "Pesanan", href: "/app/order/pending" },
               { label: "Form Pesanan", active: true },
             ]}
           />
@@ -179,7 +190,7 @@ export default function CreatePesanan() {
         actions={
           <Button
             className="text-blue-700"
-            onClick={() => navigate("/app/order/ordered")}
+            onClick={() => navigate("/app/order/pending")}
             variant="outline"
           >
             <ChevronLeft className="w-4" />
@@ -188,21 +199,16 @@ export default function CreatePesanan() {
         }
       />
 
-      {/* FORM */}
-      <Form
-        method="post"
-        className="space-y-6 bg-white rounded-xl shadow-sm p-6 border border-slate-200"
-      >
+      <div className="space-y-6 bg-white rounded-xl shadow-sm p-6 border border-slate-200">
         <input type="hidden" name="state" value={JSON.stringify(state)} />
 
-        {/* === DATA INSTANSI === */}
-        <div className="space-y-4">
+        {/* === INSTANSI === */}
+        <section className="space-y-4">
           <h3 className="text-slate-700 font-semibold text-base border-b pb-1">
             Data Instansi
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Nama Instansi */}
             <div className="space-y-1">
               <Label>Nama Instansi</Label>
               <AsyncReactSelect
@@ -214,9 +220,7 @@ export default function CreatePesanan() {
                       }
                     : null
                 }
-                maxMenuHeight={175}
                 loadOptions={loadOptionInstitution}
-                cacheOptions
                 defaultOptions
                 placeholder="Cari dan Pilih Instansi"
                 onChange={(val: any) =>
@@ -226,15 +230,12 @@ export default function CreatePesanan() {
                     institution_name: val.label,
                   })
                 }
-                className="w-full text-xs font-light !text-black placeholder:text-xs"
               />
             </div>
 
-            {/* Singkatan */}
             <div className="space-y-1">
               <Label>Singkatan Instansi</Label>
               <Input
-                required
                 type="text"
                 placeholder="Masukkan Singkatan Instansi"
                 value={state?.institution_abbr}
@@ -245,78 +246,87 @@ export default function CreatePesanan() {
                   setState({
                     ...state,
                     institution_abbr: value,
-                    institution_domain: `kinau.id/${value?.toLowerCase()}`,
+                    institution_domain: `kinau.id/${value.toLowerCase()}`,
                   });
                 }}
               />
             </div>
           </div>
 
-          {/* Domain */}
           <div className="space-y-1">
             <Label>Domain Institusi</Label>
             <Input
-              required
               readOnly
-              type="text"
-              placeholder="Generate Otomatis"
-              className="bg-gray-100"
               value={state?.institution_domain}
+              className="bg-gray-100"
+              placeholder="Generate Otomatis"
             />
           </div>
-        </div>
+        </section>
 
         {/* === DETAIL PESANAN === */}
-        <div className="space-y-4">
+        <section className="space-y-4">
           <h3 className="text-slate-700 font-semibold text-base border-b pb-1">
             Detail Pesanan
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
-              <Label>Deadline</Label>
-              <Input
-                required
-                type="date"
-                className="text-gray-700"
-                value={state?.deadline}
-                onChange={(e) =>
-                  setState({ ...state, deadline: e.target.value })
-                }
+              <Label>Jenis Pesanan</Label>
+              <SelectBasic
+                options={[
+                  { label: "Paket", value: "package" },
+                  { label: "Kartu ID", value: "id_card" },
+                  { label: "Lanyard", value: "lanyard" },
+                  { label: "Custom", value: "custom" },
+                  { label: "Layanan / Service", value: "service" },
+                ]}
+                value={state?.order_type}
+                onChange={(value) => setState({ ...state, order_type: value })}
               />
             </div>
 
             <div className="space-y-1">
-              <Label>Pembayaran</Label>
+              <Label>Status Pembayaran</Label>
               <SelectBasic
-                required
                 options={[
+                  { label: "Belum Bayar", value: "unpaid" },
                   { label: "DP", value: "down_payment" },
                   { label: "Lunas", value: "paid" },
                 ]}
-                placeholder="Pilih Jenis Pembayaran"
-                value={state?.payment_type}
-                onChange={(value) =>
-                  setState({ ...state, payment_type: value })
-                }
+                value={state?.payment_status}
+                onChange={(val) => setState({ ...state, payment_status: val })}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label>Metode Pembayaran</Label>
+              <SelectBasic
+                options={[
+                  { label: "Transfer Manual", value: "manual_transfer" },
+                  { label: "QRIS", value: "qris" },
+                  { label: "Virtual Account", value: "virtual_account" },
+                  { label: "Tunai / Cash", value: "cash" },
+                ]}
+                value={state?.payment_method}
+                onChange={(val) => setState({ ...state, payment_method: val })}
               />
             </div>
           </div>
-        </div>
+        </section>
 
         {/* === PRODUK === */}
-        <div className="space-y-4">
+        <section className="space-y-4">
           <h3 className="text-slate-700 font-semibold text-base border-b pb-1">
             Produk Dipesan
           </h3>
 
           <CardContent className="bg-slate-50 space-y-3 py-4 rounded-lg border border-slate-200">
-            {items.map((item: any, index: number) => (
+            {items.map((item, index) => (
               <div
                 key={index}
                 className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-lg border border-slate-200"
               >
-                {/* Produk */}
                 <div className="col-span-5">
                   <AsyncReactSelect
                     value={
@@ -324,39 +334,36 @@ export default function CreatePesanan() {
                         ? { value: item?.product_id, label: item?.product_name }
                         : null
                     }
-                    maxMenuHeight={175}
                     loadOptions={loadOptionProduct}
-                    cacheOptions
                     defaultOptions
-                    placeholder="Cari dan Pilih Produk"
+                    placeholder="Cari Produk"
                     onChange={(val: any) => {
-                      let tmp = [...items];
-                      const unitPrice = val?.price ?? 0;
+                      const price = val?.total_price ?? 0;
+                      const tmp = [...items];
                       tmp[index] = {
                         ...item,
                         product_id: val.value,
                         product_name: val.label,
                         product_type: val.type,
-                        unit_price: unitPrice,
-                        subtotal: unitPrice * (item?.qty ?? 0),
+                        unit_price: price,
+                        subtotal: price * (item.qty ?? 1),
                       };
                       setItems(tmp);
                     }}
-                    className="w-full text-xs font-light !text-black placeholder:text-xs"
                   />
                 </div>
 
-                {/* Jumlah */}
                 <div className="col-span-2">
                   <Input
-                    placeholder="Jumlah"
+                    placeholder="Qty"
                     value={item?.qty}
                     onChange={(e) => {
-                      let tmp = [...items];
+                      const qty = +e.target.value;
+                      const tmp = [...items];
                       tmp[index] = {
                         ...item,
-                        qty: +e.target.value,
-                        subtotal: +e.target.value * (item?.unit_price ?? 0),
+                        qty,
+                        subtotal: qty * (item?.unit_price ?? 0),
                       };
                       setItems(tmp);
                     }}
@@ -364,22 +371,19 @@ export default function CreatePesanan() {
                   />
                 </div>
 
-                {/* Subtotal */}
                 <div className="col-span-4 text-right">
                   <p className="text-sm font-semibold text-slate-700">
                     Rp {toMoney(item?.subtotal)}
                   </p>
                 </div>
 
-                {/* Hapus */}
                 <div className="col-span-1 flex justify-end">
                   <Button
                     size="icon"
-                    type="button"
                     variant="ghost"
                     className="text-red-600 hover:text-red-500"
                     onClick={() => {
-                      let tmp = [...items];
+                      const tmp = [...items];
                       tmp.splice(index, 1);
                       setItems(tmp);
                     }}
@@ -390,20 +394,17 @@ export default function CreatePesanan() {
               </div>
             ))}
 
-            <div>
-              <Button
-                size="sm"
-                variant="outline"
-                type="button"
-                className="text-gray-800 hover:text-gray-700"
-                onClick={() => setItems([...items, defItem])}
-              >
-                <PlusCircleIcon className="w-4 mr-1" />
-                Tambah Produk
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              type="button"
+              onClick={() => setItems([...items, defItem])}
+            >
+              <PlusCircleIcon className="w-4 mr-1" />
+              Tambah Produk
+            </Button>
           </CardContent>
-        </div>
+        </section>
 
         {/* === RINCIAN HARGA PESANAN === */}
         <Card className="bg-white border border-slate-200 rounded-lg shadow-sm">
@@ -412,40 +413,64 @@ export default function CreatePesanan() {
               Rincian Harga Pesanan
             </CardTitle>
           </CardHeader>
+
           <CardContent className="space-y-3 text-sm">
             {/* Subtotal */}
             <div className="flex justify-between items-center">
               <span className="text-slate-600">Subtotal</span>
               <span className="font-semibold text-slate-800">
-                Rp {toMoney(items.reduce((a, b) => a + (b.subtotal || 0), 0))}
+                Rp {toMoney(subtotal)}
               </span>
             </div>
 
             {/* Diskon */}
             <div className="flex justify-between items-center gap-3">
               <span className="text-slate-600 flex-1">Potongan / Diskon</span>
-              <Input
-                type="number"
-                placeholder="Nominal (Rp)"
-                value={state.discount || ""}
-                onChange={(e) => {
-                  const val = +e.target.value;
-                  setState({ ...state, discount: isNaN(val) ? 0 : val });
-                }}
-                className="w-40 text-right"
-              />
+              <div className="flex items-center gap-1">
+                <SelectBasic
+                  options={[
+                    { label: "%", value: "percent" },
+                    { label: "Rp", value: "fixed" },
+                  ]}
+                  placeholder="Tipe"
+                  value={state.discount_type || "fixed"}
+                  onChange={(value) =>
+                    setState((s: any) => ({ ...s, discount_type: value }))
+                  }
+                  className="w-20"
+                />
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  placeholder={
+                    state.discount_type === "percent"
+                      ? "Misal 10%"
+                      : "Nominal (Rp)"
+                  }
+                  value={state.discount_value ?? ""}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value) || 0;
+                    setState((s: any) => ({ ...s, discount_value: val }));
+                  }}
+                  className="w-40 text-right"
+                />
+              </div>
             </div>
 
             {/* Pajak */}
             <div className="flex justify-between items-center gap-3">
-              <span className="text-slate-600 flex-1">Pajak (%)</span>
+              <span className="text-slate-600 flex-1">Tambahan Pajak (%)</span>
               <Input
                 type="number"
-                placeholder="Misal 10"
-                value={state.tax_percent || ""}
+                inputMode="numeric"
+                min={0}
+                max={100}
+                placeholder="Misal 11"
+                value={state.tax_fee ?? ""}
                 onChange={(e) => {
-                  const val = +e.target.value;
-                  setState({ ...state, tax_percent: isNaN(val) ? 0 : val });
+                  const val = parseFloat(e.target.value) || 0;
+                  setState((s: any) => ({ ...s, tax_fee: val }));
                 }}
                 className="w-40 text-right"
               />
@@ -458,11 +483,13 @@ export default function CreatePesanan() {
               </span>
               <Input
                 type="number"
+                inputMode="numeric"
+                min={0}
                 placeholder="Nominal (Rp)"
-                value={state.extra_fee || ""}
+                value={state.other_fee ?? ""}
                 onChange={(e) => {
-                  const val = +e.target.value;
-                  setState({ ...state, extra_fee: isNaN(val) ? 0 : val });
+                  const val = parseFloat(e.target.value) || 0;
+                  setState((s: any) => ({ ...s, other_fee: val }));
                 }}
                 className="w-40 text-right"
               />
@@ -470,32 +497,71 @@ export default function CreatePesanan() {
 
             <div className="border-t border-slate-200 my-3" />
 
-            {/* Total Akhir */}
+            {/* PERHITUNGAN */}
             {(() => {
-              const subtotal = items.reduce((a, b) => a + (b.subtotal || 0), 0);
-              const discount = state.discount || 0;
-              const taxPercent = state.tax_percent || 0;
-              const extraFee = state.extra_fee || 0;
-              const afterDiscount = subtotal - discount;
-              const tax = (afterDiscount * taxPercent) / 100;
-              const total = afterDiscount + tax + extraFee;
+              let discountValue = 0;
+              if (state.discount_type === "percent") {
+                discountValue = (subtotal * (state.discount_value || 0)) / 100;
+              } else {
+                discountValue = state.discount_value || 0;
+              }
+              const afterDiscount = Math.max(subtotal - discountValue, 0);
+              const taxValue = (afterDiscount * (state.tax_fee || 0)) / 100;
+              const total = afterDiscount + taxValue + (state.other_fee || 0);
 
               return (
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-700 font-semibold text-base">
-                    Total Akhir
-                  </span>
-                  <span className="text-blue-600 font-bold text-lg">
-                    Rp {toMoney(total)}
-                  </span>
-                </div>
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600">
+                      Setelah Diskon (
+                      {state.discount_type === "percent"
+                        ? `${state.discount_value || 0}%`
+                        : `Rp ${toMoney(discountValue)}`}
+                      )
+                    </span>
+                    <span className="font-semibold text-slate-700">
+                      Rp {toMoney(afterDiscount)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600">
+                      Pajak ({state.tax_fee || 0}%)
+                    </span>
+                    <span className="font-semibold text-slate-700">
+                      Rp {toMoney(taxValue)}
+                    </span>
+                  </div>
+
+                  {state.other_fee > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-600">Biaya Tambahan</span>
+                      <span className="font-semibold text-slate-700">
+                        Rp {toMoney(state.other_fee)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="border-t border-slate-200 my-3" />
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-700 font-semibold text-base">
+                      Total Akhir
+                    </span>
+                    <span className="text-blue-600 font-bold text-lg">
+                      Rp {toMoney(total)}
+                    </span>
+                  </div>
+                </>
               );
             })()}
           </CardContent>
         </Card>
 
-        {/* === BUTTONS === */}
-        <div className="flex justify-end gap-2 pt-2">
+        {/* === BUTTON === */}
+        <Form method="post" className="flex justify-end gap-2 pt-2">
+          <input type="hidden" name="state" value={JSON.stringify(state)} />
+          <input type="hidden" name="items" value={JSON.stringify(items)} />
           <Button
             type="button"
             variant="outline"
@@ -514,8 +580,8 @@ export default function CreatePesanan() {
             <CheckCircle2Icon className="w-4 mr-1" />
             Buat Pesanan
           </Button>
-        </div>
-      </Form>
+        </Form>
+      </div>
     </div>
   );
 }

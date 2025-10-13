@@ -150,7 +150,7 @@ export default function AccountPage() {
         { id: data?.id, deleted_on: moment().format("YYYY-MM-DD HH:mm:ss") },
         {
           method: "delete",
-          action: "/app/master/supplier",
+          action: "/app/product",
         }
       );
 

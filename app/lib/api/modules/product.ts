@@ -48,6 +48,7 @@ export const ProductAPI = {
   },
   create: async ({ req }: any) => {
     const {
+      id,
       code,
       name,
       type,
@@ -77,11 +78,21 @@ export const ProductAPI = {
     };
 
     try {
-      const result = await callApi({
-        action: "insert",
-        table: "products",
-        data: newProduct,
-      });
+      let result = null;
+      if (!id) {
+        result = await callApi({
+          action: "insert",
+          table: "products",
+          data: newProduct,
+        });
+      } else {
+        result = await callApi({
+          action: "update",
+          table: "products",
+          data: newProduct,
+          where: { id },
+        });
+      }
 
       if (items && items?.length > 0) {
         await callApi({
@@ -118,6 +129,7 @@ export const ProductAPI = {
     };
 
     try {
+      console.log("UPDATE => ", updatedData);
       const result = await callApi({
         action: "update",
         table: "products",

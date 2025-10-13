@@ -1,35 +1,181 @@
-import { useRef, useState } from "react";
-import { Upload, Trash2, PlusCircle, Info } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Upload,
+  Trash2,
+  PlusCircle,
+  Info,
+  MessageCircle,
+  CheckCircle2Icon,
+  ChevronLeftIcon,
+} from "lucide-react";
 import { Input } from "~/components/ui/input";
 import { API } from "~/lib/api";
+import {
+  Form,
+  useActionData,
+  useLoaderData,
+  useNavigate,
+  type ActionFunction,
+  type LoaderFunction,
+} from "react-router";
+import { Button } from "~/components/ui/button";
+import { getSession } from "~/lib/session";
+import { toast } from "sonner";
 // import { Link, Outlet } from "react-router";
+
+// type Folder = {
+//   id: string;
+//   name: string;
+//   files: { type: "front" | "back" | "lanyard"; url: string }[];
+// };
 
 type Folder = {
   id: string;
   name: string;
-  files: { type: "front" | "back" | "lanyard"; url: string }[];
+  files: { type: string; url: string }[];
+};
+
+export const loader: LoaderFunction = async ({ request, params }) => {
+  // const url = new URL(request.url);
+  // const { page = 0, size = 10 } = Object.fromEntries(
+  //   url.searchParams.entries()
+  // );
+  try {
+    const order = await API.ORDERS.get({
+      // session,
+      session: {},
+      req: {
+        query: {
+          pagination: "true",
+          institution_domain: `kinau.id/${params.domain}`,
+          page: 0,
+          size: 1,
+        },
+      } as any,
+    });
+
+    const folders = await API.ORDER_UPLOAD.get_folder({
+      // session,
+      session: {},
+      req: {
+        query: {
+          // pagination: "false",
+          order_number: order?.items?.[0]?.order_number,
+          // page: 0,
+          // size: 1,
+        },
+      } as any,
+    });
+
+    return {
+      // search,
+      // APP_CONFIG: CONFIG,
+      order: order?.items?.[0] ?? null,
+      folders: folders?.items ?? [],
+    };
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export const action: ActionFunction = async ({ request }) => {
+  const session = await getSession(request.headers.get("Cookie"));
+  const formData = await request.formData();
+  let { id, state, items, ...payload } = Object.fromEntries(
+    formData.entries()
+  ) as Record<string, any>;
+
+  try {
+    // let resMessage = "";
+    // state = state ? JSON.parse(state) : {};
+    // items = items ? JSON.parse(items) : {};
+
+    // if (!id) {
+    //   await API.PRODUCT.create({
+    //     session: {},
+    //     req: {
+    //       body: {
+    //         ...state,
+    //         subtotal: payload?.subtotal,
+    //         total_price: payload?.total,
+    //         items: items,
+    //       },
+    //     },
+    //   });
+
+    //   resMessage = "Berhasil menambahkan Produk";
+    // } else {
+    //   await API.PRODUCT.create({
+    //     session: {},
+    //     req: {
+    //       body: {
+    //         ...state,
+    //         subtotal: payload?.subtotal,
+    //         total_price: payload?.total,
+    //         items: items,
+    //         id,
+    //       },
+    //     },
+    //   });
+
+    //   resMessage = "Berhasil memperbaharui Produk";
+    // }
+
+    return Response.json({
+      flash: {
+        success: true,
+        // message: resMessage,
+        message: "Berhasil menyimpan perubahan",
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    return {
+      success: false,
+      error_message: "Terjadi Kesalahan",
+    };
+  }
 };
 
 export default function UploadPage() {
+  const { order, folders: currentFolder } = useLoaderData() || {};
   const [tab, setTab] = useState<"idcard" | "lanyard">("idcard");
-  const [folders, setFolders] = useState<Folder[]>([
-    { id: "umum", name: "Umum", files: [] },
-  ]);
+  const [folders, setFolders] = useState<Folder[]>(
+    currentFolder.length > 0
+      ? currentFolder
+      : [{ id: Date.now().toString(), name: "Umum", files: [] }]
+  );
 
+  const depanRef = useRef<HTMLInputElement>(null);
+  const belakangRef = useRef<HTMLInputElement>(null);
+  const lanyardRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+  const actionData = useActionData();
+
+  useEffect(() => {
+    if (actionData?.flash) {
+      // navigate(`/${order?.institution_domain}`, {
+      //   state: { flash: actionData?.flash },
+      //   replace: true,
+      // });
+      toast.success("Berhasil", {
+        description: actionData?.flash?.message,
+      });
+    }
+  }, [actionData]);
+
+  // Fungsi menambah folder baru
   const addFolder = () => {
     const id = Date.now().toString();
     setFolders([...folders, { id, name: "Folder Baru", files: [] }]);
   };
 
+  // Fungsi hapus folder
   const removeFolder = (id: string) => {
     setFolders(folders.filter((f) => f.id !== id));
   };
 
-  const depanRef = useRef<HTMLInputElement>(null);
-  const belakangRef = useRef<HTMLInputElement>(null);
-  const lanyardRef = useRef<HTMLInputElement>(null);
-
-  // handler saat file dipilih
+  // Fungsi upload file
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
     type: string,
@@ -47,16 +193,50 @@ export default function UploadPage() {
           files: [
             ...(tmp[index]?.files || []),
             {
-              type: type,
+              type,
               url: response.url,
             },
-          ] as any,
+          ],
         };
         setFolders(tmp);
       }
     }
   };
 
+  // Jika order tidak ditemukan
+  if (!order) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-sky-100 to-sky-300 text-center px-6">
+        <img
+          src="/kinau-logo.png"
+          alt="Kinau"
+          className="mb-6 h-12 w-auto opacity-80"
+        />
+        <h1 className="text-2xl font-bold text-sky-900 mb-2">
+          Halaman Tidak Ditemukan
+        </h1>
+        <p className="text-slate-700 max-w-md mb-6">
+          Maaf, pesanan yang kamu cari tidak ditemukan. <br />
+          Silakan buat pesanan terlebih dahulu agar bisa mengunggah desain.
+        </p>
+
+        <a
+          href="https://wa.me/6285219337474?text=Halo%20Admin%2C%20saya%20ingin%20membuat%20pesanan%20baru."
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 rounded-full bg-green-500 px-5 py-2 text-white font-medium shadow-md hover:bg-green-600 transition"
+        >
+          <MessageCircle size={18} /> Hubungi Admin
+        </a>
+
+        <div className="mt-10 text-xs text-slate-500">
+          © {new Date().getFullYear()} Kinau — Semua hak dilindungi.
+        </div>
+      </div>
+    );
+  }
+
+  // Jika order ditemukan, tampilkan UI upload
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-200 to-sky-500 p-4">
       {/* Header */}
@@ -135,8 +315,10 @@ export default function UploadPage() {
               </button>
             </div>
 
-            {tab === "idcard" && (
+            {/* Upload Section */}
+            {tab === "idcard" ? (
               <div className="flex flex-col gap-2">
+                {/* Upload Depan */}
                 <button
                   onClick={() => depanRef.current?.click()}
                   className="flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-sky-700"
@@ -150,18 +332,18 @@ export default function UploadPage() {
                   accept="image/*"
                   onChange={(e) => handleFileChange(e, "front", folder.id)}
                 />
-                {(folder?.files ?? [])?.length > 0 &&
-                  folder?.files
-                    .filter((v: any) => v?.type === "front")
-                    .map((v: any, idx: number) => (
-                      <img
-                        key={idx}
-                        src={v?.url}
-                        alt="Preview Depan"
-                        className="h-20 w-auto rounded-lg border object-cover"
-                      />
-                    ))}
+                {folder?.files
+                  ?.filter((v) => v?.type === "front")
+                  ?.map((v, idx) => (
+                    <img
+                      key={idx}
+                      src={v.url}
+                      alt="Preview Depan"
+                      className="h-20 w-auto rounded-lg border object-cover"
+                    />
+                  ))}
 
+                {/* Upload Belakang */}
                 <button
                   onClick={() => belakangRef.current?.click()}
                   className="flex items-center justify-center gap-2 rounded-lg bg-slate-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-slate-700"
@@ -175,22 +357,18 @@ export default function UploadPage() {
                   accept="image/*"
                   onChange={(e) => handleFileChange(e, "back", folder.id)}
                 />
-
-                {(folder?.files ?? [])?.length > 0 &&
-                  folder?.files
-                    .filter((v: any) => v?.type === "back")
-                    .map((v: any, idx: number) => (
-                      <img
-                        key={idx}
-                        src={v?.url}
-                        alt="Preview Depan"
-                        className="h-20 w-auto rounded-lg border object-cover"
-                      />
-                    ))}
+                {folder?.files
+                  ?.filter((v) => v?.type === "back")
+                  ?.map((v, idx) => (
+                    <img
+                      key={idx}
+                      src={v.url}
+                      alt="Preview Belakang"
+                      className="h-20 w-auto rounded-lg border object-cover"
+                    />
+                  ))}
               </div>
-            )}
-
-            {tab === "lanyard" && (
+            ) : (
               <div>
                 <button
                   onClick={() => lanyardRef.current?.click()}
@@ -205,16 +383,14 @@ export default function UploadPage() {
                   accept="image/*"
                   onChange={(e) => handleFileChange(e, "lanyard", folder.id)}
                 />
-
-                {(folder?.files ?? [])?.length > 0 &&
-                  folder?.files.map((v: any, idx: number) => (
-                    <img
-                      key={idx}
-                      src={v?.url}
-                      alt="Preview Depan"
-                      className="h-20 w-auto rounded-lg border object-cover"
-                    />
-                  ))}
+                {folder?.files?.map((v, idx) => (
+                  <img
+                    key={idx}
+                    src={v.url}
+                    alt="Preview Lanyard"
+                    className="h-20 w-auto rounded-lg border object-cover"
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -227,6 +403,32 @@ export default function UploadPage() {
         >
           <PlusCircle size={18} /> Tambah Folder
         </button>
+
+        <Form
+          method="post"
+          className="w-full flex justify-between gap-2"
+          // onSubmit={(e) => {
+          //   e.preventDefault();
+          //   console.log(folders);
+          // }}
+        >
+          <Button
+            type="button"
+            variant="outline"
+            className="text-green-700 bg-white flex items-center gap-2"
+            onClick={() => navigate(`/`)}
+          >
+            <ChevronLeftIcon className="w-4" />
+            Beranda
+          </Button>
+          <Button
+            type="submit"
+            className="bg-green-700 flex items-center gap-2"
+          >
+            <CheckCircle2Icon className="w-4" />
+            Simpan
+          </Button>
+        </Form>
       </main>
     </div>
   );

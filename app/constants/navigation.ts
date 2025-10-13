@@ -30,11 +30,11 @@ export const navigation: NavItem[] = [
         href: "/app/product/package",
         active: ["/app/product/package"],
       },
-      {
-        name: "Kategori & Variasi",
-        href: "/app/product/category",
-        active: ["/app/product/category"],
-      },
+      // {
+      //   name: "Kategori & Variasi",
+      //   href: "/app/product/category",
+      //   active: ["/app/product/category"],
+      // },
       // {
       //   name: "Stok & Ketersediaan",
       //   href: "/users/list",
@@ -54,9 +54,9 @@ export const navigation: NavItem[] = [
     children: [
       {
         name: "Semua Pesanan",
-        href: "/app/order/ordered",
+        href: "/app/order/pending",
         // icon: "FileText",
-        active: ["/app/order/ordered"],
+        active: ["/app/order/pending"],
       },
       // {
       //   name: "Detail Item Custom",

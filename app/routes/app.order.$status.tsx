@@ -17,12 +17,18 @@ import TableComponent from "~/components/table/Table";
 import TabsComponent from "~/components/Tabs";
 import { TitleHeader } from "~/components/TitleHedaer";
 import { Button } from "~/components/ui/button";
-import { API } from "~/lib/api";
+import { API, API_KEY, API_URL } from "~/lib/api";
 import moment from "moment";
 import "moment/locale/id";
 import { dateFormat, formatDate } from "~/lib/dateFormatter";
 import { commitSession, getSession } from "~/lib/session";
-import { getOrderLabel, getPaymentLabel, toMoney } from "~/lib/utils";
+import {
+  getOrderLabel,
+  getOrderStatusLabel,
+  getPaymentLabel,
+  getPaymentStatusLabel,
+  toMoney,
+} from "~/lib/utils";
 import { Badge } from "~/components/ui/badge";
 import { toast } from "sonner";
 import { ReceiptTemplate } from "~/components/print/order/ReceiptTemplate";
@@ -118,13 +124,13 @@ export default function AppOrder() {
     setTabs([
       {
         name: "Menunggu Pembayaran",
-        href: "/app/order/ordered",
-        current: location.pathname === "/app/order/ordered",
+        href: "/app/order/pending",
+        current: location.pathname === "/app/order/pending",
       },
       {
         name: "Menunggu Konfirmasi",
-        href: "/app/order/confirmed",
-        current: location.pathname === "/app/order/confirmed",
+        href: "/app/order/ordered",
+        current: location.pathname === "/app/order/ordered",
       },
       {
         name: "Diproses",
@@ -156,11 +162,6 @@ export default function AppOrder() {
         href: "/app/order/rejected",
         current: location.pathname === "/app/order/rejected",
       },
-      {
-        name: "Pending",
-        href: "/app/order/pending",
-        current: location.pathname === "/app/order/pending",
-      },
     ]);
   }, [location]);
 
@@ -173,11 +174,12 @@ export default function AppOrder() {
     },
     {
       name: "Kode Pesanan",
-      width: "120px",
-      cell: (_: any, index: number) => table?.order_number ?? "-",
+      width: "180px",
+      cell: (row: any) => row?.order_number ?? "-",
     },
     {
       name: "Instansi",
+      width: "180px",
       cell: (row: any) => (
         <div className="flex flex-col">
           <p className="text-sm font-semibold">
@@ -194,69 +196,79 @@ export default function AppOrder() {
       cell: (row: any) => getOrderLabel(row?.order_type),
     },
     {
-      name: "Jumlah",
-      cell: (row: any) => row?.quantity || 0,
+      name: "Tanggal Pesanan",
+      width: "150px",
+      cell: (row: any) => (row?.order_date ? formatDate(row?.order_date) : "-"),
     },
     {
       name: "Deadline",
-      cell: (row: any) =>
-        row?.deadline
-          ? // ? moment(row?.deadline).locale("id").format("dddd, DD MMMM YYYY")
-            formatDate(row?.deadline)
-          : "-",
+      width: "150px",
+      cell: (row: any) => (row?.deadline ? formatDate(row?.deadline) : "-"),
     },
     {
-      name: "Jenis Pembayaran",
-      cell: (row: any) => getPaymentLabel(row?.payment_type),
+      name: "Status Pesanan",
+      width: "150px",
+      cell: (row: any) => (
+        <Badge
+          className={`text-[0.675rem] ${
+            row?.status === "done"
+              ? "bg-green-700"
+              : row?.status === "cancelled"
+                ? "bg-red-700"
+                : "bg-gray-700"
+          }`}
+        >
+          {getOrderStatusLabel(row?.status)}
+        </Badge>
+      ),
     },
-    ...(table?.filter?.status === "ordered"
-      ? [
-          {
-            name: "Pembayaran",
-            width: "250px",
-            cell: (row: any) => (
-              <div className="flex flex-col gap-1.5">
-                <div className="flex justify-between gap-2">
-                  <p className="text-[0.675rem] text-gray-500">Status:</p>
-                  <p>
-                    <Badge className="text-[0.675rem] bg-orange-700">
-                      Belum dibayar
-                    </Badge>
-                  </p>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <p className="text-[0.675rem] text-gray-500">Bukti:</p>
-                  <p>
-                    {row.payment_proof ? (
-                      <a
-                        href={row.payment_proof}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        Lihat
-                      </a>
-                    ) : (
-                      "-"
-                    )}
-                  </p>
-                </div>
-              </div>
-            ),
-          },
-        ]
-      : []),
+    {
+      name: "Metode Pembayaran",
+      width: "150px",
+      cell: (row: any) =>
+        row?.payment_method ? getPaymentLabel(row?.payment_method) : "-",
+    },
+    {
+      name: "Status Pembayaran",
+      width: "150px",
+      cell: (row: any) => (
+        <Badge
+          className={`text-[0.675rem] ${
+            row?.payment_status === "paid"
+              ? "bg-green-700"
+              : row?.payment_status === "down_payment"
+                ? "bg-yellow-600"
+                : row?.payment_status === "cancelled"
+                  ? "bg-red-600"
+                  : "bg-gray-600"
+          }`}
+        >
+          {getPaymentStatusLabel(row?.payment_status)}
+        </Badge>
+      ),
+    },
+    {
+      name: "Jatuh Tempo",
+      width: "150px",
+      cell: (row: any) =>
+        row?.payment_due_date ? formatDate(row?.payment_due_date) : "-",
+    },
+    {
+      name: "Total Tagihan",
+      width: "160px",
+      right: true,
+      cell: (row: any) =>
+        `Rp ${toMoney(row?.grand_total ?? row?.total_amount ?? 0)}`,
+    },
     {
       name: "Aksi",
       width: "200px",
-      cell: (row: any, index: number) => (
-        <div className="w-full flex gap-2">
+      cell: (row: any) => (
+        <div className="flex gap-2">
           <Button
             size="sm"
             className="bg-gray-600 hover:bg-gray-500 text-white text-xs"
-            onClick={() => {
-              navigate(`/app/order/${row?.id}/detail`);
-            }}
+            onClick={() => navigate(`/app/order/${row?.id}/detail`)}
           >
             <EyeIcon className="w-4" />
             Detail
@@ -264,6 +276,7 @@ export default function AppOrder() {
           <Button
             size="sm"
             className="bg-green-600 hover:bg-green-500 text-white text-xs"
+            // onClick={() => handleConfirm(row)}
             onClick={() => {}}
           >
             <CheckCircle2Icon className="w-4" />
@@ -310,7 +323,7 @@ export default function AppOrder() {
         expandableRowsData={[
           {
             name: "Domain",
-            cell: (row, index) =>
+            cell: (row) =>
               row?.institution_domain ? (
                 <div className="flex items-center gap-3">
                   <CopyIcon
@@ -324,7 +337,6 @@ export default function AppOrder() {
                     }}
                     className="w-4 cursor-pointer"
                   />
-
                   <a
                     href={
                       row.institution_domain.startsWith("http")
@@ -343,27 +355,109 @@ export default function AppOrder() {
               ),
           },
           {
+            name: "Subtotal",
+            cell: (row) => `Rp ${toMoney(row?.subtotal ?? 0)}`,
+          },
+          {
+            name: "Kode Diskon",
+            cell: (row) => row?.discount_code || "-",
+          },
+          {
+            name: "Diskon",
+            cell: (row) =>
+              row?.discount_value > 0
+                ? `- Rp ${toMoney(row?.discount_value)}`
+                : "-",
+          },
+          {
+            name: "Pajak (%)",
+            cell: (row) => `${row?.tax_percent ?? 0}%`,
+          },
+          {
             name: "Pajak",
-            cell: (row, index) => `Rp ${toMoney(row?.total_tax ?? 0)}`,
+            cell: (row) =>
+              row?.tax_value > 0
+                ? `Rp ${toMoney(row?.tax_value)} (${row?.tax_percent ?? 0}%)`
+                : "-",
           },
           {
-            name: "Ongkir",
-            cell: (row, index) => `Rp ${toMoney(row?.shipping_fee ?? 0)}`,
+            name: "Biaya Lain",
+            cell: (row) => `Rp ${toMoney(row?.other_fee ?? 0)}`,
           },
           {
-            name: "Total Tagihan",
-            cell: (row, index) => `Rp ${toMoney(row?.total_amount ?? 0)}`,
+            name: "Grand Total",
+            cell: (row) => `Rp ${toMoney(row?.grand_total ?? 0)}`,
           },
           {
             name: "Nota",
             cell: (row: any) => (
               <div className="inline-flex flex-col gap-1.5">
                 {PrintButton ? (
-                  <PrintButton contentRef={printRef}>
+                  <PrintButton>
                     {({ handlePrint }: any) => (
                       <Button
-                        onClick={() => {
-                          handlePrint();
+                        onClick={async () => {
+                          try {
+                            // 1️⃣ Fetch item order
+                            // const res = await fetch(
+                            //   `/api/order-items?order_number=${row.order_number}`
+                            // );
+                            // const items = await res.json();
+                            const response = await fetch(API_URL, {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${API_KEY}`,
+                              },
+                              body: JSON.stringify({
+                                action: "select",
+                                table: "order_items",
+                                columns: [
+                                  "id",
+                                  "order_number",
+                                  "product_id",
+                                  "product_name",
+                                  "product_type",
+                                  "qty",
+                                  "unit_price",
+                                  "discount_type",
+                                  "discount_value",
+                                  "tax_percent",
+                                  "subtotal",
+                                  "discount_total",
+                                  "tax_value",
+                                  "total_after_tax",
+                                ],
+                                where: {
+                                  deleted_on: "null",
+                                  order_number: row?.order_number,
+                                },
+                                // search,
+                                // page: 0,
+                                // size: 50,
+                              }),
+                            });
+                            const items = await response.json();
+
+                            // 2️⃣ Siapkan QR Code
+                            const qrContent = `https://kinau.id/track/${row.order_number}`;
+                            const qrUrl = await import("qrcode").then((qr) =>
+                              qr.default.toDataURL(qrContent, {
+                                width: 200,
+                                margin: 1,
+                              })
+                            );
+
+                            // 3️⃣ Kirim data ke print
+                            handlePrint({
+                              order: row,
+                              items: items?.items ?? [],
+                              qrCodeUrl: qrUrl,
+                            });
+                          } catch (err) {
+                            console.error("Gagal print nota:", err);
+                            toast.error("Gagal memuat data nota.");
+                          }
                         }}
                         className="bg-gray-600 hover:bg-gray-500 text-white text-xs"
                       >
@@ -385,23 +479,6 @@ export default function AppOrder() {
           },
         ]}
       />
-
-      <div className="hidden">
-        <ReceiptTemplate
-          ref={printRef}
-          {...{
-            order: {} as any,
-            items: [
-              {
-                product_name: "",
-                product_price: 10000,
-                qty: 10,
-              },
-            ],
-            qrCodeUrl: qrCodeUrl ?? undefined,
-          }}
-        />
-      </div>
     </div>
   );
 }

@@ -50,16 +50,16 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       req: {
         query: {
           pagination: "true",
-          id,
+          product_id: id,
           page: 0,
           size: 10,
         },
       } as any,
     });
 
-    // console.log(detail?.items?.[0]);
     return {
       detail: detail?.items?.[0] ?? null,
+      items: items?.items ?? [],
       // search,
       // APP_CONFIG: CONFIG,
       table: {
@@ -81,25 +81,45 @@ export const action: ActionFunction = async ({ request }) => {
   ) as Record<string, any>;
 
   try {
+    let resMessage = "";
     state = state ? JSON.parse(state) : {};
     items = items ? JSON.parse(items) : {};
 
-    await API.PRODUCT.create({
-      session: {},
-      req: {
-        body: {
-          ...state,
-          subtotal: payload?.subtotal,
-          total_price: payload?.total,
-          items: items,
+    if (!id) {
+      await API.PRODUCT.create({
+        session: {},
+        req: {
+          body: {
+            ...state,
+            subtotal: payload?.subtotal,
+            total_price: payload?.total,
+            items: items,
+          },
         },
-      },
-    });
+      });
+
+      resMessage = "Berhasil menambahkan Produk";
+    } else {
+      await API.PRODUCT.create({
+        session: {},
+        req: {
+          body: {
+            ...state,
+            subtotal: payload?.subtotal,
+            total_price: payload?.total,
+            items: items,
+            id,
+          },
+        },
+      });
+
+      resMessage = "Berhasil memperbaharui Produk";
+    }
 
     return Response.json({
       flash: {
         success: true,
-        message: "Berhasil menambahkan Produk",
+        message: resMessage,
       },
     });
   } catch (error) {
@@ -112,17 +132,9 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function AccountPage() {
-  const { detail } = useLoaderData();
+  const { detail, items: currentItems } = useLoaderData();
   const actionData = useActionData();
   const navigate = useNavigate();
-
-  const defItem = {
-    commodity_id: "",
-    commodity_name: "",
-    qty: 0,
-    unit_price: 0,
-    subtotal: 0,
-  };
 
   const defState = {
     code: detail?.code ?? "",
@@ -133,7 +145,9 @@ export default function AccountPage() {
     tax_fee: detail?.tax_fee ?? 0,
     other_fee: detail?.other_fee ?? 0,
   };
-  const [items, setItems] = useState<any[]>([defItem]);
+  // const [items, setItems] = useState<any[]>(
+  //   currentItems?.length > 0 ? currentItems : [defItem]
+  // );
   const [state, setState] = useState<any>(defState);
 
   const loadOptionCommodity = async (search: string) => {
@@ -174,7 +188,31 @@ export default function AccountPage() {
     }
   }, [actionData]);
 
-  // === HITUNG TOTAL ===
+  const defItem = {
+    commodity_id: 0,
+    commodity_name: "",
+    qty: 1,
+    unit_price: 0,
+    subtotal: 0,
+  };
+
+  // ✅ Normalisasi data awal (fix untuk edit mode)
+  const [items, setItems] = useState<any[]>(() => {
+    if (currentItems?.length > 0) {
+      return currentItems.map((it: any) => ({
+        ...defItem,
+        ...it,
+        commodity_id: it.commodity_id,
+        commodity_name: it.commodity_name,
+        unit_price: +it.unit_price || 0,
+        qty: +it.qty || 0,
+        subtotal: (+it.unit_price || 0) * (+it.qty || 0),
+      }));
+    }
+    return [defItem];
+  });
+
+  // ✅ Total otomatis
   const subtotal = items.reduce((a, b) => a + (b.subtotal || 0), 0);
   const discount = state.discount_value || 0;
   const taxPercent = state.tax_fee || 0;
@@ -182,6 +220,51 @@ export default function AccountPage() {
   const afterDiscount = subtotal - discount;
   const tax = (afterDiscount * taxPercent) / 100;
   const total = afterDiscount + tax + extraFee;
+
+  // ✅ Recalculate subtotal per item jika qty/unit_price berubah
+  const handleChange = (index: number, field: string, value: any) => {
+    setItems((prev) =>
+      prev.map((it, i) =>
+        i === index
+          ? {
+              ...it,
+              [field]: value,
+              subtotal:
+                field === "qty" || field === "unit_price"
+                  ? (field === "qty" ? +value : +it.qty) *
+                    (field === "unit_price" ? +value : +it.unit_price)
+                  : it.subtotal,
+            }
+          : it
+      )
+    );
+  };
+
+  // ✅ Tambah item baru
+  const handleAddItem = () => {
+    setItems((prev) => [
+      ...prev,
+      {
+        ...defItem,
+        id: Date.now(),
+      },
+    ]);
+  };
+
+  // ✅ Hapus item
+  const handleRemoveItem = (index: number) => {
+    setItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // ✅ Sinkronisasi hidden field ke form (biar submit aman)
+  useEffect(() => {
+    document
+      .querySelector('input[name="subtotal"]')
+      ?.setAttribute("value", subtotal.toString());
+    document
+      .querySelector('input[name="total"]')
+      ?.setAttribute("value", total.toString());
+  }, [subtotal, total]);
 
   return (
     <div className="space-y-6">
@@ -471,6 +554,7 @@ export default function AccountPage() {
 
         {/* === BUTTON SUBMIT === */}
         <Form method="post" className="flex justify-end pt-4">
+          <input type="hidden" name="id" value={detail?.id} />
           <input type="hidden" name="state" value={JSON.stringify(state)} />
           <input type="hidden" name="items" value={JSON.stringify(items)} />
           <input type="hidden" name="subtotal" value={subtotal} />

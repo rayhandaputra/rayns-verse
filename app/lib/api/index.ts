@@ -8,6 +8,8 @@ import { CommodityAPI } from "./modules/commodity";
 import { CommodityStockAPI } from "./modules/commodity_stock";
 import { InstitutionAPI } from "./modules/institution";
 import { OrderAPI } from "./modules/order";
+import { OrderItemAPI } from "./modules/order_item";
+import { OrderUploadAPI } from "./modules/order_upload";
 import { ProductAPI } from "./modules/product";
 import { ProductCategoryAPI } from "./modules/product_category";
 import { ProductComponentAPI } from "./modules/product_component";
@@ -20,6 +22,8 @@ import { UserAPI } from "./modules/user";
 export const API = {
   USER: UserAPI,
   ORDERS: OrderAPI,
+  ORDER_ITEMS: OrderItemAPI,
+  ORDER_UPLOAD: OrderUploadAPI,
   COMMODITY: CommodityAPI,
   COMMODITY_STOCK: CommodityStockAPI,
   SUPPLIER: SupplierAPI,

@@ -9,17 +9,19 @@ type InvoiceItem = {
 };
 
 type ReceiptProps = {
-  order: {
-    order_number: string;
-    institution_abbr: string;
-    institution_name: string;
-    status: string;
-    total_tax: number;
-    shipping_fee: number;
-    created_by: any;
-    created_on: string;
-  };
-  items: InvoiceItem[];
+  order: any;
+  // order: {
+  //   order_number: string;
+  //   institution_abbr: string;
+  //   institution_name: string;
+  //   status: string;
+  //   total_tax: number;
+  //   shipping_fee: number;
+  //   created_by: any;
+  //   created_on: string;
+  // };
+  // items: InvoiceItem[];
+  items: any[];
   qrCodeUrl?: string;
 };
 
@@ -34,9 +36,9 @@ export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptProps>(
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <img src="/kinau-logo.png" alt="Logo" className="h-10" />
+          <img src="/kinau-logo.png" alt="Logo" className="w-24 h-16" />
           <div className="text-right">
-            <h2 className="text-xl font-bold">{order?.status}</h2>
+            <h2 className="text-xl font-bold capitalize">{order?.status}</h2>
             <p className="text-gray-500 text-sm">
               Order #{order?.order_number} •{" "}
               {moment(order?.created_on).format("DD/MM/YYYY")}{" "}
@@ -71,7 +73,7 @@ export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptProps>(
                 </td>
                 <td className="py-3">{item?.qty ?? 0}</td>
                 <td className="py-3 text-right">
-                  Rp. {toMoney(item?.product_price ?? 0)}
+                  Rp. {toMoney(item?.subtotal ?? 0)}
                 </td>
               </tr>
             ))}
@@ -91,8 +93,7 @@ export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptProps>(
                 Rp.{" "}
                 {toMoney(
                   items?.reduce(
-                    (acc: number, item: any) =>
-                      acc + +(+item?.product_price * +item?.qty),
+                    (acc: number, item: any) => acc + +item?.subtotal,
                     0
                   )
                 )}
@@ -100,7 +101,7 @@ export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptProps>(
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Pajak</span>
-              <span>Rp. {toMoney(order?.total_tax ?? 0)}</span>
+              <span>Rp. {toMoney(order?.tax_value ?? 0)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Ongkir</span>
@@ -108,16 +109,7 @@ export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptProps>(
             </div>
             <div className="flex justify-between border-t pt-2 font-semibold">
               <span>Total</span>
-              <span>
-                Rp.{" "}
-                {items?.reduce(
-                  (acc: number, item: any) =>
-                    acc + +(+item?.product_price * +item?.qty),
-                  0
-                ) -
-                  +(order?.total_tax ?? 0) -
-                  +(order?.shipping_fee ?? 0)}
-              </span>
+              <span>Rp. {toMoney(order?.grand_total)}</span>
             </div>
           </div>
         </div>

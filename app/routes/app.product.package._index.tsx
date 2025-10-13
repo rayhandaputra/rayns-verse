@@ -198,7 +198,7 @@ export default function AccountPage() {
             size="icon"
             className="text-blue-700 hover:text-blue-500"
             onClick={() =>
-              setModal({ ...modal, open: true, key: "update", data: row })
+              navigate(`/app/product/package/manage?id=${row?.id}`)
             }
           >
             <PencilLineIcon className="w-4" />
