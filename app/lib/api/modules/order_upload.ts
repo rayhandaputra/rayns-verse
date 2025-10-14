@@ -87,15 +87,16 @@ export const OrderUploadAPI = {
           "folder_id",
           "order_number",
           "file_type",
-          "file_path",
-          "uploaded_by",
+          "file_url",
+          "file_name",
+          // "uploaded_by",
           "created_on",
         ],
         where,
         search: search
           ? {
               logic: "or",
-              fields: ["file_type", "file_path", "order_number"],
+              fields: ["file_type", "file_url", "file_name", "order_number"],
               keyword: search,
             }
           : undefined,
@@ -120,6 +121,70 @@ export const OrderUploadAPI = {
         total_pages: 0,
         error: err.message,
       };
+    }
+  },
+  create: async ({ req }: any) => {
+    const { folders } = req.body || {};
+
+    if (!folders || !Array.isArray(folders) || folders.length === 0) {
+      return { success: false, message: "Data folder wajib diisi" };
+    }
+
+    try {
+      // Loop tiap folder
+      for (const folder of folders) {
+        const { id, order_number, folder_name, files } = folder;
+
+        if (!order_number || !folder_name) continue; // skip kalau data penting kosong
+
+        const folderData = { order_number, folder_name };
+
+        let folderResult = null;
+
+        // Insert atau update per folder
+        if (!id || id?.toString().includes(`KEY`)) {
+          folderResult = await callApi({
+            action: "insert",
+            table: "order_upload_folders",
+            data: folderData,
+          });
+        } else {
+          folderResult = await callApi({
+            action: "update",
+            table: "order_upload_folders",
+            data: folderData,
+            where: { id },
+          });
+          folderResult = { insert_id: id }; // supaya konsisten di bawah
+        }
+
+        // Jika ada files, masukkan satu per satu
+        if (files && files.length > 0) {
+          const rows = files.map((v: any) => ({
+            code: Math.random().toString(36).substring(2, 10).toUpperCase(), // random 8 char
+            order_number,
+            folder_id: id ?? folderResult.insert_id,
+            file_type: v?.file_type || null,
+            file_url: v?.file_url || null,
+            file_name: v?.file_name || null,
+          }));
+
+          await callApi({
+            action: "bulk_insert",
+            table: "order_upload_files",
+            updateOnDuplicate: true,
+            rows,
+          });
+        }
+      }
+
+      return {
+        success: true,
+        message: "Berhasil menyimpan semua folder dan file",
+      };
+    } catch (err: any) {
+      console.error(err);
+      return { success: false, message: err.message };
     }
   },
 };

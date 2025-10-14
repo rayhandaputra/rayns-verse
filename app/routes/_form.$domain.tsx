@@ -31,8 +31,8 @@ import { toast } from "sonner";
 
 type Folder = {
   id: string;
-  name: string;
-  files: { type: string; url: string }[];
+  folder_name: string;
+  files: { file_type: string; file_url: string; file_name: string }[];
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -66,12 +66,28 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         },
       } as any,
     });
+    const files = await API.ORDER_UPLOAD.get_file({
+      // session,
+      session: {},
+      req: {
+        query: {
+          // pagination: "false",
+          order_number: order?.items?.[0]?.order_number,
+          // page: 0,
+          // size: 1,
+        },
+      } as any,
+    });
 
     return {
       // search,
       // APP_CONFIG: CONFIG,
       order: order?.items?.[0] ?? null,
-      folders: folders?.items ?? [],
+      folders:
+        folders?.items?.map((v: any) => ({
+          ...v,
+          files: files?.items?.filter((j: any) => +j.folder_id === +v?.id),
+        })) ?? [],
     };
   } catch (err) {
     console.log(err);
@@ -81,19 +97,31 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 export const action: ActionFunction = async ({ request }) => {
   const session = await getSession(request.headers.get("Cookie"));
   const formData = await request.formData();
-  let { id, state, items, ...payload } = Object.fromEntries(
+  let { id, state, items, order_number, ...payload } = Object.fromEntries(
     formData.entries()
   ) as Record<string, any>;
 
   try {
     // let resMessage = "";
-    // state = state ? JSON.parse(state) : {};
+    state = state ? JSON.parse(state) : {};
     // items = items ? JSON.parse(items) : {};
+
+    const result = await API.ORDER_UPLOAD.create({
+      session: {},
+      req: {
+        body: {
+          folders: state.map((v: any) => ({
+            ...v,
+            order_number,
+          })),
+        },
+      },
+    });
 
     // if (!id) {
     //   await API.PRODUCT.create({
     //     session: {},
-    //     req: {
+    //     req: {Folder
     //       body: {
     //         ...state,
     //         subtotal: payload?.subtotal,
@@ -139,12 +167,19 @@ export const action: ActionFunction = async ({ request }) => {
 
 export default function UploadPage() {
   const { order, folders: currentFolder } = useLoaderData() || {};
+  console.log(currentFolder);
   const [tab, setTab] = useState<"idcard" | "lanyard">("idcard");
   const [folders, setFolders] = useState<Folder[]>(
     currentFolder.length > 0
       ? currentFolder
-      : [{ id: Date.now().toString(), name: "Umum", files: [] }]
+      : [{ id: `KEY${Date.now().toString()}`, folder_name: "Umum", files: [] }]
   );
+
+  useEffect(() => {
+    if (currentFolder.length > 0) {
+      setFolders(currentFolder);
+    }
+  }, [currentFolder]);
 
   const depanRef = useRef<HTMLInputElement>(null);
   const belakangRef = useRef<HTMLInputElement>(null);
@@ -154,10 +189,6 @@ export default function UploadPage() {
 
   useEffect(() => {
     if (actionData?.flash) {
-      // navigate(`/${order?.institution_domain}`, {
-      //   state: { flash: actionData?.flash },
-      //   replace: true,
-      // });
       toast.success("Berhasil", {
         description: actionData?.flash?.message,
       });
@@ -166,8 +197,8 @@ export default function UploadPage() {
 
   // Fungsi menambah folder baru
   const addFolder = () => {
-    const id = Date.now().toString();
-    setFolders([...folders, { id, name: "Folder Baru", files: [] }]);
+    const id = `KEY${Date.now().toString()}`;
+    setFolders([...folders, { id, folder_name: "Folder Baru", files: [] }]);
   };
 
   // Fungsi hapus folder
@@ -193,8 +224,9 @@ export default function UploadPage() {
           files: [
             ...(tmp[index]?.files || []),
             {
-              type,
-              url: response.url,
+              file_type: type,
+              file_url: response?.url ?? "",
+              file_name: response?.filename ?? "",
             },
           ],
         };
@@ -297,11 +329,13 @@ export default function UploadPage() {
             <div className="mb-3 flex items-center justify-between">
               <Input
                 type="text"
-                value={folder.name}
+                value={folder.folder_name}
                 onChange={(e) =>
                   setFolders(
                     folders.map((f) =>
-                      f.id === folder.id ? { ...f, name: e.target.value } : f
+                      f.id === folder.id
+                        ? { ...f, folder_name: e.target.value }
+                        : f
                     )
                   )
                 }
@@ -333,11 +367,11 @@ export default function UploadPage() {
                   onChange={(e) => handleFileChange(e, "front", folder.id)}
                 />
                 {folder?.files
-                  ?.filter((v) => v?.type === "front")
+                  ?.filter((v) => v?.file_type === "front")
                   ?.map((v, idx) => (
                     <img
                       key={idx}
-                      src={v.url}
+                      src={v.file_url}
                       alt="Preview Depan"
                       className="h-20 w-auto rounded-lg border object-cover"
                     />
@@ -358,11 +392,11 @@ export default function UploadPage() {
                   onChange={(e) => handleFileChange(e, "back", folder.id)}
                 />
                 {folder?.files
-                  ?.filter((v) => v?.type === "back")
+                  ?.filter((v) => v?.file_type === "back")
                   ?.map((v, idx) => (
                     <img
                       key={idx}
-                      src={v.url}
+                      src={v.file_url}
                       alt="Preview Belakang"
                       className="h-20 w-auto rounded-lg border object-cover"
                     />
@@ -386,7 +420,7 @@ export default function UploadPage() {
                 {folder?.files?.map((v, idx) => (
                   <img
                     key={idx}
-                    src={v.url}
+                    src={v.file_url}
                     alt="Preview Lanyard"
                     className="h-20 w-auto rounded-lg border object-cover"
                   />
@@ -412,6 +446,12 @@ export default function UploadPage() {
           //   console.log(folders);
           // }}
         >
+          <input
+            type="hidden"
+            name="order_number"
+            value={order?.order_number}
+          />
+          <input type="hidden" name="state" value={JSON.stringify(folders)} />
           <Button
             type="button"
             variant="outline"
