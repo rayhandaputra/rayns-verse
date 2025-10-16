@@ -31,6 +31,7 @@ import { toast } from "sonner";
 
 type Folder = {
   id: string;
+  deleted?: number;
   folder_name: string;
   files: { file_type: string; file_url: string; file_name: string }[];
 };
@@ -74,7 +75,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
           // pagination: "false",
           order_number: order?.items?.[0]?.order_number,
           // page: 0,
-          // size: 1,
+          size: 100,
         },
       } as any,
     });
@@ -167,7 +168,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 export default function UploadPage() {
   const { order, folders: currentFolder } = useLoaderData() || {};
-  console.log(currentFolder);
+  // console.log(currentFolder);
   const [tab, setTab] = useState<"idcard" | "lanyard">("idcard");
   const [folders, setFolders] = useState<Folder[]>(
     currentFolder.length > 0
@@ -216,7 +217,9 @@ export default function UploadPage() {
       const file = e.target.files[0];
       const response = await API.ASSET.upload(file);
 
-      const index = folders.findIndex((f) => f.id === folderId);
+      const index = folders.findIndex(
+        (f) => f.id?.toString() === folderId?.toString()
+      );
       if (index !== -1) {
         let tmp = [...folders];
         tmp[index] = {
@@ -321,114 +324,126 @@ export default function UploadPage() {
 
       {/* Content */}
       <main className="mx-auto max-w-md space-y-4">
-        {folders.map((folder) => (
-          <div
-            key={folder.id}
-            className="rounded-xl bg-white text-black p-4 shadow-md"
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <Input
-                type="text"
-                value={folder.folder_name}
-                onChange={(e) =>
-                  setFolders(
-                    folders.map((f) =>
-                      f.id === folder.id
-                        ? { ...f, folder_name: e.target.value }
-                        : f
+        {folders
+          ?.filter((v: any) => +v?.deleted !== 1)
+          ?.map((folder: any, folderIdx: number) => (
+            <div
+              key={folder.id}
+              className="rounded-xl bg-white text-black p-4 shadow-md"
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <Input
+                  type="text"
+                  value={folder.folder_name}
+                  onChange={(e) =>
+                    setFolders(
+                      folders.map((f) =>
+                        f.id === folder.id
+                          ? { ...f, folder_name: e.target.value }
+                          : f
+                      )
                     )
-                  )
-                }
-                className="w-2/3 rounded-lg border px-2 py-1 text-sm font-medium"
-              />
-              <button
-                onClick={() => removeFolder(folder.id)}
-                className="rounded-full bg-red-100 p-2 text-red-600 hover:bg-red-200"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-
-            {/* Upload Section */}
-            {tab === "idcard" ? (
-              <div className="flex flex-col gap-2">
-                {/* Upload Depan */}
-                <button
-                  onClick={() => depanRef.current?.click()}
-                  className="flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-sky-700"
-                >
-                  <Upload size={16} /> Upload Depan
-                </button>
-                <input
-                  type="file"
-                  ref={depanRef}
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "front", folder.id)}
+                  }
+                  className="w-2/3 rounded-lg border px-2 py-1 text-sm font-medium"
                 />
-                {folder?.files
-                  ?.filter((v) => v?.file_type === "front")
-                  ?.map((v, idx) => (
-                    <img
-                      key={idx}
-                      src={v.file_url}
-                      alt="Preview Depan"
-                      className="h-20 w-auto rounded-lg border object-cover"
-                    />
-                  ))}
-
-                {/* Upload Belakang */}
                 <button
-                  onClick={() => belakangRef.current?.click()}
-                  className="flex items-center justify-center gap-2 rounded-lg bg-slate-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-slate-700"
+                  onClick={() => {
+                    if (folder?.id?.toString()?.includes("KEY")) {
+                      removeFolder(folder.id);
+                    } else {
+                      let tmp = [
+                        ...folders.filter((v: any) => +v?.deleted !== 1),
+                      ];
+                      tmp[folderIdx].deleted = 1;
+                      setFolders(tmp);
+                    }
+                  }}
+                  className="rounded-full bg-red-100 p-2 text-red-600 hover:bg-red-200"
                 >
-                  <Upload size={16} /> Upload Belakang
+                  <Trash2 size={16} />
                 </button>
-                <input
-                  type="file"
-                  ref={belakangRef}
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "back", folder.id)}
-                />
-                {folder?.files
-                  ?.filter((v) => v?.file_type === "back")
-                  ?.map((v, idx) => (
-                    <img
-                      key={idx}
-                      src={v.file_url}
-                      alt="Preview Belakang"
-                      className="h-20 w-auto rounded-lg border object-cover"
-                    />
-                  ))}
               </div>
-            ) : (
-              <div>
-                <button
-                  onClick={() => lanyardRef.current?.click()}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-sky-700"
-                >
-                  <Upload size={16} /> Upload Lanyard
-                </button>
-                <input
-                  type="file"
-                  ref={lanyardRef}
-                  hidden
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, "lanyard", folder.id)}
-                />
-                {folder?.files?.map((v, idx) => (
-                  <img
-                    key={idx}
-                    src={v.file_url}
-                    alt="Preview Lanyard"
-                    className="h-20 w-auto rounded-lg border object-cover"
+
+              {/* Upload Section */}
+              {tab === "idcard" ? (
+                <div className="flex flex-col gap-2">
+                  {/* Upload Depan */}
+                  <button
+                    onClick={() => depanRef.current?.click()}
+                    className="flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-sky-700"
+                  >
+                    <Upload size={16} /> Upload Depan
+                  </button>
+                  <input
+                    type="file"
+                    ref={depanRef}
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, "front", folder.id)}
                   />
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+                  {folder?.files
+                    ?.filter((v: any) => v?.file_type === "front")
+                    ?.map((v: any, idx: number) => (
+                      <img
+                        key={idx}
+                        src={v.file_url}
+                        alt="Preview Depan"
+                        className="h-20 w-auto rounded-lg border object-cover"
+                      />
+                    ))}
+
+                  {/* Upload Belakang */}
+                  <button
+                    onClick={() => belakangRef.current?.click()}
+                    className="flex items-center justify-center gap-2 rounded-lg bg-slate-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-slate-700"
+                  >
+                    <Upload size={16} /> Upload Belakang
+                  </button>
+                  <input
+                    type="file"
+                    ref={belakangRef}
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, "back", folder.id)}
+                  />
+                  {folder?.files
+                    ?.filter((v: any) => v?.file_type === "back")
+                    ?.map((v: any, idx: number) => (
+                      <img
+                        key={idx}
+                        src={v.file_url}
+                        alt="Preview Belakang"
+                        className="h-20 w-auto rounded-lg border object-cover"
+                      />
+                    ))}
+                </div>
+              ) : (
+                <div>
+                  <button
+                    onClick={() => lanyardRef.current?.click()}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-sky-700"
+                  >
+                    <Upload size={16} /> Upload Lanyard
+                  </button>
+                  <input
+                    type="file"
+                    ref={lanyardRef}
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, "lanyard", folder.id)}
+                  />
+                  {folder?.files?.map((v: any, idx: number) => (
+                    <img
+                      key={idx}
+                      src={v.file_url}
+                      alt="Preview Lanyard"
+                      className="h-20 w-auto rounded-lg border object-cover"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
 
         {/* Tambah Folder */}
         <button

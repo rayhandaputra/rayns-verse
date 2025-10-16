@@ -133,11 +133,15 @@ export const OrderUploadAPI = {
     try {
       // Loop tiap folder
       for (const folder of folders) {
-        const { id, order_number, folder_name, files } = folder;
+        const { id, order_number, folder_name, files, deleted } = folder;
 
         if (!order_number || !folder_name) continue; // skip kalau data penting kosong
 
-        const folderData = { order_number, folder_name };
+        const folderData = {
+          order_number,
+          folder_name,
+          ...(+deleted === 1 && { deleted_on: new Date().toISOString() }),
+        };
 
         let folderResult = null;
 
@@ -157,16 +161,21 @@ export const OrderUploadAPI = {
           });
           folderResult = { insert_id: id }; // supaya konsisten di bawah
         }
+        // console.log(files);
 
         // Jika ada files, masukkan satu per satu
         if (files && files.length > 0) {
           const rows = files.map((v: any) => ({
+            ...(v?.id && { id: v?.id }),
             code: Math.random().toString(36).substring(2, 10).toUpperCase(), // random 8 char
             order_number,
-            folder_id: id ?? folderResult.insert_id,
+            folder_id: folderResult.insert_id,
             file_type: v?.file_type || null,
             file_url: v?.file_url || null,
             file_name: v?.file_name || null,
+            ...((+deleted === 1 || +v?.deleted === 1) && {
+              deleted_on: new Date().toISOString(),
+            }),
           }));
 
           await callApi({

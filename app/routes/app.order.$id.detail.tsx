@@ -57,11 +57,25 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       } as any,
     });
 
+    const files = await API.ORDER_UPLOAD.get_file({
+      // session,
+      session: {},
+      req: {
+        query: {
+          pagination: "true",
+          order_number: detail?.items?.[0]?.order_number,
+          page: 0,
+          size: 100,
+        },
+      } as any,
+    });
+
     return {
       // search,
       // APP_CONFIG: CONFIG,
       detail: detail?.items?.[0] ?? null,
       items: items?.items ?? [],
+      files: files?.items ?? [],
     };
   } catch (err) {
     console.log(err);
@@ -69,7 +83,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 };
 
 export default function DetailOrder() {
-  const { detail: order, items } = useLoaderData();
+  const { detail: order, items, files: order_files } = useLoaderData();
   const navigate = useNavigate();
   const printRef = useRef<HTMLDivElement>(null);
   // const { printElement } = usePrintJS();
@@ -313,7 +327,9 @@ export default function DetailOrder() {
             <FileText className="w-5 h-5 text-blue-600" />
             File Upload dari Member
           </h3>
-          <span className="text-xs text-gray-500">Total file: {[].length}</span>
+          <span className="text-xs text-gray-500">
+            Total file: {order_files.length}
+          </span>
         </div>
 
         <div className="overflow-x-auto">
@@ -330,7 +346,7 @@ export default function DetailOrder() {
               </tr>
             </thead>
             <tbody>
-              {[].map((file: any) => (
+              {order_files.map((file: any) => (
                 <tr key={file?.id} className="border-t hover:bg-gray-50">
                   <td className="py-2 px-3 font-medium">{file?.member_name}</td>
                   <td className="py-2 px-3 text-gray-600">
@@ -360,7 +376,7 @@ export default function DetailOrder() {
                     </span>
                   </td>
                   <td className="py-2 px-3 text-right text-gray-500">
-                    {new Date(file.uploaded_on).toLocaleString("id-ID")}
+                    {new Date(file.created_on).toLocaleString("id-ID")}
                   </td>
                 </tr>
               ))}
