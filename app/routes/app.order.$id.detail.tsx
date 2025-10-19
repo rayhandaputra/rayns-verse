@@ -336,10 +336,10 @@ export default function DetailOrder() {
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-gray-100 text-gray-600 text-left">
-                <th className="py-2 px-3 rounded-l-lg">Nama Member</th>
-                <th className="py-2 px-3">Email</th>
+                {/* <th className="py-2 px-3 rounded-l-lg">Nama Member</th>
+                <th className="py-2 px-3">Email</th> */}
                 <th className="py-2 px-3">File</th>
-                <th className="py-2 px-3 text-center">Status</th>
+                {/* <th className="py-2 px-3 text-center">Status</th> */}
                 <th className="py-2 px-3 text-right rounded-r-lg">
                   Tanggal Upload
                 </th>
@@ -348,10 +348,10 @@ export default function DetailOrder() {
             <tbody>
               {order_files.map((file: any) => (
                 <tr key={file?.id} className="border-t hover:bg-gray-50">
-                  <td className="py-2 px-3 font-medium">{file?.member_name}</td>
+                  {/* <td className="py-2 px-3 font-medium">{file?.member_name}</td>
                   <td className="py-2 px-3 text-gray-600">
                     {file?.member_email}
-                  </td>
+                  </td> */}
                   <td className="py-2 px-3 flex items-center gap-2">
                     <a
                       href={file?.file_url}
@@ -362,7 +362,7 @@ export default function DetailOrder() {
                       {file.original_name || "Lihat File"}
                     </a>
                   </td>
-                  <td className="py-2 px-3 text-center">
+                  {/* <td className="py-2 px-3 text-center">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-semibold ${
                         file.status === "approved"
@@ -374,7 +374,7 @@ export default function DetailOrder() {
                     >
                       {file.status}
                     </span>
-                  </td>
+                  </td> */}
                   <td className="py-2 px-3 text-right text-gray-500">
                     {new Date(file.created_on).toLocaleString("id-ID")}
                   </td>
