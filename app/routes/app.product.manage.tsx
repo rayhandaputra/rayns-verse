@@ -38,7 +38,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       req: {
         query: {
           pagination: "true",
-          id,
+          id: id || "000",
           page: 0,
           size: 10,
         },
@@ -50,7 +50,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       req: {
         query: {
           pagination: "true",
-          product_id: id,
+          product_id: id || "000",
           page: 0,
           size: 10,
         },

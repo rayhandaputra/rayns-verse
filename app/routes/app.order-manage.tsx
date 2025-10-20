@@ -24,7 +24,7 @@ import { API, API_KEY, API_URL } from "~/lib/api";
 import { getSession } from "~/lib/session";
 import AsyncReactSelect from "react-select/async";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { toMoney } from "~/lib/utils";
+import { generateShortId, toMoney } from "~/lib/utils";
 
 // === ACTION ===
 export const action: ActionFunction = async ({ request }) => {
@@ -246,7 +246,7 @@ export default function CreatePesanan() {
                   setState({
                     ...state,
                     institution_abbr: value,
-                    institution_domain: `kinau.id/${value.toLowerCase()}`,
+                    institution_domain: `kinau.id/eforms/${generateShortId(12)}`,
                   });
                 }}
               />
