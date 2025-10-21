@@ -8,6 +8,7 @@ export const OrderAPI = {
       page = 0,
       size = 10,
       search,
+      id,
       institution_id,
       institution_domain,
       status,
@@ -19,6 +20,7 @@ export const OrderAPI = {
 
     const where: any = {};
 
+    if (id) where.id = id;
     if (institution_id) where.institution_id = institution_id;
     if (institution_domain) where.institution_domain = institution_domain;
     if (status) where.status = status;
@@ -101,6 +103,7 @@ export const OrderAPI = {
       institution_id,
       institution_name,
       institution_abbr = null,
+      institution_abbr_id = null,
       institution_domain = null,
       order_type = "package",
       deadline = null,
@@ -203,6 +206,18 @@ export const OrderAPI = {
         table: "orders",
         data: newOrder,
       });
+
+      if (institution_abbr && !institution_abbr_id) {
+        await callApi({
+          action: "insert",
+          table: "institution_domains",
+          data: {
+            domain: institution_abbr,
+            institution_id: institution_id,
+            created_on: new Date().toISOString(),
+          },
+        });
+      }
 
       // 🔹 Insert ke tabel order_items (jika ada)
       if (items && items.length > 0) {

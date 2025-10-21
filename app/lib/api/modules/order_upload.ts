@@ -161,14 +161,13 @@ export const OrderUploadAPI = {
           });
           folderResult = { insert_id: id }; // supaya konsisten di bawah
         }
-        // console.log(files);
 
         // Jika ada files, masukkan satu per satu
         if (files && files.length > 0) {
           const rows = files.map((v: any) => ({
-            ...(v?.id && { id: v?.id }),
-            code: Math.random().toString(36).substring(2, 10).toUpperCase(), // random 8 char
+            ...(v?.id ? { id: v?.id } : { id: null }),
             order_number,
+            code: Math.random().toString(36).substring(2, 10).toUpperCase(), // random 8 char
             folder_id: folderResult.insert_id,
             file_type: v?.file_type || null,
             file_url: v?.file_url || null,

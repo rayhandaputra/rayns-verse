@@ -32,18 +32,20 @@ type Folder = {
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   try {
+    // console.log(params.domain);
     const order = await API.ORDERS.get({
       session: {},
       req: {
         query: {
           pagination: "true",
-          institution_domain: `kinau.id/${params.domain}`,
+          institution_domain: `kinau.id/eforms/${params.domain}`,
           page: 0,
           size: 1,
         },
       } as any,
     });
 
+    // console.log(order?.items?.[0]?.order_number);
     const folders = await API.ORDER_UPLOAD.get_folder({
       session: {},
       req: {
@@ -85,7 +87,7 @@ export const action: ActionFunction = async ({ request }) => {
   try {
     state = state ? JSON.parse(state) : {};
 
-    console.log(state);
+    console.log(state?.[0]?.files);
     await API.ORDER_UPLOAD.create({
       session: {},
       req: {

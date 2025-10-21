@@ -7,9 +7,12 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
+  Form,
+  useActionData,
   useLoaderData,
   useLocation,
   useNavigate,
+  type ActionFunction,
   type LoaderFunction,
 } from "react-router";
 import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
@@ -34,6 +37,8 @@ import { toast } from "sonner";
 import { ReceiptTemplate } from "~/components/print/order/ReceiptTemplate";
 import QRCode from "qrcode";
 import { useModal } from "~/hooks/use-modal";
+import { Modal } from "~/components/modal/Modal";
+import SelectBasic from "~/components/select/SelectBasic";
 // import { useModal } from "~/provider/modal-provider";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -84,9 +89,61 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 };
 
+export const action: ActionFunction = async ({ request }) => {
+  const session = await getSession(request.headers.get("Cookie"));
+  const formData = await request.formData();
+  let { id, state, order_number, action_for, ...payload } = Object.fromEntries(
+    formData.entries()
+  ) as Record<string, any>;
+  let resMessage = "";
+
+  try {
+    if (action_for) {
+      switch (action_for) {
+        case "update_status":
+          // Update status order
+          const resUpdate = await API.ORDERS.update({
+            session,
+            req: {
+              body: {
+                id: id,
+                status: payload.status,
+              },
+            } as any,
+          });
+          if (resUpdate.success) {
+            resMessage = `Status Pesanan berhasil diubah menjadi "${getOrderStatusLabel(
+              payload.status
+            )}"`;
+          } else {
+            resMessage = `Gagal mengubah status Pesanan: ${resUpdate.message}`;
+          }
+          break;
+
+        default:
+          break;
+      }
+    }
+
+    return Response.json({
+      flash: {
+        success: true,
+        message: resMessage,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    return {
+      success: false,
+      error_message: "Terjadi Kesalahan",
+    };
+  }
+};
+
 export default function AppOrder() {
   const { table } = useLoaderData();
   const navigate = useNavigate();
+  const actionData = useActionData();
   const [tabs, setTabs] = useState<any>();
   const location = useLocation();
   const printRef = useRef<HTMLDivElement>(null);
@@ -95,19 +152,12 @@ export default function AppOrder() {
   const [client, setClient] = useState<boolean>(false);
   const [modal, setModal] = useModal();
 
-  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
-
   useEffect(() => {
-    const order_number =
-      modal?.data?.order?.order_number || "ORD-27369677796923678AB";
-    if (order_number) {
-      const qrContent = `https://kinau.id/track/${order_number}`;
-
-      QRCode.toDataURL(qrContent, { width: 200, margin: 1 })
-        .then((url) => setQrCodeUrl(url))
-        .catch((err) => console.error("QR generation failed", err));
+    if (actionData?.flash) {
+      setModal({ ...modal, open: false });
+      toast.success("Berhasil", { description: actionData?.flash?.message });
     }
-  }, [modal?.data?.order]);
+  }, [actionData]);
 
   useEffect(() => {
     setClient(true);
@@ -273,7 +323,7 @@ export default function AppOrder() {
             <EyeIcon className="w-4" />
             Detail
           </Button>
-          <Button
+          {/* <Button
             size="sm"
             className="bg-green-600 hover:bg-green-500 text-white text-xs"
             // onClick={() => handleConfirm(row)}
@@ -281,6 +331,21 @@ export default function AppOrder() {
           >
             <CheckCircle2Icon className="w-4" />
             Konfirmasi
+          </Button> */}
+          <Button
+            size="sm"
+            className="bg-green-600 hover:bg-green-500 text-white text-xs"
+            onClick={() => {
+              setModal({
+                ...modal,
+                open: true,
+                // title: `Ubah Status Pesanan ${row?.order_number}`,
+                key: "order-status-update",
+                data: row,
+              });
+            }}
+          >
+            Ubah Status
           </Button>
         </div>
       ),
@@ -479,6 +544,59 @@ export default function AppOrder() {
           },
         ]}
       />
+
+      {modal?.key === "order-status-update" && modal.open && (
+        <Modal
+          open={modal.open}
+          title={`Ubah Status Pesanan ${modal?.data?.order_number || ""}`}
+          onClose={() => setModal({ ...modal, open: false })}
+        >
+          <Form method="post" className="space-y-3">
+            {/* <p>Form Ubah Status Pesanan di sini</p> */}
+            <SelectBasic
+              options={[
+                { value: "pending", label: "Menunggu Pembayaran" },
+                { value: "ordered", label: "Menunggu Konfirmasi" },
+                { value: "process", label: "Diproses" },
+                { value: "production", label: "Dalam Produksi" },
+                { value: "qc", label: "Quality Check / Siap Dikirim" },
+                { value: "delivered", label: "Dikirim" },
+                { value: "done", label: "Selesai" },
+                { value: "rejected", label: "Dibatalkan / Ditolak" },
+              ]}
+              placeholder="Pilih Status Pesanan"
+              value={modal?.data?.status}
+              onChange={(value) => {
+                setModal({
+                  ...modal,
+                  data: {
+                    ...modal.data,
+                    status: value,
+                  },
+                });
+              }}
+            />
+            <input type="hidden" name="action_for" value={"update_status"} />
+            <input type="hidden" name="id" value={modal?.data?.id} />
+            <input type="hidden" name="status" value={modal?.data?.status} />
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setModal({ ...modal, open: false })}
+              >
+                Batal
+              </Button>
+              <Button
+                type="submit"
+                className="bg-green-700 hover:bg-green-600 text-white"
+              >
+                Simpan
+              </Button>
+            </div>
+          </Form>
+        </Modal>
+      )}
     </div>
   );
 }

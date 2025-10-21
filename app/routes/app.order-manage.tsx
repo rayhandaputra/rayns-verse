@@ -25,6 +25,7 @@ import { getSession } from "~/lib/session";
 import AsyncReactSelect from "react-select/async";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { generateShortId, toMoney } from "~/lib/utils";
+import AsyncCreatableSelect from "react-select/async-creatable";
 
 // === ACTION ===
 export const action: ActionFunction = async ({ request }) => {
@@ -91,6 +92,7 @@ export default function CreatePesanan() {
     institution_id: "",
     institution_name: "",
     institution_abbr: "",
+    institution_abbr_id: "",
     institution_domain: "",
     order_type: "package",
     payment_status: "unpaid",
@@ -138,6 +140,37 @@ export default function CreatePesanan() {
         ...v,
         value: v?.id,
         label: `${v?.abbr ? v?.abbr + " - " : ""}${v?.name}`,
+      }));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const loadOptionDomain = async (search: string) => {
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${API_KEY}`,
+        },
+        body: JSON.stringify({
+          action: "select",
+          table: "institution_domains",
+          columns: ["id", "institution_id", "domain"],
+          where: {
+            deleted_on: "null",
+            institution_id: state?.institution_id || "0000",
+          },
+          search,
+          page: 0,
+          size: 50,
+        }),
+      });
+      const result = await response.json();
+      return result?.items?.map((v: any) => ({
+        ...v,
+        value: v?.id,
+        label: v?.domain,
       }));
     } catch (error) {
       console.log(error);
@@ -235,26 +268,68 @@ export default function CreatePesanan() {
 
             <div className="space-y-1">
               <Label>Singkatan Instansi</Label>
-              <Input
-                type="text"
-                placeholder="Masukkan Singkatan Instansi"
-                value={state?.institution_abbr}
-                onChange={(e) => {
-                  const value = e.target.value
-                    .toUpperCase()
-                    .replace(/\s+/g, "");
+              <AsyncCreatableSelect
+                cacheOptions
+                defaultOptions
+                isClearable
+                placeholder="Cari atau tambahkan singkatan instansi..."
+                loadOptions={loadOptionDomain}
+                value={
+                  state?.institution_abbr
+                    ? {
+                        value: "",
+                        label: state?.institution_abbr,
+                      }
+                    : null
+                }
+                onChange={(val) => {
+                  setState({
+                    ...state,
+                    institution_abbr_id: val?.value,
+                    institution_abbr: val?.label,
+                    institution_domain: `kinau.id/eforms/${generateShortId(12)}`,
+                  });
+                }}
+                onCreateOption={(newValue) => {
+                  const value = newValue.toUpperCase().replace(/\s+/g, "");
                   setState({
                     ...state,
                     institution_abbr: value,
                     institution_domain: `kinau.id/eforms/${generateShortId(12)}`,
                   });
                 }}
+                formatCreateLabel={(inputValue) => {
+                  const newValue = inputValue.toUpperCase().replace(/\s+/g, "");
+                  return (
+                    <span>
+                      Buat singkatan: <strong>{newValue}</strong>
+                    </span>
+                  );
+                }}
+                noOptionsMessage={({ inputValue }) => {
+                  if (!inputValue) {
+                    return (
+                      <div style={{ padding: "8px", color: "#6b7280" }}>
+                        Belum ada singkatan instansi.
+                        <br />
+                        <strong>Ketik</strong> untuk membuat singkatan baru.
+                      </div>
+                    );
+                  }
+                  return (
+                    <div style={{ padding: "8px", color: "#6b7280" }}>
+                      Tidak ditemukan hasil untuk <strong>{inputValue}</strong>.
+                      <br />
+                      Tekan <strong>Enter</strong> untuk membuat singkatan ini.
+                    </div>
+                  );
+                }}
               />
             </div>
           </div>
 
           <div className="space-y-1">
-            <Label>Domain Institusi</Label>
+            <Label>Domain Instansi</Label>
             <Input
               readOnly
               value={state?.institution_domain}
