@@ -85,6 +85,7 @@ export const OrderUploadAPI = {
           "id",
           "code",
           "folder_id",
+          "folder_name",
           "order_number",
           "file_type",
           "file_url",

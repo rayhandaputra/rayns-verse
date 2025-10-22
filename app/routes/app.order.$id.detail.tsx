@@ -338,6 +338,7 @@ export default function DetailOrder() {
               <tr className="bg-gray-100 text-gray-600 text-left">
                 {/* <th className="py-2 px-3 rounded-l-lg">Nama Member</th>
                 <th className="py-2 px-3">Email</th> */}
+                <th className="py-2 px-3">Nama Folder</th>
                 <th className="py-2 px-3">File</th>
                 {/* <th className="py-2 px-3 text-center">Status</th> */}
                 <th className="py-2 px-3 text-right rounded-r-lg">
@@ -352,6 +353,7 @@ export default function DetailOrder() {
                   <td className="py-2 px-3 text-gray-600">
                     {file?.member_email}
                   </td> */}
+                  <td className="py-2 px-3">{file?.folder_name ?? "-"}</td>
                   <td className="py-2 px-3 flex items-center gap-2">
                     <a
                       href={file?.file_url}
