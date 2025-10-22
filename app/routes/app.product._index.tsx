@@ -23,6 +23,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { useModal } from "~/hooks/use-modal";
 import { API } from "../lib/api";
+import { toMoney } from "~/lib/utils";
 // import { API } from "~/lib/api";
 // import { API } from "~/lib/api";
 
@@ -32,7 +33,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     url.searchParams.entries()
   );
   try {
-    const supplier = await API.PRODUCT.get({
+    const product = await API.PRODUCT.get({
       // session,
       session: {},
       req: {
@@ -44,12 +45,13 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         },
       } as any,
     });
+    // console.log(product?.items?.[0]);
 
     return {
       // search,
       // APP_CONFIG: CONFIG,
       table: {
-        ...supplier,
+        ...product,
         page: 0,
         size: 10,
       },
@@ -186,12 +188,41 @@ export default function AccountPage() {
       cell: (_: any, index: number) => index + 1,
     },
     {
+      name: "Kode",
+      cell: (row: any) => row?.name || "-",
+    },
+    {
       name: "Nama",
       cell: (row: any) => row?.name || "-",
     },
     {
-      name: "Jenis",
-      cell: (row: any) => row?.type || "-",
+      name: "Biaya & Potongan",
+      cell: (row: any) => (
+        <div className="flex flex-col gap-1">
+          <div className="flex justify-between gap-2">
+            <p className="text-[0.675rem] text-gray-600">Diskon</p>
+            <p className="text-[0.675rem] font-medium">
+              Rp{toMoney(row?.discount_value)}
+            </p>
+          </div>
+          <div className="flex justify-between gap-2">
+            <p className="text-[0.675rem] text-gray-600">Pajak</p>
+            <p className="text-[0.675rem] font-medium">
+              Rp{toMoney(row?.tax_fee)}
+            </p>
+          </div>
+          <div className="flex justify-between gap-2">
+            <p className="text-[0.675rem] text-gray-600">Lainnya</p>
+            <p className="text-[0.675rem] font-medium">
+              Rp{toMoney(row?.other_fee)}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      name: "Harga",
+      cell: (row: any) => `Rp ${toMoney(row?.total_price || 0)}`,
     },
     {
       name: "Deskripsi",
