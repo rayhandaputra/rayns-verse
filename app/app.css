@@ -8,11 +8,18 @@
 
 html,
 body {
-  @apply bg-white dark:bg-gray-950;
+  /* @apply bg-white dark:bg-gray-950; */
+  background-color: rgb(var(--tw-color-gray-100));
 
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
+  .layout {
+    /* 480px */
+    max-width: 30rem;
+    @apply mx-auto;
   }
+
+  /* @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+  } */
 }
 
 /* @import "tailwindcss";

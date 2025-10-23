@@ -59,12 +59,12 @@ export function AppBreadcrumb({
             <React.Fragment key={index}>
               <BreadcrumbItem>
                 {page.active ? (
-                  <BreadcrumbPage className="text-blue-800">
+                  <BreadcrumbPage>
                     {isFirst && <Home className="mr-3 h-4 w-4 inline" />}
                     {page.label}
                   </BreadcrumbPage>
                 ) : page.href ? (
-                  <BreadcrumbLink href={page.href}>
+                  <BreadcrumbLink href={page.href} className="text-blue-800">
                     {isFirst && <Home className="mr-3 h-4 w-4 inline" />}
                     {page.label}
                   </BreadcrumbLink>
