@@ -116,7 +116,7 @@ export default function SectionImageFolder({
                 {/* Trash icon di kanan atas */}
                 <button
                   onClick={() => file.onRemove?.(file.id)}
-                  className="absolute top-1 right-1 bg-black/40 hover:bg-black/60 text-white p-1 rounded-full"
+                  className="absolute top-1 right-1 bg-black/40 hover:bg-black/60 text-white p-1 rounded-full cursor-pointer backdrop-blur-sm"
                 >
                   <Trash2Icon className="w-3 h-3" />
                 </button>

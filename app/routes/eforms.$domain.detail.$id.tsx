@@ -44,7 +44,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       req: {
         query: {
           pagination: "true",
-          order_number: order?.items?.[0]?.order_number,
+          id: params.id,
+          // order_number: order?.items?.[0]?.order_number,
           page: 0,
           size: 50,
         },
@@ -71,7 +72,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
     return {
       order: order?.items?.[0] ?? null,
-      order_items: order_items?.items ?? [],
+      detail: order_items?.items?.[0] ?? null,
       folders:
         folders?.items?.map((v: any) => ({
           ...v,
@@ -86,20 +87,22 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 export const action: ActionFunction = async ({ request }) => {
   const session = await getSession(request.headers.get("Cookie"));
   const formData = await request.formData();
-  let { id, state, order_number, ...payload } = Object.fromEntries(
+  let { id, state, detail, order_number, ...payload } = Object.fromEntries(
     formData.entries()
   ) as Record<string, any>;
 
   try {
     state = state ? JSON.parse(state) : {};
+    detail = detail ? JSON.parse(detail) : {};
 
-    console.log(state?.[0]?.files);
     await API.ORDER_UPLOAD.create({
       session: {},
       req: {
         body: {
           folders: state.map((v: any) => ({
             ...v,
+            product_id: detail?.product_id,
+            product_name: detail?.product_name,
             order_number,
           })),
         },
@@ -129,10 +132,9 @@ type Folder = {
 };
 
 const EFormDomainPage: React.FC = () => {
-  const { order, order_items, folders: currentFolder } = useLoaderData();
+  const { order, detail, folders: currentFolder } = useLoaderData();
   const actionData = useActionData();
   const navigate = useNavigate();
-  // console.log(folders);
 
   const [folders, setFolders] = useState<Folder[]>(
     currentFolder.length > 0
@@ -198,8 +200,6 @@ const EFormDomainPage: React.FC = () => {
 
     const type = lastUploadType.current[folderId];
 
-    console.log(type);
-
     // set loading aktif
     setUploading((prev) => ({
       ...prev,
@@ -217,13 +217,13 @@ const EFormDomainPage: React.FC = () => {
       if (index !== -1) {
         let tmp = [...folders];
 
-        console.log(tmp[index]);
         tmp[index] = {
           ...tmp[index],
           files: [
             // ...tmp[index]?.files.filter((x) => x.file_type !== type),
             ...tmp[index]?.files.filter((x) => x.file_type !== type),
             {
+              // product_id:
               file_type: type as any,
               // file_type: "front",
               file_url: response.url,
@@ -263,32 +263,6 @@ const EFormDomainPage: React.FC = () => {
     lastUploadType.current[folderId] = type;
     if (input) input.click();
   };
-
-  if (!order) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-sky-100 to-sky-300 text-center px-6">
-        <img
-          src="/kinau-logo.png"
-          alt="Kinau"
-          className="mb-6 h-12 opacity-80"
-        />
-        <h1 className="text-2xl font-bold text-sky-900 mb-2">
-          Halaman Tidak Ditemukan
-        </h1>
-        <p className="text-slate-700 max-w-md mb-6">
-          Maaf, pesanan tidak ditemukan. Silakan buat pesanan terlebih dahulu.
-        </p>
-        <a
-          href="https://wa.me/6285219337474?text=Halo%20Admin%2C%20saya%20ingin%20membuat%20pesanan%20baru."
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 rounded-full bg-green-500 px-5 py-2 text-white font-medium shadow-md hover:bg-green-600"
-        >
-          <MessageCircle size={18} /> Hubungi Admin
-        </a>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -395,6 +369,7 @@ const EFormDomainPage: React.FC = () => {
       >
         <input type="hidden" name="order_number" value={order?.order_number} />
         <input type="hidden" name="state" value={JSON.stringify(folders)} />
+        <input type="hidden" name="detail" value={JSON.stringify(detail)} />
         <Button
           type="button"
           variant="outline"

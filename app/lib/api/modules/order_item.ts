@@ -8,6 +8,7 @@ export const OrderItemAPI = {
       page = 0,
       size = 10,
       search,
+      id,
       order_number,
       product_type,
     } = req.query || {};
@@ -18,6 +19,7 @@ export const OrderItemAPI = {
 
     // Filter by order_number
     if (order_number) where.order_number = order_number;
+    if (id) where.id = id;
 
     // Optional filter
     if (product_type) where.product_type = product_type;
