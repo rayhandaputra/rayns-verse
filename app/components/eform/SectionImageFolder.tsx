@@ -1,4 +1,10 @@
-import { Loader2, Trash2Icon, UploadCloudIcon, UploadIcon } from "lucide-react";
+import { Loader2, Trash2Icon, UploadCloudIcon } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 export default function SectionImageFolder({
   title,
@@ -14,7 +20,7 @@ export default function SectionImageFolder({
   onChangeTitle: (newTitle: string) => void;
   files?: any[];
   onRemove?: () => void;
-  onUpload: () => void;
+  onUpload: (key: string) => void;
   isLoading?: boolean;
 }) {
   return (
@@ -40,16 +46,28 @@ export default function SectionImageFolder({
                 )}
               </div>
             </div>
-            <div className="flex gap-4">
+            <div className="flex items-center gap-4">
               {isLoading ? (
-                <>
-                  <Loader2 className="animate-spin w-4 h-4" /> Uploading...
-                </>
+                <Loader2 className="animate-spin w-4 h-4" />
               ) : (
-                <UploadCloudIcon
-                  onClick={onUpload}
-                  className="w-6 text-lg text-gray-500 cursor-pointer"
-                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex ring-1 ring-gray-50 items-center gap-2">
+                      <UploadCloudIcon className="w-6 text-lg text-gray-500 cursor-pointer" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="bg-white w-44 text-gray-700 border-0"
+                  >
+                    <DropdownMenuItem onClick={() => onUpload("front")}>
+                      Cover Depan
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onUpload("back")}>
+                      Cover Belakang
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
 
               <Trash2Icon
@@ -75,11 +93,34 @@ export default function SectionImageFolder({
             </>
           ) : (
             files?.map((file: any, index: number) => (
-              <img
-                src={file.src}
-                alt={file.alt ?? `Imange ${index + 1}`}
-                className="w-1/2 rounded-xl object-cover border border-gray-200"
-              />
+              // <img
+              //   src={file.src}
+              //   alt={file.alt ?? `Imange ${index + 1}`}
+              //   className="w-1/2 rounded-xl object-cover border border-gray-200"
+              // />
+              <div
+                key={file.id ?? index}
+                className="relative w-1/2 rounded-xl overflow-hidden"
+              >
+                <img
+                  src={file.src}
+                  alt={file.alt ?? `Image ${index + 1}`}
+                  className="w-full h-full object-cover border border-gray-200 rounded-xl"
+                />
+
+                {/* Label di kiri atas */}
+                <span className="absolute top-1 left-1 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-md backdrop-blur-sm">
+                  {file.label ?? `Image ${index + 1}`}
+                </span>
+
+                {/* Trash icon di kanan atas */}
+                <button
+                  onClick={() => file.onRemove?.(file.id)}
+                  className="absolute top-1 right-1 bg-black/40 hover:bg-black/60 text-white p-1 rounded-full"
+                >
+                  <Trash2Icon className="w-3 h-3" />
+                </button>
+              </div>
             ))
           )}
         </div>

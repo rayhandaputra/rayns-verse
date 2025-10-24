@@ -156,6 +156,9 @@ const EFormDomainPage: React.FC = () => {
       }
     >
   >({});
+  const lastUploadType = useRef<
+    Record<string, "front" | "back" | "lanyard" | null>
+  >({});
 
   useEffect(() => {
     if (currentFolder.length > 0) {
@@ -187,16 +190,21 @@ const EFormDomainPage: React.FC = () => {
   // 🔹 fungsi upload file dengan loading
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "front" | "back" | "lanyard",
+    // type: "front" | "back" | "lanyard",
     folderId: string
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const type = lastUploadType.current[folderId];
+
+    console.log(type);
+
     // set loading aktif
     setUploading((prev) => ({
       ...prev,
-      [folderId]: { ...prev[folderId], [type]: true },
+      // [folderId]: { ...prev[folderId], [type]: true },
+      [folderId]: { ...prev[folderId] },
     }));
 
     try {
@@ -208,12 +216,16 @@ const EFormDomainPage: React.FC = () => {
 
       if (index !== -1) {
         let tmp = [...folders];
+
+        console.log(tmp[index]);
         tmp[index] = {
           ...tmp[index],
           files: [
+            // ...tmp[index]?.files.filter((x) => x.file_type !== type),
             ...tmp[index]?.files.filter((x) => x.file_type !== type),
             {
-              file_type: type,
+              file_type: type as any,
+              // file_type: "front",
               file_url: response.url,
               file_name: file.name,
             },
@@ -229,7 +241,8 @@ const EFormDomainPage: React.FC = () => {
       // set loading selesai
       setUploading((prev) => ({
         ...prev,
-        [folderId]: { ...prev[folderId], [type]: false },
+        // [folderId]: { ...prev[folderId], [type]: false },
+        [folderId]: { ...prev[folderId] },
       }));
     }
   };
@@ -244,7 +257,10 @@ const EFormDomainPage: React.FC = () => {
     folderId: string,
     type: "front" | "back" | "lanyard"
   ) => {
-    const input = fileRefs.current?.[folderId]?.[type];
+    // console.log(type);
+    const input: any = fileRefs.current?.[folderId];
+    // console.log(fileRefs.current);
+    lastUploadType.current[folderId] = type;
     if (input) input.click();
   };
 
@@ -293,48 +309,68 @@ const EFormDomainPage: React.FC = () => {
         {folders
           .filter((v) => +(v?.deleted ?? 0) !== 1)
           .map((folder: any) => {
-            const isLoading = (uploading[folder.id] as any)?.[folder?.type];
+            // const isLoading = (uploading[folder.id] as any)?.[folder?.type];
+            // const isLoading = uploading[folder.id] as any;
 
             return (
-              <>
+              <React.Fragment key={folder.id}>
                 <SectionImageFolder
                   key={folder.id}
                   title={folder.folder_name}
                   description="Klik untuk mengubah nama folder"
                   onChangeTitle={(newTitle: string) => {
-                    // console.log("Change title to:", newTitle);
                     setFolders(
                       folders.map((f) =>
                         f.id === folder.id ? { ...f, folder_name: newTitle } : f
                       )
                     );
                   }}
-                  files={folder.files.map((file: any) => ({
+                  files={folder.files.map((file: any, index: number) => ({
                     id: file.id,
                     src: file.file_url,
                     alt: file.file_name,
+                    label:
+                      file.file_type === "front"
+                        ? "Cover Depan"
+                        : "Cover Belakang",
+                    onRemove: (id: number) => {
+                      setFolders(
+                        folders.map((f) => {
+                          if (f.id === folder.id) {
+                            return {
+                              ...f,
+                              files: f.files.filter(
+                                (fi: any, idx: number) => +idx !== +index
+                              ),
+                            };
+                          }
+                          return f;
+                        })
+                      );
+                    },
                   }))}
                   onRemove={() => removeFolder(folder.id)}
-                  isLoading={isLoading}
-                  onUpload={() => triggerInput(folder.id, folder.type)}
+                  // isLoading={isLoading}
+                  onUpload={(key) => triggerInput(folder.id, key as any)}
                 />
                 <input
                   type="file"
                   hidden
                   accept="image/*"
                   ref={(el) => {
-                    if (!fileRefs.current[folder.id]) {
-                      fileRefs.current[folder.id] = {
-                        front: null,
-                        back: null,
-                        lanyard: null,
-                      };
-                    }
-                    (fileRefs.current[folder.id] as any)[folder?.type] = el;
+                    // if (!fileRefs.current[folder.id]) {
+                    //   fileRefs.current[folder.id] = {
+                    //     front: null,
+                    //     back: null,
+                    //     lanyard: null,
+                    //   };
+                    // }
+                    // (fileRefs.current[folder.id] as any)[folder?.type] = el;
+                    (fileRefs.current[folder.id] as any) = el;
                   }}
-                  onChange={(e) => handleFileChange(e, folder?.type, folder.id)}
+                  onChange={(e) => handleFileChange(e, folder.id)}
                 />
-              </>
+              </React.Fragment>
             );
           })}
       </section>

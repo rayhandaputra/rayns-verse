@@ -15,7 +15,9 @@ export default function CardFolder({
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-16">
-        <span className="text-yellow-400">📁</span>
+        <div className="bg-yellow-100 px-1.5 py-1 rounded-full">
+          <span className="text-yellow-400 text-3xl">📁</span>
+        </div>
         <MoreVertical className="w-4 h-4 text-gray-400 cursor-pointer" />
       </div>
       <div>
