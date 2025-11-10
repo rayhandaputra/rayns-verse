@@ -4,12 +4,15 @@ export * from "./core/helpers";
 export * from "./core/types";
 
 import { AssetAPI } from "./modules/asset";
+import { CmsContentAPI } from "./modules/cms_content";
 import { CommodityAPI } from "./modules/commodity";
 import { CommodityStockAPI } from "./modules/commodity_stock";
+import { DiscountAPI } from "./modules/discount_codes";
 import { InstitutionAPI } from "./modules/institution";
 import { OrderAPI } from "./modules/order";
 import { OrderItemAPI } from "./modules/order_item";
 import { OrderUploadAPI } from "./modules/order_upload";
+import { OverviewAPI } from "./modules/overview";
 import { ProductAPI } from "./modules/product";
 import { ProductCategoryAPI } from "./modules/product_category";
 import { ProductComponentAPI } from "./modules/product_component";
@@ -34,4 +37,7 @@ export const API = {
   PRODUCT_COMPONENT: ProductComponentAPI,
   PRODUCT_CATEGORY: ProductCategoryAPI,
   PRODUCT_PACKAGE_ITEM: ProductPackageItemsAPI,
+  CMS_CONTENT: CmsContentAPI,
+  OVERVIEW: OverviewAPI,
+  DISCOUNT: DiscountAPI,
 };

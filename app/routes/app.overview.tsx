@@ -4,20 +4,83 @@
 import React, { useEffect, useState } from "react";
 import type { ApexOptions } from "apexcharts";
 import ChartLazy from "~/components/Chart/ChartLazy";
+import { useLoaderData, type LoaderFunction } from "react-router";
+import { getSession } from "~/lib/session";
+import { API } from "~/lib/api";
+import { getOrderStatusLabel, toMoney } from "~/lib/utils";
 
 // const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
+export const loader: LoaderFunction = async ({ request, params }) => {
+  const session = await getSession();
+  let url = new URL(request.url);
+  let { search, page = 0, size = 10 } = Object.fromEntries(url.searchParams);
+
+  try {
+    const filters = {
+      pagination: "true",
+      page: page || 0,
+      size: size || 10,
+      status: params.status || "",
+    };
+    const overview = await API.OVERVIEW.get({
+      session,
+      req: {
+        query: filters,
+      } as any,
+    });
+    const orders = await API.ORDERS.get({
+      session,
+      req: {
+        query: {
+          pagination: "true",
+          page: page || 0,
+          size: size || 3,
+        },
+      } as any,
+    });
+
+    return {
+      overview,
+      orders: orders?.items
+    };
+  } catch (err) {
+    console.log(err);
+    return {
+      error_message: err,
+    };
+  }
+};
+
 export default function DashboardOverview() {
+  const {overview, orders} = useLoaderData()
+  
+  const rawData: any[] = overview?.monthly_report ?? [];
+
+  const monthNames = [
+    "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+    "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
+  ];
+
+  const months = rawData.map((v) => monthNames[Number(v.month) - 1]);
+  const totals = rawData.map((v) => Number(v.total_sales));
+
   const orderChart = {
-    series: [{ name: "Pesanan", data: [40, 55, 60, 70, 90, 120, 150] }],
+    series: [
+      {
+        name: "Pesanan",
+        data: totals,
+      },
+    ],
     options: {
       chart: { type: "area", height: 300, toolbar: { show: false } },
-      xaxis: { categories: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul"] },
+      xaxis: { categories: months },
       stroke: { curve: "smooth" },
       dataLabels: { enabled: false },
       colors: ["#3b82f6"],
     },
   };
+
 
   const basisChart = {
     series: [
@@ -48,20 +111,20 @@ export default function DashboardOverview() {
       {/* Statistik Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl p-4 shadow">
-          <h2 className="text-sm text-gray-500">Total Pesanan</h2>
-          <p className="text-2xl font-bold">320</p>
+          <h2 className="text-sm text-gray-500">Total Pesanan Masuk</h2>
+          <p className="text-2xl font-bold">{overview?.total_order_pending}</p>
         </div>
         <div className="bg-white rounded-2xl p-4 shadow">
           <h2 className="text-sm text-gray-500">Sedang Diproduksi</h2>
-          <p className="text-2xl font-bold">85</p>
+          <p className="text-2xl font-bold">{overview?.total_order_process}</p>
         </div>
         <div className="bg-white rounded-2xl p-4 shadow">
           <h2 className="text-sm text-gray-500">Selesai Bulan Ini</h2>
-          <p className="text-2xl font-bold">120</p>
+          <p className="text-2xl font-bold">{overview?.total_order_done}</p>
         </div>
         <div className="bg-white rounded-2xl p-4 shadow">
           <h2 className="text-sm text-gray-500">Pendapatan</h2>
-          <p className="text-2xl font-bold">Rp 25.000.000</p>
+          <p className="text-2xl font-bold">Rp {toMoney(overview?.total_revenue)}</p>
         </div>
       </div>
 
@@ -75,7 +138,7 @@ export default function DashboardOverview() {
             type="area"
           />
         </div>
-        <div className="bg-white rounded-2xl p-4 shadow">
+        {/* <div className="bg-white rounded-2xl p-4 shadow">
           <h2 className="text-lg font-semibold mb-4">Akrual vs Cash Basis</h2>
           <ChartLazy
             options={basisChart.options}
@@ -83,7 +146,7 @@ export default function DashboardOverview() {
             type="bar"
             horizontal
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Tabel Pesanan Terbaru */}
@@ -92,25 +155,22 @@ export default function DashboardOverview() {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-gray-500 border-b">
-              <th className="py-2">Nama Klien</th>
-              <th className="py-2">Produk</th>
+              <th className="py-2">Instansi</th>
+              <th className="py-2">No Order</th>
               <th className="py-2">Jumlah</th>
               <th className="py-2">Status</th>
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b">
-              <td className="py-2">PT ABC</td>
-              <td className="py-2">ID Card Premium</td>
-              <td className="py-2">150</td>
-              <td className="py-2 text-green-600">Selesai</td>
-            </tr>
-            <tr>
-              <td className="py-2">CV XYZ</td>
-              <td className="py-2">Lanyard</td>
-              <td className="py-2">200</td>
-              <td className="py-2 text-yellow-600">Proses</td>
-            </tr>
+            {orders?.map((order: any, index: number) => (
+              <tr key={index} className="border-b">
+                <td className="py-2">{order?.institution_name}</td>
+                <td className="py-2">{order?.order_number}</td>
+                <td className="py-2">{order?.total_product}</td>
+                <td className={`py-2 ${order?.status === "done" ? "text-green-600" : "text-orange-600"}`}>{getOrderStatusLabel(order?.status)}</td>
+              </tr>
+            ))}
+            
           </tbody>
         </table>
       </div>

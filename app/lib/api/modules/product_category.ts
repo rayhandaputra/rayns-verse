@@ -1,98 +1,100 @@
-import { callApi } from "../core/callApi";
-import { CONFIG } from "~/config";
+import { APIProvider } from "../client";
 
 export const ProductCategoryAPI = {
-    get: async ({
-      session,
-      req,
-    }: {
-      session: any;
-      req: { query?: any; body?: any; header?: any };
-    }) => {
-      const {
-        pagination = "true",
-        page = 0,
-        size = 10,
-        search,
-        email,
-      } = req.query || {};
+  // === GET / LIST ===
+  get: async ({ req }: any) => {
+    const {
+      page = 0,
+      size = 10,
+      search
+    } = req.query || {};
 
-      const res = await fetch(CONFIG.apiBaseUrl.server_api_url, {
+    try {
+      return await APIProvider({
+        endpoint: "select",
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer REPLACE_WITH_STRONG_KEY",
-        },
-        body: JSON.stringify({
-          action: "select",
-          table: "product_categories",
-          columns: ["id", "name", "decsription"],
+        table: "product_categories",
+        action: "select",
+        body: {
+          columns: ["id", "name", "description"],
           where: { deleted_on: "null" },
-          search,
-          page,
-          size,
-        }),
+          search: search || null,
+          page: Number(page),
+          size: Number(size)
+        }
       });
-      const result = await res.json();
-      return result;
-    },
-    create: async ({ req }: any) => {
-      const { name, phone, address } = req.body || {};
+    } catch (err: any) {
+      console.error("ProductCategoryAPI.get ERROR:", err);
+      return { success: false, message: err.message };
+    }
+  },
 
-      if (!name || !phone) {
-        return { success: false, message: "Nama dan Telepon wajib diisi" };
-      }
+  // === CREATE ===
+  create: async ({ req }: any) => {
+    const { name, description } = req.body || {};
 
-      const newCommodity = {
-        phone,
-        name,
-        address,
+    if (!name) {
+      return { success: false, message: "Nama kategori wajib diisi" };
+    }
+
+    const newCategory = {
+      name,
+      description: description || null
+    };
+
+    try {
+      const result = await APIProvider({
+        endpoint: "insert",
+        method: "POST",
+        table: "product_categories",
+        action: "insert",
+        body: { data: newCategory }
+      });
+
+      return {
+        success: true,
+        message: "Kategori produk berhasil dibuat",
+        category: { id: result.insert_id, ...newCategory }
       };
+    } catch (err: any) {
+      console.error("ProductCategoryAPI.create ERROR:", err);
+      return { success: false, message: err.message };
+    }
+  },
 
-      try {
-        const result = await callApi({
-          action: "insert",
-          table: "product_categories",
-          data: newCommodity,
-        });
+  // === UPDATE ===
+  update: async ({ req }: any) => {
+    const { id, ...fields } = req.body || {};
 
-        return {
-          success: true,
-          message: "Produk berhasil ditambahkan",
-          user: { id: result.insert_id, ...newCommodity },
-        };
-      } catch (err: any) {
-        console.log(err);
-        return { success: false, message: err.message };
-      }
-    },
-    update: async ({ req }: any) => {
-      const { id, ...fields } = req.body || {};
+    if (!id) {
+      return { success: false, message: "ID wajib diisi" };
+    }
 
-      if (!id) {
-        return { success: false, message: "ID wajib diisi" };
-      }
+    const updatedData = {
+      ...fields,
+      modified_on: new Date().toISOString()
+    };
 
-      const updatedData: Record<string, any> = {
-        ...fields,
-        modified_on: new Date().toISOString(),
-      };
-
-      try {
-        const result = await callApi({
-          action: "update",
-          table: "product_categories",
+    try {
+      const result = await APIProvider({
+        endpoint: "update",
+        method: "POST",
+        table: "product_categories",
+        action: "update",
+        body: {
           data: updatedData,
-          where: { id },
-        });
+          where: { id }
+        }
+      });
 
-        return {
-          success: true,
-          message: "Produk berhasil diperbarui",
-          affected: result.affected_rows,
-        };
-      } catch (err: any) {
-        return { success: false, message: err.message };
-      }
-    },
+      return {
+        success: true,
+        message: "Kategori produk berhasil diperbarui",
+        affected: result.affected_rows
+      };
+    } catch (err: any) {
+      console.error("ProductCategoryAPI.update ERROR:", err);
+      return { success: false, message: err.message };
+    }
   }
+};

@@ -36,7 +36,7 @@ export default function RootLayout({
             <div className="flex-1 flex flex-col bg-white md:pl-[256px] pt-[64px] overflow-x-hidden">
               <Topbar sidebar={{ mobileMenuOpen, setMobileMenuOpen }} />
               <main
-                className="overflow-y-auto bg-gray-50 text-gray-600 rounded-tl-3xl py-2 px-4"
+                className="overflow-y-auto bg-gray-50 text-gray-600 rounded-tl-3xl py-4 px-6"
                 style={{ height: "calc(100vh - 64px)" }}
               >
                 {children}

@@ -125,7 +125,7 @@ export default function DetailOrder() {
         breadcrumb={
           <AppBreadcrumb
             pages={[
-              { label: "Pesanan", href: "/app/order/pending" },
+              { label: "Pesanan", href: "/app/order/ordered" },
               { label: "Detail Pesanan", active: true },
             ]}
           />
@@ -133,7 +133,7 @@ export default function DetailOrder() {
         actions={
           <Button
             className="text-blue-700"
-            onClick={() => navigate("/app/order/pending")}
+            onClick={() => navigate("/app/order/ordered")}
             variant="outline"
           >
             <ChevronLeft className="w-4" />
@@ -151,7 +151,7 @@ export default function DetailOrder() {
               className={`${
                 order?.status === "done"
                   ? "bg-green-700"
-                  : order?.status === "pending"
+                  : order?.status === "ordered"
                     ? "bg-yellow-600"
                     : "bg-gray-600"
               }`}

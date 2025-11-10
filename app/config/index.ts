@@ -2,7 +2,7 @@ export const CONFIG = {
   //   env: process.env.NODE_ENV || "development",
   env: "development",
   port: 3000,
-  sessionSecret: "super-secret-key-change-this",
+  sessionSecret: "REPLACE_WITH_STRONG_KEY", // "super-secret-key-change-this"
   apiBaseUrl: {
     server_api_url: "https://data.kinau.id/api/",
   },

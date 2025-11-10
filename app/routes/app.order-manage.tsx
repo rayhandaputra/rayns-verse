@@ -81,7 +81,7 @@ export default function CreatePesanan() {
 
   useEffect(() => {
     if (actionData?.flash) {
-      navigate("/app/order/pending", {
+      navigate("/app/order/ordered", {
         state: { flash: actionData?.flash },
         replace: true,
       });
@@ -215,7 +215,7 @@ export default function CreatePesanan() {
         breadcrumb={
           <AppBreadcrumb
             pages={[
-              { label: "Pesanan", href: "/app/order/pending" },
+              { label: "Pesanan", href: "/app/order/ordered" },
               { label: "Form Pesanan", active: true },
             ]}
           />
@@ -223,7 +223,7 @@ export default function CreatePesanan() {
         actions={
           <Button
             className="text-blue-700"
-            onClick={() => navigate("/app/order/pending")}
+            onClick={() => navigate("/app/order/ordered")}
             variant="outline"
           >
             <ChevronLeft className="w-4" />

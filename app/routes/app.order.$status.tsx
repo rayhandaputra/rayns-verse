@@ -172,46 +172,46 @@ export default function AppOrder() {
 
   useEffect(() => {
     setTabs([
+      // {
+      //   name: "Menunggu Pembayaran",
+      //   href: "/app/order/pending",
+      //   current: location.pathname === "/app/order/pending",
+      // },
       {
-        name: "Menunggu Pembayaran",
-        href: "/app/order/pending",
-        current: location.pathname === "/app/order/pending",
-      },
-      {
-        name: "Menunggu Konfirmasi",
+        name: "Masuk",
         href: "/app/order/ordered",
         current: location.pathname === "/app/order/ordered",
       },
       {
-        name: "Diproses",
+        name: "Proses",
         href: "/app/order/process",
         current: location.pathname === "/app/order/process",
       },
-      {
-        name: "Dalam Produksi",
-        href: "/app/order/production",
-        current: location.pathname === "/app/order/production",
-      },
-      {
-        name: "Quality Check / Siap Dikirim",
-        href: "/app/order/qc",
-        current: location.pathname === "/app/order/qc",
-      },
-      {
-        name: "Dikirim",
-        href: "/app/order/delivered",
-        current: location.pathname === "/app/order/delivered",
-      },
+      // {
+      //   name: "Dalam Produksi",
+      //   href: "/app/order/production",
+      //   current: location.pathname === "/app/order/production",
+      // },
+      // {
+      //   name: "Quality Check / Siap Dikirim",
+      //   href: "/app/order/qc",
+      //   current: location.pathname === "/app/order/qc",
+      // },
+      // {
+      //   name: "Dikirim",
+      //   href: "/app/order/delivered",
+      //   current: location.pathname === "/app/order/delivered",
+      // },
       {
         name: "Selesai",
         href: "/app/order/done",
         current: location.pathname === "/app/order/done",
       },
-      {
-        name: "Dibatalkan / Ditolak",
-        href: "/app/order/rejected",
-        current: location.pathname === "/app/order/rejected",
-      },
+      // {
+      //   name: "Dibatalkan / Ditolak",
+      //   href: "/app/order/rejected",
+      //   current: location.pathname === "/app/order/rejected",
+      // },
     ]);
   }, [location]);
 
@@ -555,14 +555,14 @@ export default function AppOrder() {
             {/* <p>Form Ubah Status Pesanan di sini</p> */}
             <SelectBasic
               options={[
-                { value: "pending", label: "Menunggu Pembayaran" },
-                { value: "ordered", label: "Menunggu Konfirmasi" },
-                { value: "process", label: "Diproses" },
-                { value: "production", label: "Dalam Produksi" },
-                { value: "qc", label: "Quality Check / Siap Dikirim" },
-                { value: "delivered", label: "Dikirim" },
+                // { value: "pending", label: "Menunggu Pembayaran" },
+                { value: "ordered", label: "Masuk" },
+                { value: "process", label: "Proses" },
+                // { value: "production", label: "Dalam Produksi" },
+                // { value: "qc", label: "Quality Check / Siap Dikirim" },
+                // { value: "delivered", label: "Dikirim" },
                 { value: "done", label: "Selesai" },
-                { value: "rejected", label: "Dibatalkan / Ditolak" },
+                // { value: "rejected", label: "Dibatalkan / Ditolak" },
               ]}
               placeholder="Pilih Status Pesanan"
               value={modal?.data?.status}

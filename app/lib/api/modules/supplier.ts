@@ -1,98 +1,88 @@
-import { callApi } from "../core/callApi";
-import { CONFIG } from "~/config";
+import { APIProvider } from "../client";
 
 export const SupplierAPI = {
-    get: async ({
-      session,
-      req,
-    }: {
-      session: any;
-      req: { query?: any; body?: any; header?: any };
-    }) => {
-      const {
-        pagination = "true",
-        page = 0,
-        size = 10,
+  get: async ({ req }: any) => {
+    const { page = 0, size = 10, search } = req.query || {};
+
+    return APIProvider({
+      endpoint: "select",
+      method: "POST",
+      table: "suppliers",
+      action: "select",
+      body: {
+        columns: ["id", "name", "phone", "address"],
+        where: { deleted_on: "null" },
         search,
-        email,
-      } = req.query || {};
+        page,
+        size
+      }
+    });
+  },
 
-      const res = await fetch(CONFIG.apiBaseUrl.server_api_url, {
+  create: async ({ req }: any) => {
+    const { name, phone, address } = req.body || {};
+
+    if (!name || !phone) {
+      return { success: false, message: "Nama dan Telepon wajib diisi" };
+    }
+
+    const newSupplier = {
+      name,
+      phone,
+      address
+    };
+
+    try {
+      const result = await APIProvider({
+        endpoint: "insert",
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer REPLACE_WITH_STRONG_KEY",
-        },
-        body: JSON.stringify({
-          action: "select",
-          table: "suppliers",
-          columns: ["id", "name", "phone", "address"],
-          where: { deleted_on: "null" },
-          search,
-          page,
-          size,
-        }),
+        table: "suppliers",
+        action: "insert",
+        body: { data: newSupplier }
       });
-      const result = await res.json();
-      return result;
-    },
-    create: async ({ req }: any) => {
-      const { name, phone, address } = req.body || {};
 
-      if (!name || !phone) {
-        return { success: false, message: "Nama dan Telepon wajib diisi" };
-      }
-
-      const newCommodity = {
-        phone,
-        name,
-        address,
+      return {
+        success: true,
+        message: "Toko berhasil ditambahkan",
+        supplier: { id: result.insert_id, ...newSupplier }
       };
+    } catch (err: any) {
+      console.error(err);
+      return { success: false, message: err.message };
+    }
+  },
 
-      try {
-        const result = await callApi({
-          action: "insert",
-          table: "suppliers",
-          data: newCommodity,
-        });
+  update: async ({ req }: any) => {
+    const { id, ...fields } = req.body || {};
 
-        return {
-          success: true,
-          message: "Toko berhasil ditambahkan",
-          user: { id: result.insert_id, ...newCommodity },
-        };
-      } catch (err: any) {
-        console.log(err);
-        return { success: false, message: err.message };
-      }
-    },
-    update: async ({ req }: any) => {
-      const { id, ...fields } = req.body || {};
+    if (!id) {
+      return { success: false, message: "ID wajib diisi" };
+    }
 
-      if (!id) {
-        return { success: false, message: "ID wajib diisi" };
-      }
+    const updatedData = {
+      ...fields,
+      modified_on: new Date().toISOString()
+    };
 
-      const updatedData: Record<string, any> = {
-        ...fields,
-        modified_on: new Date().toISOString(),
-      };
-
-      try {
-        const result = await callApi({
-          action: "update",
-          table: "suppliers",
+    try {
+      const result = await APIProvider({
+        endpoint: "update",
+        method: "POST",
+        table: "suppliers",
+        action: "update",
+        body: {
           data: updatedData,
-          where: { id },
-        });
+          where: { id }
+        }
+      });
 
-        return {
-          success: true,
-          message: "Toko berhasil diperbarui",
-          affected: result.affected_rows,
-        };
-      } catch (err: any) {
-        return { success: false, message: err.message };
-      }
-    },
+      return {
+        success: true,
+        message: "Toko berhasil diperbarui",
+        affected: result.affected_rows
+      };
+    } catch (err: any) {
+      return { success: false, message: err.message };
+    }
   }
+};

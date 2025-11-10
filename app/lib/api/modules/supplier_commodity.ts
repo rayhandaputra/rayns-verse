@@ -1,71 +1,80 @@
-import { callApi } from "../core/callApi";
-import { CONFIG } from "~/config";
+import { APIProvider } from "../client";
 
 export const SupplierCommodityAPI = {
-    get: async ({ req }: any) => {
-      const { page = 0, size = 10, supplier_id, search } = req.query || {};
+  get: async ({ req }: any) => {
+    const { page = 0, size = 10, supplier_id, search } = req.query || {};
 
-      try {
-        const result = await callApi({
-          table: "supplier_commodities",
-          action: "select", // pakai endpoint custom di PHP
+    try {
+      const result = await APIProvider({
+        endpoint: "select",
+        method: "POST",
+        table: "supplier_commodities",
+        action: "select",
+        body: {
           columns: [
             "id",
             "supplier_id",
             "commodity_id",
             "commodity_name",
             "qty",
-            "price",
+            "price"
           ],
           where: {
-            ...(supplier_id && { supplier_id: supplier_id }),
-            deleted_on: "null",
+            ...(supplier_id ? { supplier_id } : {}),
+            deleted_on: "null"
           },
-          page: +page || 0,
-          size: +size || 10,
-          search: search || null,
-        });
+          page: Number(page),
+          size: Number(size),
+          search: search || null
+        }
+      });
 
-        return {
-          total_items: result.total_items || result.items?.length || 0,
-          items: result.items || [],
-          current_page: Number(page),
-          total_pages: result.total_pages || 1,
-        };
-      } catch (err: any) {
-        console.error(err);
-        return {
-          total_items: 0,
-          items: [],
-          current_page: Number(page),
-          total_pages: 0,
-          error: err.message,
-        };
-      }
-    },
-    bulkCreate: async ({ req }: any) => {
-      const { commodities } = req.body || {};
+      return {
+        total_items: result.total_items || result.items?.length || 0,
+        items: result.items || [],
+        current_page: Number(page),
+        total_pages: result.total_pages || 1
+      };
+    } catch (err: any) {
+      console.error(err);
+      return {
+        total_items: 0,
+        items: [],
+        current_page: Number(page),
+        total_pages: 0,
+        error: err.message
+      };
+    }
+  },
 
-      if (!commodities) {
-        return { success: false, message: "Komponen wajib diisi" };
-      }
+  bulkCreate: async ({ req }: any) => {
+    const { commodities } = req.body || {};
 
-      try {
-        const result = await callApi({
-          action: "bulk_insert",
-          table: "supplier_commodities",
+    if (!commodities || !Array.isArray(commodities)) {
+      return { success: false, message: "Komponen wajib diisi dalam bentuk array" };
+    }
+
+    try {
+      const result = await APIProvider({
+        endpoint: "bulk_insert",
+        method: "POST",
+        table: "supplier_commodities",
+        action: "bulk_insert",
+        body: {
           updateOnDuplicate: true,
-          rows: commodities,
-        });
+          rows: commodities
+        }
+      });
 
-        return {
-          success: true,
-          message: "Stok Toko berhasil diperbaharui",
-          user: { id: result.insert_id, ...commodities },
-        };
-      } catch (err: any) {
-        console.log(err);
-        return { success: false, message: err.message };
-      }
-    },
+      return {
+        success: true,
+        message: "Stok supplier berhasil diperbarui",
+        inserted: result.inserted_rows,
+        update_on_duplicate: result.update_on_duplicate
+      };
+    } catch (err: any) {
+      console.error(err);
+      return { success: false, message: err.message };
+    }
   }
+};

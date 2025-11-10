@@ -11,7 +11,7 @@ import { useFetcher, useLocation, useNavigate } from "react-router";
 import { abbreviation } from "~/lib/utils";
 import { Button } from "../../ui/button";
 import { useEffect, useState } from "react";
-import { SlideInModal } from "~/components/modal/SlideInModal";
+import SlideInModal from "~/components/modal/SlideInModal";
 import { auth } from "~/config/firebase";
 import { API } from "~/lib/api";
 import { toast } from "sonner";
@@ -52,7 +52,7 @@ const Navbar = ({ session, sidebar }: NavbarProps) => {
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data) {
       navigate("/app/overview", {
-        state: { flash: fetcher.data }
+        state: { flash: fetcher.data },
       });
     }
   }, [fetcher.state, fetcher.data, navigate]);
@@ -165,7 +165,7 @@ const Navbar = ({ session, sidebar }: NavbarProps) => {
         </div>
       </div>
 
-      <SlideInModal open={openLogin} onClose={() => setOpenLogin(false)}>
+      <SlideInModal isOpen={openLogin} onClose={() => setOpenLogin(false)}>
         <div className="min-h-screen flex items-center justify-center bg-white px-4 z-50">
           <div className="w-full max-w-md text-center">
             {/* Welcome Text */}

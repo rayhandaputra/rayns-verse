@@ -47,6 +47,12 @@ export default function AppLayout() {
     }
   }, [flash]);
 
+  const [client, setClient] = useState<boolean>(false);
+  useEffect(() => {
+    setClient(true);
+  }, []);
+  if (!client) return null;
+
   return (
     <div>
       <Outlet />

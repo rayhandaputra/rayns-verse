@@ -1,184 +1,148 @@
-import { callApi } from "../core/callApi";
-import { CONFIG } from "~/config";
+import { APIProvider } from "../client";
 
 export const UserAPI = {
-    get: async ({
-      session,
-      req,
-    }: {
-      session: any;
-      req: { query?: any; body?: any; header?: any };
-    }) => {
-      const {
-        pagination = "true",
-        page = 0,
-        size = 10,
+  get: async ({ req }: any) => {
+    const { page = 0, size = 10, search } = req.query || {};
+
+    return APIProvider({
+      endpoint: "select",
+      method: "POST",
+      table: "users",
+      action: "select",
+      body: {
+        columns: ["id", "fullname", "email", "role"],
+        where: { deleted: 0 },
         search,
-        email,
-      } = req.query || {};
+        page,
+        size
+      }
+    });
+  },
 
-      const res = await fetch(CONFIG.apiBaseUrl.server_api_url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer REPLACE_WITH_STRONG_KEY",
-        },
-        body: JSON.stringify({
-          action: "select",
+  create: async ({ req }: any) => {
+    const { fullname, email, role = "customer" } = req.body || {};
+
+    if (!fullname || !email) {
+      return { success: false, message: "Email dan fullname wajib diisi" };
+    }
+
+    const result = await APIProvider({
+      endpoint: "insert",
+      method: "POST",
+      table: "users",
+      action: "insert",
+      body: {
+        data: { fullname, email, role }
+      }
+    });
+
+    return {
+      success: true,
+      message: "User berhasil dibuat",
+      user: { id: result.insert_id, fullname, email, role }
+    };
+  },
+
+  findOrCreate: async ({ req }: any) => {
+    const { fullname, email, role = "customer" } = req.body || {};
+
+    if (!fullname || !email) {
+      return { success: false, message: "Email dan fullname wajib diisi" };
+    }
+
+    // check existing
+    const existing = await APIProvider({
+      endpoint: "select",
+      method: "POST",
+      table: "users",
+      action: "select",
+      body: {
+        columns: ["*"],
+        where: { email },
+        size: 1
+      }
+    });
+
+    const user = existing.items?.[0];
+
+    if (user) {
+      if (user.deleted === 1) {
+        // restore
+        const updated = await APIProvider({
+          endpoint: "update",
+          method: "POST",
           table: "users",
-          columns: ["id", "fullname", "email", "role"],
-          where: { deleted: 0 },
-          search,
-          page: 0,
-          size: 10,
-        }),
-      });
-      const result = await res.json();
-      return result;
-    },
-    create: async ({ req }: any) => {
-      const {
-        fullname,
-        email,
-        role = "customer",
-        is_active = 1,
-        deleted = 0,
-      } = req.body || {};
-
-      if (!fullname || !email) {
-        return { success: false, message: "Email dan fullname wajib diisi" };
-      }
-
-      const newUser = {
-        fullname,
-        email,
-        role,
-        // is_active,
-        // deleted,
-        // created_on: new Date().toISOString(),
-        // modified_on: new Date().toISOString(),
-      };
-
-      try {
-        const result = await callApi({
-          action: "insert",
-          table: "users",
-          data: newUser,
-        });
-
-        return {
-          success: true,
-          message: "User berhasil dibuat",
-          user: { id: result.insert_id, ...newUser },
-        };
-      } catch (err: any) {
-        console.log(err);
-        return { success: false, message: err.message };
-      }
-    },
-    findOrCreate: async ({ req }: any) => {
-      const {
-        fullname,
-        email,
-        role = "customer",
-        is_active = 1,
-        deleted = 0,
-      } = req.body || {};
-
-      if (!fullname || !email) {
-        return { success: false, message: "Email dan fullname wajib diisi" };
-      }
-
-      try {
-        // cek existing
-        const existing = await callApi({
-          action: "select",
-          table: "users",
-          columns: ["*"],
-          where: { email },
-          size: 1,
-        });
-
-        if (existing.items.length > 0) {
-          const user = existing.items[0];
-          if (user.deleted === 1) {
-            // restore + update
-            const updated = await callApi({
-              action: "update",
-              table: "users",
-              data: {
-                fullname,
-                email,
-                role,
-                is_active,
-                deleted: 0,
-                modified_on: new Date().toISOString(),
-              },
-              where: { id: user.id },
-            });
-
-            return {
-              success: true,
-              message: "User berhasil dipulihkan dan diperbarui",
-              user: { ...user, ...updated },
-            };
-          }
-          return { success: false, message: "Email sudah terdaftar" };
-        }
-
-        // jika belum ada → insert baru
-        const newUser = {
-          fullname,
-          email,
-          role,
-          is_active,
-          deleted,
-          created_on: new Date().toISOString(),
-          modified_on: new Date().toISOString(),
-        };
-
-        const result = await callApi({
-          action: "insert",
-          table: "users",
-          data: newUser,
-        });
-
-        return {
-          success: true,
-          message: "User baru berhasil dibuat",
-          user: { id: result.insert_id, ...newUser },
-        };
-      } catch (err: any) {
-        return { success: false, message: err.message };
-      }
-    },
-    update: async ({ req }: any) => {
-      const { id, ...fields } = req.body || {};
-
-      if (!id) {
-        return { success: false, message: "ID user wajib diisi" };
-      }
-
-      const updatedData: Record<string, any> = {
-        ...fields,
-        modified_on: new Date().toISOString(),
-      };
-
-      try {
-        const result = await callApi({
           action: "update",
-          table: "users",
-          data: updatedData,
-          where: { id },
+          body: {
+            data: {
+              fullname,
+              email,
+              role,
+              deleted: 0,
+              modified_on: new Date().toISOString()
+            },
+            where: { id: user.id }
+          }
         });
 
         return {
           success: true,
-          message: "User berhasil diperbarui",
-          affected: result.affected_rows,
+          message: "User dipulihkan dan diperbarui",
+          user: updated
         };
-      } catch (err: any) {
-        return { success: false, message: err.message };
       }
-    },
-  };
+      return { success: false, message: "Email sudah terdaftar" };
+    }
+
+    // create new
+    const newUser = {
+      fullname,
+      email,
+      role,
+      created_on: new Date().toISOString(),
+      modified_on: new Date().toISOString()
+    };
+
+    const result = await APIProvider({
+      endpoint: "insert",
+      method: "POST",
+      table: "users",
+      action: "insert",
+      body: { data: newUser }
+    });
+
+    return {
+      success: true,
+      message: "User baru berhasil dibuat",
+      user: { id: result.insert_id, ...newUser }
+    };
+  },
+
+  update: async ({ req }: any) => {
+    const { id, ...fields } = req.body || {};
+
+    if (!id) return { success: false, message: "ID user wajib diisi" };
+
+    const updatedData = {
+      ...fields,
+      modified_on: new Date().toISOString()
+    };
+
+    const result = await APIProvider({
+      endpoint: "update",
+      method: "POST",
+      table: "users",
+      action: "update",
+      body: {
+        data: updatedData,
+        where: { id }
+      }
+    });
+
+    return {
+      success: true,
+      message: "User berhasil diperbarui",
+      affected: result.affected_rows
+    };
+  }
+};

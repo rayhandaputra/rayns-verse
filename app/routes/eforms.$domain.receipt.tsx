@@ -5,9 +5,11 @@ import { useLocation, useNavigate, type LoaderFunction } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
-import { API } from "~/lib/api";
+import { API, API_KEY, API_URL } from "~/lib/api";
 import QRCode from "qrcode";
 import { toMoney } from "~/lib/utils";
+import { useSWRLoader } from "~/lib/api-client";
+// import { useSWRLoader } from "~/lib/swr-loader";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   try {
@@ -48,6 +50,22 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
 export default function DigitalInvoice() {
   const { order, order_items } = useLoaderData();
+
+    const { data, error, isLoading } = useSWRLoader<{
+      message: string;
+    }>(API_URL, {
+      params: {
+        action: "select",
+        table: "orders",
+        columns: ["id"],
+      },
+      headers: {
+        Authorization: `Bearer ${API_KEY}`,
+        "X-Client-ID": "web",
+      },
+    });
+    console.log(data)
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -115,8 +133,8 @@ export default function DigitalInvoice() {
 
           {/* Item list */}
           <div className="text-sm text-gray-700 space-y-1">
-            {order_items?.map((item: any) => (
-              <div className="flex justify-between">
+            {order_items?.map((item: any, idx: number) => (
+              <div key={idx} className="flex justify-between">
                 <span>{item?.product_name}</span>
                 <span>x{item?.qty}</span>
               </div>

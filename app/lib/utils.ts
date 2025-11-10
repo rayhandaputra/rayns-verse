@@ -98,3 +98,17 @@ export const generateShortId = (length = 6) => {
   }
   return result;
 };
+
+export function generateProductCode() {
+  const random = Math.floor(10000 + Math.random() * 90000); // 10000–99999
+  return `PRD${random}`;
+}
+
+export function generateDiscountCode() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let out = "";
+  for (let i = 0; i < 6; i++) {
+    out += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return out;
+}

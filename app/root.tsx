@@ -6,6 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
   useLocation,
+  useNavigation,
 } from "react-router";
 
 import { LoaderProvider } from "~/hooks/use-loading";
@@ -44,6 +45,11 @@ export const links = (): any[] => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+
+  const navigation = useNavigation();
+
+  const isLoading = navigation.state !== "idle";
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -55,6 +61,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body className="antialiased bg-gray-50 min-h-screen">
         <LoaderProvider>
           <ModalProvider>
+            {/* Loader Global */}
+            {isLoading && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+                <div className="animate-spin w-10 h-10 border-4 border-gray-300 border-t-blue-500 rounded-full" />
+              </div>
+            )}
+            
             <RootLayout session={null}>
               <div>{children}</div>
             </RootLayout>

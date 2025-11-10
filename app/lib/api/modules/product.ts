@@ -1,36 +1,21 @@
-import { callApi } from "../core/callApi";
-import { CONFIG } from "~/config";
+import { generateProductCode } from "~/lib/utils";
+import { APIProvider } from "../client";
 
 export const ProductAPI = {
-  get: async ({
-    session,
-    req,
-  }: {
-    session: any;
-    req: { query?: any; body?: any; header?: any };
-  }) => {
-    const {
-      pagination = "true",
-      page = 0,
-      size = 10,
-      search,
-      type = "",
-      id = "",
-      email,
-    } = req.query || {};
-    const res = await fetch(CONFIG.apiBaseUrl.server_api_url, {
+  get: async ({ req }: any) => {
+    const { page = 0, size = 10, search, type = "", id = "" } = req.query || {};
+
+    return APIProvider({
+      endpoint: "select",
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer REPLACE_WITH_STRONG_KEY",
-      },
-      body: JSON.stringify({
-        action: "select",
-        table: "products",
+      table: "products",
+      action: "select",
+      body: {
         columns: [
           "id",
           "code",
           "name",
+          "image",
           "type",
           "description",
           "subtotal",
@@ -38,21 +23,25 @@ export const ProductAPI = {
           "tax_fee",
           "other_fee",
           "total_price",
+          `(SELECT COUNT(id) FROM product_components WHERE product_id = products.id) AS total_components`,
         ],
-        where: { deleted_on: "null", ...(type && { type }), ...(id && { id }) },
+        where: {
+          deleted_on: "null",
+          ...(type ? { type } : {}),
+          ...(id ? { id } : {}),
+        },
         search,
-        page,
-        size,
-      }),
+        page: Number(page),
+        size: Number(size),
+      },
     });
-    const result = await res.json();
-    return result;
   },
+
   create: async ({ req }: any) => {
     const {
       id,
-      code,
       name,
+      image,
       type,
       description,
       discount_value = 0,
@@ -63,13 +52,14 @@ export const ProductAPI = {
       items = [],
     } = req.body || {};
 
-    if (!name || !code) {
+    if (!name) {
       return { success: false, message: "Nama dan Kode wajib diisi" };
     }
 
     const newProduct = {
-      code,
+      code: generateProductCode(),
       name,
+      image,
       type,
       description,
       subtotal,
@@ -80,44 +70,66 @@ export const ProductAPI = {
     };
 
     try {
-      let result = null;
+      let result;
+
+      // INSERT BARU
       if (!id) {
-        result = await callApi({
+        result = await APIProvider({
+          endpoint: "insert",
+          method: "POST",
+          table: "products",
           action: "insert",
-          table: "products",
-          data: newProduct,
+          body: { data: newProduct },
         });
-      } else {
-        result = await callApi({
-          action: "update",
-          table: "products",
-          data: newProduct,
-          where: { id },
-        });
+
+        // result.insert_id dipakai
       }
 
-      if (items && items?.length > 0) {
-        await callApi({
-          action: "bulk_insert",
+      // UPDATE PRODUK
+      else {
+        result = await APIProvider({
+          endpoint: "update",
+          method: "POST",
+          table: "products",
+          action: "update",
+          body: {
+            data: newProduct,
+            where: { id },
+          },
+        });
+
+        result.insert_id = id; // agar konsisten dipakai di bawah
+      }
+
+      // INSERT / UPDATE COMPONENT ITEMS
+      if (Array.isArray(items) && items.length > 0) {
+        await APIProvider({
+          endpoint: "bulk-insert",
+          method: "POST",
           table: "product_components",
-          updateOnDuplicate: true,
-          rows: items.map((item: any) => ({
-            ...item,
-            product_id: result.insert_id,
-          })),
+          action: "bulk_insert",
+          body: {
+            updateOnDuplicate: true,
+            rows: items.map((item: any) => ({
+              ...item,
+              product_id: result.insert_id,
+              id: null,
+            })),
+          },
         });
       }
 
       return {
         success: true,
-        message: "Produk berhasil ditambahkan",
-        user: { id: result.insert_id, ...newProduct },
+        message: "Produk berhasil disimpan",
+        product: { id: result.insert_id, ...newProduct },
       };
     } catch (err: any) {
-      console.log(err);
+      console.error(err);
       return { success: false, message: err.message };
     }
   },
+
   update: async ({ req }: any) => {
     const { id, ...fields } = req.body || {};
 
@@ -131,12 +143,15 @@ export const ProductAPI = {
     };
 
     try {
-      console.log("UPDATE => ", updatedData);
-      const result = await callApi({
-        action: "update",
+      const result = await APIProvider({
+        endpoint: "update",
+        method: "POST",
         table: "products",
-        data: updatedData,
-        where: { id },
+        action: "update",
+        body: {
+          data: updatedData,
+          where: { id },
+        },
       });
 
       return {
@@ -145,6 +160,7 @@ export const ProductAPI = {
         affected: result.affected_rows,
       };
     } catch (err: any) {
+      console.log(err);
       return { success: false, message: err.message };
     }
   },

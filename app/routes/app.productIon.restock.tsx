@@ -166,27 +166,12 @@ export default function RestockForm() {
 
   const loadOptionCommodity = async (search: string) => {
     try {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${API_KEY}`,
-        },
-        body: JSON.stringify({
-          action: "select",
-          table: "commodities",
-          columns: ["id", "code", "name", "unit"],
-          where: { deleted_on: "null" },
-          search,
-          page: 0,
-          size: 50,
-        }),
-      });
-      const result = await response.json();
+      const result = await API.COMMODITY.get({ req: { search } });
       return result?.items?.map((v: any) => ({
-        ...v,
-        value: v?.id,
-        label: `${v?.code} - ${v?.name}`,
+        value: v.id,
+        label: `[${v.code}] ${v.name} - Rp ${v.base_price}`,
+        base_price: v.base_price,
+        name: v.name,
       }));
     } catch (error) {
       console.log(error);

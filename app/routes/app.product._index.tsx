@@ -1,6 +1,18 @@
-import { PencilLineIcon, PlusCircleIcon, Trash2Icon } from "lucide-react";
+import {
+  Copy,
+  EllipsisIcon,
+  Eye,
+  Pencil,
+  PencilLineIcon,
+  PenLine,
+  Plus,
+  PlusCircleIcon,
+  Trash2,
+  Trash2Icon,
+  X,
+} from "lucide-react";
 import moment from "moment";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Form,
   useActionData,
@@ -24,6 +36,19 @@ import { Label } from "~/components/ui/label";
 import { useModal } from "~/hooks/use-modal";
 import { API } from "../lib/api";
 import { toMoney } from "~/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import PaginationItem from "~/components/table/PaginationOnly";
+import ProductCard from "~/components/card/ProductCard";
+import { ConfirmDialog } from "~/components/modal/ConfirmDialog";
+import SlideInModal from "~/components/modal/SlideInModal";
+import ProductFullFormModal from "~/components/form/FormProduct";
+import { getSession } from "~/lib/session";
+import {
+  PopoverMenu,
+  type PopoverMenuItem,
+} from "~/components/popover/PopoverMenu";
+import { DropdownMenu } from "~/components/ui/dropdown-menu";
+// import SlideInModal from "~/components/modal/SlideInModal";
 // import { API } from "~/lib/api";
 // import { API } from "~/lib/api";
 
@@ -62,27 +87,37 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
+  const session = await getSession(request.headers.get("Cookie"));
   const formData = await request.formData();
-  const data = Object.fromEntries(formData.entries()) as Record<string, any>;
-
-  const { id, ...payload } = data;
+  let { id, state, items, ...payload } = Object.fromEntries(
+    formData.entries()
+  ) as Record<string, any>;
 
   try {
-    let res: any = {};
-    if (request.method === "DELETE") {
-      res = await API.PRODUCT.update({
+    let resMessage = "";
+    state = state ? JSON.parse(state) : {};
+    items = items ? JSON.parse(items) : {};
+
+    // console.log("STATE", state);
+    // console.log("ITEMS", items);
+
+    if (!id) {
+      const result = await API.PRODUCT.create({
         session: {},
         req: {
           body: {
-            id,
-            ...payload,
-          } as any,
+            ...state,
+            subtotal: payload?.subtotal,
+            total_price: payload?.total,
+            items: items,
+          },
         },
       });
-    }
-    if (request.method === "POST") {
-      if (id) {
-        res = await API.PRODUCT.update({
+
+      resMessage = "Berhasil menambahkan Produk";
+    } else {
+      if (request.method === "DELETE") {
+        await API.PRODUCT.update({
           session: {},
           req: {
             body: {
@@ -91,30 +126,42 @@ export const action: ActionFunction = async ({ request }) => {
             } as any,
           },
         });
+
+        resMessage = "Berhasil menghapus Produk";
       } else {
-        res = await API.PRODUCT.create({
+        await API.PRODUCT.create({
           session: {},
           req: {
-            body: payload as any,
+            body: {
+              ...state,
+              subtotal: payload?.subtotal,
+              total_price: payload?.total,
+              items: items,
+              id,
+            },
           },
         });
+
+        resMessage = "Berhasil memperbaharui Produk";
       }
     }
 
-    if (!res.success) throw { error_message: res.message };
-
     return Response.json({
       success: true,
-      message: res.message,
-      user: res.user,
+      message: resMessage,
     });
-  } catch (error: any) {
+    // return Response.json({
+    //   flash: {
+    //     success: true,
+    //     message: resMessage,
+    //   },
+    // });
+  } catch (error) {
     console.log(error);
-    return Response.json({
+    return {
       success: false,
-      error_message:
-        error.error_message || error.message || "Terjadi kesalahan",
-    });
+      error_message: "Terjadi Kesalahan",
+    };
   }
 };
 
@@ -127,24 +174,11 @@ export default function AccountPage() {
   const fetcher = useFetcher();
 
   const handleDelete = async (data: any) => {
-    const result = await Swal.fire({
+    const result = await ConfirmDialog({
       title: "Konfirmasi Hapus",
-      text: "Apakah Anda yakin ingin menghapus data ini?",
+      text: "Apakah Anda yakin ingin menghapus Produk ini?",
       icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Ya, Hapus",
-      cancelButtonText: "Batal",
-      reverseButtons: true,
-      customClass: {
-        confirmButton:
-          "bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg focus:outline-none",
-        cancelButton:
-          "bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg ml-2 mr-2",
-        popup: "rounded-2xl shadow-lg",
-        title: "text-lg font-semibold text-gray-800",
-        htmlContainer: "text-gray-600",
-      },
-      buttonsStyling: false,
+      confirmText: "Hapus",
     });
 
     if (result.isConfirmed) {
@@ -155,12 +189,7 @@ export default function AccountPage() {
           action: "/app/product",
         }
       );
-
-      // console.log("HASIL FETCHER => ", fetcher);
-      toast.success("Berhasil", {
-        // description: fetcher.data.message,
-        description: "Berhasil menghapus Produk",
-      });
+      toast.success("Produk berhasil dihapus");
     }
   };
 
@@ -181,78 +210,6 @@ export default function AccountPage() {
     }
   }, [actionData]);
 
-  const columns = [
-    {
-      name: "No",
-      width: "50px",
-      cell: (_: any, index: number) => index + 1,
-    },
-    {
-      name: "Kode",
-      cell: (row: any) => row?.name || "-",
-    },
-    {
-      name: "Nama",
-      cell: (row: any) => row?.name || "-",
-    },
-    {
-      name: "Biaya & Potongan",
-      cell: (row: any) => (
-        <div className="flex flex-col gap-1">
-          <div className="flex justify-between gap-2">
-            <p className="text-[0.675rem] text-gray-600">Diskon</p>
-            <p className="text-[0.675rem] font-medium">
-              Rp{toMoney(row?.discount_value)}
-            </p>
-          </div>
-          <div className="flex justify-between gap-2">
-            <p className="text-[0.675rem] text-gray-600">Pajak</p>
-            <p className="text-[0.675rem] font-medium">
-              Rp{toMoney(row?.tax_fee)}
-            </p>
-          </div>
-          <div className="flex justify-between gap-2">
-            <p className="text-[0.675rem] text-gray-600">Lainnya</p>
-            <p className="text-[0.675rem] font-medium">
-              Rp{toMoney(row?.other_fee)}
-            </p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      name: "Harga",
-      cell: (row: any) => `Rp ${toMoney(row?.total_price || 0)}`,
-    },
-    {
-      name: "Deskripsi",
-      cell: (row: any) => row?.description || "-",
-    },
-    {
-      name: "Aksi",
-      cell: (row: any, index: number) => (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="text-blue-700 hover:text-blue-500"
-            onClick={() => navigate(`/app/product/manage?id=${row?.id}`)}
-          >
-            <PencilLineIcon className="w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="text-red-700 hover:text-red-500"
-            onClick={() => handleDelete(row)}
-          >
-            <Trash2Icon className="w-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
   return (
     <div className="space-y-3">
       <TitleHeader
@@ -269,7 +226,10 @@ export default function AccountPage() {
         actions={
           <Button
             className="bg-blue-700 hover:bg-blue-600 text-white"
-            onClick={() => navigate(`/app/product/manage`)}
+            // onClick={() => navigate(`/app/product/manage`)}
+            onClick={() =>
+              setModal({ ...modal, open: true, key: "create", data: null })
+            }
           >
             <PlusCircleIcon className="w-4" />
             Produk Baru
@@ -277,7 +237,116 @@ export default function AccountPage() {
         }
       />
 
-      <TableComponent columns={columns} data={table} />
+      {/* <TableComponent columns={columns} data={table} /> */}
+
+      {/* <ProductList /> */}
+
+      <div className="relative">
+        {/* Product Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {table?.items.map((p: any) => (
+            <div className="relative">
+              <ProductCard
+                key={p.id}
+                id={p.id}
+                name={p.name}
+                sku={p.code}
+                image={p.image}
+                status={p.status}
+                price={`Rp ${toMoney(p?.total_price || 0)}`}
+                fee={`${toMoney(p?.tax_fee || 0)}%`}
+                discount={`Rp ${toMoney(p?.other_fee || 0)}`}
+                component={p.total_components}
+                onMenuClick={(id) => {
+                  setModal({
+                    ...modal,
+                    open:
+                      modal?.key !== `${p?.code}-open-detail` ? true : false,
+                    key:
+                      modal?.key !== `${p?.code}-open-detail`
+                        ? `${p?.code}-open-detail`
+                        : "",
+                    data: p,
+                  });
+                }}
+              />
+              <PopoverMenu
+                open={modal?.open && modal?.key === `${p.code}-open-detail`}
+                onClose={() => setModal({ open: false, key: "" })}
+                items={[
+                  {
+                    label: "Detail",
+                    icon: <Eye className="w-4 h-4" />,
+                    onClick: () => console.log("detail"),
+                  },
+                  {
+                    label: "Edit",
+                    icon: <PenLine className="w-4 h-4" />,
+                    onClick: () =>
+                      setModal({
+                        ...modal,
+                        open: true,
+                        key: "create",
+                        data: p,
+                      }),
+                  },
+                  {
+                    label: "Delete",
+                    icon: <Trash2 className="w-4 h-4" />,
+                    destructive: true,
+                    onClick: () => handleDelete(p),
+                  },
+                ]}
+              />
+            </div>
+          ))}
+        </div>
+
+        <PaginationItem
+          currentPage={table?.page}
+          totalPages={table?.total_pages}
+          totalItems={table?.total_items}
+          perPage={table?.size}
+          onPageChange={(p) => {}}
+        />
+
+        <SlideInModal
+          isOpen={modal?.open && modal?.key === "create"}
+          onClose={() => setModal({ ...modal, open: false })}
+          title={modal?.data ? "Edit Produk" : "Tambah Produk"}
+          width="w-1/2 max-w-3xl"
+        >
+          <ProductFullFormModal
+            detail={modal?.data}
+            // currentItems={currentItems}
+            currentItems={[]}
+            onSuccess={() => {
+              setModal({ ...modal, open: false });
+              toast.success("Produk berhasil disimpan!");
+            }}
+          />
+        </SlideInModal>
+      </div>
     </div>
   );
 }
+
+interface Product {
+  id: number;
+  name: string;
+  sku: string;
+  retail: string;
+  wholesale: string;
+  stock: string;
+  status: "Active" | "Draft";
+}
+
+const mockProducts: Product[] = Array.from({ length: 22 }).map((_, i) => ({
+  id: i + 1,
+  name: `Product ${i + 1}`,
+  sku: `SKU-${i + 1}`,
+  retail: "$120.00",
+  wholesale: "$90.00",
+  stock: `${Math.floor(Math.random() * 100)} in stock`,
+  status: i % 2 === 0 ? "Active" : "Draft",
+}));

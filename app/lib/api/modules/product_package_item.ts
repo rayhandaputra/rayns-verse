@@ -1,34 +1,23 @@
-import { callApi } from "../core/callApi";
-import { CONFIG } from "~/config";
+import { APIProvider } from "../client";
 
 export const ProductPackageItemsAPI = {
-  // === GET / LIST ===
-  get: async ({
-    session,
-    req,
-  }: {
-    session?: any;
-    req: { query?: any; body?: any; header?: any };
-  }) => {
+  // === GET LIST ===
+  get: async ({ req }: any) => {
     const {
-      pagination = "true",
       page = 0,
       size = 10,
       search,
       package_id,
-      product_id,
+      product_id
     } = req.query || {};
 
     try {
-      const res = await fetch(CONFIG.apiBaseUrl.server_api_url, {
+      return APIProvider({
+        endpoint: "select",
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer REPLACE_WITH_STRONG_KEY`,
-        },
-        body: JSON.stringify({
-          action: "select",
-          table: "product_package_items",
+        table: "product_package_items",
+        action: "select",
+        body: {
           columns: [
             "id",
             "package_id",
@@ -41,91 +30,81 @@ export const ProductPackageItemsAPI = {
             "note",
             "seq",
             "created_on",
-            "modified_on",
+            "modified_on"
           ],
           where: {
             deleted_on: "null",
             ...(package_id ? { package_id } : {}),
-            ...(product_id ? { product_id } : {}),
+            ...(product_id ? { product_id } : {})
           },
-          search,
-          page,
-          size,
-        }),
+          search: search || null,
+          page: Number(page),
+          size: Number(size)
+        }
       });
-
-      const result = await res.json();
-      return result;
     } catch (err: any) {
       console.error(err);
       return { success: false, message: err.message };
     }
   },
 
-  // === CREATE ===
+  // === CREATE PACKAGE + ITEMS ===
   create: async ({ req }: any) => {
     const {
       code,
       name,
       description,
-      // package_id,
-      // package_name,
-      // product_id,
-      // product_name,
-      // qty = 1,
-      // unit_price = 0,
-      // note,
-      // seq = 0,
-      products,
+      products // list of items in package
     } = req.body || {};
 
     if (!code || !name) {
       return {
         success: false,
-        message: "Kode dan Nama Paket wajib diisi",
+        message: "Kode dan Nama Paket wajib diisi"
       };
     }
 
-    const newItem = {
-      // app_id: "id.siesta.app.campusqu.unisma",
-      // package_id,
-      // package_name,
-      // product_id,
-      // product_name,
-      // qty,
-      // unit_price,
-      // note,
-      // seq,
+    const newPackage = {
       code,
       name,
       description,
-      type: "package",
+      type: "package"
     };
 
     try {
-      const result = await callApi({
-        action: "insert",
+      // 1. INSERT NEW PACKAGE INTO products table
+      const result = await APIProvider({
+        endpoint: "insert",
+        method: "POST",
         table: "products",
-        data: newItem,
+        action: "insert",
+        body: { data: newPackage }
       });
 
-      if (products && products?.length > 0) {
-        await callApi({
-          action: "bulk_insert",
+      const packageId = result.insert_id;
+
+      // 2. INSERT PACKAGE ITEMS (bulk)
+      if (Array.isArray(products) && products.length > 0) {
+        await APIProvider({
+          endpoint: "bulk_insert",
+          method: "POST",
           table: "product_package_items",
-          updateOnDuplicate: true,
-          rows: products.map((v: any) => ({
-            ...v,
-            package_id: result.insert_id,
-            package_name: name,
-          })),
+          action: "bulk_insert",
+          body: {
+            updateOnDuplicate: true,
+            rows: products.map((v: any) => ({
+              ...v,
+              package_id: packageId,
+              package_name: name
+            }))
+          }
         });
       }
 
       return {
         success: true,
         message: "Paket Produk berhasil dibuat",
-        data: { id: result.insert_id, ...newItem },
+        data: { id: packageId, ...newPackage }
       };
     } catch (err: any) {
       console.error(err);
@@ -133,7 +112,7 @@ export const ProductPackageItemsAPI = {
     }
   },
 
-  // === UPDATE ===
+  // === UPDATE PACKAGE ITEM ===
   update: async ({ req }: any) => {
     const { id, ...fields } = req.body || {};
 
@@ -143,21 +122,25 @@ export const ProductPackageItemsAPI = {
 
     const updatedData = {
       ...fields,
-      modified_on: new Date().toISOString(),
+      modified_on: new Date().toISOString()
     };
 
     try {
-      const result = await callApi({
-        action: "update",
+      const result = await APIProvider({
+        endpoint: "update",
+        method: "POST",
         table: "product_package_items",
-        data: updatedData,
-        where: { id },
+        action: "update",
+        body: {
+          data: updatedData,
+          where: { id }
+        }
       });
 
       return {
         success: true,
         message: "Item paket berhasil diperbarui",
-        affected: result.affected_rows,
+        affected: result.affected_rows
       };
     } catch (err: any) {
       console.error(err);
@@ -165,27 +148,37 @@ export const ProductPackageItemsAPI = {
     }
   },
 
-  // === DELETE (SOFT DELETE) ===
+  // === SOFT DELETE ===
   delete: async ({ req }: any) => {
     const { id } = req.body || {};
-    if (!id) return { success: false, message: "ID wajib diisi" };
+
+    if (!id) {
+      return { success: false, message: "ID wajib diisi" };
+    }
 
     try {
-      const result = await callApi({
-        action: "update",
+      const result = await APIProvider({
+        endpoint: "update",
+        method: "POST",
         table: "product_package_items",
-        data: { deleted: 1, modified_on: new Date().toISOString() },
-        where: { id },
+        action: "update",
+        body: {
+          data: {
+            deleted: 1,
+            modified_on: new Date().toISOString()
+          },
+          where: { id }
+        }
       });
 
       return {
         success: true,
         message: "Item paket berhasil dihapus",
-        affected: result.affected_rows,
+        affected: result.affected_rows
       };
     } catch (err: any) {
       console.error(err);
       return { success: false, message: err.message };
     }
-  },
+  }
 };

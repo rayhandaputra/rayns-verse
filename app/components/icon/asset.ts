@@ -18,6 +18,9 @@ import {
   ClipboardList,
   ImagePlus,
   Layers,
+  Puzzle,
+  Building,
+  Store,
 } from "lucide-react";
 
 export const Icons = {
@@ -39,4 +42,7 @@ export const Icons = {
   ClipboardList,
   ImagePlus,
   Layers,
+  Puzzle,
+  Building,
+  Store,
 };

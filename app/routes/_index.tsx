@@ -1,4 +1,9 @@
-import { Link, useLoaderData, type LoaderFunctionArgs } from "react-router";
+import {
+  Link,
+  redirect,
+  useLoaderData,
+  type LoaderFunctionArgs,
+} from "react-router";
 import { CONFIG } from "~/config";
 import ComingSoon from "./pre-launch/_index";
 import { Button } from "~/components/ui/button";
@@ -7,10 +12,17 @@ import { db } from "~/config/supabase";
 import FloatingWhatsApp from "~/components/FloatingWhatsapp";
 import CardFeatureSection from "~/components/section/feature-section";
 import CardTestimoniSection from "~/components/section/testimoni-seection";
-import { SlideInModal } from "~/components/modal/SlideInModal";
+// import { SlideInModal } from "~/components/modal/SlideInModal";
 import { useState } from "react";
+import { HighlightSection } from "~/components/section/highlight-event-section";
+import { getSession } from "~/lib/session";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
+  // const session = await getSession();
+  // console.log(session);
+  // if (session) {
+  //   redirect("/app/overview");
+  // }
   const url = new URL(request.url);
   const search = url.searchParams.get("q") ?? "";
 
@@ -41,6 +53,19 @@ const LandingPageDesign = () => {
       <HeroSection isAuthenticated={false} isAdmin={false} isCustomer={false} />
 
       <CardFeatureSection />
+
+      <HighlightSection
+        highlights={[
+          {
+            id: 1,
+            institution: "ITERA 2",
+            event: "ACARA 2",
+            description: "Bismillah",
+            imageUrl: "https://i.pravatar.cc/40",
+            link: "https://kinau.id",
+          },
+        ]}
+      />
 
       <section className="w-full bg-blue-600 py-16">
         <div className="container max-w-7xl mx-auto px-4 md:px-6">
