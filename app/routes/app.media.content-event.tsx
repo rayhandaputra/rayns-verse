@@ -12,6 +12,8 @@ import {
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
+import { ImageUploadPreview } from "~/components/input/ImageUploadPreview";
+import { ConfirmDialog } from "~/components/modal/ConfirmDialog";
 import { Modal } from "~/components/modal/Modal";
 import SelectBasic from "~/components/select/SelectBasic";
 import TableComponent from "~/components/table/Table";
@@ -72,6 +74,8 @@ export const action: ActionFunction = async ({ request }) => {
         },
       });
     }
+
+    console.log(payload);
     if (request.method === "POST") {
       if (id) {
         res = await API.CMS_CONTENT.update({
@@ -87,7 +91,10 @@ export const action: ActionFunction = async ({ request }) => {
         res = await API.CMS_CONTENT.create({
           session: {},
           req: {
-            body: payload as any,
+            body: {
+              ...payload,
+              type: "highlight-event",
+            } as any,
           },
         });
       }
@@ -118,24 +125,11 @@ export default function AccountPage() {
   const fetcher = useFetcher();
 
   const handleDelete = async (data: any) => {
-    const result = await Swal.fire({
+    const result = await ConfirmDialog({
       title: "Konfirmasi Hapus",
       text: "Apakah Anda yakin ingin menghapus data ini?",
       icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Ya, Hapus",
-      cancelButtonText: "Batal",
-      reverseButtons: true,
-      customClass: {
-        confirmButton:
-          "bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg focus:outline-none",
-        cancelButton:
-          "bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg ml-2 mr-2",
-        popup: "rounded-2xl shadow-lg",
-        title: "text-lg font-semibold text-gray-800",
-        htmlContainer: "text-gray-600",
-      },
-      buttonsStyling: false,
+      confirmText: "Hapus",
     });
 
     if (result.isConfirmed) {
@@ -143,15 +137,10 @@ export default function AccountPage() {
         { id: data?.id, deleted_on: moment().format("YYYY-MM-DD HH:mm:ss") },
         {
           method: "delete",
-          action: "/app/master/supplier",
+          action: "/app/media/content-event",
         }
       );
-
-      // console.log("HASIL FETCHER => ", fetcher);
-      toast.success("Berhasil", {
-        // description: fetcher.data.message,
-        description: "Berhasil menghapus Toko",
-      });
+      toast.success("Produk berhasil dihapus");
     }
   };
 
@@ -179,16 +168,21 @@ export default function AccountPage() {
       cell: (_: any, index: number) => index + 1,
     },
     {
+      name: "Gambar",
+      cell: (row: any) =>
+        row?.image ? <img src={row?.image} alt="" className="w-24" /> : "-",
+    },
+    {
       name: "Nama",
-      cell: (row: any) => row?.name || "-",
+      cell: (row: any) => row?.title || "-",
     },
     {
-      name: "Telepon",
-      cell: (row: any) => row?.phone || "-",
+      name: "Deskripsi",
+      cell: (row: any) => row?.description || "-",
     },
     {
-      name: "Alamat",
-      cell: (row: any) => row?.address || "-",
+      name: "Tautan",
+      cell: (row: any) => row?.link || "-",
     },
     {
       name: "Aksi",
@@ -274,14 +268,29 @@ export default function AccountPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label>Gambar</Label>
+              <ImageUploadPreview
+                label="Upload Foto Profil"
+                value={modal?.data?.image || undefined}
+                size={128}
+                onChange={(file, previewUrl) => {
+                  setModal({
+                    ...modal,
+                    data: {
+                      ...modal?.data,
+                      image: previewUrl,
+                    },
+                  });
+                }}
+              />
+              <input type="hidden" name="image" value={modal?.data?.image} />
+              {/* <Label>Gambar</Label>
               <Input
                 required
                 type="text"
                 name="image"
                 placeholder="Masukkan Gambar"
                 defaultValue={modal?.data?.image}
-              />
+              /> */}
             </div>
             <div className="space-y-1">
               <Label>Deskripsi</Label>

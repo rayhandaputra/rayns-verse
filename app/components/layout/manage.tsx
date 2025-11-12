@@ -36,7 +36,7 @@ export default function RootLayout({
             <div className="flex-1 flex flex-col bg-white md:pl-[256px] pt-[64px] overflow-x-hidden">
               <Topbar sidebar={{ mobileMenuOpen, setMobileMenuOpen }} />
               <main
-                className="overflow-y-auto bg-gray-50 text-gray-600 rounded-tl-3xl py-4 px-6"
+                className="overflow-y-auto bg-gray-100 text-gray-600 border border-gray-200 rounded-tl-3xl py-4 px-6"
                 style={{ height: "calc(100vh - 64px)" }}
               >
                 {children}
@@ -45,7 +45,7 @@ export default function RootLayout({
           </div>
         ) : (
           <>
-            <Navbar session={session} />
+            <Navbar />
             <main className="pt-[64px]">{children}</main>
             <Footer />
           </>

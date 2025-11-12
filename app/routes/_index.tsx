@@ -19,27 +19,40 @@ import { getSession } from "~/lib/session";
 import EventsSection from "~/components/section/new-event-section";
 import StatsSection from "~/components/section/stats-section";
 import HeroSection from "~/components/section/new-hero-section";
+import { API } from "~/lib/api";
 // import Navbar from "~/components/section/navbar";
 // import FooterSection from "~/components/section/footer";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  // const session = await getSession();
-  // console.log(session);
-  // if (session) {
-  //   redirect("/app/overview");
-  // }
   const url = new URL(request.url);
-  const search = url.searchParams.get("q") ?? "";
+  const { page = 0, size = 10 } = Object.fromEntries(
+    url.searchParams.entries()
+  );
+  try {
+    const highlightEvent = await API.CMS_CONTENT.get({
+      session: {},
+      req: {
+        pagination: "false",
+        type: "highlight-event",
+      } as any,
+    });
 
-  return { search, APP_CONFIG: CONFIG };
+    return {
+      APP_CONFIG: CONFIG,
+      highlightEvent: highlightEvent?.items,
+    };
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 export default function LandingPage() {
-  const { APP_CONFIG } = useLoaderData();
+  const { highlightEvent, APP_CONFIG } = useLoaderData();
+
   return (
     <section>
       <div className="w-full">
-        <LandingPageDesign />
+        <LandingPageDesign data={{ highlightEvent }} />
       </div>
       {/* {APP_CONFIG.env === "development" ? (
         <div className="w-full">
@@ -52,7 +65,7 @@ export default function LandingPage() {
   );
 }
 
-const LandingPageDesign = () => {
+const LandingPageDesign = ({ data }: any) => {
   return (
     <div className="flex flex-col">
       {/* <HeroSection isAuthenticated={false} isAdmin={false} isCustomer={false} /> */}
@@ -62,7 +75,7 @@ const LandingPageDesign = () => {
 
       <StatsSection />
 
-      <EventsSection />
+      <EventsSection events={data?.highlightEvent} />
       {/* <HighlightSection
         highlights={[
           {
