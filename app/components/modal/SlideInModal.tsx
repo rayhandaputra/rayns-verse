@@ -13,7 +13,7 @@ interface SlideInModalProps {
 export default function SlideInModal({
   isOpen,
   onClose,
-  title = "Modal Title",
+  title = "",
   width = "w-1/3 max-w-md", // Desktop width
   children,
   showOverlay = true,

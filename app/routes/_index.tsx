@@ -7,7 +7,7 @@ import {
 import { CONFIG } from "~/config";
 import ComingSoon from "./pre-launch/_index";
 import { Button } from "~/components/ui/button";
-import HeroSection from "~/components/section/hero-section";
+// import HeroSection from "~/components/section/hero-section";
 import { db } from "~/config/supabase";
 import FloatingWhatsApp from "~/components/FloatingWhatsapp";
 import CardFeatureSection from "~/components/section/feature-section";
@@ -16,6 +16,11 @@ import CardTestimoniSection from "~/components/section/testimoni-seection";
 import { useState } from "react";
 import { HighlightSection } from "~/components/section/highlight-event-section";
 import { getSession } from "~/lib/session";
+import EventsSection from "~/components/section/new-event-section";
+import StatsSection from "~/components/section/stats-section";
+import HeroSection from "~/components/section/new-hero-section";
+// import Navbar from "~/components/section/navbar";
+// import FooterSection from "~/components/section/footer";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   // const session = await getSession();
@@ -50,11 +55,15 @@ export default function LandingPage() {
 const LandingPageDesign = () => {
   return (
     <div className="flex flex-col">
-      <HeroSection isAuthenticated={false} isAdmin={false} isCustomer={false} />
+      {/* <HeroSection isAuthenticated={false} isAdmin={false} isCustomer={false} /> */}
+      <HeroSection />
 
       <CardFeatureSection />
 
-      <HighlightSection
+      <StatsSection />
+
+      <EventsSection />
+      {/* <HighlightSection
         highlights={[
           {
             id: 1,
@@ -65,7 +74,7 @@ const LandingPageDesign = () => {
             link: "https://kinau.id",
           },
         ]}
-      />
+      /> */}
 
       <section className="w-full bg-blue-600 py-16">
         <div className="container max-w-7xl mx-auto px-4 md:px-6">

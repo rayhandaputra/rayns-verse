@@ -1,39 +1,18 @@
+"use client";
+
+import { Loader2, Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useFetcher, useNavigate } from "react-router";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../../ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
-import { Loader2, Menu } from "lucide-react";
-import { useFetcher, useLocation, useNavigate } from "react-router";
-import { abbreviation } from "~/lib/utils";
-import { Button } from "../../ui/button";
-import { useEffect, useState } from "react";
-import SlideInModal from "~/components/modal/SlideInModal";
 import { auth } from "~/config/firebase";
-import { API } from "~/lib/api";
-import { toast } from "sonner";
+import SlideInModal from "~/components/modal/SlideInModal";
 
-interface NavbarProps {
-  session?: {
-    name: string;
-    role: string;
-    avatar?: string;
-  } | null;
-  sidebar?: {
-    mobileMenuOpen: boolean;
-    setMobileMenuOpen: (val: boolean) => void;
-  };
-}
-
-const Navbar = ({ session, sidebar }: NavbarProps) => {
+export default function Navbar() {
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
   const fetcher = useFetcher();
-  const location = useLocation();
+  const [scrolled, setScrolled] = useState(false);
   const [openLogin, setOpenLogin] = useState<boolean>(false);
-  // const [alert, setAlert] = useState<boolean>(false);
   const isLoading = fetcher.state === "submitting";
 
   const handleGooglSignIn = async () => {
@@ -57,113 +36,99 @@ const Navbar = ({ session, sidebar }: NavbarProps) => {
     }
   }, [fetcher.state, fetcher.data, navigate]);
 
-  const toggleMobileMenu = () => {
-    sidebar?.setMobileMenuOpen?.(!sidebar?.mobileMenuOpen);
-  };
+  // Detect scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) setScrolled(true);
+      else setScrolled(false);
+    };
 
-  const abbr = abbreviation(session?.name || "G");
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const navItems = [
+    { label: "Berita", href: "#" },
+    { label: "Katalog", href: "#" },
+    // { label: "Harga", href: "#" },
+    { label: "Kontak", href: "#" },
+    { label: "Fitur", href: "#" },
+  ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-30 h-[64px] bg-white border-b border-gray-200 flex items-center px-4 md:px-6 shadow-sm">
-      <div className="flex w-full items-center justify-between max-w-7xl mx-auto">
+    <nav
+      className={`w-full fixed top-0 left-0 z-50 transition-all duration-300 bg-white ${
+        scrolled ? "shadow-md shadow-gray-400/30" : ""
+      }`}
+    >
+      <div className="max-w-7xl mx-auto flex items-center justify-between py-4 md:py-6 px-6 md:px-12">
         {/* Logo */}
-        <div className="flex items-center gap-3">
-          <img src="/kinau-logo.png" className="w-24 h-auto" alt="Logo" />
-        </div>
+        <img
+          src="/kinau-logo.png"
+          className="w-28 h-auto"
+          alt="Logo"
+          onClick={() => navigate("/")}
+        />
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-700">
-          <button
-            onClick={() => navigate("/")}
-            className="hover:text-primary cursor-pointer"
-          >
-            Berita
-          </button>
-          <button
-            onClick={() => navigate("/features")}
-            className="hover:text-primary cursor-pointer"
-          >
-            Katalog
-          </button>
-          <button
-            onClick={() => navigate("/pricing")}
-            className="hover:text-primary cursor-pointer"
-          >
-            Harga
-          </button>
-          <button
-            onClick={() => navigate("/contact")}
-            className="hover:text-primary cursor-pointer"
-          >
-            Kontak
-          </button>
+        <div className="hidden md:flex items-center space-x-8">
+          {navItems.map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              className="text-gray-600 hover:text-blue-600 transition"
+            >
+              {item.label}
+            </a>
+          ))}
+
+          <div className="flex items-center gap-4">
+            <button
+              className="text-gray-700 font-medium cursor-pointer"
+              onClick={() => setOpenLogin(true)}
+            >
+              Login
+            </button>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition">
+              Daftar
+            </button>
+          </div>
         </div>
 
-        {/* Right Section */}
-        <div className="flex items-center gap-4">
-          {session ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 focus:outline-none">
-                <Avatar className="w-9 h-9 ring-1 ring-gray-200">
-                  <AvatarImage src={session.avatar} />
-                  <AvatarFallback>{abbr}</AvatarFallback>
-                </Avatar>
-
-                {/* Desktop user info */}
-                <div className="hidden md:flex flex-col items-start">
-                  <span className="text-sm font-medium text-gray-900">
-                    {session.name}
-                  </span>
-                  <span className="text-xs text-gray-500">{session.role}</span>
-                </div>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end" className="w-44 mt-2">
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  Profil
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/logout")}>
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            // <Button
-            //   variant="outline"
-            //   size="sm"
-            //   className="text-blue-800 border border-blue-800 hover:bg-blue-50 font-semibold"
-            //   onClick={() => setOpenLogin(true)}
-            // >
-            //   Login
-            // </Button>
-            <div className="inline-flex items-center rounded-full bg-gray-100 p-1 shadow-inner">
-              <a
-                onClick={() => setOpenLogin(true)}
-                className="px-5 py-2 text-sm font-semibold rounded-full 
-           bg-blue-600 text-white shadow-md 
-           hover:bg-blue-700 transition cursor-pointer"
-              >
-                Masuk
-              </a>
-
-              <a
-                className="px-5 py-2 text-sm font-semibold rounded-full 
-           text-gray-600 hover:text-blue-600 hover:bg-gray-200 transition cursor-pointer"
-              >
-                Daftar
-              </a>
-            </div>
-          )}
-
-          {/* Mobile menu button */}
-          <button
-            onClick={toggleMobileMenu}
-            className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-        </div>
+        {/* Mobile Menu Toggle */}
+        <button
+          onClick={() => setOpen(!open)}
+          className="md:hidden p-2 text-gray-700"
+        >
+          {open ? <X /> : <Menu />}
+        </button>
       </div>
+
+      {/* Mobile Dropdown */}
+      {open && (
+        <div className="bg-white border-t md:hidden flex flex-col items-center py-4 space-y-4 shadow-inner">
+          {navItems.map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              className="text-gray-700 hover:text-blue-600 transition"
+            >
+              {item.label}
+            </a>
+          ))}
+          <div className="flex flex-col gap-2">
+            <button
+              className="text-gray-700 font-medium cursor-pointer"
+              onClick={() => setOpenLogin(true)}
+            >
+              Login
+            </button>
+            <button className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition">
+              Signup
+            </button>
+          </div>
+        </div>
+      )}
 
       <SlideInModal isOpen={openLogin} onClose={() => setOpenLogin(false)}>
         <div className="min-h-screen flex items-center justify-center bg-white px-4 z-50">
@@ -227,6 +192,4 @@ const Navbar = ({ session, sidebar }: NavbarProps) => {
       </SlideInModal>
     </nav>
   );
-};
-
-export default Navbar;
+}

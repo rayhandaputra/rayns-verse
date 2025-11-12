@@ -7,7 +7,7 @@ const FloatingWhatsApp = () => {
   return (
     <div className="fixed bottom-5 right-5 z-20 flex flex-col items-end md:flex-row md:items-center md:gap-4 space-y-2">
       {visible && (
-        <div className="relative bg-blue-800 text-white text-sm px-4 py-2 rounded-lg shadow-lg max-w-[200px] animate-fade-in">
+        <div className="relative opacity-80 bg-blue-600 text-white text-sm px-4 py-2 rounded-lg shadow-lg max-w-[200px] animate-fade-in">
           Hubungi Admin untuk Informasi lebih lanjut!
           <button
             onClick={() => setVisible(false)}
@@ -19,7 +19,7 @@ const FloatingWhatsApp = () => {
       )}
 
       <a
-        href="https://wa.me/6281234567890"
+        href="https://wa.me/6285219337474"
         target="_blank"
         rel="noopener noreferrer"
         className="relative w-16 h-16 bg-green-200 rounded-full border border-gray-300 shadow-lg transition-colors"

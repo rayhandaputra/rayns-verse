@@ -306,6 +306,18 @@ export const navigation: NavItem[] = [
     icon: "FileText",
     active: ["/app/drive"],
   },
+  {
+    name: "CMS",
+    icon: "PuzzleIcon",
+    active: ["/app/media/content-event"],
+    children: [
+      {
+        name: "Sorotan Event",
+        href: "/app/media/content-event",
+        active: ["/app/media/content-event"],
+      },
+    ],
+  },
   // {
   //   name: "Kepegawaian", // Laporan Penjualan per Acara, Statistik Produk Terlaris, Riwayat Kolaborasi Panitia
   //   href: "/app/employee",
