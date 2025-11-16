@@ -1,6 +1,13 @@
 "use client";
 
-import { MapPin, Phone, Mail, Clock, ChevronRight } from "lucide-react";
+import {
+  MapPin,
+  Phone,
+  Mail,
+  Clock,
+  ChevronRight,
+  Instagram,
+} from "lucide-react";
 
 export default function FooterSection() {
   return (
@@ -8,29 +15,33 @@ export default function FooterSection() {
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-10">
         {/* Left Section */}
         <div>
-          <h2 className="text-white text-xl font-semibold mb-2">KINAU ID</h2>
+          {/* <h2 className="text-white text-xl font-semibold mb-2">KINAU ID</h2>
           <p className="text-sm mb-4">
             Dipercaya oleh ratusan kampus, organisasi, dan event organizer di
             seluruh Indonesia
-          </p>
+          </p> */}
 
           <ul className="space-y-2 text-sm">
             <li className="flex items-start gap-2">
               <MapPin className="w-4 h-4 text-red-500 mt-0.5" />
-              <span>Lokasi: Kota Baru, Bandar Lampung</span>
+              <span>Lokasi: Korpri Raya, Sukarame, Bandar Lampun</span>
             </li>
             <li className="flex items-start gap-2">
               <Phone className="w-4 h-4 text-green-500 mt-0.5" />
               <span>Kontak: (+62) 852-1933-7474</span>
             </li>
             <li className="flex items-start gap-2">
+              <Instagram className="w-4 h-4 text-blue-500 mt-0.5" />
+              <span>@kinau.id</span>
+            </li>
+            <li className="flex items-start gap-2">
               <Mail className="w-4 h-4 text-blue-500 mt-0.5" />
               <span>admin@kinau.id</span>
             </li>
-            <li className="flex items-start gap-2">
+            {/* <li className="flex items-start gap-2">
               <Clock className="w-4 h-4 text-yellow-500 mt-0.5" />
               <span>Jam Kerja: Senin–Sabtu | 9 AM – 8 PM</span>
-            </li>
+            </li> */}
           </ul>
 
           {/* Social Icons */}
@@ -51,7 +62,7 @@ export default function FooterSection() {
         </div>
 
         {/* Right Section */}
-        <div>
+        {/* <div>
           <h3 className="text-white text-lg font-semibold mb-4">
             Tautan Pendukung
           </h3>
@@ -67,7 +78,7 @@ export default function FooterSection() {
               </li>
             ))}
           </ul>
-        </div>
+        </div> */}
       </div>
 
       {/* Bottom Bar */}

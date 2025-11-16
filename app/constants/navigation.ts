@@ -312,9 +312,14 @@ export const navigation: NavItem[] = [
     active: ["/app/media/content-event"],
     children: [
       {
-        name: "Sorotan Event",
+        name: "Riwayat Pesanan",
         href: "/app/media/content-event",
         active: ["/app/media/content-event"],
+      },
+      {
+        name: "Banner Utama",
+        href: "/app/media/main-banner",
+        active: ["/app/media/main-banner"],
       },
     ],
   },

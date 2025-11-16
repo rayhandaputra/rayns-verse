@@ -23,7 +23,10 @@ export const CmsContentAPI = {
             "title",
             "slug",
             "image",
+            "image_gallery",
+            "total_order",
             "description",
+            "promotion_type",
             "link",
             "type",
             "seq",
@@ -52,8 +55,18 @@ export const CmsContentAPI = {
 
   // ✅ CREATE NEW CONTENT
   create: async ({ req }: any) => {
-    const { title, image, description, link, type, seq, is_active } =
-      req.body || {};
+    const {
+      title,
+      image,
+      description,
+      link,
+      type,
+      seq,
+      is_active,
+      image_gallery,
+      promotion_type,
+      total_order,
+    } = req.body || {};
 
     if (!title || !type) {
       return { success: false, message: "Title dan Type wajib diisi" };
@@ -62,6 +75,9 @@ export const CmsContentAPI = {
     const newContent = {
       title,
       image,
+      image_gallery,
+      promotion_type,
+      total_order,
       description,
       link,
       type,

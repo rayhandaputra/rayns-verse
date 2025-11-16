@@ -20,7 +20,10 @@ import RootLayout from "./components/layout/manage";
 // import stylesheet from "./tailwind.css";
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: "KINAU ID" }, { name: "description", content: "" }];
+  return [
+    { title: "Your Digital Specialist" },
+    { name: "description", content: "" },
+  ];
 }
 
 export const links = (): any[] => [
@@ -36,7 +39,7 @@ export const links = (): any[] => [
   },
   {
     rel: "icon",
-    href: "/kinau-logo.png",
+    href: "/head-icon-kinau.png",
     type: "image/png",
   },
 ];
@@ -67,7 +70,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <div className="animate-spin w-10 h-10 border-4 border-gray-300 border-t-blue-500 rounded-full" />
               </div>
             )}
-            
+
             <RootLayout session={null}>
               <div>{children}</div>
             </RootLayout>

@@ -7,38 +7,38 @@ const statsData = [
   {
     id: 1,
     icon: <Package className="w-6 h-6 text-blue-500" />,
-    label: "Produk Diproduksi",
+    label: "ID Card Diproduksi",
     value: 12500,
     suffix: "+",
   },
   {
     id: 2,
     icon: <Users className="w-6 h-6 text-blue-500" />,
-    label: "Total Customer",
+    label: "Jumlah Instansi/Event",
     value: 3200,
     suffix: "+",
   },
   {
     id: 3,
     icon: <CalendarDays className="w-6 h-6 text-blue-500" />,
-    label: "Event Ditangani",
+    label: "Jumlah Event Disponsori",
     value: 85.45,
     suffix: "%",
     isPercent: true,
   },
-  {
-    id: 4,
-    icon: <Building2 className="w-6 h-6 text-blue-500" />,
-    label: "Instansi Bekerja Sama",
-    value: 750,
-    suffix: "+",
-  },
+  // {
+  //   id: 4,
+  //   icon: <Building2 className="w-6 h-6 text-blue-500" />,
+  //   label: "Instansi Bekerja Sama",
+  //   value: 750,
+  //   suffix: "+",
+  // },
 ];
 
 export default function StatsSection() {
   return (
     <section className="py-16 bg-white">
-      <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+      <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 text-center">
         {statsData.map((stat) => (
           <StatCard key={stat.id} stat={stat} />
         ))}

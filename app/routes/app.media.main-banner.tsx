@@ -13,10 +13,8 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
 import { ImageUploadPreview } from "~/components/input/ImageUploadPreview";
-import MediaGalleryUploader from "~/components/input/MediaGalleryUploader";
 import { ConfirmDialog } from "~/components/modal/ConfirmDialog";
 import { Modal } from "~/components/modal/Modal";
-import SelectBasic from "~/components/select/SelectBasic";
 import TableComponent from "~/components/table/Table";
 import { TitleHeader } from "~/components/TitleHedaer";
 import { Badge } from "~/components/ui/badge";
@@ -39,8 +37,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         query: {
           pagination: "true",
           page: 0,
+          type: "hero-section",
           size: 10,
-          type: "highlight-event",
         },
       } as any,
     });
@@ -97,7 +95,7 @@ export const action: ActionFunction = async ({ request }) => {
           req: {
             body: {
               ...payload,
-              type: "highlight-event",
+              type: "hero-section",
             } as any,
           },
         });
@@ -172,48 +170,21 @@ export default function AccountPage() {
       cell: (_: any, index: number) => index + 1,
     },
     {
-      name: "Gambar",
-      cell: (row: any) => {
-        const gallery: string[] = row?.image_gallery
-          ? JSON.parse(row?.image_gallery)
-          : [];
-
-        if (!gallery.length) return "-";
-
-        const first = gallery[0];
-        const remaining = gallery.length - 1;
-
-        return (
-          <div className="flex items-center gap-2">
-            {/* Thumbnail pertama */}
-            <img
-              src={first}
-              alt="preview"
-              className="w-16 h-16 object-cover rounded border"
-            />
-
-            {/* Info sisa gambar */}
-            {remaining > 0 && (
-              <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                +{remaining} gambar lainnya
-              </span>
-            )}
-          </div>
-        );
-      },
-    },
-
-    {
-      name: "Nama Instansi/Event",
+      name: "Label",
       cell: (row: any) => row?.title || "-",
     },
     {
-      name: "Jumlah Order",
-      cell: (row: any) => row?.total_order,
-    },
-    {
-      name: "Jenis",
-      cell: (row: any) => row?.promotion_type || "-",
+      name: "Gambar",
+      cell: (row: any) =>
+        row?.image ? (
+          <img
+            src={row?.image}
+            alt="preview"
+            className="w-16 h-16 object-cover rounded border"
+          />
+        ) : (
+          "-"
+        ),
     },
     {
       name: "Aksi",
@@ -230,9 +201,6 @@ export default function AccountPage() {
                 key: "update",
                 data: {
                   ...row,
-                  ...(row?.image_gallery && {
-                    image_gallery: JSON.parse(row?.image_gallery),
-                  }),
                 },
               })
             }
@@ -255,13 +223,13 @@ export default function AccountPage() {
   return (
     <div className="space-y-3">
       <TitleHeader
-        title="Riwayat Pesanan"
-        description="Kelola Konten Riwayat Pesanan."
+        title="Banner Utama"
+        description="Kelola Konten Banner Utama."
         breadcrumb={
           <AppBreadcrumb
             pages={[
               { label: "CMS", href: "/" },
-              { label: "Riwayat Pesanan", active: true },
+              { label: "Banner Utama", active: true },
             ]}
           />
         }
@@ -273,14 +241,12 @@ export default function AccountPage() {
                 ...modal,
                 open: true,
                 key: "create",
-                data: {
-                  image_gallery: [],
-                },
+                data: null,
               })
             }
           >
             <PlusCircleIcon className="w-4" />
-            Riwayat Pesanan
+            Banner Baru
           </Button>
         }
       />
@@ -291,82 +257,24 @@ export default function AccountPage() {
         <Modal
           open={modal?.open}
           onClose={() => setModal({ ...modal, open: false })}
-          title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Riwayat Pesanan`}
+          title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Banner utama`}
         >
           <Form method="post" className="space-y-3">
             <input type="hidden" name="id" value={modal?.data?.id} />
             <div className="space-y-1">
-              <Label>Nama Instansi/Event</Label>
+              <Label>Label</Label>
               <Input
                 required
                 type="text"
                 name="title"
-                placeholder="Masukkan Nama Instansi/Event"
+                placeholder="Masukkan Label"
                 defaultValue={modal?.data?.title}
               />
             </div>
             <div className="space-y-1">
-              <Label>Jumlah Order</Label>
-              <Input
-                required
-                type="number"
-                name="total_order"
-                placeholder="Masukkan Jumlah Order"
-                defaultValue={modal?.data?.total_order}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Jenis</Label>
-              <SelectBasic
-                required
-                options={[
-                  { label: "Reguler", value: "regular" },
-                  { label: "Sponsor", value: "sponsored" },
-                ]}
-                defaultValue={modal?.data?.promotion_type || "regular"}
-                placeholder="Pilih Jeni"
-                onChange={(value) => {
-                  setModal({
-                    ...modal,
-                    data: { ...modal?.data, promotion_type: value },
-                  });
-                }}
-              />
-              <input
-                type="hidden"
-                name="promotion_type"
-                value={modal?.data?.promotion_type || "regular"}
-              />
-            </div>
-            <div className="space-y-1">
               <Label>Upload Gambar</Label>
-              <MediaGalleryUploader
-                value={modal?.data?.image_gallery ?? []} // initial value (optional)
-                onChange={(urls) => {
-                  setModal({
-                    ...modal,
-                    data: {
-                      ...modal?.data,
-                      image_gallery: urls,
-                    },
-                  });
-                }} // receive updated array of URLs
-                maxFiles={50} // optional
-                size={128} // optional square size
-              />
-              <input
-                type="hidden"
-                name="image_gallery"
-                value={JSON.stringify(modal?.data?.image_gallery)}
-              />
-
-              {/* <pre className="mt-4 bg-gray-100 p-3 rounded text-xs">
-                {JSON.stringify(gallery, null, 2)}
-              </pre> */}
-            </div>
-            {/* <div className="space-y-1">
               <ImageUploadPreview
-                label="Upload Gambar"
+                label=""
                 value={modal?.data?.image || undefined}
                 size={128}
                 onChange={(file, previewUrl) => {
@@ -379,19 +287,8 @@ export default function AccountPage() {
                   });
                 }}
               />
-            </div> */}
-
-            {/* <div className="space-y-1">
-              <Label>Deskripsi</Label>
-              <Input
-                required
-                type="text"
-                name="description"
-                placeholder="Masukkan Deskripsi"
-                defaultValue={modal?.data?.description}
-              />
+              <input type="hidden" name="image" value={modal?.data?.image} />
             </div>
-            */}
 
             <div className="flex justify-end gap-2">
               <Button

@@ -20,6 +20,7 @@ import EventsSection from "~/components/section/new-event-section";
 import StatsSection from "~/components/section/stats-section";
 import HeroSection from "~/components/section/new-hero-section";
 import { API } from "~/lib/api";
+import ImageCarousel from "~/components/slider/ImageCarousel";
 // import Navbar from "~/components/section/navbar";
 // import FooterSection from "~/components/section/footer";
 
@@ -28,6 +29,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const { page = 0, size = 10 } = Object.fromEntries(
     url.searchParams.entries()
   );
+
+  const session = await getSession();
+  console.log(session?.data);
   try {
     const highlightEvent = await API.CMS_CONTENT.get({
       session: {},
@@ -69,9 +73,23 @@ const LandingPageDesign = ({ data }: any) => {
   return (
     <div className="flex flex-col">
       {/* <HeroSection isAuthenticated={false} isAdmin={false} isCustomer={false} /> */}
-      <HeroSection />
+      {/* <HeroSection /> */}
 
-      <CardFeatureSection />
+      <div className="p-8 bg-white">
+        <div className="max-w-7xl mx-auto rounded-2xl overflow-hidden">
+          <ImageCarousel
+            images={[
+              "https://data.kinau.id/api/resource/b0c85cce748a656b9bbc.png",
+              "https://data.kinau.id/api/resource/b0c85cce748a656b9bbc.png",
+            ]}
+            height={430}
+            rounded="rounded-none" // penting: biarkan carousel tanpa rounding
+            interval={3500}
+          />
+        </div>
+      </div>
+
+      {/* <CardFeatureSection /> */}
 
       <StatsSection />
 
@@ -89,7 +107,7 @@ const LandingPageDesign = ({ data }: any) => {
         ]}
       /> */}
 
-      <section className="w-full bg-blue-600 py-16">
+      {/* <section className="w-full bg-blue-600 py-16">
         <div className="container max-w-7xl mx-auto px-4 md:px-6">
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold text-white mb-4">
@@ -110,7 +128,7 @@ const LandingPageDesign = ({ data }: any) => {
             </Button>
           </div>
         </div>
-      </section>
+      </section> */}
 
       <CardTestimoniSection />
 

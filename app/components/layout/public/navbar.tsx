@@ -72,7 +72,7 @@ export default function Navbar() {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-8">
-          {navItems.map((item) => (
+          {/* {navItems.map((item) => (
             <a
               key={item.label}
               href={item.href}
@@ -80,17 +80,23 @@ export default function Navbar() {
             >
               {item.label}
             </a>
-          ))}
+          ))} */}
 
           <div className="flex items-center gap-4">
-            <button
+            {/* <button
               className="text-gray-700 font-medium cursor-pointer"
               onClick={() => setOpenLogin(true)}
             >
               Login
-            </button>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition">
+            </button> */}
+            {/* <button className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition">
               Daftar
+            </button> */}
+            <button
+              onClick={() => setOpenLogin(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition"
+            >
+              Login
             </button>
           </div>
         </div>

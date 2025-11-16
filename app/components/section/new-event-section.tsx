@@ -1,6 +1,7 @@
 import { CalendarDays, Music, Apple, CornerUpLeftIcon } from "lucide-react";
 import moment from "moment";
 import { useMemo } from "react";
+import { toMoney } from "~/lib/utils";
 
 export default function EventsSection({ events }: { events: any[] }) {
   const mockEvents = useMemo(() => {
@@ -72,15 +73,15 @@ export default function EventsSection({ events }: { events: any[] }) {
     <section className="max-w-7xl mx-auto text-gray-800 px-4 py-10">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-3xl font-bold">Berita & Acara</h2>
-        <p className="text-gray-600">
+        <h2 className="text-3xl font-bold">Riwayat Pesanan</h2>
+        {/* <p className="text-gray-600">
           Dapatkan informasi terkini seputar kegiatan, acara, dan pembaruan
           terbaru dari kami.
-        </p>
+        </p> */}
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-3 mb-8">
+      {/* <div className="flex gap-3 mb-8">
         <button className="px-4 py-2 rounded-full bg-black text-white text-sm">
           Semua
         </button>
@@ -90,7 +91,7 @@ export default function EventsSection({ events }: { events: any[] }) {
         <button className="px-4 py-2 rounded-full border text-sm">
           Telah Berlangsung
         </button>
-      </div>
+      </div> */}
 
       {/* Cards Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -122,7 +123,10 @@ function EventCard({ event }: any) {
           {event.title}
         </h3>
 
-        <p className="text-sm text-gray-600 mb-4">{event.description}</p>
+        {/* <p className="text-sm text-gray-600 mb-4">{event.description}</p> */}
+        <p className="text-sm text-gray-600 mb-4">
+          Jumlah: {toMoney(event.total_order)}
+        </p>
 
         <span className="text-xs text-gray-500">{event.dateRange}</span>
       </div>

@@ -2,6 +2,8 @@
 @import "tailwindcss/theme" layer(theme);
 @import "tailwindcss/utilities";
 
+@import "keen-slider/keen-slider.min.css";
+
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
