@@ -36,14 +36,26 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     const highlightEvent = await API.CMS_CONTENT.get({
       session: {},
       req: {
-        pagination: "false",
-        type: "highlight-event",
+        query: {
+          pagination: "false",
+          type: "highlight-event",
+        },
+      } as any,
+    });
+    const heroSection = await API.CMS_CONTENT.get({
+      session: {},
+      req: {
+        query: {
+          pagination: "false",
+          type: "hero-section",
+        },
       } as any,
     });
 
     return {
       APP_CONFIG: CONFIG,
       highlightEvent: highlightEvent?.items,
+      heroSection: heroSection?.items,
     };
   } catch (err) {
     console.log(err);
@@ -51,12 +63,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function LandingPage() {
-  const { highlightEvent, APP_CONFIG } = useLoaderData();
+  const { highlightEvent, heroSection, APP_CONFIG } = useLoaderData();
 
   return (
     <section>
       <div className="w-full">
-        <LandingPageDesign data={{ highlightEvent }} />
+        <LandingPageDesign data={{ highlightEvent, heroSection }} />
       </div>
       {/* {APP_CONFIG.env === "development" ? (
         <div className="w-full">
@@ -78,10 +90,7 @@ const LandingPageDesign = ({ data }: any) => {
       <div className="p-8 bg-white">
         <div className="max-w-7xl mx-auto rounded-2xl overflow-hidden">
           <ImageCarousel
-            images={[
-              "https://data.kinau.id/api/resource/b0c85cce748a656b9bbc.png",
-              "https://data.kinau.id/api/resource/b0c85cce748a656b9bbc.png",
-            ]}
+            images={data?.heroSection?.map((v: any) => v?.image)}
             height={430}
             rounded="rounded-none" // penting: biarkan carousel tanpa rounding
             interval={3500}
