@@ -71,7 +71,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       query: {
         pagination: "false",
         type: "stats",
-        // is_active: 1,
+        is_active: 1,
       },
     } as any,
   });
