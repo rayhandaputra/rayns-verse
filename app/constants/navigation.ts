@@ -321,6 +321,11 @@ export const navigation: NavItem[] = [
         href: "/app/media/main-banner",
         active: ["/app/media/main-banner"],
       },
+      {
+        name: "Ringkasan Angka",
+        href: "/app/media/stats",
+        active: ["/app/media/stats"],
+      },
     ],
   },
   // {

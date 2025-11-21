@@ -7,7 +7,7 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "~/config/firebase";
 import SlideInModal from "~/components/modal/SlideInModal";
 
-export default function Navbar() {
+export default function Navbar({ session }: { session: any }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const fetcher = useFetcher();
@@ -29,6 +29,7 @@ export default function Navbar() {
   };
 
   useEffect(() => {
+    console.log("Fetcher State:", fetcher.state);
     if (fetcher.state === "idle" && fetcher.data) {
       navigate("/app/overview", {
         state: { flash: fetcher.data },
@@ -92,12 +93,21 @@ export default function Navbar() {
             {/* <button className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition">
               Daftar
             </button> */}
-            <button
-              onClick={() => setOpenLogin(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition"
-            >
-              Login
-            </button>
+            {session ? (
+              <button
+                onClick={() => navigate("/app/overview")}
+                className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition"
+              >
+                Dashboard
+              </button>
+            ) : (
+              <button
+                onClick={() => setOpenLogin(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition"
+              >
+                Login
+              </button>
+            )}
           </div>
         </div>
 

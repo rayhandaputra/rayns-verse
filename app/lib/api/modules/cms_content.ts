@@ -31,6 +31,9 @@ export const CmsContentAPI = {
             "type",
             "seq",
             "is_active",
+            "value",
+            "suffix",
+            "icon_type",
             "created_on",
             "modified_on",
           ],
@@ -66,6 +69,9 @@ export const CmsContentAPI = {
       image_gallery,
       promotion_type,
       total_order,
+      value,
+      suffix,
+      icon_type,
     } = req.body || {};
 
     if (!title || !type) {
@@ -83,6 +89,9 @@ export const CmsContentAPI = {
       type,
       seq: seq ?? 0,
       is_active: is_active ?? 1,
+      value: value || null,
+      suffix: suffix || null,
+      icon_type: icon_type || null,
       created_on: new Date().toISOString(),
     };
 

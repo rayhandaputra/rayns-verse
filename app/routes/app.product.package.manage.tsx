@@ -21,7 +21,7 @@ import { Label } from "~/components/ui/label";
 import { API, API_KEY, API_URL } from "~/lib/api";
 import AsyncReactSelect from "react-select/async";
 import { useEffect, useState } from "react";
-import { getSession } from "~/lib/session";
+import { getSession } from "~/lib/session.client";
 import { toMoney } from "~/lib/utils";
 
 export const loader: LoaderFunction = async ({ request, params }) => {

@@ -21,7 +21,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import moment from "moment";
 import { API, API_KEY, API_URL } from "~/lib/api";
-import { getSession } from "~/lib/session";
+import { requireAuth } from "~/lib/session.server";
 import AsyncReactSelect from "react-select/async";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { generateShortId, toMoney } from "~/lib/utils";
@@ -29,7 +29,9 @@ import AsyncCreatableSelect from "react-select/async-creatable";
 
 // === ACTION ===
 export const action: ActionFunction = async ({ request }) => {
-  const session = await getSession(request.headers.get("Cookie"));
+  // Require authentication
+  const { user, token } = await requireAuth(request);
+  
   const formData = await request.formData();
   let { id, state, items, ...payload } = Object.fromEntries(
     formData.entries()
@@ -40,7 +42,7 @@ export const action: ActionFunction = async ({ request }) => {
     items = items ? JSON.parse(items) : {};
 
     await API.ORDERS.create({
-      session: {},
+      session: { user, token },
       req: {
         body: {
           ...state,

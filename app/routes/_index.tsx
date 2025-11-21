@@ -15,60 +15,86 @@ import CardTestimoniSection from "~/components/section/testimoni-seection";
 // import { SlideInModal } from "~/components/modal/SlideInModal";
 import { useState } from "react";
 import { HighlightSection } from "~/components/section/highlight-event-section";
-import { getSession } from "~/lib/session";
+// import { getSession } from "~/lib/session";
 import EventsSection from "~/components/section/new-event-section";
 import StatsSection from "~/components/section/stats-section";
 import HeroSection from "~/components/section/new-hero-section";
 import { API } from "~/lib/api";
 import ImageCarousel from "~/components/slider/ImageCarousel";
+import { getOptionalUser } from "~/lib/session.server";
+// import { blockUserIfLoggedIn } from "~/lib/session.client";
+// import { blockLoggedIn } from "~/lib/session.server";
+// import { unsealSession } from "~/lib/session.client";
+// import { unsealSession } from "~/lib/session.server";
 // import Navbar from "~/components/section/navbar";
 // import FooterSection from "~/components/section/footer";
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
-  const url = new URL(request.url);
-  const { page = 0, size = 10 } = Object.fromEntries(
-    url.searchParams.entries()
-  );
+export async function loader({ request }: LoaderFunctionArgs) {
+  // Get optional user (for public pages)
+  const authData = await getOptionalUser(request);
 
-  const session = await getSession();
-  console.log(session?.data);
-  try {
-    const highlightEvent = await API.CMS_CONTENT.get({
-      session: {},
-      req: {
-        query: {
-          pagination: "false",
-          type: "highlight-event",
-        },
-      } as any,
-    });
-    const heroSection = await API.CMS_CONTENT.get({
-      session: {},
-      req: {
-        query: {
-          pagination: "false",
-          type: "hero-section",
-        },
-      } as any,
-    });
+  /* ===========================
+     FETCH LANDING PAGE CONTENT
+  =========================== */
+  // Prepare session data for API calls
+  const sessionData = authData
+    ? { user: authData.user, token: authData.token }
+    : {};
 
-    return {
-      APP_CONFIG: CONFIG,
-      highlightEvent: highlightEvent?.items,
-      heroSection: heroSection?.items,
-    };
-  } catch (err) {
-    console.log(err);
-  }
+  const highlightEvent = await API.CMS_CONTENT.get({
+    session: sessionData,
+    req: { query: { type: "highlight-event", pagination: "false" } } as any,
+  });
+
+  const heroSection = await API.CMS_CONTENT.get({
+    session: sessionData,
+    req: { query: { type: "hero-section", pagination: "false" } } as any,
+  });
+
+  // Get approved testimonials for landing page
+  const testimonials = await API.TESTIMONIAL.get({
+    session: sessionData,
+    req: {
+      query: {
+        pagination: "true",
+        // status: "approved",
+        page: 0,
+        size: 6, // Limit to 6 testimonials
+      },
+    } as any,
+  });
+
+  // Get stats data for stats section
+  const stats = await API.CMS_CONTENT.get({
+    session: sessionData,
+    req: {
+      query: {
+        pagination: "false",
+        type: "stats",
+        // is_active: 1,
+      },
+    } as any,
+  });
+
+  return {
+    user: authData?.user || null,
+    highlightEvent: highlightEvent.items,
+    heroSection: heroSection.items,
+    testimonials: testimonials.items || [],
+    stats: stats.items || [],
+  };
 }
 
 export default function LandingPage() {
-  const { highlightEvent, heroSection, APP_CONFIG } = useLoaderData();
+  const { highlightEvent, heroSection, testimonials, stats, APP_CONFIG } =
+    useLoaderData();
 
   return (
     <section>
       <div className="w-full">
-        <LandingPageDesign data={{ highlightEvent, heroSection }} />
+        <LandingPageDesign
+          data={{ highlightEvent, heroSection, testimonials, stats }}
+        />
       </div>
       {/* {APP_CONFIG.env === "development" ? (
         <div className="w-full">
@@ -100,7 +126,7 @@ const LandingPageDesign = ({ data }: any) => {
 
       {/* <CardFeatureSection /> */}
 
-      <StatsSection />
+      <StatsSection stats={data?.stats || []} />
 
       <EventsSection events={data?.highlightEvent} />
       {/* <HighlightSection
@@ -109,7 +135,7 @@ const LandingPageDesign = ({ data }: any) => {
             id: 1,
             institution: "ITERA 2",
             event: "ACARA 2",
-            description: "Bismillah",
+            description: "Bismillah", 
             imageUrl: "https://i.pravatar.cc/40",
             link: "https://kinau.id",
           },
@@ -139,7 +165,7 @@ const LandingPageDesign = ({ data }: any) => {
         </div>
       </section> */}
 
-      <CardTestimoniSection />
+      <CardTestimoniSection testimonials={data?.testimonials} />
 
       <FloatingWhatsApp />
     </div>

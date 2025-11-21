@@ -42,7 +42,7 @@ import ProductCard from "~/components/card/ProductCard";
 import { ConfirmDialog } from "~/components/modal/ConfirmDialog";
 import SlideInModal from "~/components/modal/SlideInModal";
 import ProductFullFormModal from "~/components/form/FormProduct";
-import { getSession } from "~/lib/session";
+import { getSession } from "~/lib/session.client";
 import {
   PopoverMenu,
   type PopoverMenuItem,

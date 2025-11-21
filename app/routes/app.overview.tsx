@@ -4,62 +4,124 @@
 import React, { useEffect, useState } from "react";
 import type { ApexOptions } from "apexcharts";
 import ChartLazy from "~/components/Chart/ChartLazy";
-import { useLoaderData, type LoaderFunction } from "react-router";
-import { getSession } from "~/lib/session";
+import {
+  redirect,
+  useLoaderData,
+  type LoaderFunction,
+  type LoaderFunctionArgs,
+} from "react-router";
+// import { getSession } from "~/lib/session";
 import { API } from "~/lib/api";
 import { getOrderStatusLabel, toMoney } from "~/lib/utils";
+import { requireAuth } from "~/lib/session.server";
+// import { requireUser } from "~/lib/session.client";
+// import { requireUserSession } from "~/lib/session.server";
+// import { unsealSession } from "~/lib/session.client";
 
 // const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
-export const loader: LoaderFunction = async ({ request, params }) => {
-  const session = await getSession();
+export async function loader({ request, params }: LoaderFunctionArgs) {
+  // Require authentication
+  const { user, session, token } = await requireAuth(request);
+
   let url = new URL(request.url);
   let { search, page = 0, size = 10 } = Object.fromEntries(url.searchParams);
 
-  try {
-    const filters = {
-      pagination: "true",
-      page: page || 0,
-      size: size || 10,
-      status: params.status || "",
-    };
-    const overview = await API.OVERVIEW.get({
-      session,
-      req: {
-        query: filters,
-      } as any,
-    });
-    const orders = await API.ORDERS.get({
-      session,
-      req: {
-        query: {
-          pagination: "true",
-          page: page || 0,
-          size: size || 3,
-        },
-      } as any,
-    });
+  const filters = {
+    pagination: "true",
+    page: page || 0,
+    size: size || 10,
+    status: params.status || "",
+  };
 
-    return {
-      overview,
-      orders: orders?.items
-    };
-  } catch (err) {
-    console.log(err);
-    return {
-      error_message: err,
-    };
-  }
-};
+  // Pass session data to API calls
+  const overview = await API.OVERVIEW.get({
+    session: { user, token },
+    req: {
+      query: filters,
+    } as any,
+  });
+
+  const orders = await API.ORDERS.get({
+    session: { user, token },
+    req: {
+      query: {
+        pagination: "true",
+        page: page || 0,
+        size: size || 3,
+      },
+    } as any,
+  });
+
+  return {
+    user,
+    overview,
+    orders: orders?.items,
+  };
+}
+
+// export const loader: LoaderFunction = async ({ request, params }) => {
+//   const session = await unsealSession(request);
+
+//   console.log("SESSION OVERVIEW PAGE => ", session.get("user"));
+
+//   let url = new URL(request.url);
+//   let { search, page = 0, size = 10 } = Object.fromEntries(url.searchParams);
+
+//   try {
+//     const filters = {
+//       pagination: "true",
+//       page: page || 0,
+//       size: size || 10,
+//       status: params.status || "",
+//     };
+//     const overview = await API.OVERVIEW.get({
+//       session,
+//       req: {
+//         query: filters,
+//       } as any,
+//     });
+//     const orders = await API.ORDERS.get({
+//       session,
+//       req: {
+//         query: {
+//           pagination: "true",
+//           page: page || 0,
+//           size: size || 3,
+//         },
+//       } as any,
+//     });
+
+//     return {
+//       overview,
+//       orders: orders?.items,
+//     };
+//   } catch (err) {
+//     console.log(err);
+//     return {
+//       error_message: err,
+//     };
+//   }
+// };
 
 export default function DashboardOverview() {
-  const {overview, orders} = useLoaderData()
-  
+  const { overview, orders } = useLoaderData();
+
   const rawData: any[] = overview?.monthly_report ?? [];
 
   const monthNames = [
-    "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
-    "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "Mei",
+    "Jun",
+    "Jul",
+    "Agu",
+    "Sep",
+    "Okt",
+    "Nov",
+    "Des",
   ];
 
   const months = rawData.map((v) => monthNames[Number(v.month) - 1]);
@@ -80,7 +142,6 @@ export default function DashboardOverview() {
       colors: ["#3b82f6"],
     },
   };
-
 
   const basisChart = {
     series: [
@@ -124,7 +185,9 @@ export default function DashboardOverview() {
         </div>
         <div className="bg-white rounded-2xl p-4 shadow">
           <h2 className="text-sm text-gray-500">Pendapatan</h2>
-          <p className="text-2xl font-bold">Rp {toMoney(overview?.total_revenue)}</p>
+          <p className="text-2xl font-bold">
+            Rp {toMoney(overview?.total_revenue)}
+          </p>
         </div>
       </div>
 
@@ -167,10 +230,13 @@ export default function DashboardOverview() {
                 <td className="py-2">{order?.institution_name}</td>
                 <td className="py-2">{order?.order_number}</td>
                 <td className="py-2">{order?.total_product}</td>
-                <td className={`py-2 ${order?.status === "done" ? "text-green-600" : "text-orange-600"}`}>{getOrderStatusLabel(order?.status)}</td>
+                <td
+                  className={`py-2 ${order?.status === "done" ? "text-green-600" : "text-orange-600"}`}
+                >
+                  {getOrderStatusLabel(order?.status)}
+                </td>
               </tr>
             ))}
-            
           </tbody>
         </table>
       </div>

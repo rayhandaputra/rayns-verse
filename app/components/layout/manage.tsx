@@ -45,7 +45,7 @@ export default function RootLayout({
           </div>
         ) : (
           <>
-            <Navbar />
+            <Navbar session={session} />
             <main className="pt-[64px]">{children}</main>
             <Footer />
           </>

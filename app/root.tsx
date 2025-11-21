@@ -5,8 +5,10 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
   useLocation,
   useNavigation,
+  type LoaderFunctionArgs,
 } from "react-router";
 
 import { LoaderProvider } from "~/hooks/use-loading";
@@ -17,7 +19,24 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import "./tailwind.css";
 import RootLayout from "./components/layout/manage";
+import { getOptionalUser } from "./lib/session.server";
 // import stylesheet from "./tailwind.css";
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  try {
+    // Get optional user (for public pages)
+    const authData = await getOptionalUser(request);
+    return {
+      user: authData?.user || null,
+    };
+  } catch (error) {
+    console.error("Error in root loader:", error);
+    // Return default data even if there's an error
+    return {
+      user: null,
+    };
+  }
+}
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -47,6 +66,8 @@ export const links = (): any[] => [
 // export const RootLayoutPageNames = ["/", "/app"];
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const loaderData = useLoaderData() as { user?: any } | undefined;
+  const user = loaderData?.user || null;
   const location = useLocation();
 
   const navigation = useNavigation();
@@ -71,7 +92,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             )}
 
-            <RootLayout session={null}>
+            <RootLayout session={user}>
               <div>{children}</div>
             </RootLayout>
           </ModalProvider>

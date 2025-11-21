@@ -6,17 +6,14 @@ import {
   type LoaderFunction,
 } from "react-router";
 import { toast } from "sonner";
-import { commitSession, getSession } from "~/lib/session";
+import { requireAuth } from "~/lib/session.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const session = await getSession(request.headers.get("Cookie"));
-  // const flash = session.get("flash");
-  // session.unset("flash");
+  // Require authentication for app routes
+  const { user } = await requireAuth(request);
+  
   return {
-    // flash,
-    headers: {
-      "Set-Cookie": await commitSession(session),
-    },
+    user,
   };
 };
 

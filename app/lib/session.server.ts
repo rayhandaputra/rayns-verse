@@ -1,52 +1,120 @@
-// app/lib/ironSession.server.ts
-// import { createCookie } from "@remix-run/node";
-// import * as Iron from "iron";
-// import { createCookie } from "react-router";
+// app/lib/session.server.ts
+import {
+  createCookie,
+  createCookieSessionStorage,
+  redirect,
+} from "react-router";
 
-// const SESSION_SECRET =
-//   process.env.SESSION_SECRET || "super_long_secret_at_least_32_chars";
+import { deleteSession, getSessionUser } from "./auth.server";
 
-// const sealedCookie = createCookie("iron_session", {
-//   httpOnly: true,
-//   secure: process.env.NODE_ENV === "production",
-//   path: "/",
-//   sameSite: "lax",
-// });
+if (!process.env.SESSION_SECRET) {
+  throw new Error("SESSION_SECRET must be set in environment variables");
+}
 
-// export async function sealSession(payload: any) {
-//   return Iron.seal(payload, SESSION_SECRET, Iron.defaults);
-// }
-
-// export async function unsealSession<T = any>(sealed: string) {
-//   return Iron.unseal(sealed, SESSION_SECRET, Iron.defaults) as Promise<T>;
-// }
-
-// // get dari request
-// export async function getSession(request: Request) {
-//   const cookieHeader = request.headers.get("Cookie");
-//   const sealed = (await sealedCookie.parse(cookieHeader)) || null;
-//   if (!sealed) return null;
-//   return unsealSession(sealed);
-// }
-
-// // set ke response
-// export async function commitSession(payload: any) {
-//   const sealed = await sealSession(payload);
-//   return sealedCookie.serialize(sealed);
-// }
-
-// lib/session.server.ts
-import { createCookieSessionStorage } from "react-router";
-
-export const sessionStorage = createCookieSessionStorage({
-  cookie: {
-    name: "__session",
-    secure: process.env.NODE_ENV === "production",
-    secrets: ["supersecretkey"],
-    sameSite: "lax",
-    path: "/",
-    httpOnly: true,
-  },
+// COOKIE DEFINITION
+const sessionCookie = createCookie("session", {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+  maxAge: 60 * 60 * 24 * 7, // 7 days
+  secrets: [process.env.SESSION_SECRET],
 });
 
-export const { getSession, commitSession, destroySession } = sessionStorage;
+export const sessionStorage = createCookieSessionStorage({
+  cookie: sessionCookie,
+});
+
+/**
+ * Get session from request cookie
+ */
+export async function getSession(cookieHeader: string | null) {
+  return sessionStorage.getSession(cookieHeader);
+}
+
+/**
+ * Commit session and return Set-Cookie header
+ */
+export async function commitSession(session: any) {
+  return sessionStorage.commitSession(session);
+}
+
+/**
+ * Destroy session and return Set-Cookie header
+ */
+export async function destroySession(session: any) {
+  return sessionStorage.destroySession(session);
+}
+
+/**
+ * Create user session and redirect
+ */
+export async function createUserSession(token: string, redirectTo = "/") {
+  const session = await sessionStorage.getSession();
+  session.set("token", token);
+
+  return redirect(redirectTo, {
+    headers: {
+      "Set-Cookie": await sessionStorage.commitSession(session),
+    },
+  });
+}
+
+/**
+ * Require authentication for protected routes
+ * Redirects to /login if not authenticated
+ */
+export async function requireAuth(request: Request) {
+  const session = await sessionStorage.getSession(
+    request.headers.get("Cookie")
+  );
+
+  const token = session.get("token");
+  if (!token) {
+    throw redirect("/");
+  }
+
+  const user = await getSessionUser(token);
+  if (!user) {
+    throw redirect("/");
+  }
+
+  return { user, session, token };
+}
+
+/**
+ * Get user if authenticated (optional)
+ * Returns null if not authenticated
+ */
+export async function getOptionalUser(request: Request) {
+  const session = await sessionStorage.getSession(
+    request.headers.get("Cookie")
+  );
+  const token = session.get("token");
+  
+  if (!token) {
+    return null;
+  }
+
+  const user = await getSessionUser(token);
+  return user ? { user, session, token } : null;
+}
+
+/**
+ * Logout user and redirect to login
+ */
+export async function logout(request: Request) {
+  const session = await sessionStorage.getSession(
+    request.headers.get("Cookie")
+  );
+  const token = session.get("token");
+
+  if (token) {
+    await deleteSession(token);
+  }
+
+  return redirect("/", {
+    headers: {
+      "Set-Cookie": await sessionStorage.destroySession(session),
+    },
+  });
+}

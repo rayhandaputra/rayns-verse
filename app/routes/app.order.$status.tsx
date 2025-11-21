@@ -24,7 +24,7 @@ import { API, API_KEY, API_URL } from "~/lib/api";
 import moment from "moment";
 import "moment/locale/id";
 import { dateFormat, formatDate } from "~/lib/dateFormatter";
-import { commitSession, getSession } from "~/lib/session";
+import { requireAuth } from "~/lib/session.server";
 import {
   getOrderLabel,
   getOrderStatusLabel,
@@ -42,13 +42,9 @@ import SelectBasic from "~/components/select/SelectBasic";
 // import { useModal } from "~/provider/modal-provider";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
-  // const session = await unsealSession(request);
-  // const session = await getSession(request);
-  // const url = new URL(request.url);
-  // const search = url.searchParams.get("q") ?? "";
-  // const session = await getSession(request.headers.get("Cookie"));
-  // const flash = session.get("flash");
-  // session.unset("flash");
+  // Require authentication
+  const { user, token } = await requireAuth(request);
+  
   let url = new URL(request.url);
   let { search, page = 0, size = 10 } = Object.fromEntries(url.searchParams);
 
@@ -59,27 +55,22 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       size: size || 10,
       status: params.status || "",
     };
+    
     const list = await API.ORDERS.get({
-      // session,
-      session: {},
+      session: { user, token },
       req: {
         query: filters,
       } as any,
     });
 
     return {
-      // search,
-      // APP_CONFIG: CONFIG,
+      user,
       table: {
         ...list,
         page: page || 0,
         size: size || 10,
         filter: filters,
       },
-      // flash,
-      // headers: {
-      //   "Set-Cookie": await commitSession(session),
-      // },
     };
   } catch (err) {
     console.log(err);
@@ -90,7 +81,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-  const session = await getSession(request.headers.get("Cookie"));
+  // Require authentication
+  const { user, token } = await requireAuth(request);
+  
   const formData = await request.formData();
   let { id, state, order_number, action_for, ...payload } = Object.fromEntries(
     formData.entries()
@@ -103,7 +96,7 @@ export const action: ActionFunction = async ({ request }) => {
         case "update_status":
           // Update status order
           const resUpdate = await API.ORDERS.update({
-            session,
+            session: { user, token },
             req: {
               body: {
                 id: id,

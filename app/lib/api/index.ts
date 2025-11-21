@@ -19,6 +19,7 @@ import { ProductComponentAPI } from "./modules/product_component";
 import { ProductPackageItemsAPI } from "./modules/product_package_item";
 import { SupplierAPI } from "./modules/supplier";
 import { SupplierCommodityAPI } from "./modules/supplier_commodity";
+import { TestimonialAPI } from "./modules/testimonial";
 import { UserAPI } from "./modules/user";
 
 // optional: unified API wrapper
@@ -40,4 +41,5 @@ export const API = {
   CMS_CONTENT: CmsContentAPI,
   OVERVIEW: OverviewAPI,
   DISCOUNT: DiscountAPI,
+  TESTIMONIAL: TestimonialAPI,
 };
