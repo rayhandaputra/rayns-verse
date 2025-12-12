@@ -1,6 +1,7 @@
 import { CalendarDays, Music, Apple, CornerUpLeftIcon } from "lucide-react";
 import moment from "moment";
 import { useMemo } from "react";
+import { useNavigate } from "react-router";
 import { toMoney } from "~/lib/utils";
 
 export default function EventsSection({ events }: { events: any[] }) {
@@ -104,8 +105,12 @@ export default function EventsSection({ events }: { events: any[] }) {
 }
 
 function EventCard({ event }: any) {
+  const navigate = useNavigate();
   return (
-    <div className="rounded-2xl shadow-sm bg-white overflow-hidden hover:shadow-md transition">
+    <div
+      className="rounded-2xl shadow-sm bg-white cursor-pointer overflow-hidden hover:shadow-md transition"
+      onClick={() => navigate(`/media/event/${event.slug}`)}
+    >
       {/* Image */}
       <div className="h-40 w-full bg-gray-200 overflow-hidden">
         <img

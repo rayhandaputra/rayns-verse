@@ -11,14 +11,7 @@ import MenuIcon from "~/components/icon/menu-icon";
 import { DriveLayout } from "~/components/drive/drive-layout";
 import { API } from "~/lib/api";
 import { Button } from "~/components/ui/button";
-import {
-  Plus,
-  Folder,
-  FileText,
-  ChevronRight,
-  Home,
-  PlusCircleIcon,
-} from "lucide-react";
+import { Plus, Folder, FileText, ChevronRight, Home } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,8 +21,6 @@ import {
 import { CreateFolderModal } from "~/components/drive/create-folder-modal";
 import { UploadFileModal } from "~/components/drive/upload-file-modal";
 import { toast } from "sonner";
-import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
-import { TitleHeader } from "~/components/TitleHedaer";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   try {
@@ -41,25 +32,25 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       req: {
         query: {
           pagination: "true",
-          // institution_domain: `kinau.id/eforms/${params.domain}`,
+          institution_domain: `kinau.id/eforms/${params.domain}`,
           page: 0,
           size: 1,
         },
       } as any,
     });
 
-    // const orderNumber = order?.items?.[0]?.order_number;
+    const orderNumber = order?.items?.[0]?.order_number;
 
-    // if (!orderNumber) {
-    //   return { order: null, detail: null, folders: [], files: [] };
-    // }
+    if (!orderNumber) {
+      return { order: null, detail: null, folders: [], files: [] };
+    }
 
     const order_items = await API.ORDER_ITEMS.get({
       session: {},
       req: {
         query: {
           pagination: "true",
-          // order_number: orderNumber,
+          order_number: orderNumber,
           page: 0,
           size: 50,
         },
@@ -70,7 +61,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       session: {},
       req: {
         query: {
-          // order_number: orderNumber,
+          order_number: orderNumber,
         },
       } as any,
     });
@@ -79,7 +70,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       session: {},
       req: {
         query: {
-          // order_number: orderNumber,
+          order_number: orderNumber,
           folder_id: folder_id ?? undefined,
           size: 100,
         },
@@ -92,7 +83,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         session: {},
         req: {
           query: {
-            // order_number: orderNumber,
+            order_number: orderNumber,
             id: folder_id,
           },
         } as any,
@@ -205,31 +196,41 @@ export default function DrivePage() {
       const response = await API.ASSET.upload(file);
 
       const newFile = {
-        file_type: "doc", // Default type
+        file_type: file.type || "application/octet-stream", // Use actual file type or a default
         file_url: response.url,
         file_name: file.name,
-        folder_id: folderId, // Use optional folderId
+        folder_id: folderId,
+        order_number: order?.order_number, // Assuming order_number is needed for file association
+        product_id: detail?.product_id, // Assuming product_id is needed
+        product_name: detail?.product_name, // Assuming product_name is needed
       };
 
-      let updatedFolders = folders;
+      await API.ORDER_UPLOAD.create_single_file({
+        session: {},
+        req: {
+          body: newFile,
+        },
+      });
+
+      // Optimistically update UI
       if (folderId) {
-        updatedFolders = folders.map((f) => {
-          if (f.id.toString() === folderId.toString()) {
-            const initialFolderFiles =
-              f.files || files.filter((file: any) => +file.folder_id === +f.id);
-
-            return {
-              ...f,
-              files: [...initialFolderFiles, newFile],
-            };
-          }
-          return f;
-        });
+        setFolders((prevFolders) =>
+          prevFolders.map((f) => {
+            if (f.id.toString() === folderId.toString()) {
+              const initialFolderFiles =
+                f.files ||
+                files.filter((file: any) => +file.folder_id === +f.id);
+              return {
+                ...f,
+                files: [...initialFolderFiles, newFile],
+              };
+            }
+            return f;
+          })
+        );
       }
+      setFiles((prevFiles) => [...prevFiles, newFile]);
 
-      setFolders(updatedFolders);
-      setFiles((prevFiles) => [...prevFiles, newFile]); // Add to general files list
-      saveChanges(updatedFolders); // Save folders, which now might include the new file if folderId was provided
       toast.success("Upload berhasil", { description: file.name });
     } catch (error) {
       console.error(error);
@@ -271,20 +272,27 @@ export default function DrivePage() {
   if (!client) return null;
 
   return (
-    <div className="">
-      {/* <div className="min-h-screen bg-gradient-to-b from-[#f8f9fb] to-[#f8f9fd] layout flex flex-col items-center p-4"> */}
-      <TitleHeader
-        title="Pusat Data"
-        description="Kelola data pengguna aplikasi Anda."
-        breadcrumb={
-          <AppBreadcrumb
-            pages={[
-              { label: "Pengaturan", href: "/" },
-              { label: "Pusat Data", active: true },
-            ]}
+    <div className="bg-[#f2f4f7]">
+      <div className="min-h-screen bg-gradient-to-b from-[#f8f9fb] to-[#f8f9fd] layout flex flex-col items-center p-4">
+        {/* Header */}
+        <header className="w-full flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <MenuIcon className="w-6 h-6 text-black" />
+          </div>
+          <img
+            src="/kinau-logo.png"
+            onClick={() => navigate("/")}
+            alt="Kinau"
+            className="w-24 opacity-80 cursor-pointer"
           />
-        }
-        actions={
+          <img
+            src="https://i.pravatar.cc/40"
+            alt="User"
+            className="w-9 h-9 rounded-full border border-gray-200"
+          />
+        </header>
+
+        <div className="w-full flex justify-end mb-4">
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 focus:outline-none">
               <Button className="bg-blue-600 hover:bg-blue-700 text-white">
@@ -305,53 +313,52 @@ export default function DrivePage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        }
-      />
-
-      {/* Breadcrumb / Title */}
-      <div className="w-full flex items-center gap-2 mb-6">
-        <div
-          className="flex items-center gap-1 cursor-pointer text-slate-500 hover:text-slate-900 transition-colors"
-          onClick={() => navigate(".")}
-        >
-          <Home className="w-4 h-4" />
-          <span className="text-sm font-medium">Home</span>
         </div>
 
-        {currentFolder && (
-          <>
-            <ChevronRight className="w-4 h-4 text-slate-400" />
-            <div className="flex items-center gap-2">
-              <Folder className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-bold text-slate-900">
-                {currentFolder.folder_name}
-              </span>
-            </div>
-          </>
-        )}
+        {/* Breadcrumb / Title */}
+        <div className="w-full flex items-center gap-2 mb-6">
+          <div
+            className="flex items-center gap-1 cursor-pointer text-slate-500 hover:text-slate-900 transition-colors"
+            onClick={() => navigate(".")}
+          >
+            <Home className="w-4 h-4" />
+            <span className="text-sm font-medium">Home</span>
+          </div>
+
+          {currentFolder && (
+            <>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <div className="flex items-center gap-2">
+                <Folder className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-bold text-slate-900">
+                  {currentFolder.folder_name}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+
+        <DriveLayout
+          folders={currentFolder ? [] : mappedFolders}
+          recentFiles={mappedRecentFiles}
+          allFiles={mappedAllFiles}
+          use_for="mobile"
+          onFolderClick={(folder) => navigate(`?folder_id=${folder.id}`)}
+        />
+
+        <CreateFolderModal
+          open={isCreateFolderOpen}
+          onOpenChange={setIsCreateFolderOpen}
+          onCreate={handleCreateFolder}
+        />
+
+        <UploadFileModal
+          open={isUploadFileOpen}
+          onOpenChange={setIsUploadFileOpen}
+          folder={currentFolder} // This is correct, shows all folders
+          onUpload={handleUploadFile}
+        />
       </div>
-
-      <DriveLayout
-        folders={currentFolder ? [] : mappedFolders}
-        recentFiles={mappedRecentFiles}
-        allFiles={mappedAllFiles}
-        // use_for="mobile"
-        onFolderClick={(folder) => navigate(`?folder_id=${folder.id}`)}
-      />
-
-      <CreateFolderModal
-        open={isCreateFolderOpen}
-        onOpenChange={setIsCreateFolderOpen}
-        onCreate={handleCreateFolder}
-      />
-
-      <UploadFileModal
-        open={isUploadFileOpen}
-        onOpenChange={setIsUploadFileOpen}
-        folder={currentFolder} // This is correct, shows all folders
-        onUpload={handleUploadFile}
-      />
-      {/* </div> */}
     </div>
   );
 }

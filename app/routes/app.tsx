@@ -10,10 +10,11 @@ import { requireAuth } from "~/lib/session.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
   // Require authentication for app routes
-  const { user } = await requireAuth(request);
+  // const { user } = await requireAuth(request);
   
   return {
-    user,
+    // user,
+    message: "OK"
   };
 };
 

@@ -307,6 +307,12 @@ export const navigation: NavItem[] = [
     active: ["/app/drive"],
   },
   {
+    name: "Email", // Laporan Penjualan per Acara, Statistik Produk Terlaris, Riwayat Kolaborasi Panitia
+    href: "/app/email",
+    icon: "Mail",
+    active: ["/app/email"],
+  },
+  {
     name: "CMS",
     icon: "PuzzleIcon",
     active: ["/app/media/content-event"],

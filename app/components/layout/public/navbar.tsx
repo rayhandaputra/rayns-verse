@@ -6,6 +6,7 @@ import { useFetcher, useNavigate } from "react-router";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "~/config/firebase";
 import SlideInModal from "~/components/modal/SlideInModal";
+import { toast } from "sonner";
 
 export default function Navbar({ session }: { session: any }) {
   const navigate = useNavigate();
@@ -31,9 +32,13 @@ export default function Navbar({ session }: { session: any }) {
   useEffect(() => {
     console.log("Fetcher State:", fetcher.state);
     if (fetcher.state === "idle" && fetcher.data) {
-      navigate("/app/overview", {
-        state: { flash: fetcher.data },
-      });
+      if (fetcher.data.error) {
+        toast.error(fetcher.data.error);
+      } else {
+        navigate("/app/overview", {
+          state: { flash: fetcher.data },
+        });
+      }
     }
   }, [fetcher.state, fetcher.data, navigate]);
 

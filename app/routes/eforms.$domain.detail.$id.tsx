@@ -23,7 +23,7 @@ import CardFolder from "~/components/eform/CardFolder";
 import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
 import SectionImageFolder from "~/components/eform/SectionImageFolder";
 import { toast } from "sonner";
-import { getSession } from "~/lib/session.client";
+// import { getSession } from "~/lib/session.client";
 import { Button } from "~/components/ui/button";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -85,7 +85,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 };
 
 export const action: ActionFunction = async ({ request }) => {
-  const session = await getSession(request.headers.get("Cookie"));
+  // const session = await getSession(request.headers.get("Cookie"));
   const formData = await request.formData();
   let { id, state, detail, order_number, ...payload } = Object.fromEntries(
     formData.entries()

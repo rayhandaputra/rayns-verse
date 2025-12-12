@@ -4,6 +4,7 @@ import {
   useLoaderData,
   type LoaderFunctionArgs,
 } from "react-router";
+import { motion } from "framer-motion";
 import { CONFIG } from "~/config";
 import ComingSoon from "./pre-launch/_index";
 import { Button } from "~/components/ui/button";
@@ -13,7 +14,7 @@ import FloatingWhatsApp from "~/components/FloatingWhatsapp";
 import CardFeatureSection from "~/components/section/feature-section";
 import CardTestimoniSection from "~/components/section/testimoni-seection";
 // import { SlideInModal } from "~/components/modal/SlideInModal";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { HighlightSection } from "~/components/section/highlight-event-section";
 // import { getSession } from "~/lib/session";
 import EventsSection from "~/components/section/new-event-section";
@@ -22,6 +23,7 @@ import HeroSection from "~/components/section/new-hero-section";
 import { API } from "~/lib/api";
 import ImageCarousel from "~/components/slider/ImageCarousel";
 import { getOptionalUser } from "~/lib/session.server";
+import MediaEvent from "./media.event.$slug";
 // import { blockUserIfLoggedIn } from "~/lib/session.client";
 // import { blockLoggedIn } from "~/lib/session.server";
 // import { unsealSession } from "~/lib/session.client";
@@ -108,12 +110,39 @@ export default function LandingPage() {
 }
 
 const LandingPageDesign = ({ data }: any) => {
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+      },
+    },
+  };
+
   return (
-    <div className="flex flex-col">
+    <motion.div
+      className="flex flex-col"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {/* <HeroSection isAuthenticated={false} isAdmin={false} isCustomer={false} /> */}
       {/* <HeroSection /> */}
 
-      <div className="p-8 bg-white">
+      <motion.div className="p-8 bg-white" variants={itemVariants}>
         <div className="max-w-7xl mx-auto rounded-2xl overflow-hidden">
           <ImageCarousel
             images={data?.heroSection?.map((v: any) => v?.image)}
@@ -122,13 +151,27 @@ const LandingPageDesign = ({ data }: any) => {
             interval={3500}
           />
         </div>
-      </div>
+      </motion.div>
 
       {/* <CardFeatureSection /> */}
 
-      <StatsSection stats={data?.stats || []} />
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6 }}
+      >
+        <StatsSection stats={data?.stats || []} />
+      </motion.div>
 
-      <EventsSection events={data?.highlightEvent} />
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+      >
+        <EventsSection events={data?.highlightEvent} />
+      </motion.div>
       {/* <HighlightSection
         highlights={[
           {
@@ -165,9 +208,20 @@ const LandingPageDesign = ({ data }: any) => {
         </div>
       </section> */}
 
-      <CardTestimoniSection testimonials={data?.testimonials} />
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6 }}
+      >
+        <CardTestimoniSection testimonials={data?.testimonials} />
+      </motion.div>
+
+      {/* Detail article / news event */}
+      {/* <MediaEvent /> */}
 
       <FloatingWhatsApp />
-    </div>
+      <FloatingWhatsApp />
+    </motion.div>
   );
 };

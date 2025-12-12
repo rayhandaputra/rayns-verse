@@ -31,7 +31,7 @@ import AsyncCreatableSelect from "react-select/async-creatable";
 export const action: ActionFunction = async ({ request }) => {
   // Require authentication
   const { user, token } = await requireAuth(request);
-  
+
   const formData = await request.formData();
   let { id, state, items, ...payload } = Object.fromEntries(
     formData.entries()
@@ -289,7 +289,7 @@ export default function CreatePesanan() {
                     ...state,
                     institution_abbr_id: val?.value,
                     institution_abbr: val?.label,
-                    institution_domain: `kinau.id/eforms/${generateShortId(12)}`,
+                    institution_domain: `kinau.id/drive/${generateShortId(12)}`,
                   });
                 }}
                 onCreateOption={(newValue) => {
@@ -297,7 +297,7 @@ export default function CreatePesanan() {
                   setState({
                     ...state,
                     institution_abbr: value,
-                    institution_domain: `kinau.id/eforms/${generateShortId(12)}`,
+                    institution_domain: `kinau.id/drive/${generateShortId(12)}`,
                   });
                 }}
                 formatCreateLabel={(inputValue) => {
