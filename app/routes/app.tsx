@@ -6,7 +6,8 @@ import {
   type LoaderFunction,
 } from "react-router";
 import { toast } from "sonner";
-import { requireAuth } from "~/lib/session.server";
+// NOTE: Uncomment import ini jika requireAuth diaktifkan di loader
+// import { requireAuth } from "~/lib/session.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
   // Require authentication for app routes
