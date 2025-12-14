@@ -16,6 +16,7 @@ import {
   User2Icon,
 } from "lucide-react";
 import Topbar from "~/components/layout/admin/topbar";
+import { Sheet, SheetContent, SheetTrigger } from "~/components/ui/sheet";
 // NOTE: Uncomment import ini jika requireAuth diaktifkan di loader
 // import { requireAuth } from "~/lib/session.server";
 
@@ -123,14 +124,29 @@ export default function AppLayout() {
 
   return (
     <div>
-      <Sidebar
-        navigation={ADMIN_NAVIGATION}
-        currentPath={location.pathname}
-        onLogout={handleLogout}
-      />
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block">
+        <Sidebar
+          navigation={ADMIN_NAVIGATION}
+          currentPath={location.pathname}
+          onLogout={handleLogout}
+        />
+      </div>
 
-      {/* Topbar - fixed at top, offset for sidebar */}
-      <div className="fixed top-0 left-64 right-0 z-10">
+      {/* Mobile Sidebar (Sheet) */}
+      <Sheet open={isMobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+        <SheetContent side="left" className="p-0 w-64 border-r-0">
+          <Sidebar
+            navigation={ADMIN_NAVIGATION}
+            currentPath={location.pathname}
+            onLogout={handleLogout}
+            isMobile
+          />
+        </SheetContent>
+      </Sheet>
+
+      {/* Topbar */}
+      <div className="fixed top-0 left-0 lg:left-64 right-0 z-10">
         <Topbar
           sidebar={{
             mobileMenuOpen: isMobileSidebarOpen,
@@ -139,8 +155,9 @@ export default function AppLayout() {
         />
       </div>
 
-      <div className="flex-1 ml-64 pt-[64px]">
-        <div className="p-8 max-w-[1600px] mx-auto">
+      {/* Main Content */}
+      <div className="flex-1 ml-0 lg:ml-64 pt-[81px]">
+        <div className="p-4 md:p-8 max-w-[1600px] mx-auto overflow-x-hidden">
           <Outlet />
         </div>
       </div>
@@ -152,12 +169,14 @@ interface SidebarProps {
   navigation: MenuItem[];
   currentPath: string;
   onLogout: () => void;
+  isMobile?: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   navigation,
   currentPath,
   onLogout,
+  isMobile = false,
 }) => {
   // Check if current path matches item or its active paths
   const isActive = (item: MenuItem) => {
@@ -168,8 +187,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     return false;
   };
 
+  const baseClasses =
+    "w-64 bg-white border-r border-gray-200 flex flex-col z-20 h-full";
+  const positionClasses = isMobile ? "" : "fixed left-0 top-0 h-screen";
+
   return (
-    <div className="w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 flex flex-col z-20">
+    <div className={`${baseClasses} ${positionClasses}`}>
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center gap-3">
           <img src="/kinau-logo.png" className="w-28 h-auto" alt="Logo" />

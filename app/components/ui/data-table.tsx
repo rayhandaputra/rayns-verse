@@ -77,7 +77,7 @@ export function DataTable<T>({
               <tr
                 key={getRowKey(row, index)}
                 className={cn(
-                  "border-b hover:bg-gray-50 transition",
+                  "border-b border-gray-200 hover:bg-gray-50 transition",
                   rowClassName?.(row)
                 )}
               >

@@ -1,18 +1,74 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import type { Product } from "../types";
 import { formatCurrency, parseCurrency } from "../constants";
 import { Plus, Edit2, Trash2, Save, X } from "lucide-react";
 import { DataTable, type ColumnDef } from "../components/ui/data-table";
+import {
+  useLoaderData,
+  useSubmit,
+  useActionData,
+  type LoaderFunction,
+  type ActionFunction,
+} from "react-router";
+import { API } from "~/lib/api";
+import { requireAuth } from "~/lib/session.server";
 
-interface ProductListPageProps {
-  products: Product[];
-  onUpdateProducts: (products: Product[]) => void;
-}
+export const loader: LoaderFunction = async ({ request }) => {
+  await requireAuth(request);
+  const response = await API.PRODUCT.get({
+    req: {
+      query: {
+        page: 0,
+        size: 100, // Fetch enough for the list
+        pagination: "true",
+      },
+    },
+  });
+  return Response.json({ products: response.items || [] });
+};
 
-const ProductListPage: React.FC<ProductListPageProps> = ({
-  products = [],
-  onUpdateProducts,
-}) => {
+export const action: ActionFunction = async ({ request }) => {
+  const { user, token } = await requireAuth(request);
+  const formData = await request.formData();
+  const name = formData.get("name");
+  const price = formData.get("price");
+  const category = formData.get("category");
+  const description = formData.get("description");
+
+  // Map category to API type
+  let type = "other";
+  if (category === "Paket") type = "package";
+  else if (category === "Id Card") type = "id_card";
+  else if (category === "Lanyard") type = "lanyard";
+  else if (category === "Lainnya") type = "custom";
+
+  const response = await API.PRODUCT.create({
+    session: { user, token },
+    req: {
+      body: {
+        name,
+        total_price: parseCurrency(price as string),
+        type,
+        description,
+      },
+    },
+  });
+
+  if (response.success) {
+    return Response.json({ success: true, message: response.message });
+  } else {
+    return Response.json(
+      { success: false, message: response.message },
+      { status: 400 }
+    );
+  }
+};
+
+const ProductListPage: React.FC = () => {
+  const { products: apiProducts } = useLoaderData<{ products: any[] }>();
+  const submit = useSubmit();
+  const actionData = useActionData();
+
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Product | null>(null);
 
@@ -25,6 +81,38 @@ const ProductListPage: React.FC<ProductListPageProps> = ({
   >("Paket");
   const [newDesc, setNewDesc] = useState("");
 
+  // Map API products to UI Product interface
+  const products: Product[] = useMemo(() => {
+    return apiProducts.map((p: any) => {
+      let category: any = "Lainnya";
+      if (p.type === "package") category = "Paket";
+      else if (p.type === "id_card") category = "Id Card";
+      else if (p.type === "lanyard") category = "Lanyard";
+      else if (p.type === "custom") category = "Lainnya";
+
+      return {
+        id: p.id,
+        name: p.name,
+        price: p.total_price || 0,
+        category: category,
+        description: p.description,
+      };
+    });
+  }, [apiProducts]);
+
+  useEffect(() => {
+    if (actionData?.success) {
+      setShowAdd(false);
+      setNewName("");
+      setNewPrice("");
+      setNewCategory("Paket");
+      setNewDesc("");
+    } else if (actionData?.message) {
+      // Handle generic message or error alert if needed
+      // alert(actionData.message);
+    }
+  }, [actionData]);
+
   const handleEdit = (p: Product) => {
     setIsEditing(p.id);
     setEditForm({ ...p });
@@ -32,15 +120,15 @@ const ProductListPage: React.FC<ProductListPageProps> = ({
 
   const handleSaveEdit = () => {
     if (!editForm) return;
-    const updated = products.map((p) => (p.id === editForm.id ? editForm : p));
-    onUpdateProducts(updated);
     setIsEditing(null);
     setEditForm(null);
+    // Placeholder: Edit not implemented in action yet as per focus on create/list
+    alert("Edit not implemented via API in this version.");
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Hapus produk ini?")) {
-      onUpdateProducts(products.filter((p) => p.id !== id));
+    if (confirm("Hapus produk ini? (Fitur Delete belum terhubung API)")) {
+      // Placeholder
     }
   };
 
@@ -48,20 +136,13 @@ const ProductListPage: React.FC<ProductListPageProps> = ({
     e.preventDefault();
     if (!newName || !newPrice) return;
 
-    const newProduct: Product = {
-      id: String(Date.now()),
-      name: newName,
-      price: parseCurrency(newPrice),
-      category: newCategory,
-      description: newDesc,
-    };
+    const formData = new FormData();
+    formData.append("name", newName);
+    formData.append("price", newPrice);
+    formData.append("category", newCategory);
+    formData.append("description", newDesc);
 
-    onUpdateProducts([...products, newProduct]);
-    setShowAdd(false);
-    setNewName("");
-    setNewPrice("");
-    setNewCategory("Paket");
-    setNewDesc("");
+    submit(formData, { method: "post" });
   };
 
   const getCategoryBadgeClass = (category: string) => {

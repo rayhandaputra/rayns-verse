@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import type { HistoryEntry, Order, CustomItem, Product } from "../types";
 import {
-  getUnitPrice,
   formatCurrency,
   parseCurrency,
-  slugifyBase,
   getKKNPeriod,
   formatPhoneNumber,
   generateAccessCode,
@@ -12,7 +10,6 @@ import {
 import {
   Save,
   Eraser,
-  AlertCircle,
   Users,
   Plus,
   Trash2,
@@ -24,20 +21,152 @@ import {
   PackagePlus,
   Tag,
 } from "lucide-react";
+import { type ActionFunction, useSubmit } from "react-router";
+import { API, API_KEY, API_URL } from "~/lib/api";
+import { requireAuth } from "~/lib/session.server";
+import AsyncReactSelect from "react-select/async";
+import { toMoney } from "~/lib/utils";
+
+// === ACTION ===
+export const action: ActionFunction = async ({ request }) => {
+  const { user, token } = await requireAuth(request);
+  const data = await request.json();
+
+  const {
+    instansi,
+    singkatan,
+    jenisPesanan,
+    jumlah,
+    deadline,
+    statusPembayaran,
+    dpAmount,
+    domain,
+    accessCode,
+    unitPrice,
+    totalAmount,
+    isKKN,
+    kknDetails,
+    pjName,
+    pjPhone,
+    customItems,
+    selectedProduct, // Receive full product object if available
+  } = data;
+
+  // Construct items for order.ts
+  const items = [];
+
+  // Main product item
+  // If selectedProduct is passed, use its ID.
+  if (selectedProduct && selectedProduct.id) {
+    items.push({
+      product_id: selectedProduct.id,
+      product_name: selectedProduct.name || jenisPesanan,
+      product_type: selectedProduct.type || "single", // Add type map if needed
+      qty: Number(jumlah),
+      unit_price: Number(unitPrice),
+      subtotal: Number(jumlah) * Number(unitPrice),
+    });
+  } else {
+    // Fallback if no product ID (should rely on form validation usually)
+    // or if it's a fully custom order
+    items.push({
+      product_name: jenisPesanan || "Custom Order",
+      qty: Number(jumlah),
+      unit_price: Number(unitPrice),
+      subtotal: Number(totalAmount), // Assuming totalAmount covers it
+    });
+  }
+
+  // Custom items
+  if (customItems && customItems.length > 0) {
+    customItems.forEach((ci: any) => {
+      items.push({
+        product_name: ci.name,
+        qty: ci.quantity,
+        unit_price: 0, // As per UI logic where they don't affect total
+        notes: "Custom Item / Tambahan",
+      });
+    });
+  }
+
+  // Combine PJ info into notes or shipping_contact if needed
+  let notes = "";
+  if (isKKN) {
+    if (pjName || pjPhone) notes += `PJ: ${pjName} (${pjPhone}) `;
+    if (kknDetails)
+      notes += `KKN Details: ${kknDetails.tipe} ${kknDetails.nilai} Periode ${kknDetails.periode}/${kknDetails.tahun}`;
+  }
+
+  const payload = {
+    institution_id: "0000", // Placeholder if we don't have ID selection in this form yet
+    institution_name: instansi,
+    institution_abbr: singkatan || null,
+    institution_domain: domain,
+    order_type: selectedProduct
+      ? selectedProduct.type === "package"
+        ? "package"
+        : "custom"
+      : "custom",
+    payment_status:
+      statusPembayaran === "Tidak Ada"
+        ? "unpaid"
+        : statusPembayaran === "Lunas"
+          ? "paid"
+          : "down_payment",
+    items: items,
+    total_amount: Number(totalAmount),
+    // DP handling if needed by order.ts usually calculated?
+    // If backend recalculates, we rely on items.
+    // If we want to record DP amount paid:
+    // order.ts schema might have `paid_amount`?
+    // Checking order.ts create: doesn't seem to have `paid_amount` input explicitly in destructuring?
+    // It has `payment_status`.
+    // It has `notes`.
+    // Maybe we should put DP info in notes for now if schema doesn't support it directly in create.
+    notes: notes + (dpAmount ? ` - DP: ${dpAmount}` : ""),
+    shipping_contact: pjPhone,
+    deadline: deadline,
+  };
+
+  try {
+    const response = await API.ORDERS.create({
+      session: { user, token },
+      req: {
+        body: payload,
+      },
+    });
+
+    if (response.success) {
+      return Response.json({ success: true, order: response.order });
+    } else {
+      return Response.json(
+        { success: false, message: response.message },
+        { status: 400 }
+      );
+    }
+  } catch (error: any) {
+    return Response.json(
+      { success: false, message: error.message || "Error submitting order" },
+      { status: 500 }
+    );
+  }
+};
 
 interface OrderFormProps {
-  history: HistoryEntry[];
-  orders: Order[];
-  onSubmit: (order: any) => void;
-  products?: Product[]; // Added dynamic products
+  history?: HistoryEntry[];
+  orders?: Order[];
+  onSubmit?: (order: any) => void;
+  products?: Product[];
 }
 
 const OrderForm: React.FC<OrderFormProps> = ({
   history = [],
   orders = [],
-  onSubmit,
-  products = [],
+  onSubmit, // Optional now
+  products = [], // Optional now
 }) => {
+  const submit = useSubmit();
+
   // Global Mode
   const [isKKN, setIsKKN] = useState(false);
 
@@ -64,7 +193,8 @@ const OrderForm: React.FC<OrderFormProps> = ({
   >([]);
 
   // Product Selection State
-  const [selectedProductId, setSelectedProductId] = useState<string>("");
+  // We now store the full object to get price/name
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   const [jumlah, setJumlah] = useState<string>("");
   const [deadline, setDeadline] = useState("");
@@ -76,13 +206,6 @@ const OrderForm: React.FC<OrderFormProps> = ({
   // Confirmation Modal State
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingData, setPendingData] = useState<any>(null);
-
-  // Set default product on load
-  useEffect(() => {
-    if (products.length > 0 && !selectedProductId) {
-      setSelectedProductId(products[0].id);
-    }
-  }, [products]);
 
   // Init Auto Period
   useEffect(() => {
@@ -106,12 +229,10 @@ const OrderForm: React.FC<OrderFormProps> = ({
   }, [instansi, history, isKKN]);
 
   // Determine current unit price based on selected product
-  const currentProduct = products.find((p) => p.id === selectedProductId);
-  const currentUnitPrice = currentProduct ? currentProduct.price : 0;
+  const currentUnitPrice = selectedProduct ? selectedProduct.price : 0;
 
   const calculateFinancials = () => {
     const qty = Number(jumlah) || 0;
-    // Use the product price defined in the Product List
     const price = currentUnitPrice;
     const total = qty * price;
     return { qty, price, total };
@@ -146,6 +267,39 @@ const OrderForm: React.FC<OrderFormProps> = ({
     const newItems = [...customItems];
     newItems[idx] = { ...newItems[idx], [field]: val };
     setCustomItems(newItems);
+  };
+
+  const loadOptionProduct = async (search: string) => {
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${API_KEY}`,
+        },
+        body: JSON.stringify({
+          action: "select",
+          table: "products",
+          columns: ["id", "name", "type", "total_price"],
+          where: { deleted_on: "null" },
+          search,
+          page: 0,
+          size: 50,
+        }),
+      });
+      const result = await response.json();
+      return result?.items?.map((v: any) => ({
+        ...v,
+        value: v?.id,
+        label: `${v?.type === "package" ? "[PAKET] " : ""}${v?.name} - Rp${toMoney(v?.total_price)}`,
+        price: v?.total_price,
+        name: v?.name, // Ensure access to name
+        type: v?.type,
+      }));
+    } catch (error) {
+      console.log(error);
+      return [];
+    }
   };
 
   const handlePreSubmit = (e: React.FormEvent) => {
@@ -215,8 +369,8 @@ const OrderForm: React.FC<OrderFormProps> = ({
     const orderData = {
       instansi: finalInstansi,
       singkatan: finalSingkatan,
-      jenisPesanan: currentProduct
-        ? currentProduct.name
+      jenisPesanan: selectedProduct
+        ? selectedProduct.name
         : finalCustomItems.length > 0
           ? "Campuran/Lainnya"
           : "Custom",
@@ -240,6 +394,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
       pjName: isKKN ? pjName : undefined,
       pjPhone: isKKN ? pjPhone : undefined,
       customItems: finalCustomItems.length > 0 ? finalCustomItems : undefined,
+      selectedProduct, // Pass the full object
     };
 
     setPendingData(orderData);
@@ -248,7 +403,12 @@ const OrderForm: React.FC<OrderFormProps> = ({
 
   const handleFinalSubmit = () => {
     if (pendingData) {
-      onSubmit(pendingData);
+      // If props onSubmit exists, use it (for backward compatibility or testing)
+      if (onSubmit) onSubmit(pendingData);
+
+      // Submit via Action
+      submit(pendingData, { method: "post", encType: "application/json" });
+
       handleClear();
     }
   };
@@ -256,8 +416,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
   const handleClear = () => {
     setInstansi("");
     setSingkatan("");
-    // setJenis('Paket'); // Removed
-    if (products.length > 0) setSelectedProductId(products[0].id);
+    setSelectedProduct(null);
     setJumlah("");
     setDeadline("");
     setPay("Tidak Ada");
@@ -476,25 +635,51 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 Produk (Pilih dari Daftar Produk)
               </label>
               <div className="flex items-center gap-2">
-                <select
-                  className="w-full rounded-lg border-gray-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  value={selectedProductId}
-                  onChange={(e) => setSelectedProductId(e.target.value)}
-                >
-                  {products.length === 0 && (
-                    <option value="">Belum ada produk...</option>
-                  )}
-                  {products.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} - {formatCurrency(p.price)}
-                    </option>
-                  ))}
-                </select>
+                <div className="w-full">
+                  <AsyncReactSelect
+                    value={selectedProduct}
+                    loadOptions={loadOptionProduct}
+                    defaultOptions
+                    placeholder="Cari Produk..."
+                    onChange={(val: any) => setSelectedProduct(val)}
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        borderRadius: "0.5rem",
+                        borderColor: "#d1d5db",
+                        paddingTop: "0.1rem",
+                        paddingBottom: "0.1rem",
+                        minHeight: "42px",
+                        boxShadow: "none",
+                        "&:hover": {
+                          borderColor: "#9ca3af",
+                        },
+                      }),
+                      input: (base) => ({
+                        ...base,
+                        "input:focus": {
+                          boxShadow: "none",
+                        },
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        zIndex: 9999,
+                      }),
+                    }}
+                    theme={(theme) => ({
+                      ...theme,
+                      colors: {
+                        ...theme.colors,
+                        primary: "#3b82f6",
+                      },
+                    })}
+                  />
+                </div>
               </div>
-              {currentProduct && (
+              {selectedProduct && (
                 <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
                   <Tag size={12} /> Harga Satuan:{" "}
-                  <b>{formatCurrency(currentProduct.price)}</b>
+                  <b>{formatCurrency(selectedProduct.price || 0)}</b>
                 </p>
               )}
             </div>

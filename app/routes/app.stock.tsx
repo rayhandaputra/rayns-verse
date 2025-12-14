@@ -15,7 +15,9 @@ import {
   PLASTIC_SMALL_CAP,
   PLASTIC_MED_CAP,
   PLASTIC_BIG_CAP,
-  INK_SET_ML,
+  INITIAL_STOCK,
+  INITIAL_PRICES,
+  INITIAL_SHOPS,
 } from "../constants";
 import {
   Calculator,
@@ -25,26 +27,120 @@ import {
   Plus,
   RefreshCw,
 } from "lucide-react";
-// import {
-//   savePrices,
-//   saveShops,
-//   loadPrices,
-//   loadShops,
-// } from "../services/storage";
+import {
+  useLoaderData,
+  useFetcher,
+  type LoaderFunction,
+  type ActionFunction,
+  // json,
+} from "react-router";
+import { API } from "~/lib/api";
+import { requireAuth } from "~/lib/session.server";
+import { toast } from "sonner";
 
-interface StockPageProps {
-  stock: StockState;
-  onUpdateStock: (newStock: StockState) => void;
-}
+// Mapping specific commodity codes to StockState keys if needed
+// Or we assume the "code" in DB matches the keys in StockState
+const STOCK_KEYS = Object.keys(INITIAL_STOCK);
 
-const StockPage: React.FC<StockPageProps> = ({
-  stock = {},
-  onUpdateStock = {},
-}) => {
-  const [prices, setPrices] = useState<PriceList>({});
-  const [shops, setShops] = useState<ShopList>({});
+export const loader: LoaderFunction = async ({ request }) => {
+  const { user, token } = await requireAuth(request);
 
-  // -- States for Price Management --
+  // 1. Fetch Commodities (Stock)
+  const stockRes = await API.COMMODITY_STOCK.get({
+    session: { user, token },
+    req: { query: { size: 100 } },
+  });
+
+  // 2. Map to StockState
+  // We'll try to match `commodity.code` to our known keys.
+  // If not found, we fall back to 0 or INITIAL_STOCK for safety during dev.
+  const stock: StockState = { ...INITIAL_STOCK }; // Start with default to ensure all keys exist
+
+  // Create a map for ID lookups (key -> id) for the UI to submit correct IDs
+  const commodityMap: Record<string, string> = {};
+
+  if (stockRes.items) {
+    stockRes.items.forEach((item: any) => {
+      // Assuming item.code matches our internal keys like 'tinta_ml', 'roll_100m'
+      // If the DB doesn't have these codes yet, this might fail to populate,
+      // but that's expected for a fresh DB.
+      if (STOCK_KEYS.includes(item.code)) {
+        stock[item.code as keyof StockState] = Number(item.stock || 0);
+        commodityMap[item.code] = item.id;
+      }
+    });
+  }
+
+  return Response.json({ stock, commodityMap });
+};
+
+export const action: ActionFunction = async ({ request }) => {
+  const { user, token } = await requireAuth(request);
+  const formData = await request.formData();
+  const actionType = formData.get("actionType");
+
+  if (actionType === "restock") {
+    const rawData = formData.get("data");
+    if (typeof rawData !== "string") return Response.json({ success: false });
+
+    const updates = JSON.parse(rawData); // Array of { key, qty, id }
+
+    // We process sequentially or Promise.all
+    // The API expects: supplier_id, commodity_id, qty
+    // We'll use a placeholder supplier_id "1" if not provided/selectable yet,
+    // or fetch one via a lookup if we improved the UI to select supplier.
+    // For now, let's assume supplier_id = 1 (Standard Store)
+    const supplier_id = "1";
+
+    const promises = updates.map(async (u: any) => {
+      if (!u.id) return; // Need commodity ID
+
+      // Calculate actual unit quantity to add based on logic unless 'isDirect'
+      let qtyToAdd = Number(u.qty);
+      if (!u.isDirect) {
+        qtyToAdd = unitAdd(u.key, qtyToAdd);
+      }
+
+      // If override provided explicitly in previous layer, it's passed as qty with isDirect=true
+      return API.COMMODITY_STOCK.restock({
+        session: { user, token },
+        req: { body: { supplier_id, commodity_id: u.id, qty: qtyToAdd } },
+      });
+    });
+
+    try {
+      await Promise.all(promises);
+      return Response.json({
+        success: true,
+        message: "Stok berhasil ditambahkan",
+      });
+    } catch (e: any) {
+      return Response.json({ success: false, message: e.message });
+    }
+  }
+
+  // TODO: Implement save prices/shops if API supports it later
+
+  return Response.json({ success: true });
+};
+
+export default function StockPage() {
+  const { stock: initialStock, commodityMap } = useLoaderData<{
+    stock: StockState;
+    commodityMap: Record<string, string>;
+  }>();
+  const fetcher = useFetcher();
+
+  // We keep local state for immediate UI feedback / optimistic updates if we wanted,
+  // but simpler to rely on loader revalidation.
+  // However, for the "Manual" calculations in this specific UI, it relies heavily on
+  // the `stock` prop derived from loader.
+  const stock = initialStock;
+
+  // -- States for Price Management (Local ONLY for now as API doesn't seem to have Price/Shop config endpoints yet) --
+  const [prices, setPrices] = useState<PriceList>(INITIAL_PRICES);
+  const [shops, setShops] = useState<ShopList>(INITIAL_SHOPS);
+
   const [priceKey, setPriceKey] = useState("ink_set");
   const [priceInput, setPriceInput] = useState("");
   const [selectedShopCode, setSelectedShopCode] = useState("A");
@@ -119,82 +215,105 @@ const StockPage: React.FC<StockPageProps> = ({
     const val = parseCurrency(priceInput);
     const newPrices = { ...prices, [priceKey]: val };
     setPrices(newPrices);
-    // savePrices(newPrices);
-    alert("Harga diperbarui!");
+    // Local save only for now
+    toast.success("Harga diupdate (Lokal)");
   };
 
   const handleUpdateShopName = () => {
     if (!shopNameInput.trim()) return;
     const newShops = { ...shops, [selectedShopCode]: shopNameInput };
     setShops(newShops);
-    // saveShops(newShops);
     setShopNameInput("");
+    toast.success("Nama toko diupdate (Lokal)");
   };
 
   const handleMultiRestock = () => {
     const items = SHOP_ITEMS_CONFIG[restockShop];
     if (!items) return;
-    const newStock = { ...stock };
-    let addedCount = 0;
+
+    const updates: any[] = [];
 
     items.forEach((it) => {
       const qty = restockInputs[it.k] || 0;
       if (qty > 0) {
-        const add = unitAdd(it.k, qty);
+        let targetKey = it.k;
         if (["tinta_cL", "tinta_mL", "tinta_yL", "tinta_kL"].includes(it.k)) {
-          newStock.tinta_ml = (newStock.tinta_ml || 0) + add;
-        } else {
-          newStock[it.k] = (newStock[it.k] || 0) + add;
+          targetKey = "tinta_ml";
         }
-        addedCount++;
+
+        const id = commodityMap[targetKey];
+        if (id) {
+          updates.push({ key: it.k, qty, id });
+        } else {
+          // console.warn(`Commodity ID not found for ${targetKey}`);
+        }
       }
     });
 
-    if (addedCount > 0) {
-      //   onUpdateStock(newStock);
+    if (updates.length > 0) {
+      fetcher.submit(
+        { actionType: "restock", data: JSON.stringify(updates) },
+        { method: "post" }
+      );
       setRestockInputs({});
-      alert("Stok berhasil ditambahkan!");
+    } else {
+      toast.error("Item tidak ditemukan di database atau qty 0");
     }
   };
 
   const handleManualRestock = () => {
-    const newStock = { ...stock };
     const raw = manualValue.trim();
+    const updates: any[] = [];
 
     if (manualItem === "ink") {
       const m = raw.match(/C(\d{1,3})\s*M(\d{1,3})\s*Y(\d{1,3})\s*K(\d{1,3})/i);
       if (!m) {
-        alert("Format salah! Gunakan: C20 M30 Y0 K10");
+        toast.error("Format salah! Gunakan: C20 M30 Y0 K10");
         return;
       }
       const [_, C, M, Y, K] = m.map(Number);
       const ml = ((C + M + Y + K) / 100) * 1000;
-      newStock.tinta_ml = (newStock.tinta_ml || 0) + ml;
+
+      const id = commodityMap["tinta_ml"];
+      if (id) updates.push({ key: "tinta_ml", qty: 0, overrideQty: ml, id });
     } else if (manualItem === "roll_100m" || manualItem === "tape_roll") {
       const pct = Math.max(0, Math.min(100, Number(raw) || 0));
       const add = pct / 100;
-      newStock[manualItem] = (newStock[manualItem] || 0) + add;
+      const id = commodityMap[manualItem];
+      if (id) updates.push({ key: manualItem, qty: 0, overrideQty: add, id });
     } else if (manualItem === "rivet_pcs") {
       const pct = Math.max(0, Math.min(100, Number(raw) || 0));
       const pcs = Math.round((pct / 100) * 2000);
-      newStock.rivet_pcs = (newStock.rivet_pcs || 0) + pcs;
+      const id = commodityMap["rivet_pcs"];
+      if (id) updates.push({ key: "rivet_pcs", qty: 0, overrideQty: pcs, id });
     } else {
       const qty = Number(raw);
       if (!isFinite(qty)) return;
-      newStock[manualItem] = (newStock[manualItem] || 0) + qty;
+      const id = commodityMap[manualItem];
+      if (id) updates.push({ key: manualItem, qty: 0, overrideQty: qty, id });
     }
 
-    // onUpdateStock(newStock);
-    setManualValue("");
-    alert("Stok manual tersimpan!");
+    if (updates.length > 0) {
+      const refinedUpdates = updates.map((u) => ({
+        ...u,
+        isDirect: !!u.overrideQty,
+        qty: u.overrideQty !== undefined ? u.overrideQty : u.qty,
+      }));
+
+      fetcher.submit(
+        { actionType: "restock", data: JSON.stringify(refinedUpdates) },
+        { method: "post" }
+      );
+      setManualValue("");
+    } else {
+      toast.error("Item tidak ditemukan / ID missing");
+    }
   };
 
-  const getManualPlaceholder = () => {
-    if (manualItem === "ink") return "C20 M30 Y0 K10";
-    if (["roll_100m", "tape_roll", "rivet_pcs"].includes(manualItem))
-      return "50 (Persen)";
-    return "100 (Jumlah)";
-  };
+  useEffect(() => {
+    if (fetcher.data?.success) toast.success(fetcher.data.message);
+    if (fetcher.data?.success === false) toast.error(fetcher.data.message);
+  }, [fetcher.data]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full items-start">
@@ -333,7 +452,7 @@ const StockPage: React.FC<StockPageProps> = ({
               <input
                 type="text"
                 className="w-full border border-gray-300 rounded-lg text-sm p-2"
-                placeholder={getManualPlaceholder()}
+                placeholder={manualItem === "ink" ? "C20 M30 Y0 K10" : "100..."}
                 value={manualValue}
                 onChange={(e) => setManualValue(e.target.value)}
               />
@@ -346,7 +465,7 @@ const StockPage: React.FC<StockPageProps> = ({
             </div>
           </div>
 
-          {/* Section 3: Prices */}
+          {/* Section 3: Prices (Local) */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <h3 className="text-sm font-bold text-gray-800 uppercase mb-4 flex items-center gap-2">
               <AlertTriangle size={18} /> Harga & Toko
@@ -413,6 +532,4 @@ const StockPage: React.FC<StockPageProps> = ({
       </div>
     </div>
   );
-};
-
-export default StockPage;
+}

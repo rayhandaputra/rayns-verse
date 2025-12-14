@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import type { Order } from "../types";
 import { formatCurrency, formatFullDate, getWhatsAppLink } from "../constants";
 import {
@@ -16,22 +16,123 @@ import {
   TablePagination,
   type ColumnDef,
 } from "../components/ui/data-table";
+import {
+  useLoaderData,
+  useFetcher,
+  useNavigate,
+  type LoaderFunction,
+  type ActionFunction,
+  // json,
+} from "react-router";
+import { API } from "~/lib/api";
+import { requireAuth } from "~/lib/session.server";
+import { toast } from "sonner";
+import moment from "moment";
+import { getOrderLabel } from "~/lib/utils";
 
-interface OrderListProps {
-  orders: Order[];
-  onUpdateStatus: (id: string, status: Order["statusPengerjaan"]) => void;
-  onMarkDone: (id: string) => void;
-  onDelete: (id: string) => void;
-  onOpenDrive: (folderId: string) => void;
-}
+export const loader: LoaderFunction = async ({ request }) => {
+  const { user, token } = await requireAuth(request);
+  const response = await API.ORDERS.get({
+    session: { user, token },
+    req: {
+      query: {
+        page: 0,
+        size: 200, // Fetch largers set to support client-side filtering for now
+        pagination: "true",
+      },
+    },
+  });
 
-const OrderList: React.FC<OrderListProps> = ({
-  orders = [],
-  onUpdateStatus,
-  onMarkDone,
-  onDelete,
-  onOpenDrive,
-}) => {
+  const orders: Order[] = (response.items || []).map((item: any) => {
+    // Deduce KKN and DP from notes if possible, or defaults
+    const isKKN = item.notes?.includes("KKN") || false;
+    // Attempt parse DP from notes "DP: 50000"
+    const dpMatch = item.notes?.match(/DP:\s*(\d+)/);
+    const dpAmount = dpMatch ? Number(dpMatch[1]) : 0;
+
+    // Map status
+    let statusPengerjaan: any = "pending";
+    if (item.status === "done") statusPengerjaan = "selesai";
+    else if (
+      ["in_production", "process", "ready", "shipped"].includes(item.status)
+    )
+      statusPengerjaan = "sedang dikerjakan";
+
+    // Map payment
+    let statusPembayaran: any = "Tidak Ada";
+    if (item.payment_status === "paid") statusPembayaran = "Lunas";
+    else if (item.payment_status === "down_payment") statusPembayaran = "DP";
+
+    return {
+      id: item.id,
+      instansi: item.institution_name,
+      singkatan: item.institution_abbr || "",
+      jenisPesanan: getOrderLabel(item.order_type) || item.order_type,
+      jumlah: Number(item.total_product || 0), // Count only
+      deadline: item.deadline || "",
+      statusPembayaran,
+      dpAmount,
+      domain: item.institution_domain || "",
+      accessCode: item.order_number, // Use order number as access code
+      statusPengerjaan,
+      finishedAt: item.status === "done" ? item.modified_on : null,
+      unitPrice: 0, // Not available in list
+      totalAmount: Number(item.grand_total || 0),
+      createdAt: item.created_on,
+      isKKN,
+      pjName: item.shipping_contact || "", // Use shipping contact as PJ name proxy usually
+      pjPhone: item.shipping_contact || "",
+      customItems: [], // Details not available in list fetch
+      driveFolderId: "", // Not available in list fetch unless column added
+    };
+  });
+
+  return Response.json({ orders });
+};
+
+export const action: ActionFunction = async ({ request }) => {
+  const { user, token } = await requireAuth(request);
+  const formData = await request.formData();
+  const actionType = formData.get("action");
+  const id = formData.get("id") as string;
+
+  if (actionType === "delete") {
+    const res = await API.ORDERS.update({
+      session: { user, token },
+      req: { body: { id, deleted: 1 } },
+    });
+    return Response.json({
+      success: res.success,
+      message: res.success ? "Pesanan dihapus" : "Gagal menghapus",
+    });
+  }
+
+  if (actionType === "update_status") {
+    const status = formData.get("status") as string;
+    // Map UI status back to API status
+    let apiStatus = "ordered";
+    if (status === "selesai") apiStatus = "done";
+    else if (status === "sedang dikerjakan") apiStatus = "in_production";
+    else if (status === "pending") apiStatus = "ordered";
+
+    const res = await API.ORDERS.update({
+      session: { user, token },
+      req: { body: { id, status: apiStatus } },
+    });
+    return Response.json({
+      success: res.success,
+      message: res.success ? "Status diperbarui" : "Gagal memperbarui status",
+    });
+  }
+
+  return Response.json({ success: false });
+};
+
+export default function OrderList() {
+  const { orders } = useLoaderData<{ orders: Order[] }>();
+  const fetcher = useFetcher();
+  const navigate = useNavigate();
+
   const [viewMode, setViewMode] = useState<"reguler" | "kkn">("reguler");
   const [filterYear, setFilterYear] = useState("");
   const [sortBy, setSortBy] = useState("newest");
@@ -80,7 +181,31 @@ const OrderList: React.FC<OrderListProps> = ({
     page * pageSize
   );
 
-  const copyToClipboard = (text: string) => navigator.clipboard.writeText(text);
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Disalin ke clipboard");
+  };
+
+  const onUpdateStatus = (id: string, status: string) => {
+    fetcher.submit({ action: "update_status", id, status }, { method: "post" });
+  };
+
+  const onMarkDone = (id: string) => {
+    fetcher.submit(
+      { action: "update_status", id, status: "selesai" },
+      { method: "post" }
+    );
+  };
+
+  const onDelete = (id: string) => {
+    fetcher.submit({ action: "delete", id }, { method: "post" });
+  };
+
+  const onOpenDrive = (folderId: string) => {
+    // Trying to construct a valid drive link.
+    // Assuming accessCode acts as identifier or we navigate to main drive page
+    navigate(`/app/drive?folder_id=${folderId}`);
+  };
 
   const getStatusColor = (status: string) => {
     if (status === "selesai")
@@ -91,7 +216,7 @@ const OrderList: React.FC<OrderListProps> = ({
   };
 
   const isSponsor = (o: Order) => {
-    const txt = (o.instansi + o.jenisPesanan).toLowerCase();
+    const txt = (o.instansi + (o.jenisPesanan || "")).toLowerCase();
     return (
       txt.includes("sponsor") ||
       txt.includes("media partner") ||
@@ -322,8 +447,13 @@ const OrderList: React.FC<OrderListProps> = ({
         ),
       },
     ],
-    [viewMode, showNota, onUpdateStatus, onMarkDone, onDelete, onOpenDrive]
+    [viewMode, showNota]
   );
+
+  useEffect(() => {
+    if (fetcher.data?.success) toast.success(fetcher.data.message);
+    if (fetcher.data?.success === false) toast.error(fetcher.data.message);
+  }, [fetcher.data]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
@@ -407,6 +537,4 @@ const OrderList: React.FC<OrderListProps> = ({
       />
     </div>
   );
-};
-
-export default OrderList;
+}
