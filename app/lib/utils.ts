@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+export const ADMIN_WA = "628521933747";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -13,6 +15,12 @@ export const abbreviation = (text: string) => {
     .map((word) => word?.[0]?.toUpperCase())
     .join("")
     .slice(0, 2);
+};
+
+export const getWhatsAppLink = (formattedPhone: string, text?: string) => {
+  const clean = formattedPhone.replace(/\D/g, "");
+  const encodedText = text ? `&text=${encodeURIComponent(text)}` : "";
+  return `https://wa.me/${clean}?${encodedText}`;
 };
 
 export const ORDER_TYPE_OPTIONS = [

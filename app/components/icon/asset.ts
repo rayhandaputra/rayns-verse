@@ -21,6 +21,10 @@ import {
   PuzzleIcon,
   Building,
   Store,
+  PlusCircle,
+  Tag,
+  History,
+  BarChart2,
 } from "lucide-react";
 
 export const Icons = {
@@ -45,4 +49,8 @@ export const Icons = {
   PuzzleIcon,
   Building,
   Store,
+  PlusCircle,
+  Tag,
+  History,
+  BarChart2,
 };

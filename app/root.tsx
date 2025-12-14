@@ -92,9 +92,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             )}
 
-            <RootLayout session={user}>
+            {/* <RootLayout session={user}> */}
               <div>{children}</div>
-            </RootLayout>
+            {/* </RootLayout> */}
           </ModalProvider>
         </LoaderProvider>
 

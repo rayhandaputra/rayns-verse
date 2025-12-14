@@ -59,7 +59,7 @@ const Topbar = ({ sidebar }: NavbarProps) => {
     "RP"
   );
   return (
-    <nav className="fixed top-0 left-0 right-0 z-30 h-[64px] bg-white flex items-center px-4 md:px-md:pl-[268px]">
+    <nav className="fixed top-0 left-0 right-0 z-30 h-[81px] bg-white border-b border-gray-200 flex items-center px-4 md:px-md:pl-[268px]">
       {/* Mobile Menu Button */}
       <div className="flex w-full items-center justify-between md:hidden">
         <button

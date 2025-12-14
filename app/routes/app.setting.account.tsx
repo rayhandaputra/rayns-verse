@@ -30,6 +30,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { useModal } from "~/hooks/use-modal";
 import { API } from "~/lib/api";
+import { AuthAPI } from "~/lib/api/modules/user_auth";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   // const session = await unsealSession(request);
@@ -89,17 +90,17 @@ export const action: ActionFunction = async ({ request }) => {
             } as any,
           },
         });
+
+        // Update password if provided
+        if (payload.password) {
+          await AuthAPI.upsertAuth({
+            user_id: id,
+            email: payload.email, // email should be in payload as form data sends all inputs or defaultValues
+            password: payload.password,
+          });
+        }
       } else {
-        // res = await API.USER.findOrCreate({
-        //   session: {},
-        //   req: {
-        //     body: {
-        //       ...(payload as any),
-        //     },
-        //     role: "admin",
-        //   },
-        // });
-        console.log("CREATE USER");
+        // console.log("CREATE USER");
         res = await API.USER.create({
           session: {},
           req: {
@@ -325,6 +326,19 @@ export default function AccountPage() {
                 type="hidden"
                 name="role"
                 value={modal?.data?.role || "Admin"}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Password</Label>
+              <Input
+                type="password"
+                name="password"
+                placeholder={
+                  modal?.key === "create"
+                    ? "Masukkan Password"
+                    : "Isi jika ingin mengubah password"
+                }
+                required={modal?.key === "create"}
               />
             </div>
             <div className="flex justify-end gap-2">

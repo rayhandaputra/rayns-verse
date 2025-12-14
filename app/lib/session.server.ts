@@ -48,9 +48,14 @@ export async function destroySession(session: any) {
 /**
  * Create user session and redirect
  */
-export async function createUserSession(token: string, redirectTo = "/") {
+export async function createUserSession(
+  token: string,
+  redirectTo = "/",
+  data?: string
+) {
   const session = await sessionStorage.getSession();
   session.set("token", token);
+  session.set("user", data);
 
   return redirect(redirectTo, {
     headers: {
@@ -68,17 +73,19 @@ export async function requireAuth(request: Request) {
     request.headers.get("Cookie")
   );
 
+  console.log("SESSION => ", session.get("token"));
+
   const token = session.get("token");
   if (!token) {
     throw redirect("/");
   }
 
-  const user = await getSessionUser(token);
-  if (!user) {
-    throw redirect("/");
-  }
+  // const user = await getSessionUser(token);
+  // if (!user) {
+  //   throw redirect("/");
+  // }
 
-  return { user, session, token };
+  return { user: {}, session, token };
 }
 
 /**
@@ -90,7 +97,7 @@ export async function getOptionalUser(request: Request) {
     request.headers.get("Cookie")
   );
   const token = session.get("token");
-  
+
   if (!token) {
     return null;
   }

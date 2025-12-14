@@ -1,4 +1,5 @@
 import { APIProvider } from "../client";
+import { AuthAPI } from "./user_auth";
 
 export const UserAPI = {
   get: async ({ req }: any) => {
@@ -14,13 +15,36 @@ export const UserAPI = {
         where: { deleted: 0 },
         search,
         page,
-        size
-      }
+        size,
+      },
     });
   },
 
+  // create: async ({ req }: any) => {
+  //   const { fullname, email, role = "customer" } = req.body || {};
+
+  //   if (!fullname || !email) {
+  //     return { success: false, message: "Email dan fullname wajib diisi" };
+  //   }
+
+  //   const result = await APIProvider({
+  //     endpoint: "insert",
+  //     method: "POST",
+  //     table: "users",
+  //     action: "insert",
+  //     body: {
+  //       data: { fullname, email, role },
+  //     },
+  //   });
+
+  //   return {
+  //     success: true,
+  //     message: "User berhasil dibuat",
+  //     user: { id: result.insert_id, fullname, email, role },
+  //   };
+  // },
   create: async ({ req }: any) => {
-    const { fullname, email, role = "customer" } = req.body || {};
+    const { fullname, email, role = "customer", password } = req.body || {};
 
     if (!fullname || !email) {
       return { success: false, message: "Email dan fullname wajib diisi" };
@@ -32,14 +56,22 @@ export const UserAPI = {
       table: "users",
       action: "insert",
       body: {
-        data: { fullname, email, role }
-      }
+        data: { fullname, email, role },
+      },
     });
+
+    if (password) {
+      console.log("CREATE USER AUTH");
+      await AuthAPI.upsertAuth({
+        user_id: result.insert_id,
+        email,
+        password,
+      });
+    }
 
     return {
       success: true,
       message: "User berhasil dibuat",
-      user: { id: result.insert_id, fullname, email, role }
     };
   },
 
@@ -59,8 +91,8 @@ export const UserAPI = {
       body: {
         columns: ["*"],
         where: { email },
-        size: 1
-      }
+        size: 1,
+      },
     });
 
     const user = existing.items?.[0];
@@ -79,16 +111,16 @@ export const UserAPI = {
               email,
               role,
               deleted: 0,
-              modified_on: new Date().toISOString()
+              modified_on: new Date().toISOString(),
             },
-            where: { id: user.id }
-          }
+            where: { id: user.id },
+          },
         });
 
         return {
           success: true,
           message: "User dipulihkan dan diperbarui",
-          user: updated
+          user: updated,
         };
       }
       return { success: false, message: "Email sudah terdaftar" };
@@ -100,7 +132,7 @@ export const UserAPI = {
       email,
       role,
       created_on: new Date().toISOString(),
-      modified_on: new Date().toISOString()
+      modified_on: new Date().toISOString(),
     };
 
     const result = await APIProvider({
@@ -108,13 +140,13 @@ export const UserAPI = {
       method: "POST",
       table: "users",
       action: "insert",
-      body: { data: newUser }
+      body: { data: newUser },
     });
 
     return {
       success: true,
       message: "User baru berhasil dibuat",
-      user: { id: result.insert_id, ...newUser }
+      user: { id: result.insert_id, ...newUser },
     };
   },
 
@@ -125,7 +157,7 @@ export const UserAPI = {
 
     const updatedData = {
       ...fields,
-      modified_on: new Date().toISOString()
+      modified_on: new Date().toISOString(),
     };
 
     const result = await APIProvider({
@@ -135,14 +167,14 @@ export const UserAPI = {
       action: "update",
       body: {
         data: updatedData,
-        where: { id }
-      }
+        where: { id },
+      },
     });
 
     return {
       success: true,
       message: "User berhasil diperbarui",
-      affected: result.affected_rows
+      affected: result.affected_rows,
     };
-  }
+  },
 };
