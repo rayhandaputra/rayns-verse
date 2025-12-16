@@ -1,7 +1,3 @@
 {
-  "functions": {
-    "build/server/*/.js": {
-      "regions": ["sin1"]
-    }
-  }
+  "regions": ["sin1"]
 }
