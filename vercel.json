@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/*/.js": {
+      "regions": ["sin1"]
+    },
+    "build/server/*/.js": {
+      "regions": ["sin1"]
+    }
+  }
+}

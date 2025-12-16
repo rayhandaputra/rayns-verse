@@ -1,9 +1,9 @@
 // app/routes/app.asset.inventory.tsx
 import React, { useState, useEffect } from "react";
 import {
-  useLoaderData,
   useActionData,
   Form,
+  useFetcher,
   type LoaderFunction,
   type ActionFunction,
 } from "react-router";
@@ -41,35 +41,9 @@ interface ActionData {
 // ============================================
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const { user, token } = await requireAuth(request);
-  const url = new URL(request.url);
-  const searchTerm = url.searchParams.get("search") || undefined;
-
-  // Fetch assets from API
-  const response = await API.INVENTORY_ASSET.get({
-    session: { user, token },
-    req: {
-      query: {
-        page: 0,
-        size: 1000,
-        search: searchTerm,
-      },
-    },
-  });
-
-  // Map to Asset type
-  const mappedAssets: Asset[] = (response.items || []).map((a: any) => ({
-    id: String(a.id),
-    name: a.asset_name || "",
-    category: a.category || "",
-    purchaseDate: a.purchase_date || "",
-    value: Number(a.total_value) || 0,
-    status: a.status || "Good",
-    location: a.location || "",
-    unit: Number(a.total_unit) || 1,
-  }));
-
-  return { assets: mappedAssets };
+  // Only check authentication
+  await requireAuth(request);
+  return Response.json({ initialized: true });
 };
 
 // ============================================
@@ -209,8 +183,8 @@ export const action: ActionFunction = async ({ request }) => {
 // ============================================
 
 export default function AssetInventoryPage() {
-  const { assets = [] } = useLoaderData<LoaderData>();
   const actionData = useActionData<ActionData>();
+  const assetsFetcher = useFetcher<LoaderData>();
 
   // ========== STATE ==========
   const [searchTerm, setSearchTerm] = useState("");
@@ -219,18 +193,31 @@ export default function AssetInventoryPage() {
   const [formData, setFormData] = useState<Partial<Asset>>({});
 
   // ========== EFFECTS ==========
+  // Initial load
+  useEffect(() => {
+    if (assetsFetcher.state === "idle" && !assetsFetcher.data) {
+      assetsFetcher.load("/api/assets");
+    }
+  }, [assetsFetcher]);
+
+  // Reload after action success
   useEffect(() => {
     if (actionData?.success) {
       toast.success(actionData.message || "Berhasil");
       setIsModalOpen(false);
       setEditingId(null);
       setFormData({});
+      // Reload assets data
+      assetsFetcher.load("/api/assets");
     } else if (actionData?.success === false) {
       toast.error(actionData.message || "Gagal");
     }
   }, [actionData]);
 
   // ========== COMPUTED ==========
+  const assets = assetsFetcher.data?.assets || [];
+  const isLoading = assetsFetcher.state === "loading";
+
   const filteredAssets = assets.filter(
     (a) =>
       a.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -291,6 +278,13 @@ export default function AssetInventoryPage() {
   // ========== RENDER ==========
   return (
     <div className="space-y-6">
+      {/* Loading Indicator */}
+      {isLoading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+          Memuat data aset...
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">

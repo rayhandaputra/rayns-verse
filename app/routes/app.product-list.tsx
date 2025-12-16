@@ -59,26 +59,34 @@ export const loader: LoaderFunction = async ({ request }) => {
     },
   });
 
-  // Fetch price rules for all products
+  // Fetch price rules for all products in parallel using Promise.all
   const productIds = (response.items || []).map((p: any) => p.id);
-  const allPriceRules: Record<string, ProductTier[]> = {};
 
-  // Get price rules for each product
-  for (const productId of productIds) {
-    const priceRulesRes = await API.PRODUCT_PRICE_RULES.getTieredPricing({
+  const priceRulesPromises = productIds.map((productId: string) =>
+    API.PRODUCT_PRICE_RULES.getTieredPricing({
       session: { user, token },
       req: {
         query: { product_id: productId },
       },
-    });
+    }).then((priceRulesRes) => ({
+      productId,
+      tiers: priceRulesRes.success && priceRulesRes.tiers
+        ? priceRulesRes.tiers.map((tier: any) => ({
+            minQty: tier.min_qty,
+            price: tier.price,
+          }))
+        : [],
+    }))
+  );
 
-    if (priceRulesRes.success && priceRulesRes.tiers) {
-      allPriceRules[productId] = priceRulesRes.tiers.map((tier: any) => ({
-        minQty: tier.min_qty,
-        price: tier.price,
-      }));
-    }
-  }
+  // Wait for all price rules to be fetched
+  const priceRulesResults = await Promise.all(priceRulesPromises);
+
+  // Convert array to object for easy lookup
+  const allPriceRules: Record<string, ProductTier[]> = {};
+  priceRulesResults.forEach(({ productId, tiers }) => {
+    allPriceRules[productId] = tiers;
+  });
 
   // Map API products to UI Product interface
   const mappedProducts = (response.items || []).map((p: any) => {
