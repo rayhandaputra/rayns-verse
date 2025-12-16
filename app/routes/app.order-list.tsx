@@ -225,7 +225,8 @@ export default function OrderList() {
     );
   };
 
-  const getFunctionalLink = (accessCode: string) => `?access=${accessCode}`;
+  const getFunctionalLink = (accessCode: string) =>
+    `/public/drive-link/${accessCode}`;
 
   const NotaModal = ({ order }: { order: Order }) => (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -360,7 +361,7 @@ export default function OrderList() {
                 href={getFunctionalLink(order.accessCode)}
                 className="truncate text-blue-600 hover:underline text-xs font-mono"
               >
-                kinau.id/{order.accessCode}
+                kinau.id/public/drive-link/{order.accessCode}
               </a>
               <button
                 onClick={() => copyToClipboard(order.domain)}

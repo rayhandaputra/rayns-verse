@@ -73,8 +73,6 @@ export async function requireAuth(request: Request) {
     request.headers.get("Cookie")
   );
 
-  console.log("SESSION => ", session.get("token"));
-
   const token = session.get("token");
   if (!token) {
     throw redirect("/");
@@ -97,12 +95,13 @@ export async function getOptionalUser(request: Request) {
     request.headers.get("Cookie")
   );
   const token = session.get("token");
+  const user = session.get("user");
 
   if (!token) {
     return null;
   }
 
-  const user = await getSessionUser(token);
+  // const user = await getSessionUser(token);
   return user ? { user, session, token } : null;
 }
 

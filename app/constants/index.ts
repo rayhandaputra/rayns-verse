@@ -58,6 +58,14 @@ export const INITIAL_PRICES = {
   plastic_big_unit: 924,
 };
 
+// Admin & Location Constants
+// export const ADMIN_WA = "6285219337474";
+// export const LOCATION_COORDS = {
+//   lat: -5.370928303834815,
+//   lng: 105.29254187016355,
+// };
+export const MAX_DISTANCE_METERS = 100; // Radius absensi
+
 export const INITIAL_PRODUCTS: Product[] = [
   {
     id: "1",
@@ -107,7 +115,7 @@ export const INITIAL_ORDERS: Order[] = [
     unitPrice: 12000,
     totalAmount: 1800000,
     createdAt: "2023-11-01T08:00:00.000Z",
-    isPortfolio: true,
+    is_portfolio: true,
     rating: 5,
     review:
       "Hasil cetakan sangat tajam, bahan lanyard lembut dan nyaman dipakai. Recommended banget buat event kampus!",
@@ -131,7 +139,7 @@ export const INITIAL_ORDERS: Order[] = [
     unitPrice: 20000,
     totalAmount: 1600000,
     createdAt: "2024-01-05T09:00:00.000Z",
-    isPortfolio: true,
+    is_portfolio: true,
     rating: 5,
     review:
       "Pelayanan cepat dan ramah. Desain dibantu sampai fix. Mantap Kinau!",
@@ -155,7 +163,7 @@ export const INITIAL_ORDERS: Order[] = [
     unitPrice: 0,
     totalAmount: 0,
     createdAt: "2024-01-20T10:00:00.000Z",
-    isPortfolio: true,
+    is_portfolio: true,
     rating: 5,
     review:
       "Terima kasih Kinau sudah support event kami sebagai Media Partner. Kualitas juara!",
@@ -179,7 +187,7 @@ export const INITIAL_ORDERS: Order[] = [
     unitPrice: 10000,
     totalAmount: 2000000,
     createdAt: "2024-02-15T08:30:00.000Z",
-    isPortfolio: false,
+    is_portfolio: false,
     rating: 4,
     review: "Pengerjaan tepat waktu sesuai deadline.",
   },
@@ -199,7 +207,7 @@ export const INITIAL_ORDERS: Order[] = [
     unitPrice: 0,
     totalAmount: 0,
     createdAt: "2024-03-25T13:00:00.000Z",
-    isPortfolio: true,
+    is_portfolio: true,
     rating: 5,
     review: "Kerja sama yang luar biasa. Sukses terus buat Kinau.id",
     portfolioImages: [
@@ -222,7 +230,7 @@ export const INITIAL_ORDERS: Order[] = [
     unitPrice: 12000,
     totalAmount: 300000,
     createdAt: "2024-05-10T11:00:00.000Z",
-    isPortfolio: true,
+    is_portfolio: true,
     rating: 5,
     review: "Warna lanyard nya keluar banget, detail fotonya dapet. Keren!",
     portfolioImages: [
@@ -245,7 +253,7 @@ export const INITIAL_ORDERS: Order[] = [
     unitPrice: 20000,
     totalAmount: 2000000,
     createdAt: "2024-06-15T09:30:00.000Z",
-    isPortfolio: false,
+    is_portfolio: false,
   },
   {
     id: "ord-008",
@@ -263,7 +271,7 @@ export const INITIAL_ORDERS: Order[] = [
     unitPrice: 0,
     totalAmount: 0,
     createdAt: "2024-08-01T10:00:00.000Z",
-    isPortfolio: true,
+    is_portfolio: true,
     rating: 5,
     review: "Terbantu banget dengan support ID Card nya. Merdeka!",
     portfolioImages: [
@@ -286,7 +294,7 @@ export const INITIAL_ORDERS: Order[] = [
     unitPrice: 12000,
     totalAmount: 3600000,
     createdAt: "2024-10-01T08:00:00.000Z",
-    isPortfolio: false,
+    is_portfolio: false,
   },
   {
     id: "ord-010",
@@ -304,7 +312,7 @@ export const INITIAL_ORDERS: Order[] = [
     unitPrice: 10000,
     totalAmount: 150000,
     createdAt: "2024-10-18T09:00:00.000Z",
-    isPortfolio: false,
+    is_portfolio: false,
   },
 ];
 

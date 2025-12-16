@@ -76,5 +76,71 @@ export const SupplierCommodityAPI = {
       console.error(err);
       return { success: false, message: err.message };
     }
-  }
+  },
+
+  // ✅ UPDATE PRICE
+  updatePrice: async ({ req }: any) => {
+    const { supplier_id, commodity_id, price } = req.body || {};
+
+    if (!supplier_id || !commodity_id || price === undefined) {
+      return {
+        success: false,
+        message: "supplier_id, commodity_id, dan price wajib diisi",
+      };
+    }
+
+    try {
+      // Check if record exists
+      const existingRes = await APIProvider({
+        endpoint: "select",
+        method: "POST",
+        table: "supplier_commodities",
+        action: "select",
+        body: {
+          columns: ["id"],
+          where: { supplier_id, commodity_id, deleted_on: "null" },
+          size: 1,
+        },
+      });
+
+      if (existingRes.items && existingRes.items.length > 0) {
+        // Update existing
+        await APIProvider({
+          endpoint: "update",
+          method: "POST",
+          table: "supplier_commodities",
+          action: "update",
+          body: {
+            data: { price, modified_on: new Date().toISOString() },
+            where: { id: existingRes.items[0].id },
+          },
+        });
+      } else {
+        // Insert new
+        await APIProvider({
+          endpoint: "insert",
+          method: "POST",
+          table: "supplier_commodities",
+          action: "insert",
+          body: {
+            data: {
+              supplier_id,
+              commodity_id,
+              price,
+              qty: 0,
+              created_on: new Date().toISOString(),
+            },
+          },
+        });
+      }
+
+      return {
+        success: true,
+        message: "Harga berhasil diperbarui",
+      };
+    } catch (err: any) {
+      console.error("Error updatePrice:", err);
+      return { success: false, message: err.message };
+    }
+  },
 };

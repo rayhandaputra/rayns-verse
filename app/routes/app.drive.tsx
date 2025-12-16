@@ -1,3 +1,4 @@
+// app/routes/app.drive.tsx
 import React, { useState, useEffect, useRef } from "react";
 import type { DriveItem, Order } from "../types";
 import {
@@ -23,6 +24,8 @@ import {
   Home,
   ChevronRight,
   Plus as PlusIcon,
+  Lock,
+  FolderLock,
 } from "lucide-react";
 import NotaView from "../components/NotaView";
 import {
@@ -31,41 +34,58 @@ import {
   useNavigate,
   type LoaderFunction,
   type ActionFunction,
-  // json,
 } from "react-router";
 import { API } from "~/lib/api";
 import { requireAuth } from "~/lib/session.server";
 import { toast } from "sonner";
+
+// ============================================
+// TYPES & INTERFACES
+// ============================================
+
+interface LoaderData {
+  items: DriveItem[];
+  orders: Order[];
+}
+
+// Special folder ID for "Drive Pesanan"
+const ORDERS_DRIVE_FOLDER_ID = "SYSTEM_ORDERS_DRIVE";
+
+// ============================================
+// LOADER FUNCTION
+// ============================================
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { user, token } = await requireAuth(request);
   const url = new URL(request.url);
   const folderId = url.searchParams.get("folder_id");
 
-  // Fetch all folders and files (or by order if relevant, but assuming global for "App Drive")
-  // Using large size to try and get all structure, adjusting to "sync" logic
-  // API structure in drive-old fetches per order_number. If this is a global drive,
-  // do we have a global order number? Or do we fetch everything?
-  // Let's assume we fetch generic assets or all order uploads.
-  // Viewing `drive-old.tsx` shows it attaches to an `order`.
-  // If `app.drive.tsx` is generic, we might need to know WHICH order context we are in.
-  // If no params, maybe we show nothing or valid defaults?
-  // Since I don't see `order_number` in the URL params for `app.drive.tsx` usually,
-  // I will try to fetch ALL folders.
-
+  // Fetch folders and files with order_number IS NULL (admin general drive)
   const foldersRes = await API.ORDER_UPLOAD.get_folder({
     session: { user, token },
-    req: { query: { size: 1000 } },
+    req: {
+      query: {
+        size: 1000,
+        level: 1,
+        folder_id: null,
+        order_number: null, // Filter: only folders without order_number
+      },
+    },
   });
 
   const filesRes = await API.ORDER_UPLOAD.get_file({
     session: { user, token },
-    req: { query: { size: 1000 } },
+    req: {
+      query: {
+        size: 1000,
+        order_number: null, // Filter: only files without order_number
+      },
+    },
   });
 
   const ordersRes = await API.ORDERS.get({
     session: { user, token },
-    req: { query: { size: 100 } }, // for linking orders
+    req: { query: { size: 100 } },
   });
 
   // Map to DriveItem
@@ -75,7 +95,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     foldersRes.items.forEach((f: any) => {
       items.push({
         id: String(f.id),
-        parentId: f.parent_id ? String(f.parent_id) : null, // Assuming API supports parent_id recursion
+        parentId: f.parent_id ? String(f.parent_id) : null,
         name: f.folder_name,
         type: "folder",
         createdAt: f.created_at || new Date().toISOString(),
@@ -91,15 +111,18 @@ export const loader: LoaderFunction = async ({ request }) => {
         name: f.file_name,
         type: "file",
         mimeType: f.file_type || "doc",
-        size: "0 MB", // API might not return size?
+        size: "0 MB",
         createdAt: f.created_at || new Date().toISOString(),
       });
     });
   }
 
-  // If fetching fails or empty, items is []
   return Response.json({ items, orders: ordersRes.items || [] });
 };
+
+// ============================================
+// ACTION FUNCTION
+// ============================================
 
 export const action: ActionFunction = async ({ request }) => {
   const { user, token } = await requireAuth(request);
@@ -107,65 +130,123 @@ export const action: ActionFunction = async ({ request }) => {
   const intent = formData.get("intent");
 
   if (intent === "sync_state") {
-    // Logic copied from drive-old: Bulk Sync
-    // We receive the FULL new state of folders.
-    // NOTE: `drive-old` seemed to re-create folders based on state array?
-    // "API.ORDER_UPLOAD.create({ ... folders: state.map(...) })"
-    // If the API is "smart sync" (upsert), this works.
-
     const stateStr = formData.get("state") as string;
     const state = stateStr ? JSON.parse(stateStr) : [];
 
-    // We map DriveItem back to API expectation
-    // API expects: folder_name, etc.
-    // Need `order_number`? If this is global drive, what order number?
-    // `drive-old` used `order.order_number`.
-    // If we don't have one, we might need a dummy or skipping it?
-    // I'll assume we might not need it if not provided, or this API is strict.
-    // WARNING: If API requires order_number, this generic drive might fail without one.
-    // But I will proceed assuming the endpoint handles it or we pass a system code.
-
+    // Filter out system folder from sync
     const foldersToSync = state
-      .filter((i: any) => i.type === "folder")
+      .filter(
+        (i: any) => i.type === "folder" && i.id !== ORDERS_DRIVE_FOLDER_ID
+      )
       .map((f: any) => ({
-        id: f.id.startsWith("KEY") ? undefined : f.id, // New items (KEY...) won't have DB ID
+        id: f.id && f.id.startsWith("KEY") ? undefined : f.id,
         folder_name: f.name,
-        parent_id: f.parentId,
-        // order_number?
+        parent_id: f.parentId || null,
+        order_number: null, // Ensure order_number is null for admin drive
       }));
 
-    // Assuming we only sync folders this way? files are separate?
-    // drive-old only synced folders via `.create`. Files via single upload.
-
     try {
-      await API.ORDER_UPLOAD.create({
+      const result = await API.ORDER_UPLOAD.create({
         session: { user, token },
         req: {
           body: { folders: foldersToSync },
         },
       });
+
+      if (!result.success) {
+        return Response.json({
+          success: false,
+          message: result.message || "Sync gagal",
+        });
+      }
+
       return Response.json({ success: true });
     } catch (e: any) {
-      return Response.json({ success: false, message: e.message });
+      console.error("Error syncing state:", e);
+      return Response.json({
+        success: false,
+        message: e.message || "Terjadi kesalahan",
+      });
     }
   }
 
-  if (intent === "upload_file") {
-    // Handled purely client side via `handleUploadFile` calling API directly?
-    // drive-old: `handleUploadFile` calls `API.ASSET.upload` then `API.ORDER_UPLOAD.create_single_file`.
-    // It did NOT use standard form action for file upload.
-    // It used `submit` only for `saveChanges` (folders).
-    // So action here is mainly for Folder Sync.
+  if (intent === "delete_items") {
+    const itemsStr = formData.get("items") as string;
+    const items = itemsStr ? JSON.parse(itemsStr) : [];
+
+    if (items.length === 0) {
+      return Response.json({
+        success: false,
+        message: "Tidak ada item yang akan dihapus",
+      });
+    }
+
+    try {
+      // Separate folders and files
+      const folderIds = items
+        .filter((item: any) => item.type === "folder" && !item.id.startsWith("KEY"))
+        .map((item: any) => item.id);
+
+      const fileIds = items
+        .filter((item: any) => item.type === "file" && !item.id.startsWith("KEY"))
+        .map((item: any) => item.id);
+
+      // Delete folders
+      if (folderIds.length > 0) {
+        const folderResult = await API.ORDER_UPLOAD.bulk_delete_folders({
+          session: { user, token },
+          req: {
+            body: { ids: folderIds },
+          },
+        });
+
+        if (!folderResult.success) {
+          return Response.json({
+            success: false,
+            message: folderResult.message || "Gagal menghapus folder",
+          });
+        }
+      }
+
+      // Delete files
+      if (fileIds.length > 0) {
+        const fileResult = await API.ORDER_UPLOAD.bulk_delete_files({
+          session: { user, token },
+          req: {
+            body: { ids: fileIds },
+          },
+        });
+
+        if (!fileResult.success) {
+          return Response.json({
+            success: false,
+            message: fileResult.message || "Gagal menghapus file",
+          });
+        }
+      }
+
+      return Response.json({
+        success: true,
+        message: `Berhasil menghapus ${items.length} item`,
+      });
+    } catch (e: any) {
+      console.error("Error deleting items:", e);
+      return Response.json({
+        success: false,
+        message: e.message || "Terjadi kesalahan saat menghapus",
+      });
+    }
   }
 
   return Response.json({ success: true });
 };
 
+// ============================================
+// MAIN COMPONENT
+// ============================================
+
 export default function DrivePage() {
-  const { items: initialItems, orders } = useLoaderData<{
-    items: DriveItem[];
-    orders: Order[];
-  }>();
+  const { items: initialItems, orders } = useLoaderData<LoaderData>();
   const fetcher = useFetcher();
   const navigate = useNavigate();
 
@@ -177,12 +258,24 @@ export default function DrivePage() {
     setItems(initialItems);
   }, [initialItems]);
 
+  // Handle fetcher responses
+  useEffect(() => {
+    if (fetcher.data && fetcher.state === "idle") {
+      if (fetcher.data.success === false) {
+        toast.error(fetcher.data.message || "Operasi gagal");
+      } else if (fetcher.data.success === true) {
+        // Show success message if available
+        if (fetcher.data.message) {
+          toast.success(fetcher.data.message);
+        }
+        // Reload data after successful operation
+        fetcher.load(window.location.pathname + window.location.search);
+      }
+    }
+  }, [fetcher.data, fetcher.state]);
+
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-  // Guest view props are not present in route version usually, assuming admin view
-  // But we can check query param for linked mode?
-
   const [activeTab, setActiveTab] = useState<"files" | "nota">("files");
-
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [clipboard, setClipboard] = useState<{
     id: string;
@@ -200,10 +293,38 @@ export default function DrivePage() {
   // File Input Ref for Real Upload
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Check if we're inside Orders Drive
+  const isInsideOrdersDrive = () => {
+    let curr = currentFolderId;
+    while (curr) {
+      if (curr === ORDERS_DRIVE_FOLDER_ID) return true;
+      const folder = items.find((i) => i.id === curr);
+      curr = folder?.parentId || null;
+    }
+    return currentFolderId === ORDERS_DRIVE_FOLDER_ID;
+  };
+
   // Filter items in current directory
   const currentItems = items.filter(
     (item) => item.parentId === currentFolderId
   );
+
+  // Add system "Drive Pesanan" folder at root level only
+  if (currentFolderId === null) {
+    const ordersDriveFolder: DriveItem = {
+      id: ORDERS_DRIVE_FOLDER_ID,
+      parentId: null,
+      name: "Drive Pesanan",
+      type: "folder",
+      createdAt: new Date().toISOString(),
+      isSystemFolder: true, // Mark as system folder
+    } as any;
+
+    // Check if not already in list
+    if (!currentItems.find((i) => i.id === ORDERS_DRIVE_FOLDER_ID)) {
+      currentItems.unshift(ordersDriveFolder);
+    }
+  }
 
   // Sort: Folders first, then new to old
   currentItems.sort((a, b) => {
@@ -217,6 +338,10 @@ export default function DrivePage() {
     let curr = currentFolderId;
 
     while (curr) {
+      if (curr === ORDERS_DRIVE_FOLDER_ID) {
+        crumbs.unshift({ id: ORDERS_DRIVE_FOLDER_ID, name: "Drive Pesanan" });
+        break;
+      }
       const folder = items.find((i) => i.id === curr);
       if (folder) {
         crumbs.unshift({ id: folder.id, name: folder.name });
@@ -228,22 +353,38 @@ export default function DrivePage() {
     return crumbs;
   };
 
+  // Check if item is system folder
+  const isSystemFolder = (itemId: string) => {
+    return itemId === ORDERS_DRIVE_FOLDER_ID;
+  };
+
   // --- Actions ---
 
   // Helper to sync state to server
   const syncState = (newItems: DriveItem[]) => {
     setItems(newItems);
-    // Construct payload for API
-    // Since API might only sync folders structure, filtering folders:
-    // Real file uploads are separate.
-    const foldersOnly = newItems;
+
+    // Filter and map items for sync
+    const itemsToSync = newItems.map((item) => ({
+      id: item.id,
+      name: item.name,
+      parentId: item.parentId,
+      type: item.type,
+      mimeType: item.mimeType,
+      createdAt: item.createdAt,
+    }));
+
     fetcher.submit(
-      { intent: "sync_state", state: JSON.stringify(foldersOnly) },
+      { intent: "sync_state", state: JSON.stringify(itemsToSync) },
       { method: "post" }
     );
   };
 
   const handleOpenNewFolderModal = () => {
+    if (isInsideOrdersDrive()) {
+      toast.error("Tidak dapat membuat folder di dalam Drive Pesanan");
+      return;
+    }
     setNewFolderName("Folder Baru");
     setShowNewFolderModal(true);
   };
@@ -253,7 +394,7 @@ export default function DrivePage() {
     if (!newFolderName.trim()) return;
 
     const newFolder: DriveItem = {
-      id: `KEY${Date.now()}`, // Temp ID, will be replaced by DB ID on revalidation? Not auto-replaced unless we reload.
+      id: `KEY${Date.now()}`,
       parentId: currentFolderId,
       name: newFolderName.trim(),
       type: "folder",
@@ -266,6 +407,10 @@ export default function DrivePage() {
   };
 
   const handleUploadClick = () => {
+    if (isInsideOrdersDrive()) {
+      toast.error("Tidak dapat upload file di dalam Drive Pesanan");
+      return;
+    }
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
@@ -291,79 +436,120 @@ export default function DrivePage() {
           file_type: mime,
           file_url: uploadRes.url,
           file_name: file.name,
-          folder_id: currentFolderId,
+          folder_id: currentFolderId || null,
+          order_number: null, // Ensure null for admin drive
         };
 
-        await API.ORDER_UPLOAD.create_single_file({
-          session: {}, // Client side usually doesn't need session here if handled by cookie/browser? API wrapper handles it?
-          // Wait, API wrapper needs session passed if not global? defaults?
-          // Assuming API.ORDER_UPLOAD uses client-side fetch wrapper which attaches cookies.
+        const result = await API.ORDER_UPLOAD.create_single_file({
+          session: {},
           req: { body: newFilePayload },
         });
 
-        const newFile: DriveItem = {
-          id: String(Date.now()), // Temp ID
-          parentId: currentFolderId,
-          name: file.name,
-          type: "file",
-          mimeType: mime,
-          size: (file.size / 1024 / 1024).toFixed(2) + " MB",
-          createdAt: new Date().toISOString(),
-        };
+        if (!result.success) {
+          throw new Error(result.message || "Upload gagal");
+        }
 
-        // No need to sync entire state for file, just update local.
-        // Revalidation will fetch real ID later.
-        setItems([...items, newFile]);
+        // Reload data to get the fresh file with proper ID
+        fetcher.load(window.location.pathname + window.location.search);
+
         toast.success("Upload berhasil");
 
         // Reset
         e.target.value = "";
-      } catch (err) {
-        toast.error("Upload gagal");
+      } catch (err: any) {
+        toast.error(err.message || "Upload gagal");
         console.error(err);
       }
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    if (isSystemFolder(id)) {
+      toast.error("Folder sistem tidak dapat dihapus");
+      return;
+    }
+
     if (!window.confirm("Apakah anda yakin ingin menghapus item ini?")) return;
 
-    // Recursive delete function (VISUAL ONLY unless API supports recursive delete)
-    // If we rely on syncing the folder structure state, deleting parent folder removes children in state?
-    // drive-old logic: `saveChanges` sends updated list. If items missing, does API delete?
-    // API `create` usually creates/updates. Deletion might need specific call or "sync" handles it.
-    // If API `create` is "upsert only", we might need explicit `delete`.
-    // Assuming `state` sync handles it for now as per `drive-old` pattern, OR we just update visual.
-
-    // Actually `drive-old` didn't show Delete implementation calling explicit DELETE endpoint.
-    // It just updated `folders` state and called `saveChanges`.
-    // So assume Sync State handles removal or we accept it visual only until refresh.
-
-    const getDescendants = (parentId: string): string[] => {
+    // Get all descendants (for folders)
+    const getDescendants = (parentId: string): DriveItem[] => {
       const children = items.filter((i) => i.parentId === parentId);
-      let ids = children.map((c) => c.id);
+      let descendants: DriveItem[] = [...children];
       children.forEach((c) => {
         if (c.type === "folder") {
-          ids = [...ids, ...getDescendants(c.id)];
+          descendants = [...descendants, ...getDescendants(c.id)];
         }
       });
-      return ids;
+      return descendants;
     };
 
-    const idsToDelete = new Set([id, ...getDescendants(id)]);
-    const newItems = items.filter((i) => !idsToDelete.has(i.id));
+    // Find the item to delete
+    const itemToDelete = items.find((i) => i.id === id);
+    if (!itemToDelete) return;
 
-    syncState(newItems);
-    setSelectedItem(null);
+    // Get all items to delete (item + descendants)
+    const itemsToDelete = [itemToDelete];
+    if (itemToDelete.type === "folder") {
+      itemsToDelete.push(...getDescendants(id));
+    }
+
+    // If all items are temporary (have KEY prefix), just remove from state
+    const allTemporary = itemsToDelete.every((item) =>
+      item.id.startsWith("KEY")
+    );
+
+    if (allTemporary) {
+      // Just remove from local state
+      const idsToDelete = new Set(itemsToDelete.map((i) => i.id));
+      const newItems = items.filter((i) => !idsToDelete.has(i.id));
+      setItems(newItems);
+      setSelectedItem(null);
+      toast.success("Item berhasil dihapus");
+      return;
+    }
+
+    // Otherwise, call API to delete from database
+    try {
+      const itemsPayload = itemsToDelete.map((item) => ({
+        id: item.id,
+        type: item.type,
+      }));
+
+      fetcher.submit(
+        {
+          intent: "delete_items",
+          items: JSON.stringify(itemsPayload),
+        },
+        { method: "post" }
+      );
+
+      // Optimistically remove from UI
+      const idsToDelete = new Set(itemsToDelete.map((i) => i.id));
+      const newItems = items.filter((i) => !idsToDelete.has(i.id));
+      setItems(newItems);
+      setSelectedItem(null);
+    } catch (err: any) {
+      toast.error(err.message || "Gagal menghapus item");
+      console.error(err);
+    }
   };
 
   const handleRenameStart = (item: DriveItem) => {
+    if (isSystemFolder(item.id)) {
+      toast.error("Folder sistem tidak dapat diubah");
+      return;
+    }
     setIsRenaming(item.id);
     setRenameValue(item.name);
   };
 
   const handleRenameSave = () => {
     if (isRenaming && renameValue.trim()) {
+      if (isSystemFolder(isRenaming)) {
+        toast.error("Folder sistem tidak dapat diubah");
+        setIsRenaming(null);
+        return;
+      }
       syncState(
         items.map((i) =>
           i.id === isRenaming ? { ...i, name: renameValue } : i
@@ -374,12 +560,22 @@ export default function DrivePage() {
   };
 
   const handleCut = (id: string) => {
+    if (isSystemFolder(id)) {
+      toast.error("Folder sistem tidak dapat dipindahkan");
+      return;
+    }
     setClipboard({ id, op: "cut" });
     setSelectedItem(null);
   };
 
   const handlePaste = () => {
     if (!clipboard) return;
+
+    if (isInsideOrdersDrive()) {
+      toast.error("Tidak dapat memindahkan item ke dalam Drive Pesanan");
+      return;
+    }
+
     const item = items.find((i) => i.id === clipboard.id);
     if (!item) {
       setClipboard(null);
@@ -410,38 +606,43 @@ export default function DrivePage() {
     setClipboard(null);
   };
 
-  const generateShareLink = (accessCode: string) => {
-    return `${window.location.protocol}//${window.location.host}${window.location.pathname}?access=${accessCode}`;
-  };
-
   const handleShare = async (item?: DriveItem) => {
     const targetId = item ? item.id : currentFolderId;
 
     if (!targetId) {
       toast.error(
-        "Tidak dapat membagikan root drive utama. Masuk ke dalam folder pesanan terlebih dahulu."
+        "Tidak dapat membagikan root drive utama. Masuk ke dalam folder terlebih dahulu."
       );
       return;
     }
 
-    // Since we fetch "orders" in loader, we can look up linked order.
-    // Assuming `driveFolderId` or similar linkage exists.
-    // If API `API.ORDERS.get` doesn't populate `driveFolderId` (it wasn't in list columns),
-    // we might miss this linkage.
-    // In `app.order-list.tsx` we saw `driveFolderId` was NOT in standard columns.
-    // But `app.drive-old.tsx` didn't use this logic? It used `order` from loader.
-    // If we are in generic drive, sharing might be tricky without explicit order link.
-    // Fallback: Just show simple message.
+    if (isSystemFolder(targetId)) {
+      toast.error("Folder sistem tidak dapat dibagikan");
+      return;
+    }
 
-    // const linkedOrder = orders.find((o) => o.driveFolderId === targetId);
-
-    // For now mock:
     alert(`Share logic reserved. (Target ID: ${targetId})`);
   };
 
+  const handleOpenFolder = (item: DriveItem) => {
+    if (item.type !== "folder") return;
+
+    if (item.id === ORDERS_DRIVE_FOLDER_ID) {
+      // Navigate to orders drive view
+      navigate("/app/drive/orders");
+      return;
+    }
+
+    setCurrentFolderId(item.id);
+  };
+
   const renderIcon = (item: DriveItem) => {
-    if (item.type === "folder")
+    if (item.type === "folder") {
+      if (item.id === ORDERS_DRIVE_FOLDER_ID) {
+        return <FolderLock size={48} className="text-blue-600 fill-blue-600" />;
+      }
       return <Folder size={48} className="text-yellow-400 fill-yellow-400" />;
+    }
     if (item.mimeType === "image")
       return <FileImage size={40} className="text-purple-500" />;
     return <FileText size={40} className="text-blue-500" />;
@@ -462,31 +663,37 @@ export default function DrivePage() {
       {/* Toolbar */}
       <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
         <div className="flex gap-2">
-          <button
-            onClick={handleOpenNewFolderModal}
-            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700"
-          >
-            <FolderPlus size={16} />{" "}
-            <span className="hidden md:inline">Folder Baru</span>
-          </button>
-          <button
-            onClick={handleUploadClick}
-            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm"
-          >
-            <Upload size={16} />{" "}
-            <span className="hidden md:inline">Upload</span>
-          </button>
-
-          {currentFolderId && (
-            <button
-              onClick={() => handleShare()}
-              className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700"
-            >
-              <Share2 size={16} />{" "}
-              <span className="hidden md:inline">Bagikan</span>
-            </button>
+          {!isInsideOrdersDrive() && (
+            <>
+              <button
+                onClick={handleOpenNewFolderModal}
+                className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700"
+              >
+                <FolderPlus size={16} />{" "}
+                <span className="hidden md:inline">Folder Baru</span>
+              </button>
+              <button
+                onClick={handleUploadClick}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm"
+              >
+                <Upload size={16} />{" "}
+                <span className="hidden md:inline">Upload</span>
+              </button>
+            </>
           )}
-          {clipboard && (
+
+          {currentFolderId &&
+            !isSystemFolder(currentFolderId) &&
+            !isInsideOrdersDrive() && (
+              <button
+                onClick={() => handleShare()}
+                className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700"
+              >
+                <Share2 size={16} />{" "}
+                <span className="hidden md:inline">Bagikan</span>
+              </button>
+            )}
+          {clipboard && !isInsideOrdersDrive() && (
             <button
               onClick={handlePaste}
               className="flex items-center gap-2 px-3 py-2 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-lg text-sm font-medium hover:bg-yellow-200 animate-pulse"
@@ -513,9 +720,16 @@ export default function DrivePage() {
           <React.Fragment key={crumb.id}>
             <span className="text-gray-300">/</span>
             <button
-              onClick={() => setCurrentFolderId(crumb.id)}
-              className={`hover:bg-gray-100 px-2 py-1 rounded whitespace-nowrap ${idx === getBreadcrumbs().length - 1 ? "font-bold text-blue-600" : ""}`}
+              onClick={() => {
+                if (crumb.id === ORDERS_DRIVE_FOLDER_ID) {
+                  navigate("/app/drive/orders");
+                } else {
+                  setCurrentFolderId(crumb.id);
+                }
+              }}
+              className={`hover:bg-gray-100 px-2 py-1 rounded whitespace-nowrap flex items-center gap-1 ${idx === getBreadcrumbs().length - 1 ? "font-bold text-blue-600" : ""}`}
             >
+              {crumb.id === ORDERS_DRIVE_FOLDER_ID && <Lock size={12} />}
               {crumb.name}
             </button>
           </React.Fragment>
@@ -534,106 +748,113 @@ export default function DrivePage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {currentItems.map((item) => (
-              <div
-                key={item.id}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedItem(item.id);
-                }}
-                onDoubleClick={() =>
-                  item.type === "folder" && setCurrentFolderId(item.id)
-                }
-                className={`group relative p-4 rounded-xl border flex flex-col items-center gap-3 cursor-pointer transition-all ${
-                  selectedItem === item.id
-                    ? "bg-blue-50 border-blue-400 ring-1 ring-blue-400"
-                    : "bg-white border-gray-100 hover:border-gray-300 hover:shadow-sm"
-                } ${clipboard?.id === item.id ? "opacity-50" : ""}`}
-              >
-                {renderIcon(item)}
+            {currentItems.map((item) => {
+              const isSystem = isSystemFolder(item.id);
 
-                {isRenaming === item.id ? (
-                  <input
-                    autoFocus
-                    className="w-full text-center text-xs border border-blue-300 rounded px-1 py-0.5"
-                    value={renameValue}
-                    onChange={(e) => setRenameValue(e.target.value)}
-                    onBlur={handleRenameSave}
-                    onKeyDown={(e) => e.key === "Enter" && handleRenameSave()}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : (
-                  <div className="text-center w-full">
-                    <div
-                      className="text-xs font-medium text-gray-700 truncate w-full"
-                      title={item.name}
-                    >
-                      {item.name}
-                    </div>
-                    {item.type === "file" && (
-                      <div className="text-[10px] text-gray-400 mt-1">
-                        {item.size}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Context Menu */}
+              return (
                 <div
-                  className={`absolute top-2 right-2 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden transition-all ${selectedItem === item.id ? "opacity-100 visible" : "opacity-0 invisible group-hover:visible group-hover:opacity-100"}`}
+                  key={item.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedItem(item.id);
+                  }}
+                  onDoubleClick={() => handleOpenFolder(item)}
+                  className={`group relative p-4 rounded-xl border flex flex-col items-center gap-3 cursor-pointer transition-all ${
+                    selectedItem === item.id
+                      ? "bg-blue-50 border-blue-400 ring-1 ring-blue-400"
+                      : "bg-white border-gray-100 hover:border-gray-300 hover:shadow-sm"
+                  } ${clipboard?.id === item.id ? "opacity-50" : ""} ${isSystem ? "bg-blue-50/30" : ""}`}
                 >
-                  {item.type === "folder" && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleShare(item);
-                      }}
-                      title="Bagikan Link"
-                      className="p-1.5 hover:bg-gray-100 text-blue-600 border-b border-gray-100"
-                    >
-                      <Share2 size={12} />
-                    </button>
+                  {renderIcon(item)}
+
+                  {isRenaming === item.id && !isSystem ? (
+                    <input
+                      autoFocus
+                      className="w-full text-center text-xs border border-blue-300 rounded px-1 py-0.5"
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onBlur={handleRenameSave}
+                      onKeyDown={(e) => e.key === "Enter" && handleRenameSave()}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    <div className="text-center w-full">
+                      <div
+                        className={`text-xs font-medium truncate w-full flex items-center justify-center gap-1 ${isSystem ? "text-blue-700" : "text-gray-700"}`}
+                        title={item.name}
+                      >
+                        {isSystem && <Lock size={10} />}
+                        {item.name}
+                      </div>
+                      {item.type === "file" && (
+                        <div className="text-[10px] text-gray-400 mt-1">
+                          {item.size}
+                        </div>
+                      )}
+                    </div>
                   )}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRenameStart(item);
-                    }}
-                    title="Ganti Nama"
-                    className="p-1.5 hover:bg-gray-100 text-gray-600"
-                  >
-                    <Edit2 size={12} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCut(item.id);
-                    }}
-                    title="Pindahkan"
-                    className="p-1.5 hover:bg-gray-100 text-orange-600"
-                  >
-                    <Scissors size={12} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(item.id);
-                    }}
-                    title="Hapus"
-                    className="p-1.5 hover:bg-gray-100 text-red-600"
-                  >
-                    <Trash2 size={12} />
-                  </button>
+
+                  {/* Context Menu - Hidden for system folders */}
+                  {!isSystem && (
+                    <div
+                      className={`absolute top-2 right-2 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden transition-all ${selectedItem === item.id ? "opacity-100 visible" : "opacity-0 invisible group-hover:visible group-hover:opacity-100"}`}
+                    >
+                      {item.type === "folder" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShare(item);
+                          }}
+                          title="Bagikan Link"
+                          className="p-1.5 hover:bg-gray-100 text-blue-600 border-b border-gray-100"
+                        >
+                          <Share2 size={12} />
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRenameStart(item);
+                        }}
+                        title="Ganti Nama"
+                        className="p-1.5 hover:bg-gray-100 text-gray-600"
+                      >
+                        <Edit2 size={12} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCut(item.id);
+                        }}
+                        title="Pindahkan"
+                        className="p-1.5 hover:bg-gray-100 text-orange-600"
+                      >
+                        <Scissors size={12} />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(item.id);
+                        }}
+                        title="Hapus"
+                        className="p-1.5 hover:bg-gray-100 text-red-600"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
       {activeTab === "files" && (
         <div className="p-2 border-t border-gray-100 text-[10px] text-gray-400 text-center bg-gray-50">
-          Klik ganda untuk membuka folder.
+          {isInsideOrdersDrive()
+            ? "Drive Pesanan bersifat read-only. Klik ganda untuk membuka folder."
+            : "Klik ganda untuk membuka folder."}
         </div>
       )}
 

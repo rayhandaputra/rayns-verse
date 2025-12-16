@@ -48,12 +48,22 @@ export const loader: LoaderFunction = async ({ request }) => {
   // 1. Fetch Commodities (Stock)
   const stockRes = await API.COMMODITY_STOCK.get({
     session: { user, token },
+    req: { query: { size: 100, pagination: "false" } },
+  });
+
+  // 2. Fetch Suppliers
+  const suppliersRes = await API.SUPPLIER.get({
+    session: { user, token },
     req: { query: { size: 100 } },
   });
 
-  // 2. Map to StockState
-  // We'll try to match `commodity.code` to our known keys.
-  // If not found, we fall back to 0 or INITIAL_STOCK for safety during dev.
+  // 3. Fetch Supplier Commodities (for prices)
+  const supplierCommodityRes = await API.SUPPLIER_COMMODITY.get({
+    session: { user, token },
+    req: { query: { size: 1000, pagination: "false" } },
+  });
+
+  // 4. Map to StockState
   const stock: StockState = { ...INITIAL_STOCK }; // Start with default to ensure all keys exist
 
   // Create a map for ID lookups (key -> id) for the UI to submit correct IDs
@@ -61,9 +71,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   if (stockRes.items) {
     stockRes.items.forEach((item: any) => {
-      // Assuming item.code matches our internal keys like 'tinta_ml', 'roll_100m'
-      // If the DB doesn't have these codes yet, this might fail to populate,
-      // but that's expected for a fresh DB.
+      // Match item.code to our internal keys
       if (STOCK_KEYS.includes(item.code)) {
         stock[item.code as keyof StockState] = Number(item.stock || 0);
         commodityMap[item.code] = item.id;
@@ -71,7 +79,54 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
   }
 
-  return Response.json({ stock, commodityMap });
+  // 5. Map prices from supplier_commodities
+  const prices: PriceList = { ...INITIAL_PRICES };
+
+  if (supplierCommodityRes.items) {
+    // Group by commodity_id and get average or latest price
+    const priceMap: Record<string, number> = {};
+
+    stockRes.items?.forEach((commodity: any) => {
+      // Find all supplier commodities for this commodity
+      const supplierPrices = supplierCommodityRes.items.filter(
+        (sc: any) => sc.commodity_id === commodity.id
+      );
+
+      if (supplierPrices.length > 0) {
+        // Use average price or latest price
+        const avgPrice = supplierPrices.reduce((sum: number, sc: any) => sum + Number(sc.price || 0), 0) / supplierPrices.length;
+        priceMap[commodity.code] = avgPrice;
+      }
+    });
+
+    // Map to our price keys
+    Object.keys(INITIAL_PRICES).forEach((key) => {
+      if (priceMap[key]) {
+        prices[key] = priceMap[key];
+      }
+    });
+  }
+
+  // 6. Map shops from suppliers
+  const shops: ShopList = { ...INITIAL_SHOPS };
+
+  if (suppliersRes.items) {
+    suppliersRes.items.forEach((supplier: any, index: number) => {
+      const code = String.fromCharCode(65 + index); // A, B, C, D...
+      if (code.charCodeAt(0) <= 90) { // Only A-Z
+        shops[code] = supplier.name;
+      }
+    });
+  }
+
+  return Response.json({
+    stock,
+    commodityMap,
+    prices,
+    shops,
+    suppliers: suppliersRes.items || [],
+    commodities: stockRes.items || [],
+  });
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -85,12 +140,13 @@ export const action: ActionFunction = async ({ request }) => {
 
     const updates = JSON.parse(rawData); // Array of { key, qty, id }
 
-    // We process sequentially or Promise.all
-    // The API expects: supplier_id, commodity_id, qty
-    // We'll use a placeholder supplier_id "1" if not provided/selectable yet,
-    // or fetch one via a lookup if we improved the UI to select supplier.
-    // For now, let's assume supplier_id = 1 (Standard Store)
-    const supplier_id = "1";
+    // Use first supplier as default
+    const suppliersRes = await API.SUPPLIER.get({
+      session: { user, token },
+      req: { query: { size: 1 } },
+    });
+
+    const supplier_id = suppliersRes.items?.[0]?.id || "1";
 
     const promises = updates.map(async (u: any) => {
       if (!u.id) return; // Need commodity ID
@@ -101,7 +157,6 @@ export const action: ActionFunction = async ({ request }) => {
         qtyToAdd = unitAdd(u.key, qtyToAdd);
       }
 
-      // If override provided explicitly in previous layer, it's passed as qty with isDirect=true
       return API.COMMODITY_STOCK.restock({
         session: { user, token },
         req: { body: { supplier_id, commodity_id: u.id, qty: qtyToAdd } },
@@ -119,27 +174,138 @@ export const action: ActionFunction = async ({ request }) => {
     }
   }
 
-  // TODO: Implement save prices/shops if API supports it later
+  if (actionType === "update_price") {
+    const commodity_code = formData.get("commodity_code") as string;
+    const price = Number(formData.get("price"));
+
+    if (!commodity_code || isNaN(price)) {
+      return Response.json({
+        success: false,
+        message: "Data tidak valid",
+      });
+    }
+
+    try {
+      // Get commodity ID from code
+      const commodityRes = await API.COMMODITY.get({
+        session: { user, token },
+        req: { query: { search: commodity_code, size: 1 } },
+      });
+
+      const commodity = commodityRes.items?.find((item: any) => item.code === commodity_code);
+      if (!commodity) {
+        return Response.json({
+          success: false,
+          message: "Commodity tidak ditemukan",
+        });
+      }
+
+      // Get first supplier
+      const suppliersRes = await API.SUPPLIER.get({
+        session: { user, token },
+        req: { query: { size: 1 } },
+      });
+
+      const supplier_id = suppliersRes.items?.[0]?.id;
+      if (!supplier_id) {
+        return Response.json({
+          success: false,
+          message: "Supplier tidak ditemukan",
+        });
+      }
+
+      // Update price
+      const result = await API.SUPPLIER_COMMODITY.updatePrice({
+        session: { user, token },
+        req: {
+          body: {
+            supplier_id,
+            commodity_id: commodity.id,
+            price,
+          },
+        },
+      });
+
+      return Response.json(result);
+    } catch (e: any) {
+      return Response.json({ success: false, message: e.message });
+    }
+  }
+
+  if (actionType === "update_shop") {
+    const shop_code = formData.get("shop_code") as string;
+    const shop_name = formData.get("shop_name") as string;
+
+    if (!shop_code || !shop_name) {
+      return Response.json({
+        success: false,
+        message: "Data tidak valid",
+      });
+    }
+
+    try {
+      // Get suppliers and find the one matching the code
+      const suppliersRes = await API.SUPPLIER.get({
+        session: { user, token },
+        req: { query: { size: 100 } },
+      });
+
+      // Map code to index (A=0, B=1, etc)
+      const index = shop_code.charCodeAt(0) - 65;
+      const supplier = suppliersRes.items?.[index];
+
+      if (!supplier) {
+        return Response.json({
+          success: false,
+          message: "Supplier tidak ditemukan",
+        });
+      }
+
+      // Update supplier name
+      const result = await API.SUPPLIER.update({
+        session: { user, token },
+        req: {
+          body: {
+            id: supplier.id,
+            name: shop_name,
+          },
+        },
+      });
+
+      return Response.json(result);
+    } catch (e: any) {
+      return Response.json({ success: false, message: e.message });
+    }
+  }
 
   return Response.json({ success: true });
 };
 
 export default function StockPage() {
-  const { stock: initialStock, commodityMap } = useLoaderData<{
+  const loaderData = useLoaderData<{
     stock: StockState;
     commodityMap: Record<string, string>;
+    prices: PriceList;
+    shops: ShopList;
+    suppliers: any[];
+    commodities: any[];
   }>();
+
   const fetcher = useFetcher();
 
-  // We keep local state for immediate UI feedback / optimistic updates if we wanted,
-  // but simpler to rely on loader revalidation.
-  // However, for the "Manual" calculations in this specific UI, it relies heavily on
-  // the `stock` prop derived from loader.
-  const stock = initialStock;
+  // Use real data from loader
+  const stock = loaderData.stock;
+  const commodityMap = loaderData.commodityMap;
 
-  // -- States for Price Management (Local ONLY for now as API doesn't seem to have Price/Shop config endpoints yet) --
-  const [prices, setPrices] = useState<PriceList>(INITIAL_PRICES);
-  const [shops, setShops] = useState<ShopList>(INITIAL_SHOPS);
+  // Use real prices and shops from loader (not local state anymore)
+  const [prices, setPrices] = useState<PriceList>(loaderData.prices);
+  const [shops, setShops] = useState<ShopList>(loaderData.shops);
+
+  // Update when loader data changes
+  useEffect(() => {
+    setPrices(loaderData.prices);
+    setShops(loaderData.shops);
+  }, [loaderData.prices, loaderData.shops]);
 
   const [priceKey, setPriceKey] = useState("ink_set");
   const [priceInput, setPriceInput] = useState("");
@@ -213,18 +379,37 @@ export default function StockPage() {
   // -- Handlers --
   const handleApplyPrice = () => {
     const val = parseCurrency(priceInput);
-    const newPrices = { ...prices, [priceKey]: val };
-    setPrices(newPrices);
-    // Local save only for now
-    toast.success("Harga diupdate (Lokal)");
+
+    // Submit to API
+    fetcher.submit(
+      {
+        actionType: "update_price",
+        commodity_code: priceKey,
+        price: String(val),
+      },
+      { method: "post" }
+    );
+
+    // Optimistic update
+    setPrices({ ...prices, [priceKey]: val });
   };
 
   const handleUpdateShopName = () => {
     if (!shopNameInput.trim()) return;
-    const newShops = { ...shops, [selectedShopCode]: shopNameInput };
-    setShops(newShops);
+
+    // Submit to API
+    fetcher.submit(
+      {
+        actionType: "update_shop",
+        shop_code: selectedShopCode,
+        shop_name: shopNameInput,
+      },
+      { method: "post" }
+    );
+
+    // Optimistic update
+    setShops({ ...shops, [selectedShopCode]: shopNameInput });
     setShopNameInput("");
-    toast.success("Nama toko diupdate (Lokal)");
   };
 
   const handleMultiRestock = () => {
@@ -311,9 +496,16 @@ export default function StockPage() {
   };
 
   useEffect(() => {
-    if (fetcher.data?.success) toast.success(fetcher.data.message);
-    if (fetcher.data?.success === false) toast.error(fetcher.data.message);
-  }, [fetcher.data]);
+    if (fetcher.data && fetcher.state === "idle") {
+      if (fetcher.data.success) {
+        toast.success(fetcher.data.message);
+        // Reload data after successful operation
+        fetcher.load(window.location.pathname + window.location.search);
+      } else if (fetcher.data.success === false) {
+        toast.error(fetcher.data.message);
+      }
+    }
+  }, [fetcher.data, fetcher.state]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full items-start">

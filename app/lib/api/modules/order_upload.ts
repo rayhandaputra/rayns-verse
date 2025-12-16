@@ -11,11 +11,22 @@ export const OrderUploadAPI = {
       size = 10,
       search,
       order_number,
+      folder_id,
+      level,
       id,
     } = req.query || {};
 
     const where: any = { deleted_on: "null" };
-    if (order_number) where.order_number = order_number;
+    if (order_number !== undefined) {
+      // Allow filtering by null order_number for admin drive
+      where.order_number = order_number === null ? "null" : order_number;
+    }
+    if (folder_id !== undefined) {
+      where.parent_id = folder_id === null ? "null" : folder_id;
+    }
+    if (level !== undefined) {
+      where.level = level === null ? "null" : level;
+    }
     if (id) where.id = id;
 
     const searchConfig = search
@@ -35,10 +46,16 @@ export const OrderUploadAPI = {
         body: {
           columns: [
             "id",
+            "uid",
             "order_number",
             "folder_name",
+            "parent_id",
+            "level",
+            "product_id",
+            "product_name",
             "created_by",
             "created_on",
+            "modified_on",
           ],
           where,
           search: searchConfig,
@@ -81,8 +98,13 @@ export const OrderUploadAPI = {
     } = req.query || {};
 
     const where: any = { deleted_on: "null" };
-    if (order_number) where.order_number = order_number;
-    if (folder_id) where.folder_id = folder_id;
+    if (order_number !== undefined) {
+      // Allow filtering by null order_number for admin drive
+      where.order_number = order_number === null ? "null" : order_number;
+    }
+    if (folder_id !== undefined) {
+      where.folder_id = folder_id === null ? "null" : folder_id;
+    }
 
     const searchConfig = search
       ? {
@@ -105,6 +127,8 @@ export const OrderUploadAPI = {
             "folder_id",
             "folder_name",
             "order_number",
+            "product_id",
+            "product_name",
             "file_type",
             "file_url",
             "file_name",
@@ -153,21 +177,27 @@ export const OrderUploadAPI = {
           id,
           order_number,
           folder_name,
+          parent_id,
           product_id,
           product_name,
           files,
           deleted,
         } = folder;
 
-        if (!order_number || !folder_name) continue;
+        if (!folder_name) continue;
 
-        const folderData = {
-          order_number,
+        const folderData: any = {
           folder_name,
-          product_id,
-          product_name,
+          parent_id: parent_id || null,
+          product_id: product_id || null,
+          product_name: product_name || null,
           ...(+deleted === 1 && { deleted_on: new Date().toISOString() }),
         };
+
+        // Only add order_number if it's provided (not null/undefined)
+        if (order_number !== undefined && order_number !== null) {
+          folderData.order_number = order_number;
+        }
 
         // -------------------------------------
         // ✅ INSERT / UPDATE FOLDER
@@ -203,9 +233,9 @@ export const OrderUploadAPI = {
         if (files && files.length > 0) {
           const rows = files.map((v: any) => ({
             id: v?.id || null,
-            order_number,
-            product_id,
-            product_name,
+            order_number: order_number || null,
+            product_id: product_id || null,
+            product_name: product_name || null,
             code: Math.random().toString(36).substring(2, 10).toUpperCase(),
             folder_id: folderResult.insert_id,
             file_type: v?.file_type || null,
@@ -254,21 +284,21 @@ export const OrderUploadAPI = {
       deleted,
     } = req.body || {};
 
-    if (!folder_id || !order_number) {
+    if (!file_name) {
       return {
         success: false,
-        message: "folder_id dan order_number wajib diisi",
+        message: "file_name wajib diisi",
       };
     }
 
     try {
       const fileData: any = {
-        folder_id,
-        order_number,
-        product_id,
-        product_name,
-        file_type,
-        file_url,
+        folder_id: folder_id || null,
+        order_number: order_number || null,
+        product_id: product_id || null,
+        product_name: product_name || null,
+        file_type: file_type || null,
+        file_url: file_url || null,
         file_name,
       };
 
@@ -318,6 +348,160 @@ export const OrderUploadAPI = {
       };
     } catch (err: any) {
       console.error("❌ Error create_single_file:", err);
+      return { success: false, message: err.message };
+    }
+  },
+
+  // ============================================================
+  // ✅ DELETE FOLDER (Soft Delete)
+  // ============================================================
+  delete_folder: async ({ req }: any) => {
+    const { id } = req.body || {};
+
+    if (!id) {
+      return {
+        success: false,
+        message: "ID folder wajib diisi",
+      };
+    }
+
+    try {
+      await APIProvider({
+        endpoint: "update",
+        table: "order_upload_folders",
+        action: "update",
+        method: "POST",
+        body: {
+          data: {
+            deleted_on: new Date().toISOString(),
+          },
+          where: { id },
+        },
+      });
+
+      return {
+        success: true,
+        message: "Berhasil menghapus folder",
+      };
+    } catch (err: any) {
+      console.error("❌ Error delete_folder:", err);
+      return { success: false, message: err.message };
+    }
+  },
+
+  // ============================================================
+  // ✅ DELETE FILE (Soft Delete)
+  // ============================================================
+  delete_file: async ({ req }: any) => {
+    const { id } = req.body || {};
+
+    if (!id) {
+      return {
+        success: false,
+        message: "ID file wajib diisi",
+      };
+    }
+
+    try {
+      await APIProvider({
+        endpoint: "update",
+        table: "order_upload_files",
+        action: "update",
+        method: "POST",
+        body: {
+          data: {
+            deleted_on: new Date().toISOString(),
+          },
+          where: { id },
+        },
+      });
+
+      return {
+        success: true,
+        message: "Berhasil menghapus file",
+      };
+    } catch (err: any) {
+      console.error("❌ Error delete_file:", err);
+      return { success: false, message: err.message };
+    }
+  },
+
+  // ============================================================
+  // ✅ BULK DELETE FOLDERS (Soft Delete)
+  // ============================================================
+  bulk_delete_folders: async ({ req }: any) => {
+    const { ids } = req.body || {};
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return {
+        success: false,
+        message: "IDs folder wajib diisi",
+      };
+    }
+
+    try {
+      // Delete all folders with the given IDs
+      for (const id of ids) {
+        await APIProvider({
+          endpoint: "update",
+          table: "order_upload_folders",
+          action: "update",
+          method: "POST",
+          body: {
+            data: {
+              deleted_on: new Date().toISOString(),
+            },
+            where: { id },
+          },
+        });
+      }
+
+      return {
+        success: true,
+        message: `Berhasil menghapus ${ids.length} folder`,
+      };
+    } catch (err: any) {
+      console.error("❌ Error bulk_delete_folders:", err);
+      return { success: false, message: err.message };
+    }
+  },
+
+  // ============================================================
+  // ✅ BULK DELETE FILES (Soft Delete)
+  // ============================================================
+  bulk_delete_files: async ({ req }: any) => {
+    const { ids } = req.body || {};
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return {
+        success: false,
+        message: "IDs file wajib diisi",
+      };
+    }
+
+    try {
+      // Delete all files with the given IDs
+      for (const id of ids) {
+        await APIProvider({
+          endpoint: "update",
+          table: "order_upload_files",
+          action: "update",
+          method: "POST",
+          body: {
+            data: {
+              deleted_on: new Date().toISOString(),
+            },
+            where: { id },
+          },
+        });
+      }
+
+      return {
+        success: true,
+        message: `Berhasil menghapus ${ids.length} file`,
+      };
+    } catch (err: any) {
+      console.error("❌ Error bulk_delete_files:", err);
       return { success: false, message: err.message };
     }
   },

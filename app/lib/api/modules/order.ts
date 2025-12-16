@@ -13,6 +13,7 @@ export const OrderAPI = {
       id,
       institution_id,
       institution_domain,
+      order_number,
       status,
       payment_status,
       order_type,
@@ -25,6 +26,7 @@ export const OrderAPI = {
     if (id) where.id = id;
     if (institution_id) where.institution_id = institution_id;
     if (institution_domain) where.institution_domain = institution_domain;
+    if (order_number) where.order_number = order_number;
     if (status) where.status = status;
     if (payment_status) where.payment_status = payment_status;
     if (order_type) where.order_type = order_type;
@@ -76,6 +78,7 @@ export const OrderAPI = {
             "subtotal",
             "total_amount",
             "grand_total",
+            "is_portfolio",
             "status",
             "deadline",
             "created_on",
@@ -114,8 +117,8 @@ export const OrderAPI = {
   // ================================
   create: async ({ req }: any) => {
     const {
-      institution_id,
-      institution_name,
+      institution_id = null,
+      institution_name = null,
       institution_abbr = null,
       institution_abbr_id = null,
       institution_domain = null,
@@ -135,15 +138,16 @@ export const OrderAPI = {
       shipping_address = null,
       shipping_contact = null,
       created_by = null,
+      status = "ordered",
       items = [],
     } = req.body || {};
 
-    if (!institution_id || !institution_name) {
-      return {
-        success: false,
-        message: "institution_id dan institution_name wajib diisi",
-      };
-    }
+    // if (!institution_id || !institution_name) {
+    //   return {
+    //     success: false,
+    //     message: "institution_id dan institution_name wajib diisi",
+    //   };
+    // }
 
     // ✅ Generate nomor order
     const generateOrderNumber = () => {
@@ -202,7 +206,7 @@ export const OrderAPI = {
       total_amount,
       grand_total,
       deadline,
-      status: "ordered",
+      status,
       notes,
       shipping_address,
       shipping_contact,
@@ -222,64 +226,64 @@ export const OrderAPI = {
       });
 
       // ✅ Simpan domain baru jika perlu
-      if (institution_abbr && !institution_abbr_id) {
-        await APIProvider({
-          endpoint: "insert",
-          method: "POST",
-          table: "institution_domains",
-          action: "insert",
-          body: {
-            data: {
-              domain: institution_abbr,
-              institution_id,
-              created_on: new Date().toISOString(),
-            },
-          },
-        });
-      }
+      // if (institution_abbr && !institution_abbr_id) {
+      //   await APIProvider({
+      //     endpoint: "insert",
+      //     method: "POST",
+      //     table: "institution_domains",
+      //     action: "insert",
+      //     body: {
+      //       data: {
+      //         domain: institution_abbr,
+      //         institution_id,
+      //         created_on: new Date().toISOString(),
+      //       },
+      //     },
+      //   });
+      // }
 
       // ✅ Insert order_items (bulk)
-      if (items?.length > 0) {
-        const itemRows = items.map((item: any) => {
-          const qty = item.qty || 1;
-          const unit_price = item.unit_price || 0;
-          const subtotal = qty * unit_price;
-          const discount_total =
-            item.discount_type === "percent"
-              ? (subtotal * (item.discount_value || 0)) / 100
-              : item.discount_value || 0;
-          const tax_value =
-            ((subtotal - discount_total) * (item.tax_percent || 0)) / 100;
+      // if (items?.length > 0) {
+      //   const itemRows = items.map((item: any) => {
+      //     const qty = item.qty || 1;
+      //     const unit_price = item.unit_price || 0;
+      //     const subtotal = qty * unit_price;
+      //     const discount_total =
+      //       item.discount_type === "percent"
+      //         ? (subtotal * (item.discount_value || 0)) / 100
+      //         : item.discount_value || 0;
+      //     const tax_value =
+      //       ((subtotal - discount_total) * (item.tax_percent || 0)) / 100;
 
-          return {
-            order_number,
-            product_id: item.product_id || null,
-            product_name: item.product_name,
-            product_type: item.product_type || "single",
-            qty,
-            unit_price,
-            discount_type: item.discount_type || null,
-            discount_value: item.discount_value || 0,
-            tax_percent: item.tax_percent || 0,
-            subtotal,
-            discount_total,
-            tax_value,
-            total_after_tax: subtotal - discount_total + tax_value,
-            notes: item.notes || null,
-          };
-        });
+      //     return {
+      //       order_number,
+      //       product_id: item.product_id || null,
+      //       product_name: item.product_name,
+      //       product_type: item.product_type || "single",
+      //       qty,
+      //       unit_price,
+      //       discount_type: item.discount_type || null,
+      //       discount_value: item.discount_value || 0,
+      //       tax_percent: item.tax_percent || 0,
+      //       subtotal,
+      //       discount_total,
+      //       tax_value,
+      //       total_after_tax: subtotal - discount_total + tax_value,
+      //       notes: item.notes || null,
+      //     };
+      //   });
 
-        await APIProvider({
-          endpoint: "bulk_insert",
-          method: "POST",
-          table: "order_items",
-          action: "bulk_insert",
-          body: {
-            rows: itemRows,
-            updateOnDuplicate: true,
-          },
-        });
-      }
+      //   await APIProvider({
+      //     endpoint: "bulk_insert",
+      //     method: "POST",
+      //     table: "order_items",
+      //     action: "bulk_insert",
+      //     body: {
+      //       rows: itemRows,
+      //       updateOnDuplicate: true,
+      //     },
+      //   });
+      // }
 
       return {
         success: true,
@@ -376,6 +380,7 @@ export const OrderAPI = {
     };
 
     try {
+      console.log(updatedOrder);
       const result = await APIProvider({
         endpoint: "update",
         method: "POST",

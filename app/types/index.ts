@@ -26,13 +26,29 @@ export interface CustomItem {
   quantity: number;
 }
 
+export interface ProductTier {
+  minQty: number;
+  price: number;
+}
+
 export interface Product {
   id: string;
   name: string;
-  price: number;
+  price: number; // Base price (qty 1)
+  wholesalePrices?: ProductTier[]; // Tiered pricing
   category: "Id Card" | "Lanyard" | "Paket" | "Lainnya";
   description?: string;
+  image?: string; // Base64 string for product image
+  showInDashboard?: boolean; // Toggle visibility on landing page
 }
+
+// export interface Product {
+//   id: string;
+//   name: string;
+//   price: number;
+//   category: "Id Card" | "Lanyard" | "Paket" | "Lainnya";
+//   description?: string;
+// }
 
 export interface Order {
   id: string;
@@ -62,12 +78,20 @@ export interface Order {
   driveFolderId?: string;
 
   // Portfolio & Landing Page
-  isPortfolio?: boolean;
+  is_portfolio?: boolean;
   portfolioImages?: string[]; // Base64 strings
   review?: string;
   rating?: number; // 1-5
 }
 
+export interface OrderItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number; // Unit price at the time of order
+  total: number;
+  note?: string;
+}
 export interface HistoryEntry {
   name: string;
   abbr: string;
@@ -83,4 +107,51 @@ export interface DriveItem {
   size?: string;
   mimeType?: string;
   createdAt: string;
+}
+
+// --- NEW TYPES FOR V5 ---
+
+export interface User {
+  id: string;
+  username: string;
+  password: string; // Plaintext for demo, hash in real app
+  name: string;
+  role: "CEO" | "Staff" | "Developer";
+}
+
+export interface Employee {
+  id: string;
+  name: string;
+  role: string;
+  phone: string;
+  baseSalary: number; // Gaji Pokok
+  allowance: number; // Tunjangan/Bonus per hari/bulan
+  status: "Active" | "Inactive";
+  attendanceToday?: {
+    status: "Hadir" | "Izin" | "Alpha";
+    timeIn?: string;
+    location?: string;
+    photo?: string;
+  };
+}
+
+export interface Asset {
+  id: string;
+  name: string;
+  category: string;
+  purchaseDate: string;
+  value: number;
+  status: "Good" | "Damaged" | "Maintenance";
+  location: string;
+  unit?: number;
+}
+
+export interface EmailMessage {
+  id: string;
+  sender: string;
+  subject: string;
+  preview: string;
+  date: string;
+  read: boolean;
+  tag: "Inbox" | "Sent" | "Spam";
 }

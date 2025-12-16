@@ -1,300 +1,323 @@
-import React, { useState, useEffect } from "react";
-import type { HistoryEntry, Order, CustomItem, Product } from "../types";
+// app/routes/app.order-form.tsx
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Form,
+  useActionData,
+  useLoaderData,
+  useNavigate,
+  type LoaderFunction,
+  type ActionFunction,
+} from "react-router";
+import type { HistoryEntry, Order, Product, OrderItem } from "../types";
 import {
   formatCurrency,
   parseCurrency,
+  generateAccessCode,
   getKKNPeriod,
   formatPhoneNumber,
-  generateAccessCode,
 } from "../constants";
 import {
   Save,
   Eraser,
-  Users,
+  AlertTriangle,
   Plus,
   Trash2,
   Calendar,
-  Lock,
-  AlertTriangle,
-  X,
   Check,
-  PackagePlus,
-  Tag,
+  X,
+  Handshake,
+  Copy,
+  Upload,
 } from "lucide-react";
-import { type ActionFunction, useSubmit } from "react-router";
-import { API, API_KEY, API_URL } from "~/lib/api";
-import { requireAuth } from "~/lib/session.server";
 import AsyncReactSelect from "react-select/async";
-import { toMoney } from "~/lib/utils";
+import { API } from "~/lib/api";
+import { requireAuth } from "~/lib/session.server";
+import { toast } from "sonner";
 
-// === ACTION ===
-export const action: ActionFunction = async ({ request }) => {
-  const { user, token } = await requireAuth(request);
-  const data = await request.json();
+// ============================================
+// TYPES & INTERFACES
+// ============================================
 
-  const {
-    instansi,
-    singkatan,
-    jenisPesanan,
-    jumlah,
-    deadline,
-    statusPembayaran,
-    dpAmount,
-    domain,
-    accessCode,
-    unitPrice,
-    totalAmount,
-    isKKN,
-    kknDetails,
-    pjName,
-    pjPhone,
-    customItems,
-    selectedProduct, // Receive full product object if available
-  } = data;
-
-  // Construct items for order.ts
-  const items = [];
-
-  // Main product item
-  // If selectedProduct is passed, use its ID.
-  if (selectedProduct && selectedProduct.id) {
-    items.push({
-      product_id: selectedProduct.id,
-      product_name: selectedProduct.name || jenisPesanan,
-      product_type: selectedProduct.type || "single", // Add type map if needed
-      qty: Number(jumlah),
-      unit_price: Number(unitPrice),
-      subtotal: Number(jumlah) * Number(unitPrice),
-    });
-  } else {
-    // Fallback if no product ID (should rely on form validation usually)
-    // or if it's a fully custom order
-    items.push({
-      product_name: jenisPesanan || "Custom Order",
-      qty: Number(jumlah),
-      unit_price: Number(unitPrice),
-      subtotal: Number(totalAmount), // Assuming totalAmount covers it
-    });
-  }
-
-  // Custom items
-  if (customItems && customItems.length > 0) {
-    customItems.forEach((ci: any) => {
-      items.push({
-        product_name: ci.name,
-        qty: ci.quantity,
-        unit_price: 0, // As per UI logic where they don't affect total
-        notes: "Custom Item / Tambahan",
-      });
-    });
-  }
-
-  // Combine PJ info into notes or shipping_contact if needed
-  let notes = "";
-  if (isKKN) {
-    if (pjName || pjPhone) notes += `PJ: ${pjName} (${pjPhone}) `;
-    if (kknDetails)
-      notes += `KKN Details: ${kknDetails.tipe} ${kknDetails.nilai} Periode ${kknDetails.periode}/${kknDetails.tahun}`;
-  }
-
-  const payload = {
-    institution_id: "0000", // Placeholder if we don't have ID selection in this form yet
-    institution_name: instansi,
-    institution_abbr: singkatan || null,
-    institution_domain: domain,
-    order_type: selectedProduct
-      ? selectedProduct.type === "package"
-        ? "package"
-        : "custom"
-      : "custom",
-    payment_status:
-      statusPembayaran === "Tidak Ada"
-        ? "unpaid"
-        : statusPembayaran === "Lunas"
-          ? "paid"
-          : "down_payment",
-    items: items,
-    total_amount: Number(totalAmount),
-    // DP handling if needed by order.ts usually calculated?
-    // If backend recalculates, we rely on items.
-    // If we want to record DP amount paid:
-    // order.ts schema might have `paid_amount`?
-    // Checking order.ts create: doesn't seem to have `paid_amount` input explicitly in destructuring?
-    // It has `payment_status`.
-    // It has `notes`.
-    // Maybe we should put DP info in notes for now if schema doesn't support it directly in create.
-    notes: notes + (dpAmount ? ` - DP: ${dpAmount}` : ""),
-    shipping_contact: pjPhone,
-    deadline: deadline,
-  };
-
-  try {
-    const response = await API.ORDERS.create({
-      session: { user, token },
-      req: {
-        body: payload,
-      },
-    });
-
-    if (response.success) {
-      return Response.json({ success: true, order: response.order });
-    } else {
-      return Response.json(
-        { success: false, message: response.message },
-        { status: 400 }
-      );
-    }
-  } catch (error: any) {
-    return Response.json(
-      { success: false, message: error.message || "Error submitting order" },
-      { status: 500 }
-    );
-  }
-};
-
-interface OrderFormProps {
-  history?: HistoryEntry[];
-  orders?: Order[];
-  onSubmit?: (order: any) => void;
-  products?: Product[];
+interface LoaderData {
+  products: Product[];
+  history: HistoryEntry[];
+  user: any;
 }
 
-const OrderForm: React.FC<OrderFormProps> = ({
-  history = [],
-  orders = [],
-  onSubmit, // Optional now
-  products = [], // Optional now
-}) => {
-  const submit = useSubmit();
+interface OrderFormData {
+  instansi: string;
+  items: OrderItem[];
+  jenisPesanan: string;
+  jumlah: number;
+  deadline: string;
+  statusPembayaran: string;
+  dpAmount: number;
+  domain: string;
+  accessCode: string;
+  totalAmount: number;
+  isKKN: boolean;
+  kknDetails?: any;
+  pemesanName: string;
+  pemesanPhone: string;
+  discount?: { type: string; value: number };
+  isSponsor: boolean;
+  createdAt: string;
+  portfolioImages: string[];
+  is_portfolio: boolean;
+}
 
-  // Global Mode
-  const [isKKN, setIsKKN] = useState(false);
+// ============================================
+// LOADER FUNCTION
+// ============================================
 
-  // Auto Calc Period (ReadOnly)
-  const [autoPeriod, setAutoPeriod] = useState({
-    period: "1",
-    year: new Date().getFullYear().toString(),
+export const loader: LoaderFunction = async ({ request }) => {
+  const { user, token } = await requireAuth(request);
+
+  // Fetch Products
+  const productsRes = await API.PRODUCT.get({
+    req: { query: { page: 0, size: 100, pagination: "true" } },
   });
 
+  // Fetch History (Institutions)
+  let historyRes: any = { items: [] };
+  try {
+    historyRes = await API.INSTITUTION.get({
+      session: { user, token },
+      req: { query: { page: 0, size: 1000, pagination: "true" } },
+    });
+  } catch (e) {
+    console.error("Failed to fetch history", e);
+  }
+
+  return {
+    products: productsRes.items || [],
+    history: historyRes.items || [],
+    user,
+  };
+};
+
+// ============================================
+// ACTION FUNCTION
+// ============================================
+
+export const action: ActionFunction = async ({ request }) => {
+  const { user, token } = await requireAuth(request);
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  if (intent === "create_order") {
+    try {
+      const stateStr = formData.get("state") as string;
+      const itemsStr = formData.get("items") as string;
+
+      const state = JSON.parse(stateStr);
+      const items = JSON.parse(itemsStr);
+
+      const response = await API.ORDERS.create({
+        session: { user, token },
+        req: {
+          body: {
+            ...state,
+            items,
+          },
+        },
+      });
+
+      if (response.success) {
+        return Response.json({
+          success: true,
+          message: "Pesanan berhasil disimpan",
+        });
+      } else {
+        return Response.json({
+          success: false,
+          message: response.message || "Gagal menyimpan pesanan",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error creating order:", error);
+      return Response.json({
+        success: false,
+        message: error.message || "Terjadi kesalahan saat menyimpan pesanan",
+      });
+    }
+  }
+
+  return Response.json({ success: false, message: "Invalid intent" });
+};
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+const transformToAPIFormat = (orderData: OrderFormData) => {
+  // Transform items to API format
+  const apiItems = orderData.items.map((item) => ({
+    product_id: item.productId,
+    product_name: item.productName,
+    product_type: "single",
+    unit_price: item.price,
+    qty: item.quantity,
+    subtotal: item.total,
+  }));
+
+  // Calculate discount
+  let discountValue = 0;
+  if (orderData.discount) {
+    discountValue = orderData.discount.value;
+  }
+
+  // Build state object for API
+  const state = {
+    institution_name: orderData.instansi,
+    institution_abbr: orderData.instansi,
+    institution_domain: orderData.domain,
+    order_type: orderData.isKKN
+      ? "kkn"
+      : orderData.items.length > 1
+        ? "custom"
+        : "single",
+    payment_status:
+      orderData.statusPembayaran === "Lunas"
+        ? "paid"
+        : orderData.statusPembayaran === "DP"
+          ? "down_payment"
+          : "unpaid",
+    payment_method: "manual_transfer",
+    discount_value: discountValue,
+    discount_type: orderData.discount?.type === "percent" ? "percent" : "fixed",
+    tax_percent: 0,
+    shipping_fee: 0,
+    other_fee: 0,
+    deadline: orderData.deadline || new Date().toISOString().split("T")[0],
+    notes: JSON.stringify({
+      pemesanName: orderData.pemesanName,
+      pemesanPhone: orderData.pemesanPhone,
+      isSponsor: orderData.isSponsor,
+      isKKN: orderData.isKKN,
+      kknDetails: orderData.kknDetails,
+      is_portfolio: orderData.is_portfolio,
+      portfolioImages: orderData.portfolioImages,
+    }),
+    is_portfolio: orderData.is_portfolio ? 1 : 0,
+  };
+
+  return { state, items: apiItems };
+};
+
+// ============================================
+// SWITCH TOGGLE COMPONENT
+// ============================================
+
+const SwitchToggle = ({
+  options,
+  value,
+  onChange,
+}: {
+  options: { val: string; label: string }[];
+  value: string;
+  onChange: (val: any) => void;
+}) => (
+  <div className="flex bg-gray-100 p-1 rounded-lg w-fit">
+    {options.map((opt) => (
+      <button
+        key={opt.val}
+        type="button"
+        onClick={() => onChange(opt.val)}
+        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
+          value === opt.val
+            ? "bg-white shadow text-gray-900"
+            : "text-gray-500 hover:text-gray-700"
+        }`}
+      >
+        {opt.label}
+      </button>
+    ))}
+  </div>
+);
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
+
+export default function OrderFormPage() {
+  const { products = [], history = [] } = useLoaderData<LoaderData>();
+  const actionData = useActionData<{ success?: boolean; message?: string }>();
+  const navigate = useNavigate();
+
+  // ========== STATE ==========
+  const [isKKN, setIsKKN] = useState(false);
+  const [autoPeriod, setAutoPeriod] = useState(getKKNPeriod());
+
   // Form Fields
+  const [instansiMode, setInstansiMode] = useState<
+    "new" | "existing" | "perorangan"
+  >("new");
   const [instansi, setInstansi] = useState("");
-  const [singkatan, setSingkatan] = useState("");
+  const [pemesanName, setPemesanName] = useState("");
+  const [pemesanPhone, setPemesanPhone] = useState("");
 
-  // KKN Specific Inputs
-  const [kknType, setKknType] = useState<"PPM" | "Tematik">("PPM"); // PPM = Reguler logic
-  const [kknGroupNo, setKknGroupNo] = useState<number | "">(""); // 1-400
-  const [kknVillage, setKknVillage] = useState(""); // Tematik Village
-  const [pjName, setPjName] = useState("");
-  const [pjPhone, setPjPhone] = useState("");
+  // KKN Specific
+  const [kknType, setKknType] = useState<"PPM" | "Tematik">("PPM");
+  const [kknGroupNo, setKknGroupNo] = useState("");
+  const [kknVillage, setKknVillage] = useState("");
 
-  // Custom Items
-  const [customItems, setCustomItems] = useState<
-    { name: string; quantity: string }[]
-  >([]);
+  // Products
+  const [orderItems, setOrderItems] = useState<
+    { productId: string; quantity: string | number }[]
+  >([{ productId: "", quantity: "" }]);
+  const [selectedProductsData, setSelectedProductsData] = useState<
+    Record<string, any>
+  >({});
 
-  // Product Selection State
-  // We now store the full object to get price/name
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-
-  const [jumlah, setJumlah] = useState<string>("");
+  // Financial
   const [deadline, setDeadline] = useState("");
   const [pay, setPay] = useState<"Tidak Ada" | "DP" | "Lunas">("Tidak Ada");
   const [dpAmountStr, setDpAmountStr] = useState("");
-  const [accessCode, setAccessCode] = useState("");
+  const [accessCode, setAccessCode] = useState(generateAccessCode(6));
+  const [isSponsor, setIsSponsor] = useState(false);
+  const [discountType, setDiscountType] = useState<"nominal" | "percent">(
+    "nominal"
+  );
+  const [discountValStr, setDiscountValStr] = useState("");
+
+  // UI State
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Confirmation Modal State
   const [showConfirm, setShowConfirm] = useState(false);
-  const [pendingData, setPendingData] = useState<any>(null);
+  const [pendingData, setPendingData] = useState<OrderFormData | null>(null);
 
-  // Init Auto Period
+  // ========== EFFECTS ==========
   useEffect(() => {
-    setAutoPeriod(getKKNPeriod());
-  }, []);
+    if (actionData?.success) {
+      toast.success(actionData.message || "Berhasil");
+      handleClear();
+    } else if (actionData?.success === false) {
+      toast.error(actionData.message || "Gagal");
+    }
+  }, [actionData]);
 
-  // Generate Random Access Code on Mount or Mode change
   useEffect(() => {
     setAccessCode(generateAccessCode(6));
-  }, [isKKN, kknType]);
+  }, [isKKN]);
 
-  // Auto-fill Abbreviation (Standard Mode)
-  useEffect(() => {
-    if (isKKN) return;
-    const found = history.find(
-      (h) => h.name.toLowerCase() === instansi.trim().toLowerCase()
-    );
-    if (found) {
-      setSingkatan(found.abbr);
-    }
-  }, [instansi, history, isKKN]);
-
-  // Determine current unit price based on selected product
-  const currentUnitPrice = selectedProduct ? selectedProduct.price : 0;
-
-  const calculateFinancials = () => {
-    const qty = Number(jumlah) || 0;
-    const price = currentUnitPrice;
-    const total = qty * price;
-    return { qty, price, total };
-  };
-
-  const handleDp50 = () => {
-    const { total } = calculateFinancials();
-    if (total > 0) {
-      setDpAmountStr(formatCurrency(Math.round(total / 2)));
-    }
-  };
-
-  const handlePhoneChange = (val: string) => {
-    setPjPhone(formatPhoneNumber(val));
-  };
-
-  const addCustomItem = () => {
-    setCustomItems([...customItems, { name: "", quantity: "" }]);
-  };
-
-  const removeCustomItem = (idx: number) => {
-    const newItems = [...customItems];
-    newItems.splice(idx, 1);
-    setCustomItems(newItems);
-  };
-
-  const updateCustomItem = (
-    idx: number,
-    field: "name" | "quantity",
-    val: string
-  ) => {
-    const newItems = [...customItems];
-    newItems[idx] = { ...newItems[idx], [field]: val };
-    setCustomItems(newItems);
-  };
-
+  // ========== API LOADERS ==========
   const loadOptionProduct = async (search: string) => {
     try {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${API_KEY}`,
+      const result = await API.PRODUCT.get({
+        req: {
+          query: {
+            search: search || undefined,
+            page: 0,
+            size: 50,
+            pagination: "true",
+          },
         },
-        body: JSON.stringify({
-          action: "select",
-          table: "products",
-          columns: ["id", "name", "type", "total_price"],
-          where: { deleted_on: "null" },
-          search,
-          page: 0,
-          size: 50,
-        }),
       });
-      const result = await response.json();
-      return result?.items?.map((v: any) => ({
+
+      return (result?.items || []).map((v: any) => ({
         ...v,
         value: v?.id,
-        label: `${v?.type === "package" ? "[PAKET] " : ""}${v?.name} - Rp${toMoney(v?.total_price)}`,
-        price: v?.total_price,
-        name: v?.name, // Ensure access to name
-        type: v?.type,
+        label: `${v?.type === "package" ? "[PAKET] " : ""}${v?.name} - Rp${formatCurrency(v?.total_price || 0)}`,
       }));
     } catch (error) {
       console.log(error);
@@ -302,49 +325,165 @@ const OrderForm: React.FC<OrderFormProps> = ({
     }
   };
 
+  const loadOptionInstitution = async (search: string) => {
+    try {
+      const result = await API.INSTITUTION.get({
+        req: {
+          query: {
+            search: search || undefined,
+            page: 0,
+            size: 50,
+            pagination: "true",
+          },
+        },
+      });
+
+      return (result?.items || []).map((v: any) => ({
+        ...v,
+        value: v?.id,
+        label: `${v?.abbr ? v?.abbr + " - " : ""}${v?.name}`,
+      }));
+    } catch (error) {
+      console.log(error);
+      return [];
+    }
+  };
+
+  // ========== CALCULATIONS ==========
+  const getPriceForProduct = (productId: string, qty: number) => {
+    if (!productId) return 0;
+
+    let p: any = selectedProductsData[productId];
+    if (!p) {
+      p = products.find((prod) => prod.id === productId);
+    }
+    if (!p) return 0;
+
+    let finalPrice = 0;
+    if (p.total_price !== undefined && p.total_price !== null) {
+      finalPrice = Number(p.total_price);
+    } else if (p.price !== undefined && p.price !== null) {
+      finalPrice = Number(p.price);
+    }
+
+    // Wholesale pricing logic can be added here if needed
+
+    return finalPrice;
+  };
+
+  const calculateFinancials = () => {
+    let subTotal = 0;
+    let totalQty = 0;
+    const items: OrderItem[] = [];
+
+    orderItems.forEach((item) => {
+      const qtyNum = Number(item.quantity) || 0;
+      if (item.productId && qtyNum > 0) {
+        let p = selectedProductsData[item.productId];
+        if (!p) {
+          p = products.find((prod) => prod.id === item.productId);
+        }
+
+        if (p) {
+          const unitPrice = getPriceForProduct(item.productId, qtyNum);
+          const lineTotal = unitPrice * qtyNum;
+          subTotal += lineTotal;
+          totalQty += qtyNum;
+          items.push({
+            productId: p.id,
+            productName: p.name,
+            price: unitPrice,
+            quantity: qtyNum,
+            total: lineTotal,
+          });
+        }
+      }
+    });
+
+    let discountAmount = 0;
+    if (!isKKN) {
+      const val = parseCurrency(discountValStr);
+      if (discountType === "percent") {
+        discountAmount = subTotal * (val / 100);
+      } else {
+        discountAmount = val;
+      }
+    }
+
+    discountAmount = Math.min(discountAmount, subTotal);
+    const grandTotal = subTotal - discountAmount;
+
+    return { subTotal, totalQty, items, discountAmount, grandTotal };
+  };
+
+  // ========== HANDLERS ==========
+  const handleAddItem = () => {
+    setOrderItems([...orderItems, { productId: "", quantity: "" }]);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    const list = [...orderItems];
+    list.splice(index, 1);
+    setOrderItems(list);
+  };
+
+  const handleItemChange = (
+    index: number,
+    field: "productId" | "quantity",
+    val: any
+  ) => {
+    const list = [...orderItems];
+    list[index] = { ...list[index], [field]: val };
+    setOrderItems(list);
+  };
+
+  const handleDpPercent = (percent: number) => {
+    const { grandTotal } = calculateFinancials();
+    if (grandTotal > 0) {
+      setDpAmountStr(formatCurrency(Math.round(grandTotal * (percent / 100))));
+    }
+  };
+
+  const handlePhoneChange = (val: string) => {
+    setPemesanPhone(formatPhoneNumber(val));
+  };
+
   const handlePreSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
-    const { qty, price, total } = calculateFinancials();
+    const { totalQty, grandTotal, items } = calculateFinancials();
 
+    // Validation
     if (!isKKN) {
-      if (!instansi.trim()) newErrors.instansi = "Wajib diisi";
-      if (!singkatan.trim()) newErrors.singkatan = "Wajib diisi";
+      if (instansiMode !== "perorangan" && !instansi.trim()) {
+        newErrors.instansi = "Wajib diisi";
+      }
     } else {
       if (
         kknType === "PPM" &&
-        (!kknGroupNo || kknGroupNo < 1 || kknGroupNo > 400)
+        (!kknGroupNo || Number(kknGroupNo) < 1 || Number(kknGroupNo) > 400)
       ) {
         newErrors.kknGroup = "Pilih kelompok 1-400";
       }
       if (kknType === "Tematik" && !kknVillage.trim()) {
         newErrors.kknVillage = "Nama desa wajib diisi";
       }
-      if (!pjName.trim()) newErrors.pjName = "Nama PJ wajib diisi";
-      if (!pjPhone.trim()) newErrors.pjPhone = "No HP PJ wajib diisi";
     }
 
-    if (!qty || qty <= 0) newErrors.jumlah = "Minimal 1";
+    if (!pemesanName.trim()) newErrors.pemesanName = "Nama Pemesan wajib diisi";
+    if (!pemesanPhone.trim()) newErrors.pemesanPhone = "No WA wajib diisi";
+    if (items.length === 0) newErrors.items = "Pilih produk dan isi jumlah";
+    if (totalQty <= 0) newErrors.items = "Jumlah barang tidak valid";
     if (!deadline) newErrors.deadline = "Wajib diisi";
-
-    // Validate Custom Items
-    const finalCustomItems: CustomItem[] = [];
-    customItems.forEach((item) => {
-      if (item.name.trim()) {
-        finalCustomItems.push({
-          name: item.name.trim(),
-          quantity: parseInt(item.quantity) || 0,
-        });
-      }
-    });
 
     let finalDp = 0;
     if (pay === "DP") {
       finalDp = parseCurrency(dpAmountStr);
-      if (finalDp <= 0 || finalDp > total)
+      if (finalDp <= 0 || finalDp > grandTotal) {
         newErrors.dp = "Nominal DP tidak valid";
+      }
     } else if (pay === "Lunas") {
-      finalDp = total;
+      finalDp = grandTotal;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -352,36 +491,32 @@ const OrderForm: React.FC<OrderFormProps> = ({
       return;
     }
 
-    // Construct Data
+    // Construct data
     let finalInstansi = instansi;
-    let finalSingkatan = singkatan;
-
     if (isKKN) {
-      // Auto-generate display names for KKN
-      const typeLabel =
-        kknType === "PPM"
-          ? `PPM Kelompok ${kknGroupNo}`
-          : `Tematik ${kknVillage}`;
-      finalInstansi = `KKN Periode ${autoPeriod.period} ${autoPeriod.year} - ${typeLabel}`;
-      finalSingkatan = `KKN${autoPeriod.period}${autoPeriod.year}`;
+      finalInstansi = kknType === "PPM" ? `Kelompok ${kknGroupNo}` : kknVillage;
+    } else if (instansiMode === "perorangan") {
+      finalInstansi = pemesanName;
     }
 
-    const orderData = {
+    const mainProduct =
+      items.length > 0
+        ? items.length > 1
+          ? `${items[0].productName} (+${items.length - 1})`
+          : items[0].productName
+        : "Custom";
+
+    const orderData: OrderFormData = {
       instansi: finalInstansi,
-      singkatan: finalSingkatan,
-      jenisPesanan: selectedProduct
-        ? selectedProduct.name
-        : finalCustomItems.length > 0
-          ? "Campuran/Lainnya"
-          : "Custom",
-      jumlah: qty,
-      deadline,
+      items: items,
+      jenisPesanan: mainProduct,
+      jumlah: totalQty,
+      deadline: deadline,
       statusPembayaran: pay,
       dpAmount: finalDp,
-      domain: "kinau.id/" + accessCode, // Secure Link
+      domain: "kinau.id/public/drive-link/" + accessCode,
       accessCode: accessCode,
-      unitPrice: price,
-      totalAmount: total,
+      totalAmount: grandTotal,
       isKKN,
       kknDetails: isKKN
         ? {
@@ -389,79 +524,83 @@ const OrderForm: React.FC<OrderFormProps> = ({
             tahun: autoPeriod.year,
             tipe: kknType,
             nilai: kknType === "PPM" ? String(kknGroupNo) : kknVillage,
+            jumlahKelompok: 1,
           }
         : undefined,
-      pjName: isKKN ? pjName : undefined,
-      pjPhone: isKKN ? pjPhone : undefined,
-      customItems: finalCustomItems.length > 0 ? finalCustomItems : undefined,
-      selectedProduct, // Pass the full object
+      pemesanName: pemesanName,
+      pemesanPhone: pemesanPhone,
+      discount:
+        !isKKN && parseCurrency(discountValStr) > 0
+          ? {
+              type: discountType,
+              value: parseCurrency(discountValStr),
+            }
+          : undefined,
+      isSponsor: isSponsor,
+      createdAt: new Date().toISOString(),
+      portfolioImages: [],
+      is_portfolio: false,
     };
 
     setPendingData(orderData);
     setShowConfirm(true);
   };
 
-  const handleFinalSubmit = () => {
-    if (pendingData) {
-      // If props onSubmit exists, use it (for backward compatibility or testing)
-      if (onSubmit) onSubmit(pendingData);
-
-      // Submit via Action
-      submit(pendingData, { method: "post", encType: "application/json" });
-
-      handleClear();
-    }
-  };
-
   const handleClear = () => {
+    setInstansiMode("new");
     setInstansi("");
-    setSingkatan("");
-    setSelectedProduct(null);
-    setJumlah("");
+    setOrderItems([{ productId: "", quantity: "" }]);
     setDeadline("");
     setPay("Tidak Ada");
     setDpAmountStr("");
     setKknGroupNo("");
     setKknVillage("");
-    setPjName("");
-    setPjPhone("");
-    setCustomItems([]);
+    setPemesanName("");
+    setPemesanPhone("");
+    setIsSponsor(false);
+    setDiscountValStr("");
     setErrors({});
-    setAccessCode(generateAccessCode(6)); // Reset Code
+    setAccessCode(generateAccessCode(6));
     setShowConfirm(false);
     setPendingData(null);
+    setSelectedProductsData({});
   };
 
-  const { total } = calculateFinancials();
+  const copyLink = (code: string) => {
+    const link = `kinau.id/public/drive-link/${code}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Link disalin: " + link);
+  };
 
+  const financials = calculateFinancials();
+
+  // ========== RENDER ==========
   return (
-    <>
+    <div className="space-y-6">
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 relative">
         <div className="mb-6 pb-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-lg font-bold text-gray-800">Form Pemesanan</h2>
             <p className="text-gray-500 text-sm">Input data pesanan baru</p>
           </div>
-          <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
-            <button
-              type="button"
-              onClick={() => setIsKKN(false)}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${!isKKN ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-            >
-              Umum
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsKKN(true)}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition flex items-center gap-2 ${isKKN ? "bg-blue-600 text-white shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-            >
-              <Users size={14} /> Khusus KKN
-            </button>
-          </div>
+
+          <SwitchToggle
+            options={[
+              { val: "false", label: "Umum" },
+              { val: "true", label: "Khusus KKN" },
+            ]}
+            value={String(isKKN)}
+            onChange={(val) => {
+              const newVal = val === "true";
+              setIsKKN(newVal);
+              handleClear();
+              setIsKKN(newVal);
+            }}
+          />
         </div>
 
         <form onSubmit={handlePreSubmit} className="space-y-6">
-          {/* KKN Global Inputs */}
+          {/* KKN MODE */}
           {isKKN && (
             <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-4 animate-fade-in">
               <div className="flex justify-between items-center mb-3">
@@ -478,32 +617,14 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 <label className="block text-xs font-semibold text-blue-700 mb-2">
                   Jenis Kelompok
                 </label>
-                <div className="flex flex-wrap gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="kknType"
-                      checked={kknType === "PPM"}
-                      onChange={() => setKknType("PPM")}
-                      className="text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">
-                      PPM (Reguler dengan Nomor)
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="kknType"
-                      checked={kknType === "Tematik"}
-                      onChange={() => setKknType("Tematik")}
-                      className="text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Tematik (Nama Desa)
-                    </span>
-                  </label>
-                </div>
+                <SwitchToggle
+                  options={[
+                    { val: "PPM", label: "PPM (Reguler)" },
+                    { val: "Tematik", label: "Tematik (Desa)" },
+                  ]}
+                  value={kknType}
+                  onChange={(val) => setKknType(val)}
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -519,8 +640,8 @@ const OrderForm: React.FC<OrderFormProps> = ({
                         max="400"
                         className="w-full border-gray-300 rounded-lg p-2 text-sm"
                         value={kknGroupNo}
-                        onChange={(e) => setKknGroupNo(Number(e.target.value))}
-                        placeholder="Masukkan nomor kelompok..."
+                        onChange={(e) => setKknGroupNo(e.target.value)}
+                        placeholder="Contoh: 14"
                       />
                       {errors.kknGroup && (
                         <p className="text-red-500 text-xs mt-1">
@@ -538,7 +659,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
                         className="w-full border-gray-300 rounded-lg p-2 text-sm"
                         value={kknVillage}
                         onChange={(e) => setKknVillage(e.target.value)}
-                        placeholder="Masukkan nama desa..."
+                        placeholder="Contoh: Rejosari"
                       />
                       {errors.kknVillage && (
                         <p className="text-red-500 text-xs mt-1">
@@ -548,164 +669,287 @@ const OrderForm: React.FC<OrderFormProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">
-                      Nama PJ
-                    </label>
-                    <input
-                      className="w-full border-gray-300 rounded-lg p-2 text-sm"
-                      value={pjName}
-                      onChange={(e) => setPjName(e.target.value)}
-                      placeholder="Nama satu kata"
-                    />
-                    {errors.pjName && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.pjName}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">
-                      No. HP PJ (WA)
-                    </label>
-                    <input
-                      className="w-full border-gray-300 rounded-lg p-2 text-sm"
-                      value={pjPhone}
-                      onChange={(e) => handlePhoneChange(e.target.value)}
-                      placeholder="+62..."
-                    />
-                    {errors.pjPhone && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.pjPhone}
-                      </p>
-                    )}
-                  </div>
-                </div>
               </div>
             </div>
           )}
 
-          {/* Standard Inputs (Hidden if KKN) */}
+          {/* STANDARD INPUTS */}
           {!isKKN && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Nama Instansi
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Jenis Pesanan
                 </label>
-                <input
-                  list="instansiList"
-                  className="w-full rounded-lg border-gray-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  value={instansi}
-                  onChange={(e) => setInstansi(e.target.value)}
-                  placeholder="Ketik nama instansi..."
-                />
-                <datalist id="instansiList">
-                  {history.map((h, i) => (
-                    <option key={i} value={h.name} />
-                  ))}
-                </datalist>
-                {errors.instansi && (
-                  <p className="text-red-500 text-xs mt-1">{errors.instansi}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Singkatan (Internal)
-                </label>
-                <input
-                  className="w-full rounded-lg border-gray-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  value={singkatan}
-                  onChange={(e) => setSingkatan(e.target.value)}
-                  placeholder="e.g. itera"
-                />
-                {errors.singkatan && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.singkatan}
-                  </p>
+                <div className="mb-2">
+                  <SwitchToggle
+                    options={[
+                      { val: "new", label: "Instansi Baru" },
+                      { val: "existing", label: "Pilih Instansi" },
+                      { val: "perorangan", label: "Perorangan" },
+                    ]}
+                    value={instansiMode}
+                    onChange={(val) => {
+                      setInstansiMode(val);
+                      setInstansi("");
+                    }}
+                  />
+                </div>
+
+                {instansiMode !== "perorangan" && (
+                  <>
+                    {instansiMode === "new" ? (
+                      <input
+                        className="w-full rounded-lg border-gray-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none mt-2"
+                        value={instansi}
+                        onChange={(e) => setInstansi(e.target.value)}
+                        placeholder="Ketik nama instansi baru..."
+                      />
+                    ) : (
+                      <div className="mt-2">
+                        <AsyncReactSelect
+                          value={
+                            instansi
+                              ? {
+                                  value: instansi,
+                                  label: instansi,
+                                }
+                              : null
+                          }
+                          loadOptions={loadOptionInstitution}
+                          defaultOptions
+                          placeholder="Cari dan Pilih Instansi..."
+                          onChange={(val: any) => {
+                            if (val) {
+                              setInstansi(val.label);
+                            } else {
+                              setInstansi("");
+                            }
+                          }}
+                          isClearable
+                          styles={{
+                            control: (base) => ({
+                              ...base,
+                              minHeight: "42px",
+                              fontSize: "0.875rem",
+                            }),
+                          }}
+                        />
+                      </div>
+                    )}
+                    {errors.instansi && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.instansi}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             </div>
           )}
 
-          {/* Order Type & Quantity */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-2">
+          {/* PEMESAN DETAILS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Produk (Pilih dari Daftar Produk)
+                Nama Pemesan
               </label>
-              <div className="flex items-center gap-2">
-                <div className="w-full">
-                  <AsyncReactSelect
-                    value={selectedProduct}
-                    loadOptions={loadOptionProduct}
-                    defaultOptions
-                    placeholder="Cari Produk..."
-                    onChange={(val: any) => setSelectedProduct(val)}
-                    styles={{
-                      control: (base) => ({
-                        ...base,
-                        borderRadius: "0.5rem",
-                        borderColor: "#d1d5db",
-                        paddingTop: "0.1rem",
-                        paddingBottom: "0.1rem",
-                        minHeight: "42px",
-                        boxShadow: "none",
-                        "&:hover": {
-                          borderColor: "#9ca3af",
-                        },
-                      }),
-                      input: (base) => ({
-                        ...base,
-                        "input:focus": {
-                          boxShadow: "none",
-                        },
-                      }),
-                      menu: (base) => ({
-                        ...base,
-                        zIndex: 9999,
-                      }),
-                    }}
-                    theme={(theme) => ({
-                      ...theme,
-                      colors: {
-                        ...theme.colors,
-                        primary: "#3b82f6",
-                      },
-                    })}
-                  />
-                </div>
-              </div>
-              {selectedProduct && (
-                <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
-                  <Tag size={12} /> Harga Satuan:{" "}
-                  <b>{formatCurrency(selectedProduct.price || 0)}</b>
+              <input
+                className="w-full border-gray-300 rounded-lg p-2.5 text-sm border"
+                value={pemesanName}
+                onChange={(e) => setPemesanName(e.target.value)}
+                placeholder="Nama lengkap pemesan"
+              />
+              {errors.pemesanName && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.pemesanName}
                 </p>
               )}
             </div>
-            <div className="md:col-span-1">
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Jumlah
+                No. WA
               </label>
               <input
-                type="number"
-                min="1"
-                className="w-full rounded-lg border-gray-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                value={jumlah}
-                onChange={(e) => setJumlah(e.target.value)}
-                placeholder="0"
+                className="w-full border-gray-300 rounded-lg p-2.5 text-sm border"
+                value={pemesanPhone}
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                placeholder="+62..."
               />
-              {errors.jumlah && (
-                <p className="text-red-500 text-xs mt-1">{errors.jumlah}</p>
+              {errors.pemesanPhone && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.pemesanPhone}
+                </p>
               )}
             </div>
-            <div className="md:col-span-1">
+          </div>
+
+          {/* PRODUCTS */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Daftar Produk yang Dipesan
+            </label>
+            <div className="space-y-3">
+              {orderItems.map((item, idx) => {
+                const qtyNum = Number(item.quantity) || 0;
+                let selectedP = selectedProductsData[item.productId];
+                if (!selectedP) {
+                  selectedP = products.find((p) => p.id === item.productId);
+                }
+                const unitPrice = getPriceForProduct(item.productId, qtyNum);
+
+                return (
+                  <div
+                    key={idx}
+                    className="flex flex-col md:flex-row gap-2 items-start md:items-center bg-gray-50 p-3 rounded-lg border border-gray-200"
+                  >
+                    <div className="flex-1 w-full">
+                      <AsyncReactSelect
+                        value={
+                          item.productId
+                            ? {
+                                value: item.productId,
+                                label:
+                                  selectedProductsData[item.productId]?.name ||
+                                  products.find((p) => p.id === item.productId)
+                                    ?.name ||
+                                  "Produk",
+                              }
+                            : null
+                        }
+                        loadOptions={loadOptionProduct}
+                        defaultOptions
+                        placeholder="Cari dan Pilih Produk..."
+                        onChange={(val: any) => {
+                          if (val) {
+                            handleItemChange(idx, "productId", val.value);
+                            setSelectedProductsData((prev) => ({
+                              ...prev,
+                              [val.value]: val,
+                            }));
+                          } else {
+                            handleItemChange(idx, "productId", "");
+                          }
+                        }}
+                        isClearable
+                        styles={{
+                          control: (base) => ({
+                            ...base,
+                            minHeight: "38px",
+                            fontSize: "0.875rem",
+                          }),
+                        }}
+                      />
+                    </div>
+                    <div className="flex gap-2 w-full md:w-auto">
+                      <input
+                        type="number"
+                        min="1"
+                        className="w-20 rounded-lg border-gray-300 border p-2 text-sm text-center"
+                        value={item.quantity}
+                        onChange={(e) =>
+                          handleItemChange(idx, "quantity", e.target.value)
+                        }
+                        placeholder="Qty"
+                      />
+                      <div className="w-32 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-sm font-semibold text-gray-700">
+                        {item.productId && unitPrice > 0
+                          ? formatCurrency(unitPrice)
+                          : "Rp 0"}
+                      </div>
+                      {orderItems.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(idx)}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {errors.items && (
+              <p className="text-red-500 text-xs mt-1">{errors.items}</p>
+            )}
+
+            <button
+              type="button"
+              onClick={handleAddItem}
+              className="mt-3 text-sm text-blue-600 font-medium flex items-center gap-1 hover:underline"
+            >
+              <Plus size={16} /> Tambah Barang Lain
+            </button>
+          </div>
+
+          {/* SPONSOR & DISCOUNT */}
+          {!isKKN && (
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <div
+                    className={`w-10 h-6 rounded-full relative transition-colors ${isSponsor ? "bg-purple-600" : "bg-gray-300"}`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={isSponsor}
+                      onChange={(e) => setIsSponsor(e.target.checked)}
+                    />
+                    <div
+                      className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${isSponsor ? "left-5" : "left-1"}`}
+                    ></div>
+                  </div>
+                  <span className="text-sm font-bold text-gray-700 flex items-center gap-1">
+                    <Handshake size={14} /> Sponsor / Kerja Sama
+                  </span>
+                </label>
+              </div>
+
+              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                <label className="text-sm font-semibold text-gray-600 w-24">
+                  Diskon:
+                </label>
+                <div className="flex gap-2 flex-1">
+                  <select
+                    className="border border-gray-300 rounded-lg p-2 text-sm bg-white"
+                    value={discountType}
+                    onChange={(e) => setDiscountType(e.target.value as any)}
+                  >
+                    <option value="nominal">Nominal (Rp)</option>
+                    <option value="percent">Persen (%)</option>
+                  </select>
+                  <input
+                    className="flex-1 border border-gray-300 rounded-lg p-2 text-sm"
+                    placeholder={
+                      discountType === "percent" ? "10" : "Rp 10.000"
+                    }
+                    value={discountValStr}
+                    onChange={(e) => {
+                      if (discountType === "nominal") {
+                        setDiscountValStr(
+                          formatCurrency(parseCurrency(e.target.value))
+                        );
+                      } else {
+                        setDiscountValStr(e.target.value);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* PAYMENT & DEADLINE */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Deadline
               </label>
               <input
                 type="date"
-                className="w-full rounded-lg border-gray-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full rounded-lg border-gray-300 border px-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none h-[42px]"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
               />
@@ -713,62 +957,13 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 <p className="text-red-500 text-xs mt-1">{errors.deadline}</p>
               )}
             </div>
-          </div>
 
-          {/* Custom Items Section */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <PackagePlus size={16} /> Jenis Barang Lain / Tambahan
-              </label>
-            </div>
-            <div className="space-y-2">
-              {customItems.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <input
-                    className="flex-[2] border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={item.name}
-                    onChange={(e) =>
-                      updateCustomItem(idx, "name", e.target.value)
-                    }
-                    placeholder="Nama barang (Misal: Pin, Sticker...)"
-                  />
-                  <input
-                    type="number"
-                    min="1"
-                    className="flex-1 border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      updateCustomItem(idx, "quantity", e.target.value)
-                    }
-                    placeholder="Jml"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeCustomItem(idx)}
-                    className="text-red-500 hover:text-red-700 p-2"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={addCustomItem}
-              className="mt-2 text-xs text-blue-600 font-medium flex items-center gap-1 hover:underline"
-            >
-              <Plus size={14} /> Tambah Item Lain
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Status Pembayaran
               </label>
               <select
-                className="w-full rounded-lg border-gray-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full rounded-lg border-gray-300 border px-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none h-[42px]"
                 value={pay}
                 onChange={(e) => setPay(e.target.value as any)}
               >
@@ -776,69 +971,70 @@ const OrderForm: React.FC<OrderFormProps> = ({
                 <option>DP</option>
                 <option>Lunas</option>
               </select>
-            </div>
-            {pay === "DP" && (
-              <div className="flex flex-col animate-fade-in">
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Nominal DP
-                </label>
-                <div className="flex gap-2">
+              {pay === "DP" && (
+                <div className="flex gap-2 animate-fade-in flex-wrap mt-2">
                   <input
                     type="text"
-                    className="w-full rounded-lg border-gray-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="flex-1 rounded-lg border-gray-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none h-[42px]"
                     value={dpAmountStr}
                     onChange={(e) =>
                       setDpAmountStr(
                         formatCurrency(parseCurrency(e.target.value))
                       )
                     }
-                    placeholder="Rp 0"
+                    placeholder="Nominal DP"
                   />
                   <button
                     type="button"
-                    onClick={handleDp50}
-                    className="bg-yellow-50 border border-yellow-300 text-yellow-700 px-3 rounded-lg text-xs font-medium hover:bg-yellow-100 whitespace-nowrap"
+                    onClick={() => handleDpPercent(50)}
+                    className="bg-yellow-50 border border-yellow-300 text-yellow-700 px-3 rounded-lg text-xs font-medium hover:bg-yellow-100 whitespace-nowrap h-[42px]"
                   >
                     50%
                   </button>
+                  {!isKKN && (
+                    <button
+                      type="button"
+                      onClick={() => handleDpPercent(70)}
+                      className="bg-orange-50 border border-orange-300 text-orange-700 px-3 rounded-lg text-xs font-medium hover:bg-orange-100 whitespace-nowrap h-[42px]"
+                    >
+                      70%
+                    </button>
+                  )}
                 </div>
-                {errors.dp && (
-                  <p className="text-red-500 text-xs mt-1">{errors.dp}</p>
-                )}
+              )}
+              {errors.dp && (
+                <p className="text-red-500 text-xs mt-1">{errors.dp}</p>
+              )}
+            </div>
+          </div>
+
+          {/* TOTAL SUMMARY */}
+          <div className="p-4 bg-gray-900 text-white rounded-xl shadow-lg space-y-2">
+            <div className="flex justify-between text-sm opacity-80">
+              <span>Subtotal ({financials.totalQty} items)</span>
+              <span>{formatCurrency(financials.subTotal)}</span>
+            </div>
+            {financials.discountAmount > 0 && (
+              <div className="flex justify-between text-sm text-green-400">
+                <span>Diskon</span>
+                <span>- {formatCurrency(financials.discountAmount)}</span>
               </div>
             )}
+            {isSponsor && (
+              <div className="flex justify-between text-sm text-purple-400 font-bold">
+                <span>Status</span>
+                <span>SPONSOR / PARTNER</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center pt-2 border-t border-gray-700">
+              <span className="text-sm font-bold">TOTAL TAGIHAN</span>
+              <span className="text-xl font-bold">
+                {formatCurrency(financials.grandTotal)}
+              </span>
+            </div>
           </div>
 
-          {total > 0 && (
-            <div className="p-4 bg-gray-900 text-white rounded-xl flex justify-between items-center shadow-lg">
-              <span className="text-sm font-medium opacity-80">
-                Total Estimasi
-              </span>
-              <span className="text-xl font-bold">{formatCurrency(total)}</span>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Link Upload Desain (Random/Secure)
-            </label>
-            <div className="flex items-center">
-              <span className="bg-gray-100 border border-r-0 border-gray-300 text-gray-600 rounded-l-lg p-2.5 text-sm font-medium">
-                kinau.id/
-              </span>
-              <input
-                readOnly
-                value={accessCode}
-                className="flex-1 bg-gray-50 text-gray-500 border border-gray-300 rounded-r-lg p-2.5 text-sm font-mono tracking-wider focus:outline-none"
-                placeholder="Auto..."
-              />
-            </div>
-            <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-              <Lock size={12} /> Link dibuat random demi kerahasiaan folder
-              desain.
-            </p>
-          </div>
-
+          {/* BUTTONS */}
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
             <button
               type="button"
@@ -857,7 +1053,7 @@ const OrderForm: React.FC<OrderFormProps> = ({
         </form>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* CONFIRMATION MODAL */}
       {showConfirm && pendingData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
@@ -873,67 +1069,101 @@ const OrderForm: React.FC<OrderFormProps> = ({
 
               <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-700 space-y-2 mb-4">
                 <div className="flex justify-between border-b border-gray-200 pb-2">
-                  <span className="text-gray-500">Pemesan:</span>
+                  <span className="text-gray-500">
+                    {isKKN ? "KELOMPOK" : "Pemesan"}:
+                  </span>
                   <span className="font-bold text-right truncate w-40">
                     {pendingData.instansi}
                   </span>
                 </div>
-                <div className="flex justify-between border-b border-gray-200 pb-2">
-                  <span className="text-gray-500">Produk:</span>
-                  <span className="font-bold text-right text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                    {pendingData.jenisPesanan}
+
+                <div className="border-b border-gray-200 pb-2">
+                  <span className="text-gray-500 text-xs block mb-1">
+                    Item:
                   </span>
+                  {pendingData.items?.map((it, i) => (
+                    <div
+                      key={i}
+                      className="flex justify-between text-xs font-semibold"
+                    >
+                      <span>
+                        {it.productName} (x{it.quantity})
+                      </span>
+                      <span>{formatCurrency(it.total)}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex justify-between border-b border-gray-200 pb-2">
-                  <span className="text-gray-500">Total Tagihan:</span>
-                  <span className="font-bold">
+
+                {pendingData.isSponsor && (
+                  <div className="text-center font-bold text-purple-600 border-b border-gray-200 pb-2">
+                    SPONSOR / PARTNER
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center pt-1">
+                  <span className="text-gray-500">Total Akhir:</span>
+                  <span className="font-bold text-lg">
                     {formatCurrency(pendingData.totalAmount)}
                   </span>
                 </div>
-                <div className="flex justify-between pb-1">
-                  <span className="text-gray-500">Jumlah:</span>
-                  <span className="font-bold">{pendingData.jumlah} Pcs</span>
-                </div>
-                {pendingData.customItems && (
-                  <div className="mt-2 pt-2 border-t border-gray-200">
-                    <span className="block text-gray-500 text-xs mb-1">
-                      Item Tambahan:
-                    </span>
-                    {pendingData.customItems.map((ci: any, i: number) => (
-                      <div key={i} className="flex justify-between text-xs">
-                        <span>- {ci.name}</span>
-                        <span className="font-semibold">{ci.quantity}</span>
-                      </div>
-                    ))}
+
+                <div className="mt-4 pt-2 border-t border-gray-200">
+                  <div className="text-xs text-gray-500 mb-1">
+                    Link Akses (Untuk Klien):
                   </div>
-                )}
+                  <div className="flex gap-2">
+                    <div className="bg-white border border-gray-300 rounded p-2 text-xs font-mono text-center select-all flex-1 truncate">
+                      kinau.id/public/drive-link/{pendingData.accessCode}
+                    </div>
+                    <button
+                      onClick={() => copyLink(pendingData.accessCode)}
+                      className="bg-gray-200 hover:bg-gray-300 p-2 rounded text-gray-700"
+                      title="Copy Link"
+                    >
+                      <Copy size={14} />
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <p className="text-sm text-gray-600 mb-6">
-                Pastikan data sudah benar. Stok akan otomatis berkurang setelah
-                pesanan disimpan.
+                Pastikan data sudah benar.
               </p>
 
-              <div className="flex gap-3">
+              <Form method="post" className="flex gap-3">
+                <input type="hidden" name="intent" value="create_order" />
+                <input
+                  type="hidden"
+                  name="state"
+                  value={JSON.stringify(
+                    transformToAPIFormat(pendingData).state
+                  )}
+                />
+                <input
+                  type="hidden"
+                  name="items"
+                  value={JSON.stringify(
+                    transformToAPIFormat(pendingData).items
+                  )}
+                />
                 <button
+                  type="button"
                   onClick={() => setShowConfirm(false)}
                   className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2"
                 >
                   <X size={16} /> Batal
                 </button>
                 <button
-                  onClick={handleFinalSubmit}
+                  type="submit"
                   className="flex-1 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 flex items-center justify-center gap-2 shadow-lg"
                 >
                   <Check size={16} /> Ya, Simpan
                 </button>
-              </div>
+              </Form>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
-};
-
-export default OrderForm;
+}

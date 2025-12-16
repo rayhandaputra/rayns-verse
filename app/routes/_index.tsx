@@ -46,65 +46,87 @@ import {
   Phone,
   Star,
 } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLoaderData } from "react-router";
 import { ADMIN_WA, getWhatsAppLink, toMoney } from "~/lib/utils";
+import { API } from "~/lib/api";
 const fmt = (n: number) => n.toLocaleString("id-ID");
 
-// export async function loader({ request }: LoaderFunctionArgs) {
-//   // Get optional user (for public pages)
-//   const authData = await getOptionalUser(request);
+export async function loader() {
+  // Fetch Products for display
+  const productsRes = await API.PRODUCT.get({
+    req: { query: { page: 0, size: 100, pagination: "true" } },
+  });
 
-//   /* ===========================
-//      FETCH LANDING PAGE CONTENT
-//   =========================== */
-//   // Prepare session data for API calls
-//   const sessionData = authData
-//     ? { user: authData.user, token: authData.token }
-//     : {};
+  // Fetch Orders with status: done and is_portfolio: true
+  const ordersRes = await API.ORDERS.get({
+    req: {
+      query: {
+        status: "done",
+        page: 0,
+        size: 200,
+        pagination: "true",
+      },
+    },
+  });
 
-//   const highlightEvent = await API.CMS_CONTENT.get({
-//     session: sessionData,
-//     req: { query: { type: "highlight-event", pagination: "false" } } as any,
-//   });
+  // Map and filter orders for portfolio
+  const portfolioItems = (ordersRes.items || [])
+    .map((o: any) => {
+      // Parse notes for portfolio data
+      let notesData: any = {};
+      try {
+        if (o.notes) {
+          const parsed = JSON.parse(o.notes);
+          if (typeof parsed === "object") notesData = parsed;
+        }
+      } catch (e) {
+        /* ignore */
+      }
 
-//   const heroSection = await API.CMS_CONTENT.get({
-//     session: sessionData,
-//     req: { query: { type: "hero-section", pagination: "false" } } as any,
-//   });
+      return {
+        id: o.id,
+        instansi: o.institution_name,
+        jenisPesanan: o.order_type === "package" ? "Paket" : "Satuan",
+        jumlah: o.total_product || 0,
+        totalHarga: o.grand_total,
+        status: o.status,
+        createdAt: o.created_on,
+        // is_portfolio: notesData.is_portfolio || false,
+        is_portfolio: +o.is_portfolio || 0,
+        review: notesData.review || "",
+        rating: notesData.rating || 0,
+        portfolioImages: notesData.portfolioImages || [],
+      };
+    })
+    .filter((item: any) => item.is_portfolio); // Only show items marked as portfolio
 
-//   // Get approved testimonials for landing page
-//   const testimonials = await API.TESTIMONIAL.get({
-//     session: sessionData,
-//     req: {
-//       query: {
-//         pagination: "true",
-//         // status: "approved",
-//         page: 0,
-//         size: 6, // Limit to 6 testimonials
-//       },
-//     } as any,
-//   });
+  console.log("portfolioItems", portfolioItems);
 
-//   // Get stats data for stats section
-//   const stats = await API.CMS_CONTENT.get({
-//     session: sessionData,
-//     req: {
-//       query: {
-//         pagination: "false",
-//         type: "stats",
-//         is_active: 1,
-//       },
-//     } as any,
-//   });
+  // Calculate stats from orders
+  const allOrders = ordersRes.items || [];
+  const countFinished = allOrders.filter(
+    (o: any) => o.status === "done"
+  ).length;
+  const countItems = allOrders.reduce(
+    (sum: number, o: any) => sum + (o.total_product || 0),
+    0
+  );
+  const uniqueClients = new Set(allOrders.map((o: any) => o.institution_name))
+    .size;
+  // For sponsors, we might need a different API or just use a placeholder
+  const countSponsors = 0; // Placeholder
 
-//   return {
-//     user: authData?.user || null,
-//     highlightEvent: highlightEvent.items,
-//     heroSection: heroSection.items,
-//     testimonials: testimonials.items || [],
-//     stats: stats.items || [],
-//   };
-// }
+  return {
+    products: productsRes.items || [],
+    portfolioItems,
+    stats: {
+      countFinished,
+      countItems,
+      uniqueClients,
+      countSponsors,
+    },
+  };
+}
 
 // export default function LandingPage() {
 //   const { highlightEvent, heroSection, testimonials, stats, APP_CONFIG } =
@@ -246,18 +268,29 @@ const fmt = (n: number) => n.toLocaleString("id-ID");
 // };
 
 export default function LandingPage() {
+  const { products, portfolioItems, stats } = useLoaderData<{
+    products: any[];
+    portfolioItems: any[];
+    stats: {
+      countFinished: number;
+      countItems: number;
+      uniqueClients: number;
+      countSponsors: number;
+    };
+  }>();
+
   return (
     <div>
       <Navbar />
-      <Hero products={[]} />
+      <Hero products={products} />
       <Stats
-        countFinished={0}
-        countItems={0}
-        countSponsors={0}
-        uniqueClients={0}
+        countFinished={stats.countFinished}
+        countItems={stats.countItems}
+        countSponsors={stats.countSponsors}
+        uniqueClients={stats.uniqueClients}
       />
-      <Products products={[]} />
-      <Portfolio portfolioItems={[]} />
+      <Products products={products} />
+      <Portfolio portfolioItems={portfolioItems} />
       <Footer />
     </div>
   );
@@ -535,7 +568,7 @@ export const Products = ({ products }: { products: any[] }) => {
 };
 
 export const Navbar = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   return (
     <>
       {/* Navbar */}
@@ -568,7 +601,7 @@ export const Navbar = () => {
             </div>
             <button
               onClick={() => {
-                navigate('/login')
+                navigate("/login");
               }}
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition cursor-pointer"
             >
