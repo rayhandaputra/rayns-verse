@@ -1,8 +1,10 @@
 "use client";
 
 import { useReactToPrint } from "react-to-print";
-import { ReceiptTemplate } from "./print/order/ReceiptTemplate";
+// import { ReceiptTemplate } from "./print/order/ReceiptTemplate";
+// import { ReceiptTemplate } from "./print/order/ReceiptTemplate";
 import { useRef, useState } from "react";
+import { PrintNotaTemplate } from "./print/order/NotaTemplate";
 
 export function PrintButton({
   children,
@@ -46,11 +48,10 @@ export function PrintButton({
     <>
       {children({ handlePrint: prepareAndPrint })}
       <div className="hidden">
-        <ReceiptTemplate
+        <PrintNotaTemplate
           ref={contentRef}
           order={printData?.order}
           items={printData?.items || []}
-          qrCodeUrl={printData?.qrCodeUrl}
         />
       </div>
     </>

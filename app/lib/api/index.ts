@@ -4,6 +4,7 @@ export * from "./core/helpers";
 export * from "./core/types";
 
 import { AssetAPI } from "./modules/asset";
+import { BankAccountAPI } from "./modules/bank_account";
 import { CmsContentAPI } from "./modules/cms_content";
 import { CommodityAPI } from "./modules/commodity";
 import { CommodityStockAPI } from "./modules/commodity_stock";
@@ -26,6 +27,7 @@ import { ProductPriceRulesAPI } from "./modules/product_price_rules";
 import { SupplierAPI } from "./modules/supplier";
 import { SupplierCommodityAPI } from "./modules/supplier_commodity";
 import { TestimonialAPI } from "./modules/testimonial";
+import { TransactionAPI } from "./modules/transaction";
 import { UserAPI } from "./modules/user";
 
 // optional: unified API wrapper
@@ -54,4 +56,6 @@ export const API = {
   OVERVIEW: OverviewAPI,
   DISCOUNT: DiscountAPI,
   TESTIMONIAL: TestimonialAPI,
+  TRANSACTION: TransactionAPI,
+  BANK_ACCOUNT: BankAccountAPI,
 };

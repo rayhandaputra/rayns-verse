@@ -1,3 +1,4 @@
+import { safeParseArray } from "~/lib/utils";
 import { APIProvider } from "../client";
 
 export const OrderAPI = {
@@ -70,15 +71,25 @@ export const OrderAPI = {
             "institution_abbr",
             "institution_domain",
             "order_type",
+            "images",
+            "review",
+            "rating",
             "payment_status",
             "payment_method",
+            "payment_proof",
             "discount_value",
             "tax_value",
             "shipping_fee",
             "subtotal",
             "total_amount",
+            "dp_amount",
             "grand_total",
             "is_portfolio",
+            "is_sponsor",
+            "is_kkn",
+            "pic_name",
+            "pic_phone",
+            "drive_folder_id",
             "status",
             "deadline",
             "created_on",
@@ -90,6 +101,24 @@ export const OrderAPI = {
           size: Number(size),
           pagination: pagination === "true",
           order_by: { created_on: "desc" },
+          include: [
+            {
+              table: "order_items",
+              alias: "order_items",
+              foreign_key: "order_number",
+              reference_key: "order_number",
+              columns: [
+                "product_id",
+                "product_name",
+                "qty",
+                "unit_price",
+                "subtotal",
+                "discount_value",
+                "tax_percent",
+                // "total_amount",
+              ],
+            },
+          ],
         },
       });
 
@@ -131,6 +160,10 @@ export const OrderAPI = {
       discount_code = null,
       discount_type = null,
       discount_value = 0,
+      total_amount = 0,
+      dp_amount = 0,
+      is_sponsor = 0,
+      is_kkn = 0,
       tax_percent = 0,
       shipping_fee = 0,
       other_fee = 0,
@@ -139,7 +172,10 @@ export const OrderAPI = {
       shipping_contact = null,
       created_by = null,
       status = "ordered",
+      pic_name = null,
+      pic_phone = null,
       items = [],
+      images = [],
     } = req.body || {};
 
     // if (!institution_id || !institution_name) {
@@ -163,33 +199,35 @@ export const OrderAPI = {
     const order_number = generateOrderNumber();
 
     // ✅ Hitung subtotal, discount, tax
-    let subtotal = 0;
-    let discountTotal = 0;
-    let totalTax = 0;
+    // let subtotal = 0;
+    // let discountTotal = 0;
+    // let totalTax = 0;
 
-    items?.forEach((item: any) => {
-      const itemSubtotal = (item.qty || 0) * (item.unit_price || 0);
-      const itemDiscount =
-        item.discount_type === "percent"
-          ? (itemSubtotal * (item.discount_value || 0)) / 100
-          : item.discount_value || 0;
-      const itemTax =
-        (itemSubtotal - itemDiscount) * ((item.tax_percent || 0) / 100);
+    // items?.forEach((item: any) => {
+    //   const itemSubtotal = (item.qty || 0) * (item.unit_price || 0);
+    //   const itemDiscount =
+    //     item.discount_type === "percent"
+    //       ? (itemSubtotal * (item.discount_value || 0)) / 100
+    //       : item.discount_value || 0;
+    //   const itemTax =
+    //     (itemSubtotal - itemDiscount) * ((item.tax_percent || 0) / 100);
 
-      subtotal += itemSubtotal;
-      discountTotal += itemDiscount;
-      totalTax += itemTax;
-    });
+    //   subtotal += itemSubtotal;
+    //   discountTotal += itemDiscount;
+    //   totalTax += itemTax;
+    // });
 
-    const total_amount = subtotal - discountTotal + totalTax;
-    const grand_total = total_amount + (shipping_fee || 0) + (other_fee || 0);
+    // const total_amount = subtotal - discountTotal + totalTax;
+    // const grand_total = total_amount + (shipping_fee || 0) + (other_fee || 0);
 
-    const newOrder = {
+    let newOrder = {
       order_number,
       institution_id,
       institution_name,
       institution_abbr,
       institution_domain,
+      pic_name,
+      pic_phone,
       order_type,
       payment_status,
       payment_method,
@@ -199,23 +237,61 @@ export const OrderAPI = {
       discount_type,
       discount_value,
       tax_percent,
-      tax_value: totalTax,
+      // tax_value: totalTax,
       shipping_fee,
       other_fee,
-      subtotal,
+      // subtotal,
       total_amount,
-      grand_total,
+      dp_amount,
+      is_sponsor,
+      is_kkn,
+      // grand_total,
       deadline,
       status,
       notes,
       shipping_address,
       shipping_contact,
+      images: JSON.stringify(images || []),
       created_by,
       created_on: new Date().toISOString(),
       modified_on: new Date().toISOString(),
     };
 
     try {
+      // ✅ Simpan domain baru jika perlu
+      if (institution_name && !(+institution_id > 0)) {
+        const result = await APIProvider({
+          endpoint: "insert",
+          method: "POST",
+          table: "institutions",
+          action: "insert",
+          body: {
+            data: {
+              name: institution_name,
+              created_on: new Date().toISOString(),
+            },
+          },
+        });
+        console.log("MBIKIN INSTITUSI => ", result);
+
+        newOrder.institution_id = result?.insert_id;
+      }
+
+      // CREATE 1 FOLDER DRIVE
+      const createFolder = await APIProvider({
+        endpoint: "insert",
+        method: "POST",
+        table: "order_upload_folders",
+        action: "insert",
+        body: {
+          data: {
+            order_number,
+            folder_name: `${institution_name} - ${order_number}`,
+          },
+        },
+      });
+      newOrder.drive_folder_id = createFolder?.insert_id;
+
       // ✅ Insert ke table orders
       const result = await APIProvider({
         endpoint: "insert",
@@ -225,65 +301,76 @@ export const OrderAPI = {
         body: { data: newOrder },
       });
 
-      // ✅ Simpan domain baru jika perlu
-      // if (institution_abbr && !institution_abbr_id) {
-      //   await APIProvider({
-      //     endpoint: "insert",
-      //     method: "POST",
-      //     table: "institution_domains",
-      //     action: "insert",
-      //     body: {
-      //       data: {
-      //         domain: institution_abbr,
-      //         institution_id,
-      //         created_on: new Date().toISOString(),
-      //       },
-      //     },
-      //   });
-      // }
-
       // ✅ Insert order_items (bulk)
-      // if (items?.length > 0) {
-      //   const itemRows = items.map((item: any) => {
-      //     const qty = item.qty || 1;
-      //     const unit_price = item.unit_price || 0;
-      //     const subtotal = qty * unit_price;
-      //     const discount_total =
-      //       item.discount_type === "percent"
-      //         ? (subtotal * (item.discount_value || 0)) / 100
-      //         : item.discount_value || 0;
-      //     const tax_value =
-      //       ((subtotal - discount_total) * (item.tax_percent || 0)) / 100;
+      if (items?.length > 0) {
+        // const itemRows = items.map((item: any) => {
+        //   const qty = item.qty || 1;
+        //   const unit_price = item.unit_price || 0;
+        //   const subtotal = qty * unit_price;
+        //   const discount_total =
+        //     item.discount_type === "percent"
+        //       ? (subtotal * (item.discount_value || 0)) / 100
+        //       : item.discount_value || 0;
+        //   const tax_value =
+        //     ((subtotal - discount_total) * (item.tax_percent || 0)) / 100;
 
-      //     return {
-      //       order_number,
-      //       product_id: item.product_id || null,
-      //       product_name: item.product_name,
-      //       product_type: item.product_type || "single",
-      //       qty,
-      //       unit_price,
-      //       discount_type: item.discount_type || null,
-      //       discount_value: item.discount_value || 0,
-      //       tax_percent: item.tax_percent || 0,
-      //       subtotal,
-      //       discount_total,
-      //       tax_value,
-      //       total_after_tax: subtotal - discount_total + tax_value,
-      //       notes: item.notes || null,
-      //     };
-      //   });
+        //   return {
+        //     order_number,
+        //     product_id: item.product_id || null,
+        //     product_name: item.product_name,
+        //     product_type: item.product_type || "single",
+        //     qty,
+        //     unit_price,
+        //     discount_type: item.discount_type || null,
+        //     discount_value: item.discount_value || 0,
+        //     tax_percent: item.tax_percent || 0,
+        //     subtotal,
+        //     discount_total,
+        //     tax_value,
+        //     total_after_tax: subtotal - discount_total + tax_value,
+        //     notes: item.notes || null,
+        //   };
+        // });
+        const itemRows = items.map((item: any) => {
+          const qty = item?.qty || item?.quantity || 1;
+          const unit_price = item?.unit_price || item?.price || 0;
+          const subtotal = qty * unit_price;
+          const discount_total =
+            item?.discount_type === "percent"
+              ? (subtotal * (item?.discount_value || 0)) / 100
+              : item?.discount_value || 0;
+          const tax_value =
+            ((subtotal - discount_total) * (item?.tax_percent || 0)) / 100;
 
-      //   await APIProvider({
-      //     endpoint: "bulk_insert",
-      //     method: "POST",
-      //     table: "order_items",
-      //     action: "bulk_insert",
-      //     body: {
-      //       rows: itemRows,
-      //       updateOnDuplicate: true,
-      //     },
-      //   });
-      // }
+          return {
+            order_number,
+            product_id: item?.product_id || item?.productId || null,
+            product_name: item?.product_name || item?.productName || null,
+            product_type: item?.product_type || "single",
+            qty,
+            unit_price,
+            discount_type: item?.discount_type || null,
+            discount_value: item?.discount_value || 0,
+            tax_percent: item?.tax_percent || 0,
+            subtotal,
+            discount_total,
+            tax_value,
+            total_after_tax: subtotal - discount_total + tax_value,
+            notes: item?.notes || null,
+          };
+        });
+
+        await APIProvider({
+          endpoint: "bulk-insert",
+          method: "POST",
+          table: "order_items",
+          action: "bulk-insert",
+          body: {
+            rows: itemRows,
+            updateOnDuplicate: true,
+          },
+        });
+      }
 
       return {
         success: true,
@@ -380,14 +467,18 @@ export const OrderAPI = {
     };
 
     try {
-      console.log(updatedOrder);
       const result = await APIProvider({
         endpoint: "update",
         method: "POST",
         table: "orders",
         action: "update",
         body: {
-          data: updatedOrder,
+          data: {
+            ...updatedOrder,
+            ...(safeParseArray(updatedOrder?.images)?.length > 0
+              ? { images: JSON.stringify(updatedOrder?.images) }
+              : {}),
+          },
           where: { id },
         },
       });

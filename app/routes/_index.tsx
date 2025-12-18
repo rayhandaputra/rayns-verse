@@ -47,14 +47,21 @@ import {
   Star,
 } from "lucide-react";
 import { useNavigate, useLoaderData } from "react-router";
-import { ADMIN_WA, getWhatsAppLink, toMoney } from "~/lib/utils";
+import {
+  ADMIN_WA,
+  getWhatsAppLink,
+  safeParseArray,
+  toMoney,
+} from "~/lib/utils";
 import { API } from "~/lib/api";
 const fmt = (n: number) => n.toLocaleString("id-ID");
 
 export async function loader() {
   // Fetch Products for display
   const productsRes = await API.PRODUCT.get({
-    req: { query: { page: 0, size: 100, pagination: "true" } },
+    req: {
+      query: { page: 0, size: 10, show_in_dashboard: 1, pagination: "true" },
+    },
   });
 
   // Fetch Orders with status: done and is_portfolio: true
@@ -62,6 +69,7 @@ export async function loader() {
     req: {
       query: {
         status: "done",
+        is_portfolio: "done",
         page: 0,
         size: 200,
         pagination: "true",
@@ -84,23 +92,22 @@ export async function loader() {
       }
 
       return {
-        id: o.id,
-        instansi: o.institution_name,
-        jenisPesanan: o.order_type === "package" ? "Paket" : "Satuan",
-        jumlah: o.total_product || 0,
-        totalHarga: o.grand_total,
-        status: o.status,
-        createdAt: o.created_on,
-        // is_portfolio: notesData.is_portfolio || false,
-        is_portfolio: +o.is_portfolio || 0,
-        review: notesData.review || "",
-        rating: notesData.rating || 0,
-        portfolioImages: notesData.portfolioImages || [],
+        ...o,
+        // id: o.id,
+        // instansi: o.institution_name,
+        // jenisPesanan: o.order_type === "package" ? "Paket" : "Satuan",
+        // jumlah: o.total_product || 0,
+        // totalHarga: o.grand_total,
+        // status: o.status,
+        // createdAt: o.created_on,
+        // // is_portfolio: notesData.is_portfolio || false,
+        // is_portfolio: +o.is_portfolio || 0,
+        // review: notesData.review || "",
+        // rating: notesData.rating || 0,
+        // portfolioImages: notesData.portfolioImages || [],
       };
     })
     .filter((item: any) => item.is_portfolio); // Only show items marked as portfolio
-
-  console.log("portfolioItems", portfolioItems);
 
   // Calculate stats from orders
   const allOrders = ordersRes.items || [];
@@ -120,10 +127,10 @@ export async function loader() {
     products: productsRes.items || [],
     portfolioItems,
     stats: {
-      countFinished,
-      countItems,
-      uniqueClients,
-      countSponsors,
+      countFinished: "100+",
+      countItems: "1000+",
+      uniqueClients: "100+",
+      countSponsors: "10+",
     },
   };
 }
@@ -405,6 +412,7 @@ export const Stats = ({
 };
 
 export const Portfolio = ({ portfolioItems }: { portfolioItems: any[] }) => {
+  console.log(portfolioItems);
   return (
     <>
       {/* Portfolio (Horizontal Scroll) */}
@@ -433,10 +441,10 @@ export const Portfolio = ({ portfolioItems }: { portfolioItems: any[] }) => {
                   className="w-[300px] md:w-[350px] bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex-shrink-0 snap-center hover:shadow-md transition group"
                 >
                   <div className="h-56 bg-gray-200 relative overflow-hidden">
-                    {item.portfolioImages?.[0] ? (
+                    {safeParseArray(item.images)?.[0] ? (
                       <img
-                        src={item.portfolioImages[0]}
-                        alt={item.instansi}
+                        src={safeParseArray(item.images)?.[0]}
+                        alt={item.institution_name}
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                       />
                     ) : (
@@ -451,12 +459,12 @@ export const Portfolio = ({ portfolioItems }: { portfolioItems: any[] }) => {
                   <div className="p-5">
                     <h3
                       className="font-bold text-lg text-gray-900 mb-1 truncate"
-                      title={item.instansi}
+                      title={item.institution_name}
                     >
-                      {item.instansi}
+                      {item.institution_name}
                     </h3>
                     <p className="text-sm text-gray-500 mb-3">
-                      {item.jenisPesanan}
+                      {safeParseArray(item.order_items)?.length}++ Produk
                     </p>
 
                     {item.review && (
@@ -526,12 +534,39 @@ export const Products = ({ products }: { products: any[] }) => {
                     {product.description ||
                       "Kualitas terbaik untuk kebutuhan anda."}
                   </p>
-                  <div className="text-3xl font-bold text-gray-900 mb-6">
+                  {/* <div className="text-3xl font-bold text-gray-900 mb-6">
                     {toMoney(product.price)}{" "}
                     <span className="text-sm text-gray-400 font-normal">
                       / pcs
                     </span>
-                  </div>
+                  </div> */}
+                  {product.product_price_rules &&
+                  safeParseArray(product.product_price_rules).length > 0 ? (
+                    <div className="mb-6">
+                      <p className="text-xs font-bold text-blue-600 uppercase mb-1">
+                        Mulai dari
+                      </p>
+                      <div className="text-3xl font-bold text-gray-900">
+                        {toMoney(
+                          Math.min(
+                            ...safeParseArray(product.product_price_rules).map(
+                              (r: any) => r.price
+                            )
+                          )
+                        )}
+                        <span className="text-sm text-gray-400 font-normal ml-1">
+                          / pcs
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-3xl font-bold text-gray-900 mb-6">
+                      {toMoney(product.price)}{" "}
+                      <span className="text-sm text-gray-400 font-normal">
+                        / pcs
+                      </span>
+                    </div>
+                  )}
                   <ul className="space-y-3 mb-8">
                     <li className="flex items-center gap-2 text-sm text-gray-600">
                       <CheckCircle size={16} className="text-green-500" /> Free

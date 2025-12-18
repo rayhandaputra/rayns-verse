@@ -27,10 +27,15 @@ import {
   useParams,
   type LoaderFunction,
   type ActionFunction,
+  useNavigate,
 } from "react-router";
 import { API } from "~/lib/api";
 import { toast } from "sonner";
 import { getOptionalUser } from "~/lib/session.server";
+import NotaView from "~/components/NotaView";
+import { useFetcherData } from "~/hooks";
+import { nexus } from "~/lib/nexus-client";
+import { useQueryParams } from "~/hooks/use-query-params";
 
 // ============================================
 // TYPES & INTERFACES
@@ -62,7 +67,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       session: {}, // Public access
       req: {
         query: {
-          order_number: domain, // Filter by order_number matching domain
+          // order_number: domain, // Filter by order_number matching domain
+          institution_domain: domain, // Filter by order_number matching domain
           size: 1,
         },
       },
@@ -88,7 +94,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       req: {
         query: {
           size: 1000,
-          order_number: domain, // Filter by order_number
+          order_number: order?.order_number, // Filter by order_number
+          folder_id: order?.drive_folder_id,
         },
       },
     });
@@ -98,7 +105,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       req: {
         query: {
           size: 1000,
-          order_number: domain, // Filter by order_number
+          order_number: order?.order_number, // Filter by order_number
+          folder_id: order?.drive_folder_id,
         },
       },
     });
@@ -166,6 +174,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
   if (intent === "sync_state") {
     const stateStr = formData.get("state") as string;
+    const orderNumber = formData.get("order_number") as string;
     const state = stateStr ? JSON.parse(stateStr) : [];
 
     const foldersToSync = state
@@ -174,7 +183,7 @@ export const action: ActionFunction = async ({ request, params }) => {
         id: f.id && f.id.startsWith("KEY") ? undefined : f.id,
         folder_name: f.name,
         parent_id: f.parentId || null,
-        order_number: domain, // Associate with order_number
+        order_number: orderNumber, // Associate with order_number
       }));
 
     try {
@@ -216,11 +225,15 @@ export const action: ActionFunction = async ({ request, params }) => {
     try {
       // Separate folders and files
       const folderIds = items
-        .filter((item: any) => item.type === "folder" && !item.id.startsWith("KEY"))
+        .filter(
+          (item: any) => item.type === "folder" && !item.id.startsWith("KEY")
+        )
         .map((item: any) => item.id);
 
       const fileIds = items
-        .filter((item: any) => item.type === "file" && !item.id.startsWith("KEY"))
+        .filter(
+          (item: any) => item.type === "file" && !item.id.startsWith("KEY")
+        )
         .map((item: any) => item.id);
 
       // Delete folders
@@ -270,6 +283,54 @@ export const action: ActionFunction = async ({ request, params }) => {
     }
   }
 
+  if (intent === "update_review") {
+    const id = formData.get("id") as string;
+    const rating = Number(formData.get("rating"));
+    const review = formData.get("review") as string;
+
+    try {
+      const res = await API.ORDERS.update({
+        session: {},
+        req: { body: { id, rating, review } },
+      });
+
+      if (res.success) {
+        return Response.json({
+          success: true,
+          message: "Ulasan berhasil dikirim. Terima kasih!",
+        });
+      } else {
+        return Response.json({
+          success: false,
+          message: res.message || "Gagal mengirim ulasan",
+        });
+      }
+    } catch (error: any) {
+      return Response.json({
+        success: false,
+        message: error.message || "Terjadi kesalahan",
+      });
+    }
+  }
+
+  if (intent === "update_payment_proof") {
+    const id = formData.get("id") as string;
+    const proof = formData.get("proof") as string;
+
+    console.log({ id, payment_proof: proof });
+    // Only update if valid
+    const res = await API.ORDERS.update({
+      session: {},
+      req: { body: { id, payment_proof: proof } },
+    });
+    return Response.json({
+      success: res.success,
+      message: res.success
+        ? "Bukti pembayaran diperbarui"
+        : "Gagal memperbarui bukti pembayaran",
+    });
+  }
+
   return Response.json({ success: true });
 };
 
@@ -287,6 +348,50 @@ export default function PublicDriveLinkPage() {
   } = useLoaderData<LoaderData>();
   const fetcher = useFetcher();
   const params = useParams();
+  const navigate = useNavigate();
+  const query = useQueryParams();
+
+  // Use query.folder_id as source of truth for currentFolderId
+  const currentFolderId = query.folder_id || orderData?.drive_folder_id || null;
+
+  // Fetch real-time data using nexus
+  const {
+    data: realFolders,
+    loading: isLoadingFolders,
+    reload: reloadRealFolders,
+  } = useFetcherData<any>({
+    endpoint: nexus()
+      .module("ORDER_UPLOAD")
+      .action("get_folder")
+      .params({
+        page: 0,
+        size: 100,
+        order_number: orderData?.order_number,
+        ...(currentFolderId && { folder_id: currentFolderId }),
+      })
+      .build(),
+    autoLoad: !!orderData?.order_number,
+  });
+
+  const {
+    data: realFiles,
+    loading: isLoadingFiles,
+    reload: reloadRealFiles,
+  } = useFetcherData<any>({
+    endpoint: nexus()
+      .module("ORDER_UPLOAD")
+      .action("get_file")
+      .params({
+        page: 0,
+        size: 100,
+        order_number: orderData?.order_number,
+        ...(currentFolderId
+          ? { folder_id: currentFolderId }
+          : { folder_id: "null" }),
+      })
+      .build(),
+    autoLoad: !!orderData?.order_number,
+  });
 
   const [items, setItems] = useState<DriveItem[]>(initialItems);
 
@@ -294,23 +399,22 @@ export default function PublicDriveLinkPage() {
     setItems(initialItems);
   }, [initialItems]);
 
-  // Handle fetcher responses
+  // Handle fetcher responses with auto reload
   useEffect(() => {
     if (fetcher.data && fetcher.state === "idle") {
       if (fetcher.data.success === false) {
         toast.error(fetcher.data.message || "Operasi gagal");
       } else if (fetcher.data.success === true) {
-        // Show success message if available
         if (fetcher.data.message) {
           toast.success(fetcher.data.message);
         }
         // Reload data after successful operation
+        reloadRealFolders();
+        reloadRealFiles();
         fetcher.load(window.location.pathname + window.location.search);
       }
     }
   }, [fetcher.data, fetcher.state]);
-
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [clipboard, setClipboard] = useState<{
     id: string;
@@ -321,18 +425,54 @@ export default function PublicDriveLinkPage() {
   const [renameValue, setRenameValue] = useState("");
 
   const [showNewFolderModal, setShowNewFolderModal] = useState(false);
+
   const [newFolderName, setNewFolderName] = useState("");
+  const [showNota, setShowNota] = useState(false);
+
+  const handleUpdateReview = (rating: number, review: string) => {
+    if (!orderData) return;
+    fetcher.submit(
+      {
+        intent: "update_review",
+        id: orderData.id,
+        rating: String(rating),
+        review,
+      },
+      { method: "post" }
+    );
+  };
+
+  const { data: actionData, load: submitAction } = useFetcherData({
+    endpoint: "",
+    method: "POST",
+    autoLoad: false,
+  });
+
+  const onUpdatePaymentProof = (id: string, proof: string) => {
+    submitAction({
+      intent: "update_payment_proof",
+      id,
+      proof,
+    });
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const currentItems = items.filter(
-    (item) => item.parentId === currentFolderId
-  );
+  // Get current items from real-time data
+  const folders = realFolders?.data?.items ?? [];
+  const files = realFiles?.data?.items ?? [];
+  const currentItems = [...folders, ...files];
 
+  // Sort: Folders first, then new to old
   currentItems.sort((a, b) => {
-    if (a.type === b.type)
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    return a.type === "folder" ? -1 : 1;
+    const aType = a.folder_name ? "folder" : "file";
+    const bType = b.folder_name ? "folder" : "file";
+    if (aType === bType) {
+      const aDate = new Date(a.created_at || a.createdAt).getTime();
+      const bDate = new Date(b.created_at || b.createdAt).getTime();
+      return bDate - aDate;
+    }
+    return aType === "folder" ? -1 : 1;
   });
 
   const getBreadcrumbs = () => {
@@ -365,7 +505,11 @@ export default function PublicDriveLinkPage() {
     }));
 
     fetcher.submit(
-      { intent: "sync_state", state: JSON.stringify(itemsToSync) },
+      {
+        intent: "sync_state",
+        state: JSON.stringify(itemsToSync),
+        order_number: orderData?.order_number || domain,
+      },
       { method: "post" }
     );
   };
@@ -411,13 +555,15 @@ export default function PublicDriveLinkPage() {
 
       try {
         const uploadRes = await API.ASSET.upload(file);
+        console.log(uploadRes);
 
         const newFilePayload = {
           file_type: mime,
           file_url: uploadRes.url,
-          file_name: file.name,
-          folder_id: currentFolderId || null,
-          order_number: domain, // Associate with order_number
+          file_name: uploadRes.filename,
+          folder_id: currentFolderId || orderData?.drive_folder_id || null,
+          level: currentFolderId ? 2 : 1,
+          order_number: orderData?.order_number, // Associate with order_number
         };
 
         const result = await API.ORDER_UPLOAD.create_single_file({
@@ -429,11 +575,11 @@ export default function PublicDriveLinkPage() {
           throw new Error(result.message || "Upload gagal");
         }
 
-        // Reload data to get the fresh file with proper ID
-        fetcher.load(window.location.pathname + window.location.search);
+        // Reload real-time data
+        reloadRealFolders();
+        reloadRealFiles();
 
-        toast.success("Upload berhasil");
-
+        toast.success("Upload File berhasil");
         e.target.value = "";
       } catch (err: any) {
         toast.error(err.message || "Upload gagal");
@@ -566,10 +712,17 @@ export default function PublicDriveLinkPage() {
     toast.info("Download akan segera dimulai...");
   };
 
-  const renderIcon = (item: DriveItem) => {
-    if (item.type === "folder")
+  const handleOpenFolder = (folderId: string | number) => {
+    const url = `/public/drive-link/${domain}?folder_id=${folderId}`;
+    navigate(url);
+  };
+
+  const renderIcon = (item: any) => {
+    const isFolder = item.folder_name !== undefined;
+    if (isFolder)
       return <Folder size={48} className="text-yellow-400 fill-yellow-400" />;
-    if (item.mimeType === "image")
+    const mimeType = item.file_type || item.mimeType;
+    if (mimeType === "image")
       return <FileImage size={40} className="text-purple-500" />;
     return <FileText size={40} className="text-blue-500" />;
   };
@@ -650,6 +803,28 @@ export default function PublicDriveLinkPage() {
   // Render normal drive interface if order found
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Nota Modal */}
+      {showNota && orderData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden relative max-h-[90vh] overflow-y-auto">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-red-500 z-10 bg-white rounded-full p-1 border border-gray-200"
+              onClick={() => setShowNota(false)}
+            >
+              <X size={16} />
+            </button>
+            <NotaView
+              order={orderData}
+              isEditable={true}
+              onReviewChange={handleUpdateReview}
+              onPaymentProofChange={(proof) =>
+                onUpdatePaymentProof(orderData.id, proof)
+              }
+            />
+          </div>
+        </div>
+      )}
+
       {/* Public Header */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -697,6 +872,13 @@ export default function PublicDriveLinkPage() {
                 <span>Folder Baru</span>
               </button>
               <button
+                onClick={() => setShowNota(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700 shadow-sm transition-all hover:shadow-md"
+              >
+                <FileText size={16} />
+                <span>Lihat Nota</span>
+              </button>
+              <button
                 onClick={handleUploadClick}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-sm transition-all hover:shadow-md"
               >
@@ -722,9 +904,10 @@ export default function PublicDriveLinkPage() {
           {/* Breadcrumbs */}
           <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 text-sm text-gray-600 overflow-x-auto bg-gray-50/50">
             <button
-              onClick={() => setCurrentFolderId(null)}
+              onClick={() => navigate(`/public/drive-link/${domain}`)}
               className={`flex items-center hover:bg-white px-3 py-1.5 rounded-lg transition-colors ${
-                !currentFolderId
+                !currentFolderId ||
+                currentFolderId === orderData?.drive_folder_id
                   ? "font-bold text-blue-600 bg-blue-50"
                   : "hover:text-blue-600"
               }`}
@@ -735,7 +918,7 @@ export default function PublicDriveLinkPage() {
               <React.Fragment key={crumb.id}>
                 <span className="text-gray-300">/</span>
                 <button
-                  onClick={() => setCurrentFolderId(crumb.id)}
+                  onClick={() => handleOpenFolder(crumb.id)}
                   className={`hover:bg-white px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
                     idx === getBreadcrumbs().length - 1
                       ? "font-bold text-blue-600 bg-blue-50"
@@ -763,105 +946,119 @@ export default function PublicDriveLinkPage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                {currentItems.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedItem(item.id);
-                    }}
-                    onDoubleClick={() =>
-                      item.type === "folder" && setCurrentFolderId(item.id)
-                    }
-                    className={`group relative p-4 rounded-xl border flex flex-col items-center gap-3 cursor-pointer transition-all ${
-                      selectedItem === item.id
-                        ? "bg-blue-50 border-blue-400 ring-2 ring-blue-400 shadow-lg"
-                        : "bg-white border-gray-200 hover:border-blue-300 hover:shadow-md"
-                    } ${clipboard?.id === item.id ? "opacity-50" : ""}`}
-                  >
-                    {renderIcon(item)}
+                {currentItems.map((item) => {
+                  const isFolder = item.folder_name !== undefined;
+                  const itemName = isFolder ? item.folder_name : item.file_name;
+                  const itemId = String(item.id);
 
-                    {isRenaming === item.id ? (
-                      <input
-                        autoFocus
-                        className="w-full text-center text-xs border border-blue-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        value={renameValue}
-                        onChange={(e) => setRenameValue(e.target.value)}
-                        onBlur={handleRenameSave}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && handleRenameSave()
-                        }
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    ) : (
-                      <div className="text-center w-full">
-                        <div
-                          className="text-xs font-medium text-gray-700 truncate w-full px-1"
-                          title={item.name}
-                        >
-                          {item.name}
-                        </div>
-                        {item.type === "file" && (
-                          <div className="text-[10px] text-gray-400 mt-1">
-                            {item.size}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Context Menu */}
+                  return (
                     <div
-                      className={`absolute top-2 right-2 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden transition-all ${
-                        selectedItem === item.id
-                          ? "opacity-100 visible"
-                          : "opacity-0 invisible group-hover:visible group-hover:opacity-100"
-                      }`}
+                      key={itemId}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedItem(itemId);
+                      }}
+                      onDoubleClick={() => {
+                        if (isFolder) {
+                          handleOpenFolder(itemId);
+                        } else if (item.file_url) {
+                          window.open(item.file_url, "_blank");
+                        }
+                      }}
+                      className={`group relative p-4 rounded-xl border flex flex-col items-center gap-3 cursor-pointer transition-all ${
+                        selectedItem === itemId
+                          ? "bg-blue-50 border-blue-400 ring-2 ring-blue-400 shadow-lg"
+                          : "bg-white border-gray-200 hover:border-blue-300 hover:shadow-md"
+                      } ${clipboard?.id === itemId ? "opacity-50" : ""}`}
                     >
-                      {item.type === "file" && (
+                      {renderIcon(item)}
+
+                      {isRenaming === itemId ? (
+                        <input
+                          autoFocus
+                          className="w-full text-center text-xs border border-blue-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onBlur={handleRenameSave}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleRenameSave()
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <div className="text-center w-full">
+                          <div
+                            className="text-xs font-medium text-gray-700 truncate w-full px-1"
+                            title={itemName}
+                          >
+                            {itemName}
+                          </div>
+                          {!isFolder && (
+                            <div className="text-[10px] text-gray-400 mt-1">
+                              {item.size || "0 MB"}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Context Menu */}
+                      <div
+                        className={`absolute top-2 right-2 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden transition-all ${
+                          selectedItem === itemId
+                            ? "opacity-100 visible"
+                            : "opacity-0 invisible group-hover:visible group-hover:opacity-100"
+                        }`}
+                      >
+                        {!isFolder && item.file_url && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(item.file_url, "_blank");
+                            }}
+                            title="Download"
+                            className="p-1.5 hover:bg-gray-100 text-green-600 border-b border-gray-100"
+                          >
+                            <Download size={12} />
+                          </button>
+                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDownload(item);
+                            handleRenameStart({
+                              id: itemId,
+                              name: itemName,
+                              type: isFolder ? "folder" : "file",
+                            } as any);
                           }}
-                          title="Download"
-                          className="p-1.5 hover:bg-gray-100 text-green-600 border-b border-gray-100"
+                          title="Ganti Nama"
+                          className="p-1.5 hover:bg-gray-100 text-gray-600 border-b border-gray-100"
                         >
-                          <Download size={12} />
+                          <Edit2 size={12} />
                         </button>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRenameStart(item);
-                        }}
-                        title="Ganti Nama"
-                        className="p-1.5 hover:bg-gray-100 text-gray-600 border-b border-gray-100"
-                      >
-                        <Edit2 size={12} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCut(item.id);
-                        }}
-                        title="Pindahkan"
-                        className="p-1.5 hover:bg-gray-100 text-orange-600 border-b border-gray-100"
-                      >
-                        <Scissors size={12} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(item.id);
-                        }}
-                        title="Hapus"
-                        className="p-1.5 hover:bg-gray-100 text-red-600"
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCut(itemId);
+                          }}
+                          title="Pindahkan"
+                          className="p-1.5 hover:bg-gray-100 text-orange-600 border-b border-gray-100"
+                        >
+                          <Scissors size={12} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(itemId);
+                          }}
+                          title="Hapus"
+                          className="p-1.5 hover:bg-gray-100 text-red-600"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

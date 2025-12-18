@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import {
   useActionData,
   Form,
-  useFetcher,
   type LoaderFunction,
   type ActionFunction,
 } from "react-router";
@@ -22,14 +21,32 @@ import {
 import { requireAuth } from "~/lib/session.server";
 import { toast } from "sonner";
 import { API } from "~/lib/api";
+import { useFetcherData } from "~/hooks/use-fetcher-data";
+import { nexus } from "~/lib/nexus-client";
+import type { NexusResponse, PaginatedResponse } from "~/lib/nexus-client";
 
 // ============================================
 // TYPES & INTERFACES
 // ============================================
 
-interface LoaderData {
-  assets: Asset[];
+interface InventoryAsset {
+  id: number;
+  asset_name: string;
+  category: string;
+  purchase_date: string;
+  location: string;
+  status: string;
+  total_value: number;
+  total_unit: number;
+  created_on: string;
 }
+
+type AssetsResponse = NexusResponse<{
+  items: InventoryAsset[];
+  total: number;
+  page: number;
+  size: number;
+}>;
 
 interface ActionData {
   success?: boolean;
@@ -184,22 +201,42 @@ export const action: ActionFunction = async ({ request }) => {
 
 export default function AssetInventoryPage() {
   const actionData = useActionData<ActionData>();
-  const assetsFetcher = useFetcher<LoaderData>();
 
   // ========== STATE ==========
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<Asset>>({});
 
-  // ========== EFFECTS ==========
-  // Initial load
+  // ========== DEBOUNCE SEARCH ==========
   useEffect(() => {
-    if (assetsFetcher.state === "idle" && !assetsFetcher.data) {
-      assetsFetcher.load("/api/assets");
-    }
-  }, [assetsFetcher]);
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
 
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // ========== FETCH DATA WITH NEXUS ==========
+  const {
+    data: assetsData,
+    loading: isLoading,
+    reload: reloadAssets,
+  } = useFetcherData<AssetsResponse>({
+    endpoint: nexus()
+      .module("INVENTORY_ASSET")
+      .action("get")
+      .params({
+        page: 0,
+        size: 1000,
+        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+      })
+      .build(),
+    autoLoad: true,
+  });
+
+  // ========== EFFECTS ==========
   // Reload after action success
   useEffect(() => {
     if (actionData?.success) {
@@ -208,21 +245,24 @@ export default function AssetInventoryPage() {
       setEditingId(null);
       setFormData({});
       // Reload assets data
-      assetsFetcher.load("/api/assets");
+      reloadAssets();
     } else if (actionData?.success === false) {
       toast.error(actionData.message || "Gagal");
     }
   }, [actionData]);
 
   // ========== COMPUTED ==========
-  const assets = assetsFetcher.data?.assets || [];
-  const isLoading = assetsFetcher.state === "loading";
-
-  const filteredAssets = assets.filter(
-    (a) =>
-      a.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.location?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Map API response to Asset type
+  const assets: Asset[] = (assetsData?.data?.items || []).map((item) => ({
+    id: String(item.id),
+    name: item.asset_name || "",
+    category: item.category || "",
+    purchaseDate: item.purchase_date || "",
+    value: Number(item.total_value) || 0,
+    status: (item.status || "Good") as Asset["status"],
+    location: item.location || "",
+    unit: Number(item.total_unit) || 1,
+  }));
 
   const totalValue = assets.reduce((sum, a) => sum + (a.value || 0), 0);
 
@@ -354,14 +394,14 @@ export default function AssetInventoryPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredAssets?.length === 0 && (
+              {assets?.length === 0 && (
                 <tr>
                   <td colSpan={8} className="text-center py-4 text-gray-500">
                     {searchTerm ? "Tidak ada hasil" : "Belum ada data aset."}
                   </td>
                 </tr>
               )}
-              {filteredAssets?.map((asset) => (
+              {assets?.map((asset) => (
                 <tr key={asset.id} className="hover:bg-gray-50">
                   <td className="px-6 py-3 font-medium text-gray-900">
                     {asset.name}

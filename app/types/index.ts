@@ -31,15 +31,23 @@ export interface ProductTier {
   price: number;
 }
 
+export interface ProductVariation {
+  id?: string;
+  variant_name: string;
+  base_price: number;
+}
+
 export interface Product {
   id: string;
   name: string;
   price: number; // Base price (qty 1)
-  wholesalePrices?: ProductTier[]; // Tiered pricing
+  product_price_rules?: ProductTier[]; // Tiered pricing
+  product_variants?: ProductVariation[]; // NEW: Product Variations
   category: "Id Card" | "Lanyard" | "Paket" | "Lainnya";
   description?: string;
-  image?: string; // Base64 string for product image
-  showInDashboard?: boolean; // Toggle visibility on landing page
+  image?: any; // Base64 string for product image
+  images: string[]; // Base64 string for product image
+  show_in_dashboard?: boolean; // Toggle visibility on landing page
 }
 
 // export interface Product {
@@ -69,6 +77,8 @@ export interface Order {
 
   // KKN Specifics
   isKKN?: boolean;
+  is_kkn?: boolean;
+  is_sponsor?: boolean;
   kknDetails?: KKNDetails;
   pjName?: string;
   pjPhone?: string;
@@ -154,4 +164,58 @@ export interface EmailMessage {
   date: string;
   read: boolean;
   tag: "Inbox" | "Sent" | "Spam";
+}
+
+// --- NEW SETTINGS & FINANCE TYPES ---
+
+export interface BankAccount {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+  holderName: string;
+}
+
+export interface AppSettings {
+  headerBackground?: string; // Base64 image for Hero & Nota
+}
+
+export interface AttendanceRecord {
+  status: "Hadir";
+  timeIn: string;
+  location: string;
+  photo: string;
+}
+
+// export interface Employee {
+//   id: string;
+//   name: string;
+//   role: string;
+//   phone: string;
+//   status: string;
+//   attendanceToday?: AttendanceRecord;
+//   baseSalary: number;
+//   allowance: number;
+// }
+
+// --- NEW MATERIAL TYPES ---
+export interface RawMaterial {
+  id: string;
+  name: string;
+  unit: string;
+  pricePerUnit: number;
+  shopId: string;
+  category: string; // e.g. "Tinta", "Kertas", "Aksesoris"
+  stockKey: string; // Key used in StockState (e.g., 'tinta_ml')
+}
+
+export interface Transaction {
+  id: string;
+  date: string;
+  type: "Income" | "Expense";
+  category: string; // e.g. "Gaji", "Bahan Baku", "Operasional", "Penjualan"
+  amount: number;
+  description: string;
+  isAuto?: boolean; // If true, generated from Order/Salary logic
+  proofImage?: string; // Base64 image
+  bankId?: string; // Bank ID or Name
 }

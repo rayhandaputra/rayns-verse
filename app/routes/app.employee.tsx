@@ -1,10 +1,8 @@
 // app/routes/app.employee.tsx
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
-  useLoaderData,
   useActionData,
   Form,
-  useRevalidator,
   type LoaderFunction,
   type ActionFunction,
 } from "react-router";
@@ -28,6 +26,8 @@ import {
 import { requireAuth } from "~/lib/session.server";
 import { toast } from "sonner";
 import { API } from "~/lib/api";
+import { useFetcherData } from "~/hooks/use-fetcher-data";
+import { nexus } from "~/lib/nexus-client";
 
 // ============================================
 // TYPES & INTERFACES
@@ -64,83 +64,9 @@ interface ActionData {
 // ============================================
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const { user, token } = await requireAuth(request);
-
-  // Fetch employees
-  const employeesRes = await API.EMPLOYEE.get({
-    session: { user, token },
-    req: {
-      query: {
-        page: 0,
-        size: 1000,
-      },
-    },
-  });
-
-  // Fetch today's attendance
-  const today = new Date().toISOString().split("T")[0];
-  const attendanceRes = await API.EMPLOYEE_ATTENDANCE.getTodayAttendance({
-    session: { user, token },
-    req: {},
-  });
-
-  // Fetch salaries
-  const salariesRes = await API.EMPLOYEE_SALARY.get({
-    session: { user, token },
-    req: {
-      query: {
-        page: 0,
-        size: 1000,
-      },
-    },
-  });
-
-  // Create salary map
-  const salaryMap = new Map();
-  (salariesRes.items || []).forEach((s: any) => {
-    salaryMap.set(s.employee_id, {
-      baseSalary: Number(s.base_salary) || 0,
-      allowance: Number(s.allowances) || 0,
-      paymentType: s.payment_type || "monthly",
-    });
-  });
-
-  // Create attendance map
-  const attendanceMap = new Map();
-  (attendanceRes.items || []).forEach((a: any) => {
-    attendanceMap.set(a.employee_id, {
-      status: a.presence_status || "absent",
-      timeIn: a.time_in || "",
-      location: "Kantor",
-      photo: a.selfie_path || "",
-    });
-  });
-
-  // Combine data
-  const mappedEmployees: EmployeeWithSalary[] = (employeesRes.items || []).map(
-    (e: any) => {
-      const salary = salaryMap.get(e.id) || {
-        baseSalary: 0,
-        allowance: 0,
-        paymentType: "monthly",
-      };
-      const attendance = attendanceMap.get(e.id);
-
-      return {
-        id: String(e.id),
-        name: e.name || "",
-        role: e.structural || "",
-        phone: e.phone || "",
-        status: e.status || "active",
-        baseSalary: salary.baseSalary,
-        allowance: salary.allowance,
-        paymentType: salary.paymentType,
-        attendanceToday: attendance,
-      };
-    }
-  );
-
-  return { employees: mappedEmployees };
+  // Only check authentication
+  await requireAuth(request);
+  return Response.json({ initialized: true });
 };
 
 // ============================================
@@ -319,9 +245,80 @@ export const action: ActionFunction = async ({ request }) => {
 // ============================================
 
 export default function EmployeePage() {
-  const { employees = [] } = useLoaderData<LoaderData>();
   const actionData = useActionData<ActionData>();
-  const revalidator = useRevalidator();
+
+  // Fetch employees
+  const { data: employeesData, reload } = useFetcherData({
+    endpoint: nexus()
+      .module("EMPLOYEE")
+      .action("get")
+      .params({ page: 0, size: 1000 })
+      .build(),
+  });
+
+  // Fetch today's attendance
+  const { data: attendanceData } = useFetcherData({
+    endpoint: nexus()
+      .module("EMPLOYEE_ATTENDANCE")
+      .action("getTodayAttendance")
+      .build(),
+  });
+
+  // Fetch salaries
+  const { data: salariesData } = useFetcherData({
+    endpoint: nexus()
+      .module("EMPLOYEE_SALARY")
+      .action("get")
+      .params({ page: 0, size: 1000 })
+      .build(),
+  });
+
+  // Map data
+  const employees: EmployeeWithSalary[] = useMemo(() => {
+    if (!employeesData?.data?.items) return [];
+
+    // Create salary map
+    const salaryMap = new Map();
+    (salariesData?.data?.items || []).forEach((s: any) => {
+      salaryMap.set(s.employee_id, {
+        baseSalary: Number(s.base_salary) || 0,
+        allowance: Number(s.allowances) || 0,
+        paymentType: s.payment_type || "monthly",
+      });
+    });
+
+    // Create attendance map
+    const attendanceMap = new Map();
+    (attendanceData?.data?.items || []).forEach((a: any) => {
+      attendanceMap.set(a.employee_id, {
+        status: a.presence_status || "absent",
+        timeIn: a.time_in || "",
+        location: "Kantor",
+        photo: a.selfie_path || "",
+      });
+    });
+
+    return employeesData.data.items.map((e: any) => {
+      const salary = salaryMap.get(e.id) || {
+        baseSalary: 0,
+        allowance: 0,
+        paymentType: "monthly",
+      };
+      const attendance = attendanceMap.get(e.id);
+
+      return {
+        id: String(e.id),
+        name: e.name || "",
+        role: e.structural || "",
+        phone: e.phone || "",
+        status: e.status || "active",
+        baseSalary: salary.baseSalary,
+        allowance: salary.allowance,
+        paymentType: salary.paymentType,
+        attendanceToday: attendance,
+      };
+    });
+  }, [employeesData, salariesData, attendanceData]);
 
   // ========== STATE ==========
   const [activeTab, setActiveTab] = useState<"list" | "attendance" | "salary">(
@@ -370,8 +367,8 @@ export default function EmployeePage() {
         phone: "",
         status: "active",
       });
-      // Revalidate to refresh data
-      revalidator.revalidate();
+      // Reload data
+      reload();
     } else if (actionData?.success === false) {
       toast.error(actionData.message || "Gagal");
     }

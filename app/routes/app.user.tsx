@@ -1,32 +1,24 @@
 import {
   Form,
   useActionData,
-  useFetcher,
-  useLoaderData,
   type ActionFunction,
   type LoaderFunction,
 } from "react-router";
-import React, { useEffect, useState } from "react";
-import { Plus, Edit2, Trash2, X, Shield } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Plus, Edit2, Trash2, X, Shield, Upload } from "lucide-react";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { API } from "~/lib/api";
 import { AuthAPI } from "~/lib/api/modules/user_auth";
+import { useFetcherData } from "~/hooks/use-fetcher-data";
+import { nexus } from "~/lib/nexus-client";
+import { requireAuth } from "~/lib/session.server";
+import { safeParseArray } from "~/lib/utils";
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const user = await API.USER.get({
-    session: {},
-    req: {
-      pagination: "true",
-      page: 0,
-      size: 10, // Increased size to show more users as pagination UI isn't fully implemented in this view yet
-    } as any,
-  });
-
-  return {
-    users: user?.items || [],
-    total: user?.total || 0,
-  };
+  // Only check authentication
+  await requireAuth(request);
+  return Response.json({ initialized: true });
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -110,9 +102,49 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function UserManagementPage() {
-  const { users } = useLoaderData() as { users: any[]; total: number };
   const actionData = useActionData() as any;
-  const fetcher = useFetcher();
+
+  // Fetch users with Nexus
+  const { data: cmsContentData, reload: reloadCmsContent } = useFetcherData({
+    endpoint: nexus()
+      .module("CMS_CONTENT")
+      .action("get")
+      .params({
+        pagination: "true",
+        type: "hero-section",
+        page: 0,
+        size: 1,
+      })
+      .build(),
+  });
+  console.log(
+    safeParseArray(cmsContentData?.data?.items?.[0]?.image_gallery)?.[0]
+  );
+
+  const { data: usersData, reload } = useFetcherData({
+    endpoint: nexus()
+      .module("USER")
+      .action("get")
+      .params({
+        pagination: "true",
+        page: 0,
+        size: 100,
+      })
+      .build(),
+  });
+
+  const users = usersData?.data?.items || [];
+
+  // Settings State
+  const [settings, setSettings] = useState<any>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetcher for delete action
+  const { data: deleteData, load: submitDelete } = useFetcherData({
+    endpoint: "",
+    method: "POST",
+    autoLoad: false,
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -133,6 +165,7 @@ export default function UserManagementPage() {
         toast.success("Berhasil", {
           description: actionData.message || "Berhasil",
         });
+        reload(); // Reload users data
       } else {
         toast.error("Terjadi Kesalahan", {
           description:
@@ -141,6 +174,15 @@ export default function UserManagementPage() {
       }
     }
   }, [actionData]);
+
+  useEffect(() => {
+    if (deleteData?.success) {
+      toast.success("User berhasil dihapus");
+      reload();
+    } else if (deleteData?.success === false) {
+      toast.error("Gagal menghapus user");
+    }
+  }, [deleteData]);
 
   const handleEdit = (user: any) => {
     setEditingId(user.id);
@@ -175,12 +217,7 @@ export default function UserManagementPage() {
     });
 
     if (result.isConfirmed) {
-      fetcher.submit(
-        { id: id, deleted: 1 },
-        {
-          method: "delete",
-        }
-      );
+      submitDelete({ id: id, deleted: 1 });
     }
   };
 
@@ -264,6 +301,58 @@ export default function UserManagementPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* --- SETTINGS SECTION --- */}
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mt-8">
+        <h2 className="text-lg font-bold text-gray-800 mb-2">
+          Pengaturan Tampilan
+        </h2>
+        <p className="text-gray-500 text-sm mb-4">
+          Background untuk Judul Landing Page & Nota.
+        </p>
+
+        <div className="flex items-center gap-4">
+          <div className="w-48 h-24 bg-gray-100 rounded-lg border border-gray-300 flex items-center justify-center overflow-hidden relative">
+            {safeParseArray(
+              cmsContentData?.data?.items?.[0]?.image_gallery
+            )?.[0] ? (
+              <img
+                src={
+                  safeParseArray(
+                    cmsContentData?.data?.items?.[0]?.image_gallery
+                  )?.[0]
+                }
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-xs text-gray-400">No Image</span>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50"
+            >
+              <Upload size={16} /> Upload Background
+            </button>
+            {settings.headerBackground && (
+              <button
+                onClick={() => {}}
+                className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 text-sm font-medium rounded-lg"
+              >
+                <Trash2 size={16} /> Hapus
+              </button>
+            )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={() => {}}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Modal */}

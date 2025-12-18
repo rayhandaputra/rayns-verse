@@ -1,7 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { API } from "./api";
 
-export const ADMIN_WA = "628521933747";
+export const ADMIN_WA = "6285219337474";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -120,3 +121,30 @@ export function generateDiscountCode() {
   }
   return out;
 }
+
+export const uploadFile = async (file: File) => {
+  const response = await API.ASSET.upload(file);
+  return response.url;
+};
+
+export const safeParseArray = <T = unknown>(str: unknown): T[] => {
+  try {
+    const parsed = typeof str === "string" ? JSON.parse(str) : str;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+export const safeParseObject = <T extends object = object>(
+  str: unknown
+): T | null => {
+  try {
+    const parsed = typeof str === "string" ? JSON.parse(str) : str;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as T)
+      : null;
+  } catch {
+    return null;
+  }
+};

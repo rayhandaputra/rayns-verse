@@ -10,6 +10,7 @@ export const ProductAPI = {
       type = "",
       id = "",
       include_prices = false,
+      show_in_dashboard = "",
     } = req.query || {};
 
     return APIProvider({
@@ -37,17 +38,34 @@ export const ProductAPI = {
           deleted_on: "null",
           ...(type ? { type } : {}),
           ...(id ? { id } : {}),
+          ...(show_in_dashboard ? { show_in_dashboard } : {}),
         },
         search,
         page: Number(page),
         size: Number(size),
-        ...(include_prices && {
-          include: 1,
-          include_table: "product_price_rules",
-          include_foreign_key: "product_id",
-          include_reference_key: "id",
-          include_columns: ["min_qty", "price"],
-        }),
+        // ...(include_prices && {
+        //   include: 1,
+        //   include_table: "product_price_rules",
+        //   include_foreign_key: "product_id",
+        //   include_reference_key: "id",
+        //   include_columns: ["min_qty", "price"],
+        // }),
+        include: [
+          {
+            table: "product_price_rules",
+            alias: "product_price_rules",
+            foreign_key: "product_id",
+            reference_key: "id",
+            columns: ["min_qty", "price"],
+          },
+          {
+            table: "product_variants",
+            alias: "product_variants",
+            foreign_key: "product_id",
+            reference_key: "id",
+            columns: ["id", "variant_name", "base_price"],
+          },
+        ],
       },
     });
   },
@@ -66,6 +84,7 @@ export const ProductAPI = {
       total_price = 0,
       items = [],
       price_rules = [], // ✅ NEW: Optional price rules
+      variants = [], // ✅ NEW: Optional price rules
     } = req.body || {};
 
     if (!name) {
@@ -156,6 +175,28 @@ export const ProductAPI = {
         });
       }
 
+      // ✅ INSERT / UPDATE VARIANTS (if provided)
+      if (Array.isArray(variants) && variants.length > 0) {
+        const variantRows = variants.map((variant: any) => ({
+          uid: crypto.randomUUID(),
+          product_id,
+          variant_name: variant.variant_name,
+          base_price: Number(variant.base_price),
+          created_on: new Date().toISOString(),
+        }));
+
+        await APIProvider({
+          endpoint: "bulk-insert",
+          method: "POST",
+          table: "product_variants",
+          action: "bulk_insert",
+          body: {
+            updateOnDuplicate: true,
+            rows: variantRows,
+          },
+        });
+      }
+
       return {
         success: true,
         message: "Produk berhasil disimpan",
@@ -168,7 +209,7 @@ export const ProductAPI = {
   },
 
   update: async ({ req }: any) => {
-    const { id, price_rules, ...fields } = req.body || {};
+    const { id, price_rules, variants, ...fields } = req.body || {};
 
     if (!id) {
       return { success: false, message: "ID wajib diisi" };
@@ -226,6 +267,45 @@ export const ProductAPI = {
             body: {
               updateOnDuplicate: true,
               rows: priceRuleRows,
+            },
+          });
+        }
+      }
+
+      if (Array.isArray(variants)) {
+        // First, soft delete existing price rules for this product
+        await APIProvider({
+          endpoint: "update",
+          method: "POST",
+          table: "product_variants",
+          action: "update",
+          body: {
+            data: { deleted_on: new Date().toISOString() },
+            where: { product_id: id, deleted_on: "null" },
+          },
+        });
+
+        // Then insert new price rules (if any)
+        if (variants.length > 0) {
+          const variantRows = variants.map((rule: any) => ({
+            id: rule.id,
+            uid: crypto.randomUUID(),
+            product_id: id,
+            variant_name: rule.variant_name,
+            base_price: Number(rule.base_price),
+            created_on: new Date().toISOString(),
+          }));
+
+          console.log(variantRows);
+
+          await APIProvider({
+            endpoint: "bulk-insert",
+            method: "POST",
+            table: "product_variants",
+            action: "bulk_insert",
+            body: {
+              updateOnDuplicate: true,
+              rows: variantRows,
             },
           });
         }

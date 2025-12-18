@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect } from "react";
 import type { StockState, PriceList, ShopList } from "../types";
 import {
   formatCurrency,
-  parseCurrency,
   mlPerPaket,
   unitAdd,
   SHOP_ITEMS_CONFIG,
@@ -23,110 +22,29 @@ import {
   Calculator,
   Store,
   Settings,
-  AlertTriangle,
   Plus,
   RefreshCw,
+  Trash2,
+  Edit2,
 } from "lucide-react";
 import {
-  useLoaderData,
-  useFetcher,
   type LoaderFunction,
   type ActionFunction,
-  // json,
 } from "react-router";
 import { API } from "~/lib/api";
 import { requireAuth } from "~/lib/session.server";
 import { toast } from "sonner";
+import { useFetcherData } from "~/hooks/use-fetcher-data";
+import { nexus } from "~/lib/nexus-client";
 
 // Mapping specific commodity codes to StockState keys if needed
 // Or we assume the "code" in DB matches the keys in StockState
 const STOCK_KEYS = Object.keys(INITIAL_STOCK);
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const { user, token } = await requireAuth(request);
-
-  // 1. Fetch Commodities (Stock)
-  const stockRes = await API.COMMODITY_STOCK.get({
-    session: { user, token },
-    req: { query: { size: 100, pagination: "false" } },
-  });
-
-  // 2. Fetch Suppliers
-  const suppliersRes = await API.SUPPLIER.get({
-    session: { user, token },
-    req: { query: { size: 100 } },
-  });
-
-  // 3. Fetch Supplier Commodities (for prices)
-  const supplierCommodityRes = await API.SUPPLIER_COMMODITY.get({
-    session: { user, token },
-    req: { query: { size: 1000, pagination: "false" } },
-  });
-
-  // 4. Map to StockState
-  const stock: StockState = { ...INITIAL_STOCK }; // Start with default to ensure all keys exist
-
-  // Create a map for ID lookups (key -> id) for the UI to submit correct IDs
-  const commodityMap: Record<string, string> = {};
-
-  if (stockRes.items) {
-    stockRes.items.forEach((item: any) => {
-      // Match item.code to our internal keys
-      if (STOCK_KEYS.includes(item.code)) {
-        stock[item.code as keyof StockState] = Number(item.stock || 0);
-        commodityMap[item.code] = item.id;
-      }
-    });
-  }
-
-  // 5. Map prices from supplier_commodities
-  const prices: PriceList = { ...INITIAL_PRICES };
-
-  if (supplierCommodityRes.items) {
-    // Group by commodity_id and get average or latest price
-    const priceMap: Record<string, number> = {};
-
-    stockRes.items?.forEach((commodity: any) => {
-      // Find all supplier commodities for this commodity
-      const supplierPrices = supplierCommodityRes.items.filter(
-        (sc: any) => sc.commodity_id === commodity.id
-      );
-
-      if (supplierPrices.length > 0) {
-        // Use average price or latest price
-        const avgPrice = supplierPrices.reduce((sum: number, sc: any) => sum + Number(sc.price || 0), 0) / supplierPrices.length;
-        priceMap[commodity.code] = avgPrice;
-      }
-    });
-
-    // Map to our price keys
-    Object.keys(INITIAL_PRICES).forEach((key) => {
-      if (priceMap[key]) {
-        prices[key] = priceMap[key];
-      }
-    });
-  }
-
-  // 6. Map shops from suppliers
-  const shops: ShopList = { ...INITIAL_SHOPS };
-
-  if (suppliersRes.items) {
-    suppliersRes.items.forEach((supplier: any, index: number) => {
-      const code = String.fromCharCode(65 + index); // A, B, C, D...
-      if (code.charCodeAt(0) <= 90) { // Only A-Z
-        shops[code] = supplier.name;
-      }
-    });
-  }
-
-  return Response.json({
-    stock,
-    commodityMap,
-    prices,
-    shops,
-    suppliers: suppliersRes.items || [],
-    commodities: stockRes.items || [],
-  });
+  // Only check authentication
+  await requireAuth(request);
+  return Response.json({ initialized: true });
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -174,157 +92,153 @@ export const action: ActionFunction = async ({ request }) => {
     }
   }
 
-  if (actionType === "update_price") {
-    const commodity_code = formData.get("commodity_code") as string;
-    const price = Number(formData.get("price"));
 
-    if (!commodity_code || isNaN(price)) {
-      return Response.json({
-        success: false,
-        message: "Data tidak valid",
-      });
-    }
-
-    try {
-      // Get commodity ID from code
-      const commodityRes = await API.COMMODITY.get({
-        session: { user, token },
-        req: { query: { search: commodity_code, size: 1 } },
-      });
-
-      const commodity = commodityRes.items?.find((item: any) => item.code === commodity_code);
-      if (!commodity) {
-        return Response.json({
-          success: false,
-          message: "Commodity tidak ditemukan",
-        });
-      }
-
-      // Get first supplier
-      const suppliersRes = await API.SUPPLIER.get({
-        session: { user, token },
-        req: { query: { size: 1 } },
-      });
-
-      const supplier_id = suppliersRes.items?.[0]?.id;
-      if (!supplier_id) {
-        return Response.json({
-          success: false,
-          message: "Supplier tidak ditemukan",
-        });
-      }
-
-      // Update price
-      const result = await API.SUPPLIER_COMMODITY.updatePrice({
-        session: { user, token },
-        req: {
-          body: {
-            supplier_id,
-            commodity_id: commodity.id,
-            price,
-          },
-        },
-      });
-
-      return Response.json(result);
-    } catch (e: any) {
-      return Response.json({ success: false, message: e.message });
-    }
-  }
-
-  if (actionType === "update_shop") {
-    const shop_code = formData.get("shop_code") as string;
-    const shop_name = formData.get("shop_name") as string;
-
-    if (!shop_code || !shop_name) {
-      return Response.json({
-        success: false,
-        message: "Data tidak valid",
-      });
-    }
-
-    try {
-      // Get suppliers and find the one matching the code
-      const suppliersRes = await API.SUPPLIER.get({
-        session: { user, token },
-        req: { query: { size: 100 } },
-      });
-
-      // Map code to index (A=0, B=1, etc)
-      const index = shop_code.charCodeAt(0) - 65;
-      const supplier = suppliersRes.items?.[index];
-
-      if (!supplier) {
-        return Response.json({
-          success: false,
-          message: "Supplier tidak ditemukan",
-        });
-      }
-
-      // Update supplier name
-      const result = await API.SUPPLIER.update({
-        session: { user, token },
-        req: {
-          body: {
-            id: supplier.id,
-            name: shop_name,
-          },
-        },
-      });
-
-      return Response.json(result);
-    } catch (e: any) {
-      return Response.json({ success: false, message: e.message });
-    }
-  }
 
   return Response.json({ success: true });
 };
 
 export default function StockPage() {
-  const loaderData = useLoaderData<{
-    stock: StockState;
-    commodityMap: Record<string, string>;
-    prices: PriceList;
-    shops: ShopList;
-    suppliers: any[];
-    commodities: any[];
-  }>();
+  // Fetch stock data
+  const { data: stockData, reload } = useFetcherData({
+    endpoint: nexus()
+      .module("COMMODITY_STOCK")
+      .action("get")
+      .params({ size: 100, pagination: "false" })
+      .build(),
+  });
 
-  const fetcher = useFetcher();
+  // Fetch suppliers
+  const { data: suppliersData } = useFetcherData({
+    endpoint: nexus()
+      .module("SUPPLIER")
+      .action("get")
+      .params({ size: 100 })
+      .build(),
+  });
 
-  // Use real data from loader
-  const stock = loaderData.stock;
-  const commodityMap = loaderData.commodityMap;
+  // Fetch supplier commodities for prices
+  const { data: supplierCommodityData } = useFetcherData({
+    endpoint: nexus()
+      .module("SUPPLIER_COMMODITY")
+      .action("get")
+      .params({ size: 1000, pagination: "false" })
+      .build(),
+  });
 
-  // Use real prices and shops from loader (not local state anymore)
-  const [prices, setPrices] = useState<PriceList>(loaderData.prices);
-  const [shops, setShops] = useState<ShopList>(loaderData.shops);
+  // Map to StockState
+  const { stock, commodityMap } = useMemo(() => {
+    const stockResult: StockState = { ...INITIAL_STOCK };
+    const mapResult: Record<string, string> = {};
 
-  // Update when loader data changes
+    if (stockData?.data?.items) {
+      stockData.data.items.forEach((item: any) => {
+        if (STOCK_KEYS.includes(item.code)) {
+          stockResult[item.code as keyof StockState] = Number(item.stock || 0);
+          mapResult[item.code] = item.id;
+        }
+      });
+    }
+
+    return { stock: stockResult, commodityMap: mapResult };
+  }, [stockData]);
+
+  // Map prices from supplier_commodities
+  const initialPrices = useMemo(() => {
+    const pricesResult: PriceList = { ...INITIAL_PRICES };
+
+    if (supplierCommodityData?.data?.items && stockData?.data?.items) {
+      const priceMap: Record<string, number> = {};
+
+      stockData.data.items.forEach((commodity: any) => {
+        const supplierPrices = supplierCommodityData.data.items.filter(
+          (sc: any) => sc.commodity_id === commodity.id
+        );
+
+        if (supplierPrices.length > 0) {
+          const avgPrice =
+            supplierPrices.reduce(
+              (sum: number, sc: any) => sum + Number(sc.price || 0),
+              0
+            ) / supplierPrices.length;
+          priceMap[commodity.code] = avgPrice;
+        }
+      });
+
+      Object.keys(INITIAL_PRICES).forEach((key) => {
+        if (priceMap[key]) {
+          pricesResult[key] = priceMap[key];
+        }
+      });
+    }
+
+    return pricesResult;
+  }, [supplierCommodityData, stockData]);
+
+  // Map shops from suppliers
+  const initialShops = useMemo(() => {
+    const shopsResult: ShopList = { ...INITIAL_SHOPS };
+
+    if (suppliersData?.data?.items) {
+      suppliersData.data.items.forEach((supplier: any, index: number) => {
+        const code = String.fromCharCode(65 + index);
+        if (code.charCodeAt(0) <= 90) {
+          shopsResult[code] = supplier.name;
+        }
+      });
+    }
+
+    return shopsResult;
+  }, [suppliersData]);
+
+  // Fetcher for actions
+  const { data: actionData, load: submitAction } = useFetcherData({
+    endpoint: "",
+    method: "POST",
+    autoLoad: false,
+  });
+
+  // Local state for prices and shops
+  const [prices, setPrices] = useState<PriceList>(initialPrices);
+  const [shops, setShops] = useState<ShopList>(initialShops);
+
+  // Update when data changes
   useEffect(() => {
-    setPrices(loaderData.prices);
-    setShops(loaderData.shops);
-  }, [loaderData.prices, loaderData.shops]);
+    setPrices(initialPrices);
+  }, [initialPrices]);
 
-  const [priceKey, setPriceKey] = useState("ink_set");
-  const [priceInput, setPriceInput] = useState("");
-  const [selectedShopCode, setSelectedShopCode] = useState("A");
-  const [shopNameInput, setShopNameInput] = useState("");
+  useEffect(() => {
+    setShops(initialShops);
+  }, [initialShops]);
+
 
   // -- States for Multi Restock --
-  const [restockShop, setRestockShop] = useState("D");
+  const [restockShop, setRestockShop] = useState("");
   const [restockInputs, setRestockInputs] = useState<Record<string, number>>(
     {}
   );
+  const [shippingCost, setShippingCost] = useState("");
+  const [discount, setDiscount] = useState("");
 
   // -- States for Manual Stock --
-  const [manualItem, setManualItem] = useState("ink");
-  const [manualValue, setManualValue] = useState("");
 
-  useEffect(() => {
-    setPriceInput(formatCurrency(prices[priceKey] || 0));
-  }, [priceKey, prices]);
+
+  // -- States for Materials Management --
+  const [showAddMaterial, setShowAddMaterial] = useState(false);
+  const [materials, setMaterials] = useState<any[]>([]);
+  const [newMatForm, setNewMatForm] = useState<any>({ unit: 'pcs', category: 'Lainnya' });
+  const [editingMaterial, setEditingMaterial] = useState<any | null>(null);
+
+
+
+  // -- Format Helper --
+  const formatNumber = (num: number | string | undefined) => {
+    if (num === undefined || num === null || num === "") return "";
+    return num.toString().replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
+
+  const parseNumber = (str: string) => {
+    return Number(str.replace(/\./g, "")) || 0;
+  };
 
   // -- Calculation: Capacity --
   const metrics = useMemo(() => {
@@ -376,45 +290,84 @@ export default function StockPage() {
     return { allCaps, maxPackage };
   }, [stock]);
 
+  // -- Calculate filtered materials based on selected shop --
+  const filteredMaterials = useMemo(() => {
+    if (!restockShop) return [];
+    return (SHOP_ITEMS_CONFIG[restockShop] || []);
+  }, [restockShop]);
+
+  // -- Calculate items cost --
+  const calculateItemsCost = () => {
+    let total = 0;
+    Object.entries(restockInputs).forEach(([key, qty]) => {
+      const item = SHOP_ITEMS_CONFIG[restockShop]?.find(it => it.k === key);
+      if (item && prices[key]) {
+        total += qty * (prices[key] || 0);
+      }
+    });
+    return total;
+  };
+
+  const calculateGrandTotal = () => {
+    const itemsCost = calculateItemsCost();
+    const ship = parseNumber(shippingCost);
+    const disc = parseNumber(discount);
+    return Math.max(0, itemsCost - disc + ship);
+  };
+
+  // -- Material Actions --
+  const handleAddMaterial = () => {
+    if (!newMatForm.name || !newMatForm.pricePerUnit || !newMatForm.stockKey) {
+      toast.error("Lengkapi data bahan baku");
+      return;
+    }
+    const newMat = {
+      id: 'mat-' + Date.now(),
+      name: newMatForm.name,
+      unit: newMatForm.unit || 'pcs',
+      pricePerUnit: Number(newMatForm.pricePerUnit),
+      shopId: newMatForm.shopId || 'Umum',
+      category: newMatForm.category || 'Lainnya',
+      stockKey: newMatForm.stockKey
+    };
+    setMaterials([...materials, newMat]);
+    setShowAddMaterial(false);
+    setNewMatForm({ unit: 'pcs', category: 'Lainnya' });
+    toast.success("Material berhasil ditambahkan");
+  };
+
+  const handleEditMaterial = () => {
+    if (!editingMaterial || !editingMaterial.name) return;
+
+    const updatedMaterials = materials.map(m =>
+      m.id === editingMaterial.id ? editingMaterial : m
+    );
+    setMaterials(updatedMaterials);
+    setEditingMaterial(null);
+    toast.success("Material berhasil diupdate");
+  };
+
+  const handleDeleteMaterial = (id: string) => {
+    if (confirm('Hapus bahan baku ini?')) {
+      setMaterials(materials.filter(m => m.id !== id));
+      toast.success("Material berhasil dihapus");
+    }
+  };
+
   // -- Handlers --
-  const handleApplyPrice = () => {
-    const val = parseCurrency(priceInput);
 
-    // Submit to API
-    fetcher.submit(
-      {
-        actionType: "update_price",
-        commodity_code: priceKey,
-        price: String(val),
-      },
-      { method: "post" }
-    );
 
-    // Optimistic update
-    setPrices({ ...prices, [priceKey]: val });
-  };
 
-  const handleUpdateShopName = () => {
-    if (!shopNameInput.trim()) return;
-
-    // Submit to API
-    fetcher.submit(
-      {
-        actionType: "update_shop",
-        shop_code: selectedShopCode,
-        shop_name: shopNameInput,
-      },
-      { method: "post" }
-    );
-
-    // Optimistic update
-    setShops({ ...shops, [selectedShopCode]: shopNameInput });
-    setShopNameInput("");
-  };
 
   const handleMultiRestock = () => {
     const items = SHOP_ITEMS_CONFIG[restockShop];
     if (!items) return;
+
+    const hasItems = Object.values(restockInputs).some((v: number) => v > 0);
+    if (!hasItems) {
+      toast.error('Masukkan jumlah barang terlebih dahulu.');
+      return;
+    }
 
     const updates: any[] = [];
 
@@ -429,299 +382,329 @@ export default function StockPage() {
         const id = commodityMap[targetKey];
         if (id) {
           updates.push({ key: it.k, qty, id });
-        } else {
-          // console.warn(`Commodity ID not found for ${targetKey}`);
         }
       }
     });
 
     if (updates.length > 0) {
-      fetcher.submit(
-        { actionType: "restock", data: JSON.stringify(updates) },
-        { method: "post" }
-      );
+      submitAction({ actionType: "restock", data: JSON.stringify(updates) });
+
+      // Reset form
       setRestockInputs({});
+      setShippingCost('');
+      setDiscount('');
     } else {
       toast.error("Item tidak ditemukan di database atau qty 0");
     }
   };
 
-  const handleManualRestock = () => {
-    const raw = manualValue.trim();
-    const updates: any[] = [];
 
-    if (manualItem === "ink") {
-      const m = raw.match(/C(\d{1,3})\s*M(\d{1,3})\s*Y(\d{1,3})\s*K(\d{1,3})/i);
-      if (!m) {
-        toast.error("Format salah! Gunakan: C20 M30 Y0 K10");
-        return;
-      }
-      const [_, C, M, Y, K] = m.map(Number);
-      const ml = ((C + M + Y + K) / 100) * 1000;
-
-      const id = commodityMap["tinta_ml"];
-      if (id) updates.push({ key: "tinta_ml", qty: 0, overrideQty: ml, id });
-    } else if (manualItem === "roll_100m" || manualItem === "tape_roll") {
-      const pct = Math.max(0, Math.min(100, Number(raw) || 0));
-      const add = pct / 100;
-      const id = commodityMap[manualItem];
-      if (id) updates.push({ key: manualItem, qty: 0, overrideQty: add, id });
-    } else if (manualItem === "rivet_pcs") {
-      const pct = Math.max(0, Math.min(100, Number(raw) || 0));
-      const pcs = Math.round((pct / 100) * 2000);
-      const id = commodityMap["rivet_pcs"];
-      if (id) updates.push({ key: "rivet_pcs", qty: 0, overrideQty: pcs, id });
-    } else {
-      const qty = Number(raw);
-      if (!isFinite(qty)) return;
-      const id = commodityMap[manualItem];
-      if (id) updates.push({ key: manualItem, qty: 0, overrideQty: qty, id });
-    }
-
-    if (updates.length > 0) {
-      const refinedUpdates = updates.map((u) => ({
-        ...u,
-        isDirect: !!u.overrideQty,
-        qty: u.overrideQty !== undefined ? u.overrideQty : u.qty,
-      }));
-
-      fetcher.submit(
-        { actionType: "restock", data: JSON.stringify(refinedUpdates) },
-        { method: "post" }
-      );
-      setManualValue("");
-    } else {
-      toast.error("Item tidak ditemukan / ID missing");
-    }
-  };
 
   useEffect(() => {
-    if (fetcher.data && fetcher.state === "idle") {
-      if (fetcher.data.success) {
-        toast.success(fetcher.data.message);
-        // Reload data after successful operation
-        fetcher.load(window.location.pathname + window.location.search);
-      } else if (fetcher.data.success === false) {
-        toast.error(fetcher.data.message);
-      }
+    if (actionData?.success) {
+      toast.success(actionData.message || "Berhasil");
+      reload();
+    } else if (actionData?.success === false) {
+      toast.error(actionData.message || "Gagal");
     }
-  }, [fetcher.data, fetcher.state]);
+  }, [actionData]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full items-start">
-      {/* LEFT COLUMN: CAPACITY & CALCULATIONS */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <Calculator size={20} /> Kalkulasi Stok
-        </h2>
+    <>
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 h-full items-start">
 
-        <div className="border border-gray-100 rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-semibold">
-              <tr>
-                <th className="px-4 py-3 text-left">Komponen</th>
-                <th className="px-4 py-3 text-right">Stok Fisik</th>
-                <th className="px-4 py-3 text-right">Konversi Paket</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {metrics.allCaps.map((c, i) => (
-                <tr
-                  key={i}
-                  className={`hover:bg-gray-50 ${c.val === metrics.maxPackage ? "bg-red-50/50" : ""}`}
-                >
-                  <td className="px-4 py-3 text-gray-700 font-medium">
-                    {c.name}
-                  </td>
-                  <td className="px-4 py-3 text-right text-gray-500">
-                    {typeof c.stock === "number"
-                      ? Number(c.stock).toLocaleString("id-ID")
-                      : c.stock}
-                  </td>
-                  <td className="px-4 py-3 text-right font-bold text-gray-900">
-                    {c.val}{" "}
-                    <span className="text-xs font-normal text-gray-400">
-                      pkt
-                    </span>
-                  </td>
+      {/* LEFT COLUMN: CAPACITY & CALCULATIONS */}
+      <div className="space-y-6">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <Calculator size={20} /> Kalkulasi Stok
+          </h2>
+
+          <div className="border border-gray-100 rounded-lg overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-semibold">
+                <tr>
+                  <th className="px-4 py-3 text-left">Komponen</th>
+                  <th className="px-4 py-3 text-right">Stok Fisik</th>
+                  <th className="px-4 py-3 text-right">Konversi Paket</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800 flex items-center gap-2">
-          <RefreshCw size={16} />
-          <span>
-            Produksi Maksimal Saat Ini: <b>{metrics.maxPackage} Paket</b>
-          </span>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {metrics.allCaps.map((c, i) => (
+                  <tr
+                    key={i}
+                    className={`hover:bg-gray-50 ${c.val === metrics.maxPackage ? 'bg-red-50/50' : ''}`}
+                  >
+                    <td className="px-4 py-3 text-gray-700 font-medium">{c.name}</td>
+                    <td className="px-4 py-3 text-right text-gray-500">
+                      {typeof c.stock === 'number' ? Number(c.stock).toLocaleString('id-ID') : c.stock}
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold text-gray-900">
+                      {c.val} <span className="text-xs font-normal text-gray-400">pkt</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800 flex items-center gap-2">
+            <RefreshCw size={16} />
+            <span>Produksi Maksimal Saat Ini: <b>{metrics.maxPackage} Paket</b></span>
+          </div>
         </div>
       </div>
 
       {/* RIGHT COLUMN: MANAGEMENT */}
       <div className="space-y-6">
-        {/* Section 1: Multi Restock */}
+
+        {/* Section 1: Restock with Cost */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <h3 className="text-sm font-bold text-gray-800 uppercase mb-4 flex items-center gap-2">
-            <Store size={18} /> Restock Toko (Multi Item)
+            <Store size={18} /> Restock Bahan Baru
           </h3>
 
+          {/* Shop Selector */}
           <div className="mb-4">
-            <label className="block text-xs font-medium text-gray-500 mb-1">
-              Pilih Toko
-            </label>
+            <label className="block text-xs font-bold text-gray-600 mb-1">Pilih Toko Supplier</label>
             <select
-              className="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border"
+              className="w-full border border-gray-300 rounded-lg p-2 text-sm bg-gray-50"
               value={restockShop}
-              onChange={(e) => setRestockShop(e.target.value)}
+              onChange={e => setRestockShop(e.target.value)}
             >
-              {Object.entries(shops).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v} ({k})
-                </option>
+              <option value="">-- Pilih Toko --</option>
+              {Object.entries(shops).map(([code, name]) => (
+                <option key={code} value={code}>{name}</option>
               ))}
             </select>
           </div>
 
-          <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
-            {(SHOP_ITEMS_CONFIG[restockShop] || []).map((item) => (
-              <div
-                key={item.k}
-                className="flex items-center justify-between text-sm"
-              >
-                <span className="text-gray-700 font-medium flex-1">
-                  {item.label}
-                </span>
-                <input
-                  type="number"
-                  min="0"
-                  className="w-24 text-right border border-gray-300 rounded-md text-sm p-2 focus:ring-blue-500 focus:outline-none"
-                  placeholder="0"
-                  value={restockInputs[item.k] || ""}
-                  onChange={(e) =>
-                    setRestockInputs({
-                      ...restockInputs,
-                      [item.k]: Number(e.target.value),
-                    })
-                  }
-                />
+          {restockShop ? (
+            <>
+              <div className="space-y-3 mb-4 max-h-60 overflow-y-auto border rounded-lg p-2 bg-gray-50">
+                {filteredMaterials.length === 0 ? (
+                  <p className="text-center text-gray-400 text-xs py-4">Tidak ada item terdaftar untuk toko ini.</p>
+                ) : (
+                  filteredMaterials.map(item => (
+                    <div key={item.k} className="flex items-center justify-between text-sm border-b border-gray-200 last:border-0 pb-2 mb-2 last:mb-0">
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-800">{item.label}</div>
+                        <div className="text-xs text-gray-500">
+                          {formatCurrency(prices[item.k] || 0)} / unit
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          className="w-20 text-right border border-gray-300 rounded-md text-sm p-1.5 focus:ring-blue-500 focus:outline-none"
+                          placeholder="0"
+                          value={restockInputs[item.k] ? formatNumber(restockInputs[item.k]) : ''}
+                          onChange={e => {
+                            const val = parseNumber(e.target.value);
+                            setRestockInputs({ ...restockInputs, [item.k]: val });
+                          }}
+                        />
+                        <span className="text-xs text-gray-500 w-8">unit</span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
-            ))}
-          </div>
 
-          <button
-            onClick={handleMultiRestock}
-            className="w-full bg-gray-900 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 flex items-center justify-center gap-2 transition shadow-lg shadow-gray-200"
-          >
-            <Plus size={16} /> Tambah Stok
-          </button>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Diskon (Rp)</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                    placeholder="0"
+                    value={formatNumber(discount)}
+                    onChange={e => setDiscount(e.target.value.replace(/\./g, ''))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Ongkir (Rp)</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                    placeholder="0"
+                    value={formatNumber(shippingCost)}
+                    onChange={e => setShippingCost(e.target.value.replace(/\./g, ''))}
+                  />
+                </div>
+              </div>
+
+              <div className="bg-gray-900 text-white p-4 rounded-lg flex justify-between items-center mb-4">
+                <span className="text-sm font-bold">Total Pengeluaran:</span>
+                <span className="text-lg font-bold">{formatCurrency(calculateGrandTotal())}</span>
+              </div>
+
+              <button
+                onClick={handleMultiRestock}
+                disabled={filteredMaterials.length === 0}
+                className="w-full bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center justify-center gap-2 transition disabled:opacity-50"
+              >
+                <Plus size={16} /> Proses & Catat Keuangan
+              </button>
+            </>
+          ) : (
+            <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+              Silakan pilih toko untuk mulai restock.
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Section 2: Manual Input */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h3 className="text-sm font-bold text-gray-800 uppercase mb-4 flex items-center gap-2">
-              <Settings size={18} /> Stok Manual
+
+
+        {/* Section 3: Manage Materials */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-sm font-bold text-gray-800 uppercase flex items-center gap-2">
+              <Settings size={18} /> Data Bahan Baku
             </h3>
-            <div className="space-y-3">
-              <select
-                className="w-full text-sm border border-gray-300 rounded-lg p-2"
-                value={manualItem}
-                onChange={(e) => {
-                  setManualItem(e.target.value);
-                  setManualValue("");
-                }}
-              >
-                <option value="ink">Tinta CMYK</option>
-                <option value="roll_100m">Kertas Roll 100m</option>
-                <option value="tape_roll">Solasi 33m</option>
-                <option value="rivet_pcs">Rivet (Persen)</option>
-                <option value="lanyard_pcs">Lanyard (Pcs)</option>
-                <option value="pvc_pcs">PVC (Pcs)</option>
-                <option value="case_pcs">Case (Pcs)</option>
-                <option value="kait_pcs">Kait (Pcs)</option>
-                <option value="stopper_pcs">Stopper (Pcs)</option>
-              </select>
-              <input
-                type="text"
-                className="w-full border border-gray-300 rounded-lg text-sm p-2"
-                placeholder={manualItem === "ink" ? "C20 M30 Y0 K10" : "100..."}
-                value={manualValue}
-                onChange={(e) => setManualValue(e.target.value)}
-              />
-              <button
-                onClick={handleManualRestock}
-                className="w-full bg-gray-100 border border-gray-300 text-gray-700 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 transition"
-              >
-                SIMPAN MANUAL
-              </button>
-            </div>
+            <button onClick={() => setShowAddMaterial(!showAddMaterial)} className="text-blue-600 text-xs font-bold hover:underline">
+              {showAddMaterial ? 'Batal' : '+ Item Baru'}
+            </button>
           </div>
 
-          {/* Section 3: Prices (Local) */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h3 className="text-sm font-bold text-gray-800 uppercase mb-4 flex items-center gap-2">
-              <AlertTriangle size={18} /> Harga & Toko
-            </h3>
-            <div className="space-y-3">
-              <select
-                className="w-full text-xs border border-gray-300 rounded-lg p-2"
-                value={priceKey}
-                onChange={(e) => setPriceKey(e.target.value)}
-              >
-                {Object.keys(prices).map((k) => (
-                  <option key={k} value={k}>
-                    {k.replace(/_/g, " ")}
-                  </option>
-                ))}
-              </select>
-              <div className="flex gap-2">
+          {showAddMaterial && (
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4 animate-fade-in">
+              <div className="grid grid-cols-2 gap-3 mb-3">
                 <input
-                  className="flex-1 border border-gray-300 rounded-lg text-sm p-2"
-                  value={priceInput}
-                  onChange={(e) => setPriceInput(e.target.value)}
+                  placeholder="Nama Item"
+                  className="text-sm border p-2 rounded col-span-2"
+                  value={newMatForm.name || ''}
+                  onChange={e => setNewMatForm({...newMatForm, name: e.target.value})}
                 />
-                <button
-                  onClick={handleApplyPrice}
-                  className="bg-blue-600 text-white px-3 rounded-lg text-xs font-bold"
-                >
-                  SET
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <label className="text-[10px] text-gray-400 uppercase font-bold mb-2 block">
-                Ubah Nama Toko
-              </label>
-              <div className="flex gap-2">
+                <input
+                  placeholder="Satuan (e.g. roll, pack)"
+                  className="text-sm border p-2 rounded"
+                  value={newMatForm.unit || ''}
+                  onChange={e => setNewMatForm({...newMatForm, unit: e.target.value})}
+                />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Harga Beli Satuan"
+                  className="text-sm border p-2 rounded"
+                  value={formatNumber(newMatForm.pricePerUnit)}
+                  onChange={e => setNewMatForm({...newMatForm, pricePerUnit: parseNumber(e.target.value)})}
+                />
                 <select
-                  className="w-16 text-xs border border-gray-300 rounded-lg p-1"
-                  value={selectedShopCode}
-                  onChange={(e) => setSelectedShopCode(e.target.value)}
+                  className="text-sm border p-2 rounded"
+                  value={newMatForm.shopId || ''}
+                  onChange={e => setNewMatForm({...newMatForm, shopId: e.target.value})}
                 >
-                  {Object.keys(shops).map((k) => (
-                    <option key={k} value={k}>
-                      {k}
-                    </option>
+                  <option value="">Pilih Toko...</option>
+                  {Object.entries(INITIAL_SHOPS).map(([code, name]) => (
+                    <option key={code} value={code}>{name}</option>
                   ))}
                 </select>
-                <input
-                  className="flex-1 border border-gray-300 rounded-lg text-xs p-2"
-                  placeholder="Nama baru..."
-                  value={shopNameInput}
-                  onChange={(e) => setShopNameInput(e.target.value)}
-                />
-                <button
-                  onClick={handleUpdateShopName}
-                  className="bg-gray-800 text-white px-3 rounded-lg text-xs font-bold"
+                <select
+                  className="text-sm border p-2 rounded"
+                  value={newMatForm.stockKey}
+                  onChange={e => setNewMatForm({...newMatForm, stockKey: e.target.value})}
                 >
-                  OK
-                </button>
+                  <option value="">Link ke Stok Fisik...</option>
+                  <option value="tinta_ml">Tinta</option>
+                  <option value="roll_100m">Kertas Roll</option>
+                  <option value="a4_sheets">Kertas A4</option>
+                  <option value="tape_roll">Solasi</option>
+                  <option value="lanyard_pcs">Lanyard</option>
+                  <option value="pvc_pcs">PVC</option>
+                  <option value="case_pcs">Case</option>
+                  <option value="kait_pcs">Kait</option>
+                  <option value="stopper_pcs">Stopper</option>
+                  <option value="rivet_pcs">Rivet</option>
+                  <option value="plastic_med_pcs">Plastik</option>
+                </select>
               </div>
+              <button onClick={handleAddMaterial} className="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold">Simpan Item</button>
+            </div>
+          )}
+
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {materials.length === 0 ? (
+              <p className="text-center text-gray-400 text-xs py-4">Belum ada bahan baku terdaftar</p>
+            ) : (
+              materials.map(mat => (
+                <div key={mat.id} className="flex justify-between items-center text-xs p-2 hover:bg-gray-50 rounded border border-transparent hover:border-gray-100 group">
+                  <div>
+                    <span className="font-bold block">{mat.name}</span>
+                    <div className="text-gray-500 flex gap-2">
+                      <span>{formatCurrency(mat.pricePerUnit)}/{mat.unit}</span>
+                      <span className="bg-gray-100 px-1 rounded text-[10px]">{INITIAL_SHOPS[mat.shopId as keyof typeof INITIAL_SHOPS] || mat.shopId}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                    <button onClick={() => setEditingMaterial(mat)} className="text-blue-500 hover:bg-blue-50 p-1 rounded"><Edit2 size={14}/></button>
+                    <button onClick={() => handleDeleteMaterial(mat.id)} className="text-red-500 hover:bg-red-50 p-1 rounded"><Trash2 size={14}/></button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    {/* Edit Material Modal */}
+    {editingMaterial && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+          <h3 className="text-lg font-bold mb-4">Edit Bahan Baku</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-600 mb-1">Nama Item</label>
+              <input
+                className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                value={editingMaterial.name}
+                onChange={e => setEditingMaterial({...editingMaterial, name: e.target.value})}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1">Harga Satuan</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                  value={formatNumber(editingMaterial.pricePerUnit)}
+                  onChange={e => setEditingMaterial({...editingMaterial, pricePerUnit: parseNumber(e.target.value)})}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-1">Satuan</label>
+                <input
+                  className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                  value={editingMaterial.unit}
+                  onChange={e => setEditingMaterial({...editingMaterial, unit: e.target.value})}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-600 mb-1">Toko Supplier</label>
+              <select
+                className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                value={editingMaterial.shopId}
+                onChange={e => setEditingMaterial({...editingMaterial, shopId: e.target.value})}
+              >
+                {Object.entries(INITIAL_SHOPS).map(([code, name]) => (
+                  <option key={code} value={code}>{name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button onClick={() => setEditingMaterial(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-bold">Batal</button>
+              <button onClick={handleEditMaterial} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-bold">Simpan</button>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    )}
+  </>
   );
 }

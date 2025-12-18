@@ -6,14 +6,14 @@ import type { ApexOptions } from "apexcharts";
 import ChartLazy from "~/components/Chart/ChartLazy";
 import {
   redirect,
-  useLoaderData,
   type LoaderFunction,
   type LoaderFunctionArgs,
 } from "react-router";
-// import { getSession } from "~/lib/session";
 import { API } from "~/lib/api";
 import { getOrderStatusLabel, toMoney } from "~/lib/utils";
 import { requireAuth } from "~/lib/session.server";
+import { useFetcherData } from "~/hooks/use-fetcher-data";
+import { nexus } from "~/lib/nexus-client";
 
 import type { Order, StockState, PriceList } from "../types";
 import {
@@ -23,6 +23,11 @@ import {
   TrendingUp,
   AlertTriangle,
   Package,
+  Crown,
+  BarChart2,
+  Layers,
+  Building2,
+  Handshake,
 } from "lucide-react";
 import {
   formatCurrency,
@@ -48,6 +53,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LabelList,
 } from "recharts";
 
 // import { requireUser } from "~/lib/session.client";
@@ -57,80 +63,9 @@ import {
 // const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  // Require authentication
-  const { user, session, token } = await requireAuth(request);
-
-  let url = new URL(request.url);
-  let { search, page = 0, size = 10 } = Object.fromEntries(url.searchParams);
-
-  const filters = {
-    pagination: "true",
-    page: page || 0,
-    size: size || 10,
-    status: params.status || "",
-  };
-
-  // Pass session data to API calls
-  const overview = await API.OVERVIEW.get({
-    session: { user, token },
-    req: {
-      query: filters,
-    } as any,
-  });
-
-  const orders = await API.ORDERS.get({
-    session: { user, token },
-    req: {
-      query: {
-        pagination: "true",
-        page: page || 0,
-        size: size || 100, // Get more orders for better analytics
-      },
-    } as any,
-  });
-
-  // Fetch real stock data
-  const stockRes = await API.COMMODITY_STOCK.get({
-    session: { user, token },
-    req: { query: { size: 100, pagination: "false" } },
-  });
-
-  // Fetch supplier commodities for prices
-  const supplierCommodityRes = await API.SUPPLIER_COMMODITY.get({
-    session: { user, token },
-    req: { query: { size: 1000, pagination: "false" } },
-  });
-
-  // Map stock to StockState format
-  const stock: StockState = {};
-  if (stockRes.items) {
-    stockRes.items.forEach((item: any) => {
-      stock[item.code] = Number(item.stock || 0);
-    });
-  }
-
-  // Map prices from supplier_commodities
-  const prices: PriceList = {};
-  if (supplierCommodityRes.items && stockRes.items) {
-    stockRes.items.forEach((commodity: any) => {
-      const supplierPrices = supplierCommodityRes.items.filter(
-        (sc: any) => sc.commodity_id === commodity.id
-      );
-
-      if (supplierPrices.length > 0) {
-        const avgPrice = supplierPrices.reduce((sum: number, sc: any) => sum + Number(sc.price || 0), 0) / supplierPrices.length;
-        prices[commodity.code] = avgPrice;
-      }
-    });
-  }
-
-  return {
-    user,
-    overview,
-    orders: orders?.items || [],
-    stock,
-    prices,
-  };
+  // Only check authentication
+  await requireAuth(request);
+  return Response.json({ initialized: true });
 }
 
 // export const loader: LoaderFunction = async ({ request, params }) => {
@@ -178,12 +113,76 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 // };
 
 export default function DashboardOverview() {
-  const { overview, orders, stock, prices } = useLoaderData<{
-    overview: any;
-    orders: Order[];
-    stock: StockState;
-    prices: PriceList;
-  }>();
+  // Fetch overview data
+  const { data: overviewData } = useFetcherData({
+    endpoint: nexus().module("OVERVIEW").action("get").build(),
+  });
+
+  // Fetch orders
+  const { data: ordersData } = useFetcherData({
+    endpoint: nexus()
+      .module("ORDERS")
+      .action("get")
+      .params({
+        pagination: "true",
+        page: 0,
+        size: 100,
+      })
+      .build(),
+  });
+
+  // Fetch stock data
+  const { data: stockData } = useFetcherData({
+    endpoint: nexus()
+      .module("COMMODITY_STOCK")
+      .action("get")
+      .params({ size: 100, pagination: "false" })
+      .build(),
+  });
+
+  // Fetch supplier commodities for prices
+  const { data: supplierCommodityData } = useFetcherData({
+    endpoint: nexus()
+      .module("SUPPLIER_COMMODITY")
+      .action("get")
+      .params({ size: 1000, pagination: "false" })
+      .build(),
+  });
+
+  // Map data
+  const overview = overviewData?.data || {};
+  const orders: Order[] = ordersData?.data?.items || [];
+
+  const stock: StockState = useMemo(() => {
+    const result: StockState = {};
+    if (stockData?.data?.items) {
+      stockData.data.items.forEach((item: any) => {
+        result[item.code] = Number(item.stock || 0);
+      });
+    }
+    return result;
+  }, [stockData]);
+
+  const prices: PriceList = useMemo(() => {
+    const result: PriceList = {};
+    if (supplierCommodityData?.data?.items && stockData?.data?.items) {
+      stockData.data.items.forEach((commodity: any) => {
+        const supplierPrices = supplierCommodityData.data.items.filter(
+          (sc: any) => sc.commodity_id === commodity.id
+        );
+
+        if (supplierPrices.length > 0) {
+          const avgPrice =
+            supplierPrices.reduce(
+              (sum: number, sc: any) => sum + Number(sc.price || 0),
+              0
+            ) / supplierPrices.length;
+          result[commodity.code] = avgPrice;
+        }
+      });
+    }
+    return result;
+  }, [supplierCommodityData, stockData]);
 
   const rawData: any[] = overview?.monthly_report ?? [];
 
@@ -418,20 +417,17 @@ export default function DashboardOverview() {
 //   );
 // };
 
-import { Crown, BarChart2 } from "lucide-react";
 interface DashboardHomeProps {
   orders: Order[];
   stock: StockState;
   prices?: PriceList;
 }
 
-interface AggregatedStat {
-  name: string;
-  count: number;
-  value: number;
-}
-
-const DashboardHome: React.FC<DashboardHomeProps> = ({ orders, stock, prices: pricesFromProps }) => {
+const DashboardHome: React.FC<DashboardHomeProps> = ({
+  orders,
+  stock,
+  prices: pricesFromProps,
+}) => {
   // Safe orders array
   const safeOrders = orders || [];
 
@@ -527,8 +523,8 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ orders, stock, prices: pr
       den > 0
         ? num / den
         : Math.min(
-            ((p.plastic_small_unit || 0) / PLASTIC_SMALL_CAP) || 0,
-            ((p.plastic_med_unit || 0) / PLASTIC_MED_CAP) || 0
+            (p.plastic_small_unit || 0) / PLASTIC_SMALL_CAP || 0,
+            (p.plastic_med_unit || 0) / PLASTIC_MED_CAP || 0
           );
 
     const cpp =
@@ -548,51 +544,24 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ orders, stock, prices: pr
   }, [stock, prices]);
 
   // Analytics Logic
-  const totalValue = safeOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+  const totalValue = safeOrders.reduce(
+    (sum, o) => sum + (o.totalAmount || 0),
+    0
+  );
   const totalPaid = safeOrders.reduce((sum, o) => sum + (o.dpAmount || 0), 0);
   const outstanding = Math.max(0, totalValue - totalPaid);
 
-  // New Aggregation Logic
-  const aggregatedStats = safeOrders.reduce(
-    (acc, o: any) => {
-      let key = o.instansi;
-      let display = o.instansi;
-
-      // Rule 1: Perorangan (Gabungan)
-      if (!o.isKKN && o.instansi === o.pemesanName) {
-        key = "PERORANGAN_ALL";
-        display = "Perorangan (Gabungan)";
-      }
-      // Rule 2: KKN grouped by Period
-      else if (o.isKKN && o.kknDetails) {
-        key = `KKN_${o.kknDetails.tahun}_${o.kknDetails.periode}`;
-        display = `KKN ITERA ${o.kknDetails.tahun} - Periode ${o.kknDetails.periode}`;
-      }
-
-      if (!acc[key]) {
-        acc[key] = { name: display, count: 0, value: 0 };
-      }
-      acc[key].count += 1;
-      acc[key].value += o.totalAmount;
-      return acc;
-    },
-    {} as Record<string, AggregatedStat>
-  );
-
-  // Convert to Array and Sort
-  const rankingList = Object.values(aggregatedStats).sort(
-    (a: AggregatedStat, b: AggregatedStat) => b.count - a.count
-  );
-  const topInst = rankingList.slice(0, 5);
-
   // Highest Value Order
-  const maxOrder = safeOrders.length > 0
-    ? safeOrders.reduce(
-        (prev, current) =>
-          (prev.totalAmount || 0) > (current.totalAmount || 0) ? prev : current,
-        safeOrders[0]
-      )
-    : null;
+  const maxOrder =
+    safeOrders.length > 0
+      ? safeOrders.reduce(
+          (prev, current) =>
+            (prev.totalAmount || 0) > (current.totalAmount || 0)
+              ? prev
+              : current,
+          safeOrders[0]
+        )
+      : null;
 
   const monthlyData = useMemo(() => {
     const data: Record<string, { name: string; total: number; paid: number }> =
@@ -604,7 +573,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ orders, stock, prices: pr
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       data[key] = {
-        name: d.toLocaleDateString("id-ID", { month: "short" }),
+        name: d.toLocaleDateString("id-ID", { month: "long" }),
         total: 0,
         paid: 0,
       };
@@ -621,6 +590,20 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ orders, stock, prices: pr
 
     return Object.values(data);
   }, [safeOrders]);
+
+  // Accumulated Stats
+  const completedOrders = safeOrders.filter((o) => o.finishedAt);
+  const countFinished = completedOrders.length;
+  const countItems = completedOrders.reduce(
+    (sum, o) => sum + (Number(o.jumlah) || 0),
+    0
+  );
+  const uniqueClients = new Set(
+    safeOrders.map((o) => o.instansi?.trim().toLowerCase())
+  ).size;
+  const countSponsors = safeOrders.filter((o: any) => o.isSponsor).length;
+
+  const fmt = (n: number) => n.toLocaleString("id-ID");
 
   return (
     <div className="space-y-6">
@@ -785,7 +768,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ orders, stock, prices: pr
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(v) => `${v / 1000}k`}
+                  tickFormatter={(v) => v.toLocaleString("id-ID")}
                 />
                 <Tooltip formatter={(value: number) => formatCurrency(value)} />
                 <Legend />
@@ -794,7 +777,16 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ orders, stock, prices: pr
                   name="Total Order"
                   fill="#1e293b"
                   radius={[4, 4, 0, 0]}
-                />
+                >
+                  <LabelList
+                    dataKey="total"
+                    position="top"
+                    style={{ fontSize: "10px", fill: "#666" }}
+                    formatter={(val: number) =>
+                      val > 0 ? formatCurrency(val) : ""
+                    }
+                  />
+                </Bar>
                 <Bar
                   dataKey="paid"
                   name="Terbayar"
@@ -807,82 +799,53 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ orders, stock, prices: pr
         </div>
       </div>
 
-      {/* Bottom Row: Top Instansi & Ranking Table */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">
-            Top 5 Kategori / Instansi
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart layout="vertical" data={topInst} margin={{ left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" allowDecimals={false} />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  width={140}
-                  fontSize={11}
-                  tickFormatter={(val) =>
-                    val.length > 25 ? val.substring(0, 25) + "..." : val
-                  }
-                />
-                <Tooltip cursor={{ fill: "transparent" }} />
-                <Bar
-                  dataKey="count"
-                  fill="#4f46e5"
-                  radius={[0, 4, 4, 0]}
-                  name="Jumlah Order"
-                  barSize={20}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+      {/* Bottom Row: Accumulation Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div className="text-center p-4 rounded-xl hover:bg-gray-50 transition group border border-gray-100">
+          <div className="flex items-center justify-center text-blue-600 mb-2 opacity-80 group-hover:scale-110 transition">
+            <CheckCircle2 size={32} />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">
+            {fmt(countFinished)}
+          </div>
+          <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+            Pesanan Selesai
           </div>
         </div>
 
-        <div className="bg-white p-0 rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <BarChart2 size={20} /> Ranking Instansi
-            </h3>
+        <div className="text-center p-4 rounded-xl hover:bg-gray-50 transition group border border-gray-100">
+          <div className="flex items-center justify-center text-purple-600 mb-2 opacity-80 group-hover:scale-110 transition">
+            <Layers size={32} />
           </div>
-          <div className="overflow-y-auto max-h-64">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0">
-                <tr>
-                  <th className="px-6 py-3">Nama Instansi / Grup</th>
-                  <th className="px-6 py-3 text-center">Freq</th>
-                  <th className="px-6 py-3 text-right">Total Omzet</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {rankingList.map((item: AggregatedStat, idx: number) => (
-                  <tr key={idx} className="hover:bg-gray-50">
-                    <td
-                      className="px-6 py-3 font-medium text-gray-800 truncate max-w-[200px]"
-                      title={item.name}
-                    >
-                      {idx + 1}. {item.name}
-                    </td>
-                    <td className="px-6 py-3 text-center">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800">
-                        {item.count}x
-                      </span>
-                    </td>
-                    <td className="px-6 py-3 text-right font-mono text-gray-600">
-                      {formatCurrency(item.value)}
-                    </td>
-                  </tr>
-                ))}
-                {rankingList.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="text-center py-4 text-gray-400">
-                      Belum ada data
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="text-2xl font-bold text-gray-900 mb-1">
+            {fmt(countItems)}
+          </div>
+          <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+            Produk Dibuat (Pcs)
+          </div>
+        </div>
+
+        <div className="text-center p-4 rounded-xl hover:bg-gray-50 transition group border border-gray-100">
+          <div className="flex items-center justify-center text-orange-600 mb-2 opacity-80 group-hover:scale-110 transition">
+            <Building2 size={32} />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">
+            {fmt(uniqueClients)}
+          </div>
+          <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+            Instansi / Event
+          </div>
+        </div>
+
+        <div className="text-center p-4 rounded-xl hover:bg-gray-50 transition group border border-gray-100">
+          <div className="flex items-center justify-center text-green-600 mb-2 opacity-80 group-hover:scale-110 transition">
+            <Handshake size={32} />
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">
+            {fmt(countSponsors)}
+          </div>
+          <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+            Sponsor & Partner
           </div>
         </div>
       </div>

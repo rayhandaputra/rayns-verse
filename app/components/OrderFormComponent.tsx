@@ -30,7 +30,7 @@ import { toast } from "sonner";
 // ============================================
 
 interface OrderFormProps {
-  history: HistoryEntry[];
+  history?: HistoryEntry[];
   orders: Order[];
   products?: Product[];
   onSubmit: (order: any) => void;
@@ -38,6 +38,7 @@ interface OrderFormProps {
 }
 
 interface OrderFormData {
+  instansi_id: string;
   instansi: string;
   items: OrderItem[];
   jenisPesanan: string;
@@ -126,6 +127,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
     "new" | "existing" | "perorangan"
   >("new");
   const [instansi, setInstansi] = useState("");
+  const [instansiId, setInstansiId] = useState("");
   const [pemesanName, setPemesanName] = useState("");
   const [pemesanPhone, setPemesanPhone] = useState("");
 
@@ -325,16 +327,20 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
     setOrderItems(list);
   };
 
-  const handleArchiveImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleArchiveImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === "string") {
-          setArchiveImages([...archiveImages, reader.result]);
-        }
-      };
-      reader.readAsDataURL(file);
+      const response = await API.ASSET.upload(file);
+      // const reader = new FileReader();
+      // reader.onloadend = () => {
+      //   if (typeof reader.result === "string") {
+      //     setArchiveImages([...archiveImages, reader.result]);
+      //   }
+      // };
+      // reader.readAsDataURL(file);
+      setArchiveImages([...archiveImages, response.url]);
     }
   };
 
@@ -430,6 +436,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
         : "Custom";
 
     const orderData: OrderFormData = {
+      instansi_id: instansiId,
       instansi: finalInstansi,
       items: items,
       jenisPesanan: mainProduct,
@@ -767,7 +774,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                               value={
                                 instansi
                                   ? {
-                                      value: instansi,
+                                      value: instansiId,
                                       label: instansi,
                                     }
                                   : null
@@ -778,6 +785,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                               onChange={(val: any) => {
                                 if (val) {
                                   setInstansi(val.label);
+                                  setInstansiId(val.id);
                                 } else {
                                   setInstansi("");
                                 }

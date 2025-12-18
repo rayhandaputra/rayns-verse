@@ -77,17 +77,23 @@ export const ADMIN_NAVIGATION: MenuItem[] = [
     icon: History,
   },
   {
-    id: "employee",
-    label: "Kepegawaian",
-    href: "/app/employee",
+    id: "finance",
+    label: "Keuangan",
+    href: "/app/finance",
     icon: Users2Icon,
   },
-  {
-    id: "inventory",
-    label: "Aset Perusahaan",
-    href: "/app/asset/inventory",
-    icon: MonitorCogIcon,
-  },
+  // {
+  //   id: "employee",
+  //   label: "Kepegawaian",
+  //   href: "/app/employee",
+  //   icon: Users2Icon,
+  // },
+  // {
+  //   id: "inventory",
+  //   label: "Aset Perusahaan",
+  //   href: "/app/asset/inventory",
+  //   icon: MonitorCogIcon,
+  // },
   {
     id: "users",
     label: "Manajemen Akun",

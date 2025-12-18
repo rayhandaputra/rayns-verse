@@ -19,7 +19,7 @@ export const PLASTIC_BIG_CAP = 100;
 export const PLASTIC_PACK = 500;
 
 // Admin & Location Constants
-export const ADMIN_WA = "628521933747";
+export const ADMIN_WA = "6285219337474";
 export const LOCATION_COORDS = {
   lat: -5.370928303834815,
   lng: 105.29254187016355,

@@ -1,7 +1,6 @@
 // app/routes/app.order-history.tsx
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
-  useLoaderData,
   useActionData,
   Form,
   type LoaderFunction,
@@ -13,6 +12,8 @@ import { Star, Edit, Upload, Check, X, Plus } from "lucide-react";
 import { API } from "~/lib/api";
 import { requireAuth } from "~/lib/session.server";
 import { toast } from "sonner";
+import { useFetcherData } from "~/hooks/use-fetcher-data";
+import { nexus } from "~/lib/nexus-client";
 
 // ============================================
 // TYPES & INTERFACES
@@ -39,76 +40,21 @@ interface OrderFormProps {
 
 // Import OrderForm component
 import OrderFormComponent from "~/components/OrderFormComponent";
+import TableHeader from "~/components/table/TableHeader";
+import DataTable, { type ColumnDef } from "~/components/ui/data-table";
+import { Button } from "~/components/ui/button";
+import { useModal } from "~/hooks";
+import ModalSecond from "~/components/modal/ModalSecond";
+import { safeParseArray, safeParseObject, uploadFile } from "~/lib/utils";
 
 // ============================================
 // LOADER FUNCTION
 // ============================================
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const { user, token } = await requireAuth(request);
-
-  // Fetch Products
-  const productsRes = await API.PRODUCT.get({
-    req: { query: { page: 0, size: 100, pagination: "true" } },
-  });
-
-  // Fetch History (Institutions)
-  let historyRes: any = { items: [] };
-  try {
-    historyRes = await API.INSTITUTION.get({
-      session: { user, token },
-      req: { query: { page: 0, size: 1000, pagination: "true" } },
-    });
-  } catch (e) {
-    console.error("Failed to fetch history", e);
-  }
-
-  // Fetch Orders (Status: done)
-  const ordersRes = await API.ORDERS.get({
-    req: {
-      query: {
-        status: "done",
-        page: 0,
-        size: 200,
-        pagination: "true",
-      },
-    },
-  });
-
-  // Map API Orders to UI Order type
-  const mappedOrders = (ordersRes.items || []).map((o: any) => {
-    // Parse notes for portfolio data
-    let notesData: any = {};
-    try {
-      if (o.notes) {
-        const parsed = JSON.parse(o.notes);
-        if (typeof parsed === "object") notesData = parsed;
-      }
-    } catch (e) {
-      /* ignore */
-    }
-
-    return {
-      id: o.id,
-      instansi: o.institution_name || "",
-      jenisPesanan: o.order_type === "package" ? "Paket" : "Satuan",
-      jumlah: o.total_product || 0,
-      totalHarga: o.grand_total || 0,
-      status: o.status || "",
-      createdAt: o.created_on || "",
-      is_portfolio: Number(o?.is_portfolio) || 0,
-      review: notesData.review || "",
-      rating: notesData.rating || 0,
-      portfolioImages: notesData.portfolioImages || [],
-      raw: o,
-    };
-  });
-
-  return {
-    products: productsRes.items || [],
-    history: historyRes.items || [],
-    orders: mappedOrders,
-  };
+  // Only check authentication
+  await requireAuth(request);
+  return Response.json({ initialized: true });
 };
 
 // ============================================
@@ -122,47 +68,23 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (intent === "update_portfolio") {
     try {
-      const id = formData.get("id") as string;
-      const review = formData.get("review") as string;
-      const rating = Number(formData.get("rating"));
-      const is_portfolio = formData.get("is_portfolio") === "true";
-      const imagesStr = formData.get("portfolioImages") as string;
-
-      let portfolioImages = [];
-      try {
-        portfolioImages = JSON.parse(imagesStr);
-      } catch (e) {
-        /* ignore */
-      }
-
-      // Fetch current order to preserve existing notes
-      const currentOrderRes = await API.ORDERS.get({
-        req: { query: { id, size: 1 } },
-      });
-      const currentOrder = currentOrderRes.items?.[0];
-
-      let currentNotes = {};
-      try {
-        if (currentOrder?.notes) currentNotes = JSON.parse(currentOrder.notes);
-      } catch (e) {
-        /* ignore */
-      }
-
-      const newNotes = {
-        ...currentNotes,
-        is_portfolio,
-        review,
-        rating,
-        portfolioImages,
-      };
+      const data = Object.fromEntries(formData);
+      const { id, review, rating, is_portfolio, images } = data as any;
 
       const response = await API.ORDERS.update({
         session: { user, token },
         req: {
           body: {
             id,
-            is_portfolio,
-            notes: JSON.stringify(newNotes),
+            ...(is_portfolio
+              ? {
+                  is_portfolio,
+                }
+              : {
+                  review,
+                  rating,
+                  images: safeParseArray(images),
+                }),
           },
         },
       });
@@ -183,16 +105,19 @@ export const action: ActionFunction = async ({ request }) => {
   if (intent === "create_archive") {
     try {
       const rawData = formData.get("data") as string;
-      const payload = JSON.parse(rawData);
+      const payload: any = safeParseObject(rawData);
 
       // Ensure status is done
       const finalPayload = {
-        ...payload,
+        // ...payload,
+        institution_id: payload.instansi_id,
+        institution_name: payload.instansi,
+        institution_domain: payload.accessCode,
+        pic_name: payload.pemesanName,
+        pic_phone: payload.pemesanPhone,
         status: "done",
-        notes: JSON.stringify({
-          ...(payload.notes || {}),
-          is_portfolio: true,
-        }),
+        images: payload.portfolioImages,
+        items: payload.items,
       };
 
       const response = await API.ORDERS.create({
@@ -221,16 +146,39 @@ export const action: ActionFunction = async ({ request }) => {
 // ============================================
 
 export default function OrderHistoryPage() {
-  const { orders = [], products = [], history = [] } = useLoaderData<LoaderData>();
   const actionData = useActionData<ActionData>();
 
+  // Fetch products
+  const { data: productsData } = useFetcherData({
+    endpoint: nexus()
+      .module("PRODUCT")
+      .action("get")
+      .params({ page: 0, size: 100, pagination: "true" })
+      .build(),
+  });
+
+  // Fetch done orders
+  const { data: getOrdersData, reload } = useFetcherData({
+    endpoint: nexus()
+      .module("ORDERS")
+      .action("get")
+      .params({
+        status: "done",
+        page: 0,
+        size: 200,
+        pagination: "true",
+      })
+      .build(),
+  });
+
+  const orders = getOrdersData?.data?.items || [];
+
+  // Map data
+  const products = productsData?.data?.items || [];
+
   // ========== STATE ==========
+  const [modal, setModal] = useModal();
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editReview, setEditReview] = useState("");
-  const [editRating, setEditRating] = useState(5);
-  const [editImages, setEditImages] = useState<string[]>([]);
-  const [showAddArchive, setShowAddArchive] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -238,41 +186,35 @@ export default function OrderHistoryPage() {
   useEffect(() => {
     if (actionData?.success) {
       toast.success(actionData.message || "Berhasil");
-      setEditingId(null);
-      setShowAddArchive(false);
+      setModal({ ...modal, open: false, type: "" });
+      reload(); // Reload data after success
     } else if (actionData?.success === false) {
       toast.error(actionData.message || "Gagal");
     }
   }, [actionData]);
 
-  // ========== COMPUTED ==========
-  const filteredOrders = orders?.filter((o) =>
-    o.instansi?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // ========== HANDLERS ==========
-  const handleEditClick = (order: Order) => {
-    setEditingId(order.id);
-    setEditReview(order.review || "");
-    setEditRating(order.rating || 5);
-    setEditImages(order.portfolioImages || []);
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === "string") {
-          setEditImages([...editImages, reader.result]);
-        }
-      };
-      reader.readAsDataURL(file);
+      const url = await uploadFile(file);
+      setModal({
+        ...modal,
+        data: {
+          ...(modal?.data ?? {}),
+          images: [...(modal?.data?.images || []), url],
+        },
+      });
     }
   };
 
   const removeImage = (index: number) => {
-    setEditImages(editImages.filter((_, i) => i !== index));
+    setModal({
+      ...modal,
+      data: {
+        ...modal.data,
+        images: modal.data.images.filter((_: any, i: number) => i !== index),
+      },
+    });
   };
 
   const handleArchiveSubmit = (data: any) => {
@@ -298,22 +240,165 @@ export default function OrderHistoryPage() {
     form.submit();
   };
 
+  const columns: ColumnDef<any>[] = useMemo(
+    () => [
+      {
+        key: "show",
+        header: "Tampil?",
+        cellClassName:
+          "whitespace-nowrap text-xs text-gray-600 min-w-[90px] font-medium",
+        cell: (row) => (
+          <Form method="post">
+            <input type="hidden" name="intent" value="update_portfolio" />
+            <input type="hidden" name="id" value={row.id} />
+            <input
+              type="hidden"
+              name="is_portfolio"
+              value={+row?.is_portfolio ? 0 : 1}
+            />
+            <button
+              type="submit"
+              className={`w-10 h-6 rounded-full transition-colors relative ${
+                +row?.is_portfolio ? "bg-blue-600" : "bg-gray-300"
+              }`}
+            >
+              <div
+                className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${
+                  +row?.is_portfolio ? "left-5" : "left-1"
+                }`}
+              ></div>
+            </button>
+          </Form>
+        ),
+      },
+      {
+        key: "institution_name",
+        header: "Instansi",
+        cellClassName:
+          "whitespace-nowrap text-xs text-gray-600 min-w-[180px] font-medium",
+        cell: (row) => (
+          <>
+            {row.institution_name}
+            <div className="text-xs text-gray-400">
+              {row.created_on ? formatFullDate(row.created_on) : "-"}
+            </div>
+          </>
+        ),
+      },
+      {
+        key: "product",
+        header: "Produk",
+        cellClassName: "max-w-[180px]",
+        cell: (row) => (
+          <ul className="list-disc list-inside text-xs text-gray-600">
+            {safeParseArray(row.order_items)?.length > 0
+              ? safeParseArray(row.order_items)?.map(
+                  (item: any, idx: number) => (
+                    <li key={idx} className="truncate">
+                      {item.product_name} ({item.qty})
+                    </li>
+                  )
+                )
+              : "-"}
+          </ul>
+        ),
+      },
+      {
+        key: "image",
+        header: "Gambar",
+        headerClassName: "text-center",
+        cellClassName: "max-w-[150px]",
+        cell: (row) => (
+          <div className="px-6 py-3 flex justify-center">
+            {(() => {
+              const images: any[] = safeParseArray(row.images);
+              return images.length > 0 ? (
+                <div className="flex -space-x-2">
+                  {images.slice(0, 3).map((img: string, i: number) => (
+                    <img
+                      key={i}
+                      src={img}
+                      className="w-8 h-8 rounded-full border border-white object-cover"
+                      alt=""
+                    />
+                  ))}
+                  {images.length > 3 && (
+                    <div className="w-8 h-8 rounded-full bg-gray-100 border border-white flex items-center justify-center text-[10px] text-gray-500">
+                      +{images.length - 3}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <span className="text-xs text-gray-400">No Image</span>
+              );
+            })()}
+          </div>
+        ),
+      },
+      {
+        key: "feedback",
+        header: "Ulasam",
+        headerClassName: "text-center",
+        cellClassName: "max-w-[150px]",
+        cell: (row) => (
+          <div className="px-6 py-3 max-w-xs truncate">
+            {row.review ? (
+              <div className="flex items-center gap-1 text-xs">
+                <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                <span className="truncate">{row.review}</span>
+              </div>
+            ) : (
+              "-"
+            )}
+          </div>
+        ),
+      },
+      {
+        key: "aksi",
+        header: "Aksi",
+        headerClassName: "text-center",
+        cellClassName: "text-center",
+        cell: (row) => (
+          <div className="flex justify-center gap-2 relative">
+            <Button
+              onClick={() => {
+                setModal({
+                  ...modal,
+                  open: true,
+                  data: {
+                    ...row,
+                    images: safeParseArray(row?.images),
+                  },
+                  type: "update",
+                });
+              }}
+              className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg"
+              title="Edit Portfolio Details"
+            >
+              <Edit size={16} />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
+
   // ========== RENDER ==========
   return (
     <div className="space-y-6">
-      {showAddArchive ? (
+      {modal?.type === "add_archive" ? (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-bold">Tambah Arsip Produksi Lama</h2>
             <button
-              onClick={() => setShowAddArchive(false)}
+              onClick={() => setModal({ ...modal, open: false, type: "" })}
               className="text-gray-500 hover:text-gray-700"
             >
               <X />
             </button>
           </div>
           <OrderFormComponent
-            history={history}
             orders={orders}
             products={products}
             onSubmit={handleArchiveSubmit}
@@ -322,152 +407,53 @@ export default function OrderHistoryPage() {
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-              <h2 className="text-lg font-bold text-gray-800">Riwayat Pesanan & Arsip</h2>
-              <p className="text-gray-500 text-sm">
-                Kelola arsip pesanan, ulasan, dan tampilan portfolio.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <input
-                className="border border-gray-300 rounded-lg px-4 py-2 text-sm"
-                placeholder="Cari Instansi..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <button
-                onClick={() => setShowAddArchive(true)}
-                className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 flex items-center gap-2"
-              >
-                <Plus size={16} /> Arsip Lama
-              </button>
-            </div>
-          </div>
+          <TableHeader
+            title="Riwayat Pesanan & Arsip"
+            description="Kelola arsip pesanan, ulasan, dan tampilan portfolio."
+            buttonText="Arsip Lama"
+            onClick={() => {
+              setModal({
+                open: true,
+                type: "add_archive",
+                data: null,
+              });
+            }}
+            buttonIcon={Plus}
+            searchValue={searchTerm}
+            setSearchValue={setSearchTerm}
+          />
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-100 text-xs uppercase text-gray-700">
-                <tr>
-                  <th className="px-6 py-3">Tampil?</th>
-                  <th className="px-6 py-3">Instansi</th>
-                  <th className="px-6 py-3">Produk</th>
-                  <th className="px-6 py-3">Gambar</th>
-                  <th className="px-6 py-3">Ulasan</th>
-                  <th className="px-6 py-3 text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredOrders?.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="text-center py-4 text-gray-500">
-                      Belum ada arsip / riwayat.
-                    </td>
-                  </tr>
-                )}
-                {filteredOrders?.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-3">
-                      <Form method="post">
-                        <input type="hidden" name="intent" value="update_portfolio" />
-                        <input type="hidden" name="id" value={order.id} />
-                        <input type="hidden" name="review" value={order.review || ""} />
-                        <input type="hidden" name="rating" value={order.rating || 0} />
-                        <input
-                          type="hidden"
-                          name="portfolioImages"
-                          value={JSON.stringify(order.portfolioImages || [])}
-                        />
-                        <input type="hidden" name="is_portfolio" value={String(!order.is_portfolio)} />
-                        <button
-                          type="submit"
-                          className={`w-10 h-6 rounded-full transition-colors relative ${
-                            order.is_portfolio ? "bg-blue-600" : "bg-gray-300"
-                          }`}
-                        >
-                          <div
-                            className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${
-                              order.is_portfolio ? "left-5" : "left-1"
-                            }`}
-                          ></div>
-                        </button>
-                      </Form>
-                    </td>
-                    <td className="px-6 py-3 font-medium">
-                      {order.instansi}
-                      <div className="text-xs text-gray-400">
-                        {order.createdAt ? formatFullDate(order.createdAt) : "-"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-3">
-                      {order.jenisPesanan} ({order.jumlah})
-                    </td>
-                    <td className="px-6 py-3">
-                      {order.portfolioImages && order.portfolioImages.length > 0 ? (
-                        <div className="flex -space-x-2">
-                          {order.portfolioImages.slice(0, 3).map((img: any, i: number) => (
-                            <img
-                              key={i}
-                              src={img}
-                              className="w-8 h-8 rounded-full border-2 border-white object-cover"
-                              alt="Portfolio"
-                            />
-                          ))}
-                          {order.portfolioImages.length > 3 && (
-                            <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs text-gray-600 font-bold">
-                              +{order.portfolioImages.length - 3}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 italic">0 Foto</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-3 max-w-xs truncate">
-                      {order.review ? (
-                        <div className="flex items-center gap-1 text-xs">
-                          <Star size={12} className="text-yellow-400 fill-yellow-400" />
-                          <span className="truncate">{order.review}</span>
-                        </div>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-                    <td className="px-6 py-3 text-center">
-                      <button
-                        onClick={() => handleEditClick(order)}
-                        className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg"
-                        title="Edit Portfolio Details"
-                      >
-                        <Edit size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {/* DataTable */}
+          <DataTable
+            columns={columns}
+            data={orders}
+            getRowKey={(product, _index) => product.id}
+            // rowClassName={(product) =>
+            //   product.show_in_dashboard ? "bg-green-50/30" : ""
+            // }
+            emptyMessage="Belum ada arsip / riwayat."
+            minHeight="400px"
+          />
         </div>
       )}
 
       {/* EDIT MODAL */}
-      {editingId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-bold">Edit Detail Portfolio</h3>
-              <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-red-500">
-                <X />
-              </button>
-            </div>
-            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-              {/* Images */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
-                  Foto Hasil Produksi
-                </label>
-                <div className="flex flex-wrap gap-3 mb-3">
-                  {editImages.map((img, idx) => (
+      {modal.type === "update" && (
+        <ModalSecond
+          open={modal.open}
+          onClose={() => setModal({ open: false, type: "" })}
+          title="Edit Detail Portfolio"
+          size="xl"
+        >
+          <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+            {/* Images */}
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Foto Hasil Produksi
+              </label>
+              <div className="flex flex-wrap gap-3 mb-3">
+                {(modal?.data?.images ?? [])?.map(
+                  (img: string, idx: number) => (
                     <div key={idx} className="relative w-20 h-20 group">
                       <img
                         src={img}
@@ -481,73 +467,90 @@ export default function OrderHistoryPage() {
                         <X size={12} />
                       </button>
                     </div>
-                  ))}
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:text-blue-500 transition"
-                  >
-                    <Upload size={20} />
-                    <span className="text-[10px] mt-1">Upload</span>
-                  </button>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                  />
-                </div>
-              </div>
-
-              {/* Review */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Ulasan Pelanggan</label>
-                <div className="flex items-center gap-1 mb-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => setEditRating(star)}
-                      className={`${
-                        star <= editRating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-                      }`}
-                    >
-                      <Star size={24} />
-                    </button>
-                  ))}
-                </div>
-                <textarea
-                  className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                  rows={3}
-                  placeholder="Ketik ulasan pelanggan..."
-                  value={editReview}
-                  onChange={(e) => setEditReview(e.target.value)}
+                  )
+                )}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-blue-500 hover:text-blue-500 transition"
+                >
+                  <Upload size={20} />
+                  <span className="text-[10px] mt-1">Upload</span>
+                </button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageUpload}
                 />
               </div>
             </div>
-            <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-2">
-              <button
-                onClick={() => setEditingId(null)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg text-sm font-medium"
-              >
-                Batal
-              </button>
-              <Form method="post">
-                <input type="hidden" name="intent" value="update_portfolio" />
-                <input type="hidden" name="id" value={editingId} />
-                <input type="hidden" name="review" value={editReview} />
-                <input type="hidden" name="rating" value={editRating} />
-                <input type="hidden" name="is_portfolio" value="true" />
-                <input type="hidden" name="portfolioImages" value={JSON.stringify(editImages)} />
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2"
-                >
-                  <Check size={16} /> Simpan Perubahan
-                </button>
-              </Form>
+
+            {/* Review */}
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Ulasan Pelanggan
+              </label>
+              <div className="flex items-center gap-1 mb-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() =>
+                      setModal({
+                        ...modal,
+                        data: { ...modal.data, rating: star },
+                      })
+                    }
+                    className={`${
+                      star <= (modal?.data?.rating ?? 0)
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-gray-300"
+                    }`}
+                  >
+                    <Star size={24} />
+                  </button>
+                ))}
+              </div>
+              <textarea
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                rows={3}
+                placeholder="Ketik ulasan pelanggan..."
+                value={modal?.data?.review}
+                onChange={(e) =>
+                  setModal({
+                    ...modal,
+                    data: { ...modal.data, review: e.target.value },
+                  })
+                }
+              />
             </div>
           </div>
-        </div>
+          <div className="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-2">
+            <button
+              onClick={() => setModal({ ...modal, open: false })}
+              className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg text-sm font-medium"
+            >
+              Batal
+            </button>
+            <Form method="post">
+              <input type="hidden" name="intent" value="update_portfolio" />
+              <input type="hidden" name="id" value={modal?.data?.id} />
+              <input type="hidden" name="review" value={modal?.data?.review} />
+              <input type="hidden" name="rating" value={modal?.data?.rating} />
+              <input
+                type="hidden"
+                name="images"
+                value={JSON.stringify(modal?.data?.images)}
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2"
+              >
+                <Check size={16} /> Simpan Perubahan
+              </button>
+            </Form>
+          </div>
+        </ModalSecond>
       )}
     </div>
   );

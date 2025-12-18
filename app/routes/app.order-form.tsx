@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Form,
   useActionData,
-  useLoaderData,
   useNavigate,
   type LoaderFunction,
   type ActionFunction,
@@ -33,6 +32,10 @@ import AsyncReactSelect from "react-select/async";
 import { API } from "~/lib/api";
 import { requireAuth } from "~/lib/session.server";
 import { toast } from "sonner";
+import { useFetcherData } from "~/hooks/use-fetcher-data";
+import { nexus } from "~/lib/nexus-client";
+import { safeParseObject } from "~/lib/utils";
+import OrderFormComponent from "~/components/OrderFormComponent";
 
 // ============================================
 // TYPES & INTERFACES
@@ -71,29 +74,9 @@ interface OrderFormData {
 // ============================================
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const { user, token } = await requireAuth(request);
-
-  // Fetch Products
-  const productsRes = await API.PRODUCT.get({
-    req: { query: { page: 0, size: 100, pagination: "true" } },
-  });
-
-  // Fetch History (Institutions)
-  let historyRes: any = { items: [] };
-  try {
-    historyRes = await API.INSTITUTION.get({
-      session: { user, token },
-      req: { query: { page: 0, size: 1000, pagination: "true" } },
-    });
-  } catch (e) {
-    console.error("Failed to fetch history", e);
-  }
-
-  return {
-    products: productsRes.items || [],
-    history: historyRes.items || [],
-    user,
-  };
+  // Only check authentication
+  await requireAuth(request);
+  return Response.json({ initialized: true });
 };
 
 // ============================================
@@ -107,19 +90,36 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (intent === "create_order") {
     try {
-      const stateStr = formData.get("state") as string;
-      const itemsStr = formData.get("items") as string;
+      const rawData = formData.get("data") as string;
+      const payload: any = safeParseObject(rawData);
 
-      const state = JSON.parse(stateStr);
-      const items = JSON.parse(itemsStr);
+      // Ensure status is done
+      const finalPayload = {
+        institution_id: payload.instansi_id,
+        institution_name: payload.instansi,
+        institution_domain: payload.accessCode,
+        pic_name: payload.pemesanName,
+        pic_phone: payload.pemesanPhone,
+        deadline: payload.deadline,
+        payment_status:
+          payload.statusPembayaran?.toLowerCase() === "dp"
+            ? "down_payment"
+            : "paid",
+        ...(payload?.dpAmount > 0 ? { dp_amount: payload?.dpAmount } : {}),
+        total_amount: payload.totalAmount,
+        is_sponsor: !payload?.isSponsor ? 0 : 1,
+        is_kkn: !payload?.isKKN ? 0 : 1,
+        discount_type: payload?.discount?.type || null,
+        discount_value: payload?.discount?.value || 0,
+        status: "ordered",
+        images: payload.portfolioImages,
+        items: payload.items,
+      };
 
       const response = await API.ORDERS.create({
         session: { user, token },
         req: {
-          body: {
-            ...state,
-            items,
-          },
+          body: finalPayload,
         },
       });
 
@@ -206,44 +206,23 @@ const transformToAPIFormat = (orderData: OrderFormData) => {
 };
 
 // ============================================
-// SWITCH TOGGLE COMPONENT
-// ============================================
-
-const SwitchToggle = ({
-  options,
-  value,
-  onChange,
-}: {
-  options: { val: string; label: string }[];
-  value: string;
-  onChange: (val: any) => void;
-}) => (
-  <div className="flex bg-gray-100 p-1 rounded-lg w-fit">
-    {options.map((opt) => (
-      <button
-        key={opt.val}
-        type="button"
-        onClick={() => onChange(opt.val)}
-        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
-          value === opt.val
-            ? "bg-white shadow text-gray-900"
-            : "text-gray-500 hover:text-gray-700"
-        }`}
-      >
-        {opt.label}
-      </button>
-    ))}
-  </div>
-);
-
-// ============================================
 // MAIN COMPONENT
 // ============================================
 
 export default function OrderFormPage() {
-  const { products = [], history = [] } = useLoaderData<LoaderData>();
   const actionData = useActionData<{ success?: boolean; message?: string }>();
   const navigate = useNavigate();
+
+  // Fetch products
+  const { data: productsData } = useFetcherData({
+    endpoint: nexus()
+      .module("PRODUCT")
+      .action("get")
+      .params({ page: 0, size: 100, pagination: "true" })
+      .build(),
+  });
+
+  const products = productsData?.data?.items || [];
 
   // ========== STATE ==========
   const [isKKN, setIsKKN] = useState(false);
@@ -286,6 +265,22 @@ export default function OrderFormPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingData, setPendingData] = useState<OrderFormData | null>(null);
 
+  // Fetch done orders
+  const { data: getOrdersData, reload } = useFetcherData({
+    endpoint: nexus()
+      .module("ORDERS")
+      .action("get")
+      .params({
+        status: "done",
+        page: 0,
+        size: 200,
+        pagination: "true",
+      })
+      .build(),
+  });
+
+  const orders = getOrdersData?.data?.items || [];
+
   // ========== EFFECTS ==========
   useEffect(() => {
     if (actionData?.success) {
@@ -300,62 +295,13 @@ export default function OrderFormPage() {
     setAccessCode(generateAccessCode(6));
   }, [isKKN]);
 
-  // ========== API LOADERS ==========
-  const loadOptionProduct = async (search: string) => {
-    try {
-      const result = await API.PRODUCT.get({
-        req: {
-          query: {
-            search: search || undefined,
-            page: 0,
-            size: 50,
-            pagination: "true",
-          },
-        },
-      });
-
-      return (result?.items || []).map((v: any) => ({
-        ...v,
-        value: v?.id,
-        label: `${v?.type === "package" ? "[PAKET] " : ""}${v?.name} - Rp${formatCurrency(v?.total_price || 0)}`,
-      }));
-    } catch (error) {
-      console.log(error);
-      return [];
-    }
-  };
-
-  const loadOptionInstitution = async (search: string) => {
-    try {
-      const result = await API.INSTITUTION.get({
-        req: {
-          query: {
-            search: search || undefined,
-            page: 0,
-            size: 50,
-            pagination: "true",
-          },
-        },
-      });
-
-      return (result?.items || []).map((v: any) => ({
-        ...v,
-        value: v?.id,
-        label: `${v?.abbr ? v?.abbr + " - " : ""}${v?.name}`,
-      }));
-    } catch (error) {
-      console.log(error);
-      return [];
-    }
-  };
-
   // ========== CALCULATIONS ==========
   const getPriceForProduct = (productId: string, qty: number) => {
     if (!productId) return 0;
 
     let p: any = selectedProductsData[productId];
     if (!p) {
-      p = products.find((prod) => prod.id === productId);
+      p = products.find((prod: any) => prod.id === productId);
     }
     if (!p) return 0;
 
@@ -381,7 +327,7 @@ export default function OrderFormPage() {
       if (item.productId && qtyNum > 0) {
         let p = selectedProductsData[item.productId];
         if (!p) {
-          p = products.find((prod) => prod.id === item.productId);
+          p = products.find((prod: any) => prod.id === item.productId);
         }
 
         if (p) {
@@ -414,38 +360,6 @@ export default function OrderFormPage() {
     const grandTotal = subTotal - discountAmount;
 
     return { subTotal, totalQty, items, discountAmount, grandTotal };
-  };
-
-  // ========== HANDLERS ==========
-  const handleAddItem = () => {
-    setOrderItems([...orderItems, { productId: "", quantity: "" }]);
-  };
-
-  const handleRemoveItem = (index: number) => {
-    const list = [...orderItems];
-    list.splice(index, 1);
-    setOrderItems(list);
-  };
-
-  const handleItemChange = (
-    index: number,
-    field: "productId" | "quantity",
-    val: any
-  ) => {
-    const list = [...orderItems];
-    list[index] = { ...list[index], [field]: val };
-    setOrderItems(list);
-  };
-
-  const handleDpPercent = (percent: number) => {
-    const { grandTotal } = calculateFinancials();
-    if (grandTotal > 0) {
-      setDpAmountStr(formatCurrency(Math.round(grandTotal * (percent / 100))));
-    }
-  };
-
-  const handlePhoneChange = (val: string) => {
-    setPemesanPhone(formatPhoneNumber(val));
   };
 
   const handlePreSubmit = (e: React.FormEvent) => {
@@ -566,492 +480,44 @@ export default function OrderFormPage() {
     setSelectedProductsData({});
   };
 
+  const handleOrderSubmit = (data: any) => {
+    // This will be called by OrderForm component
+    // We need to trigger the form submission
+    const form = document.createElement("form");
+    form.method = "post";
+    form.style.display = "none";
+
+    const intentInput = document.createElement("input");
+    intentInput.type = "hidden";
+    intentInput.name = "intent";
+    intentInput.value = "create_order";
+    form.appendChild(intentInput);
+
+    const dataInput = document.createElement("input");
+    dataInput.type = "hidden";
+    dataInput.name = "data";
+    dataInput.value = JSON.stringify(data);
+    form.appendChild(dataInput);
+
+    document.body.appendChild(form);
+    form.submit();
+  };
+
   const copyLink = (code: string) => {
     const link = `kinau.id/public/drive-link/${code}`;
     navigator.clipboard.writeText(link);
     toast.success("Link disalin: " + link);
   };
 
-  const financials = calculateFinancials();
-
   // ========== RENDER ==========
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 relative">
-        <div className="mb-6 pb-4 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h2 className="text-lg font-bold text-gray-800">Form Pemesanan</h2>
-            <p className="text-gray-500 text-sm">Input data pesanan baru</p>
-          </div>
-
-          <SwitchToggle
-            options={[
-              { val: "false", label: "Umum" },
-              { val: "true", label: "Khusus KKN" },
-            ]}
-            value={String(isKKN)}
-            onChange={(val) => {
-              const newVal = val === "true";
-              setIsKKN(newVal);
-              handleClear();
-              setIsKKN(newVal);
-            }}
-          />
-        </div>
-
-        <form onSubmit={handlePreSubmit} className="space-y-6">
-          {/* KKN MODE */}
-          {isKKN && (
-            <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-4 animate-fade-in">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-sm font-bold text-blue-800 uppercase">
-                  PESANAN KHUSUS KKN
-                </h3>
-                <div className="flex items-center gap-2 text-xs font-medium text-blue-600 bg-white/50 px-3 py-1 rounded-full border border-blue-200">
-                  <Calendar size={12} />
-                  Periode {autoPeriod.period} / {autoPeriod.year}
-                </div>
-              </div>
-
-              <div className="border-b border-blue-200 pb-4 mb-4">
-                <label className="block text-xs font-semibold text-blue-700 mb-2">
-                  Jenis Kelompok
-                </label>
-                <SwitchToggle
-                  options={[
-                    { val: "PPM", label: "PPM (Reguler)" },
-                    { val: "Tematik", label: "Tematik (Desa)" },
-                  ]}
-                  value={kknType}
-                  onChange={(val) => setKknType(val)}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  {kknType === "PPM" && (
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Nomor Kelompok (1-400)
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="400"
-                        className="w-full border-gray-300 rounded-lg p-2 text-sm"
-                        value={kknGroupNo}
-                        onChange={(e) => setKknGroupNo(e.target.value)}
-                        placeholder="Contoh: 14"
-                      />
-                      {errors.kknGroup && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.kknGroup}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  {kknType === "Tematik" && (
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Nama Desa
-                      </label>
-                      <input
-                        className="w-full border-gray-300 rounded-lg p-2 text-sm"
-                        value={kknVillage}
-                        onChange={(e) => setKknVillage(e.target.value)}
-                        placeholder="Contoh: Rejosari"
-                      />
-                      {errors.kknVillage && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.kknVillage}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STANDARD INPUTS */}
-          {!isKKN && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Jenis Pesanan
-                </label>
-                <div className="mb-2">
-                  <SwitchToggle
-                    options={[
-                      { val: "new", label: "Instansi Baru" },
-                      { val: "existing", label: "Pilih Instansi" },
-                      { val: "perorangan", label: "Perorangan" },
-                    ]}
-                    value={instansiMode}
-                    onChange={(val) => {
-                      setInstansiMode(val);
-                      setInstansi("");
-                    }}
-                  />
-                </div>
-
-                {instansiMode !== "perorangan" && (
-                  <>
-                    {instansiMode === "new" ? (
-                      <input
-                        className="w-full rounded-lg border-gray-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none mt-2"
-                        value={instansi}
-                        onChange={(e) => setInstansi(e.target.value)}
-                        placeholder="Ketik nama instansi baru..."
-                      />
-                    ) : (
-                      <div className="mt-2">
-                        <AsyncReactSelect
-                          value={
-                            instansi
-                              ? {
-                                  value: instansi,
-                                  label: instansi,
-                                }
-                              : null
-                          }
-                          loadOptions={loadOptionInstitution}
-                          defaultOptions
-                          placeholder="Cari dan Pilih Instansi..."
-                          onChange={(val: any) => {
-                            if (val) {
-                              setInstansi(val.label);
-                            } else {
-                              setInstansi("");
-                            }
-                          }}
-                          isClearable
-                          styles={{
-                            control: (base) => ({
-                              ...base,
-                              minHeight: "42px",
-                              fontSize: "0.875rem",
-                            }),
-                          }}
-                        />
-                      </div>
-                    )}
-                    {errors.instansi && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.instansi}
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* PEMESAN DETAILS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Nama Pemesan
-              </label>
-              <input
-                className="w-full border-gray-300 rounded-lg p-2.5 text-sm border"
-                value={pemesanName}
-                onChange={(e) => setPemesanName(e.target.value)}
-                placeholder="Nama lengkap pemesan"
-              />
-              {errors.pemesanName && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.pemesanName}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                No. WA
-              </label>
-              <input
-                className="w-full border-gray-300 rounded-lg p-2.5 text-sm border"
-                value={pemesanPhone}
-                onChange={(e) => handlePhoneChange(e.target.value)}
-                placeholder="+62..."
-              />
-              {errors.pemesanPhone && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.pemesanPhone}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* PRODUCTS */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Daftar Produk yang Dipesan
-            </label>
-            <div className="space-y-3">
-              {orderItems.map((item, idx) => {
-                const qtyNum = Number(item.quantity) || 0;
-                let selectedP = selectedProductsData[item.productId];
-                if (!selectedP) {
-                  selectedP = products.find((p) => p.id === item.productId);
-                }
-                const unitPrice = getPriceForProduct(item.productId, qtyNum);
-
-                return (
-                  <div
-                    key={idx}
-                    className="flex flex-col md:flex-row gap-2 items-start md:items-center bg-gray-50 p-3 rounded-lg border border-gray-200"
-                  >
-                    <div className="flex-1 w-full">
-                      <AsyncReactSelect
-                        value={
-                          item.productId
-                            ? {
-                                value: item.productId,
-                                label:
-                                  selectedProductsData[item.productId]?.name ||
-                                  products.find((p) => p.id === item.productId)
-                                    ?.name ||
-                                  "Produk",
-                              }
-                            : null
-                        }
-                        loadOptions={loadOptionProduct}
-                        defaultOptions
-                        placeholder="Cari dan Pilih Produk..."
-                        onChange={(val: any) => {
-                          if (val) {
-                            handleItemChange(idx, "productId", val.value);
-                            setSelectedProductsData((prev) => ({
-                              ...prev,
-                              [val.value]: val,
-                            }));
-                          } else {
-                            handleItemChange(idx, "productId", "");
-                          }
-                        }}
-                        isClearable
-                        styles={{
-                          control: (base) => ({
-                            ...base,
-                            minHeight: "38px",
-                            fontSize: "0.875rem",
-                          }),
-                        }}
-                      />
-                    </div>
-                    <div className="flex gap-2 w-full md:w-auto">
-                      <input
-                        type="number"
-                        min="1"
-                        className="w-20 rounded-lg border-gray-300 border p-2 text-sm text-center"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          handleItemChange(idx, "quantity", e.target.value)
-                        }
-                        placeholder="Qty"
-                      />
-                      <div className="w-32 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-sm font-semibold text-gray-700">
-                        {item.productId && unitPrice > 0
-                          ? formatCurrency(unitPrice)
-                          : "Rp 0"}
-                      </div>
-                      {orderItems.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveItem(idx)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {errors.items && (
-              <p className="text-red-500 text-xs mt-1">{errors.items}</p>
-            )}
-
-            <button
-              type="button"
-              onClick={handleAddItem}
-              className="mt-3 text-sm text-blue-600 font-medium flex items-center gap-1 hover:underline"
-            >
-              <Plus size={16} /> Tambah Barang Lain
-            </button>
-          </div>
-
-          {/* SPONSOR & DISCOUNT */}
-          {!isKKN && (
-            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4">
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <div
-                    className={`w-10 h-6 rounded-full relative transition-colors ${isSponsor ? "bg-purple-600" : "bg-gray-300"}`}
-                  >
-                    <input
-                      type="checkbox"
-                      className="hidden"
-                      checked={isSponsor}
-                      onChange={(e) => setIsSponsor(e.target.checked)}
-                    />
-                    <div
-                      className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${isSponsor ? "left-5" : "left-1"}`}
-                    ></div>
-                  </div>
-                  <span className="text-sm font-bold text-gray-700 flex items-center gap-1">
-                    <Handshake size={14} /> Sponsor / Kerja Sama
-                  </span>
-                </label>
-              </div>
-
-              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                <label className="text-sm font-semibold text-gray-600 w-24">
-                  Diskon:
-                </label>
-                <div className="flex gap-2 flex-1">
-                  <select
-                    className="border border-gray-300 rounded-lg p-2 text-sm bg-white"
-                    value={discountType}
-                    onChange={(e) => setDiscountType(e.target.value as any)}
-                  >
-                    <option value="nominal">Nominal (Rp)</option>
-                    <option value="percent">Persen (%)</option>
-                  </select>
-                  <input
-                    className="flex-1 border border-gray-300 rounded-lg p-2 text-sm"
-                    placeholder={
-                      discountType === "percent" ? "10" : "Rp 10.000"
-                    }
-                    value={discountValStr}
-                    onChange={(e) => {
-                      if (discountType === "nominal") {
-                        setDiscountValStr(
-                          formatCurrency(parseCurrency(e.target.value))
-                        );
-                      } else {
-                        setDiscountValStr(e.target.value);
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* PAYMENT & DEADLINE */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Deadline
-              </label>
-              <input
-                type="date"
-                className="w-full rounded-lg border-gray-300 border px-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none h-[42px]"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-              />
-              {errors.deadline && (
-                <p className="text-red-500 text-xs mt-1">{errors.deadline}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Status Pembayaran
-              </label>
-              <select
-                className="w-full rounded-lg border-gray-300 border px-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none h-[42px]"
-                value={pay}
-                onChange={(e) => setPay(e.target.value as any)}
-              >
-                <option>Tidak Ada</option>
-                <option>DP</option>
-                <option>Lunas</option>
-              </select>
-              {pay === "DP" && (
-                <div className="flex gap-2 animate-fade-in flex-wrap mt-2">
-                  <input
-                    type="text"
-                    className="flex-1 rounded-lg border-gray-300 border p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none h-[42px]"
-                    value={dpAmountStr}
-                    onChange={(e) =>
-                      setDpAmountStr(
-                        formatCurrency(parseCurrency(e.target.value))
-                      )
-                    }
-                    placeholder="Nominal DP"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleDpPercent(50)}
-                    className="bg-yellow-50 border border-yellow-300 text-yellow-700 px-3 rounded-lg text-xs font-medium hover:bg-yellow-100 whitespace-nowrap h-[42px]"
-                  >
-                    50%
-                  </button>
-                  {!isKKN && (
-                    <button
-                      type="button"
-                      onClick={() => handleDpPercent(70)}
-                      className="bg-orange-50 border border-orange-300 text-orange-700 px-3 rounded-lg text-xs font-medium hover:bg-orange-100 whitespace-nowrap h-[42px]"
-                    >
-                      70%
-                    </button>
-                  )}
-                </div>
-              )}
-              {errors.dp && (
-                <p className="text-red-500 text-xs mt-1">{errors.dp}</p>
-              )}
-            </div>
-          </div>
-
-          {/* TOTAL SUMMARY */}
-          <div className="p-4 bg-gray-900 text-white rounded-xl shadow-lg space-y-2">
-            <div className="flex justify-between text-sm opacity-80">
-              <span>Subtotal ({financials.totalQty} items)</span>
-              <span>{formatCurrency(financials.subTotal)}</span>
-            </div>
-            {financials.discountAmount > 0 && (
-              <div className="flex justify-between text-sm text-green-400">
-                <span>Diskon</span>
-                <span>- {formatCurrency(financials.discountAmount)}</span>
-              </div>
-            )}
-            {isSponsor && (
-              <div className="flex justify-between text-sm text-purple-400 font-bold">
-                <span>Status</span>
-                <span>SPONSOR / PARTNER</span>
-              </div>
-            )}
-            <div className="flex justify-between items-center pt-2 border-t border-gray-700">
-              <span className="text-sm font-bold">TOTAL TAGIHAN</span>
-              <span className="text-xl font-bold">
-                {formatCurrency(financials.grandTotal)}
-              </span>
-            </div>
-          </div>
-
-          {/* BUTTONS */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={handleClear}
-              className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 text-sm font-medium hover:bg-gray-50 flex items-center gap-2"
-            >
-              <Eraser size={16} /> Reset
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 shadow-lg shadow-gray-200 flex items-center gap-2"
-            >
-              <Save size={16} /> Simpan Pesanan
-            </button>
-          </div>
-        </form>
-      </div>
+      <OrderFormComponent
+        orders={orders}
+        products={products}
+        onSubmit={handleOrderSubmit}
+        isArchive={false}
+      />
 
       {/* CONFIRMATION MODAL */}
       {showConfirm && pendingData && (
