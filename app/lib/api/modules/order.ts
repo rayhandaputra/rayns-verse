@@ -372,6 +372,34 @@ export const OrderAPI = {
         });
       }
 
+      await APIProvider({
+        endpoint: "bulk-insert",
+        method: "POST",
+        table: "account_ledger_mutations",
+        action: "bulk-insert",
+        body: {
+          rows: [
+            {
+              account_code: "4-101",
+              account_name: "Pendapatan Usaha",
+              credit:
+                payment_status === "down_payment" ? dp_amount : total_amount,
+              debit: 0,
+              notes: "SISTEM",
+            },
+            {
+              account_code: "1-101",
+              account_name: "Kas Utama (Cash on Hand)",
+              credit: 0,
+              debit:
+                payment_status === "down_payment" ? dp_amount : total_amount,
+              notes: "SISTEM",
+            },
+          ],
+          updateOnDuplicate: true,
+        },
+      });
+
       return {
         success: true,
         message: "Order berhasil dibuat",

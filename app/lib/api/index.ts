@@ -3,6 +3,8 @@ export * from "./core/config";
 export * from "./core/helpers";
 export * from "./core/types";
 
+import { AccountAPI } from "./modules/account";
+import { AccountMutationAPI } from "./modules/account_mutation";
 import { AssetAPI } from "./modules/asset";
 import { BankAccountAPI } from "./modules/bank_account";
 import { CmsContentAPI } from "./modules/cms_content";
@@ -58,4 +60,6 @@ export const API = {
   TESTIMONIAL: TestimonialAPI,
   TRANSACTION: TransactionAPI,
   BANK_ACCOUNT: BankAccountAPI,
+  ACCOUNT: AccountAPI,
+  ACCOUNT_MUTATION: AccountMutationAPI,
 };

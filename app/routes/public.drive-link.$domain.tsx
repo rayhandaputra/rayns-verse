@@ -20,6 +20,7 @@ import {
   Lock,
   AlertCircle,
   Link2OffIcon,
+  Share2,
 } from "lucide-react";
 import {
   useLoaderData,
@@ -712,8 +713,8 @@ export default function PublicDriveLinkPage() {
     toast.info("Download akan segera dimulai...");
   };
 
-  const handleOpenFolder = (folderId: string | number) => {
-    const url = `/public/drive-link/${domain}?folder_id=${folderId}`;
+  const handleOpenFolder = (folder: DriveItem) => {
+    const url = `/public/drive-link/${domain}?folder_id=${folder.id}`;
     navigate(url);
   };
 
@@ -932,7 +933,7 @@ export default function PublicDriveLinkPage() {
           </div>
 
           {/* Content Area */}
-          <div
+          {/* <div
             className="flex-1 overflow-y-auto p-6"
             onClick={() => setSelectedItem(null)}
           >
@@ -1001,7 +1002,6 @@ export default function PublicDriveLinkPage() {
                         </div>
                       )}
 
-                      {/* Context Menu */}
                       <div
                         className={`absolute top-2 right-2 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden transition-all ${
                           selectedItem === itemId
@@ -1059,6 +1059,184 @@ export default function PublicDriveLinkPage() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div> */}
+
+          {/* Content Area */}
+          <div
+            className="flex-1 overflow-y-auto p-4"
+            onClick={() => setSelectedItem(null)}
+          >
+            {folders.length === 0 && files.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-gray-300">
+                <Folder size={64} className="mb-4 opacity-20" />
+                <p>Folder ini kosong</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {/* Folders */}
+                {folders.map((folder: any) => {
+                  const isSystem = folder.isSystem;
+                  return (
+                    <div
+                      key={folder.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedItem(folder.id);
+                      }}
+                      onDoubleClick={() => handleOpenFolder(folder)}
+                      className={`group relative p-4 rounded-xl border flex flex-col items-center gap-3 cursor-pointer transition-all ${
+                        selectedItem === folder.id
+                          ? "bg-blue-50 border-blue-400 ring-1 ring-blue-400"
+                          : "bg-white border-gray-100 hover:border-gray-300 hover:shadow-sm"
+                      } ${clipboard?.id === folder.id ? "opacity-50" : ""}`}
+                    >
+                      <Folder
+                        size={48}
+                        className="text-yellow-400 fill-yellow-400"
+                      />
+
+                      {isRenaming === folder.id && !isSystem ? (
+                        <input
+                          autoFocus
+                          className="w-full text-center text-xs border border-blue-300 rounded px-1 py-0.5"
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onBlur={handleRenameSave}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleRenameSave()
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <div className="text-center w-full">
+                          <div
+                            className="text-xs font-medium truncate w-full text-gray-700"
+                            title={folder.folder_name}
+                          >
+                            {folder.folder_name}
+                          </div>
+                        </div>
+                      )}
+
+                      {!isSystem && (
+                        <div
+                          className={`absolute top-2 right-2 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden transition-all ${
+                            selectedItem === folder.id
+                              ? "opacity-100 visible"
+                              : "opacity-0 invisible group-hover:visible group-hover:opacity-100"
+                          }`}
+                        >
+                          {/* <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShare(folder);
+                        }}
+                        className="p-1.5 hover:bg-gray-100 text-blue-600 border-b"
+                      >
+                        <Share2 size={12} />
+                      </button> */}
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRenameStart(folder);
+                            }}
+                            className="p-1.5 hover:bg-gray-100 text-gray-600"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCut(folder.id);
+                            }}
+                            className="p-1.5 hover:bg-gray-100 text-orange-600"
+                          >
+                            <Scissors size={12} />
+                          </button>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(folder.id);
+                            }}
+                            className="p-1.5 hover:bg-gray-100 text-red-600"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Files */}
+                {files.map((file: any) => (
+                  <div
+                    key={file.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedItem(file.id);
+                    }}
+                    onDoubleClick={() => window.open(file.file_url, "_blank")}
+                    className={`group relative p-4 rounded-xl border flex flex-col items-center gap-3 cursor-pointer transition-all ${
+                      selectedItem === file.id
+                        ? "bg-blue-50 border-blue-400 ring-1 ring-blue-400"
+                        : "bg-white border-gray-100 hover:border-gray-300 hover:shadow-sm"
+                    }`}
+                  >
+                    <FileText size={40} className="text-blue-500" />
+                    <div className="text-center w-full">
+                      <div
+                        className="text-xs font-medium truncate w-full text-gray-700"
+                        title={file.file_name}
+                      >
+                        {file.file_name}
+                      </div>
+                    </div>
+
+                    <div
+                      className={`absolute top-2 right-2 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden transition-all ${
+                        selectedItem === file.id
+                          ? "opacity-100 visible"
+                          : "opacity-0 invisible group-hover:visible group-hover:opacity-100"
+                      }`}
+                    >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRenameStart(file);
+                        }}
+                        className="p-1.5 hover:bg-gray-100 text-gray-600"
+                      >
+                        <Edit2 size={12} />
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCut(file.id);
+                        }}
+                        className="p-1.5 hover:bg-gray-100 text-orange-600"
+                      >
+                        <Scissors size={12} />
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(file.id);
+                        }}
+                        className="p-1.5 hover:bg-gray-100 text-red-600"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

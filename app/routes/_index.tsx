@@ -35,6 +35,8 @@ import {
   ArrowRight,
   Building2,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
   Globe,
   Handshake,
   Instagram,
@@ -44,7 +46,10 @@ import {
   MapPin,
   Package,
   Phone,
+  ShoppingBag,
   Star,
+  X,
+  ZoomIn,
 } from "lucide-react";
 import { useNavigate, useLoaderData } from "react-router";
 import {
@@ -54,6 +59,10 @@ import {
   toMoney,
 } from "~/lib/utils";
 import { API } from "~/lib/api";
+import { useFetcherData } from "~/hooks";
+import { nexus } from "~/lib/nexus-client";
+import { useState } from "react";
+import { formatFullDate } from "~/constants";
 const fmt = (n: number) => n.toLocaleString("id-ID");
 
 export async function loader() {
@@ -127,10 +136,10 @@ export async function loader() {
     products: productsRes.items || [],
     portfolioItems,
     stats: {
-      countFinished: "100+",
-      countItems: "1000+",
-      uniqueClients: "100+",
-      countSponsors: "10+",
+      countFinished: 578,
+      countItems: 5120,
+      uniqueClients: 346,
+      countSponsors: 259,
     },
   };
 }
@@ -286,9 +295,34 @@ export default function LandingPage() {
     };
   }>();
 
+  const { data: cmsContentData, reload: reloadCmsContent } = useFetcherData({
+    endpoint: nexus()
+      .module("CMS_CONTENT")
+      .action("get")
+      .params({
+        pagination: "true",
+        type: "hero-section",
+        page: 0,
+        size: 1,
+      })
+      .build(),
+  });
+
   return (
     <div>
       <Navbar />
+
+      {/* {safeParseArray(cmsContentData?.data?.items?.[0]?.image_gallery)?.[0] ? (
+        <img
+          src={
+            safeParseArray(cmsContentData?.data?.items?.[0]?.image_gallery)?.[0]
+          }
+          className="w-full h-96px object-cover"
+        />
+      ) : (
+        <span className=""></span>
+      )} */}
+
       <Hero products={products} />
       <Stats
         countFinished={stats.countFinished}
@@ -412,192 +446,345 @@ export const Stats = ({
 };
 
 export const Portfolio = ({ portfolioItems }: { portfolioItems: any[] }) => {
-  console.log(portfolioItems);
+  // console.log(portfolioItems);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+  const [sliderStates, setSliderStates] = useState<Record<string, number>>({});
+
+  // Slider Logic
+  const handleNextImage = (
+    e: React.MouseEvent,
+    orderId: string,
+    totalImages: number
+  ) => {
+    e.stopPropagation();
+    setSliderStates((prev) => ({
+      ...prev,
+      [orderId]: ((prev[orderId] || 0) + 1) % totalImages,
+    }));
+  };
+
+  const handlePrevImage = (
+    e: React.MouseEvent,
+    orderId: string,
+    totalImages: number
+  ) => {
+    e.stopPropagation();
+    setSliderStates((prev) => ({
+      ...prev,
+      [orderId]: ((prev[orderId] || 0) - 1 + totalImages) % totalImages,
+    }));
+  };
+
   return (
     <>
-      {/* Portfolio (Horizontal Scroll) */}
-      <section id="portfolio" className="py-20 bg-gray-50">
+      {/* Portfolio / Produksi Terbaru (Card Update with Slider) */}
+      <section
+        id="portfolio"
+        className="py-20 bg-gray-50 border-t border-gray-200"
+      >
         <div className="max-w-7xl mx-auto px-4 mb-10">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Riwayat Produksi
+            Produksi Terbaru
           </h2>
           <p className="text-gray-600 max-w-2xl">
-            Lihat hasil karya kami untuk berbagai instansi dan event di seluruh
-            Indonesia.
+            Dokumentasi hasil pengerjaan real-time dari workshop kami.
           </p>
         </div>
 
         {/* Scroll Container */}
-        <div className="max-w-7xl mx-auto flex justify-center overflow-x-auto pb-8 hide-scrollbar px-4 md:px-8">
-          <div className="flex gap-6 w-max mx-auto md:mx-0">
-            {portfolioItems.length === 0 ? (
-              <p className="w-full text-center text-gray-400 py-10 px-10 italic">
-                Belum ada portfolio ditampilkan.
-              </p>
-            ) : (
-              portfolioItems.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="w-[300px] md:w-[350px] bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex-shrink-0 snap-center hover:shadow-md transition group"
-                >
-                  <div className="h-56 bg-gray-200 relative overflow-hidden">
-                    {safeParseArray(item.images)?.[0] ? (
-                      <img
-                        src={safeParseArray(item.images)?.[0]}
-                        alt={item.institution_name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-400">
-                        <Package size={40} />
-                      </div>
-                    )}
-                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-gray-800 shadow-sm">
-                      {item.jumlah} Pcs
-                    </div>
-                  </div>
-                  <div className="p-5">
-                    <h3
-                      className="font-bold text-lg text-gray-900 mb-1 truncate"
-                      title={item.institution_name}
-                    >
-                      {item.institution_name}
-                    </h3>
-                    <p className="text-sm text-gray-500 mb-3">
-                      {safeParseArray(item.order_items)?.length}++ Produk
-                    </p>
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="w-full overflow-x-auto pb-8 hide-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
+            <div className="flex gap-6">
+              {portfolioItems.length === 0 ? (
+                <div className="w-full text-center text-gray-400 py-10 px-10 italic">
+                  Belum ada dokumentasi.
+                </div>
+              ) : (
+                portfolioItems.map((item, idx) => {
+                  const images = safeParseArray(item.images) || [];
+                  const currentIdx = sliderStates[item.id] || 0;
+                  const currentImg =
+                    images.length > 0 ? images[currentIdx] : null;
 
-                    {item.review && (
-                      <div className="bg-blue-50 p-3 rounded-lg text-xs text-gray-700 italic relative">
-                        <span className="text-blue-300 text-4xl absolute -top-2 -left-1">
-                          "
-                        </span>
-                        <span className="relative z-10">
-                          {item.review.length > 80
-                            ? item.review.substring(0, 80) + "..."
-                            : item.review}
-                        </span>
-                        {item.rating && (
-                          <div className="flex gap-0.5 mt-2 text-yellow-400">
-                            {Array.from({ length: item.rating }).map((_, i) => (
-                              <Star key={i} size={10} fill="currentColor" />
-                            ))}
+                  // Determine display string for products + variations
+                  const productDisplay =
+                    safeParseArray(item.order_items) &&
+                    safeParseArray(item.order_items).length > 0
+                      ? safeParseArray(item.order_items)
+                          .map(
+                            (i) => `${i.product_name} ` //${i.variationName ? `(${i.variationName})` : ""}
+                          )
+                          .join(", ")
+                      : "";
+
+                  return (
+                    <div
+                      key={idx}
+                      className="w-[280px] flex-shrink-0 bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition group border border-gray-100"
+                    >
+                      {/* Image Area with Slider */}
+                      <div className="w-full aspect-[4/3] bg-gray-200 relative overflow-hidden">
+                        {currentImg ? (
+                          <img
+                            src={currentImg}
+                            alt={item.instansi}
+                            className="w-full h-full object-cover cursor-pointer"
+                            onClick={() => setZoomedImage(currentImg)}
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-gray-400">
+                            <Package size={40} />
                           </div>
                         )}
+
+                        {/* Date Badge */}
+                        <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur z-10">
+                          {formatFullDate(item.created_on)}
+                        </div>
+
+                        {/* Slider Controls */}
+                        {images.length > 1 && (
+                          <>
+                            <button
+                              onClick={(e) =>
+                                handlePrevImage(e, item.id, images.length)
+                              }
+                              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                            >
+                              <ChevronLeft size={16} />
+                            </button>
+                            <button
+                              onClick={(e) =>
+                                handleNextImage(e, item.id, images.length)
+                              }
+                              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                            >
+                              <ChevronRight size={16} />
+                            </button>
+                            {/* Dots */}
+                            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+                              {images.map((_, i) => (
+                                <div
+                                  key={i}
+                                  className={`w-1.5 h-1.5 rounded-full ${i === currentIdx ? "bg-white" : "bg-white/50"}`}
+                                ></div>
+                              ))}
+                            </div>
+                          </>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
+
+                      {/* Content Area */}
+                      <div className="p-4">
+                        <h3
+                          className="font-bold text-gray-800 text-lg leading-tight mb-1 truncate"
+                          title={item.institution_name}
+                        >
+                          {item.institution_name}
+                        </h3>
+                        <div className="flex flex-col gap-1 text-xs text-gray-500 mb-3">
+                          <div className="flex items-center gap-2">
+                            <Package size={12} />
+                            <span className="font-semibold">
+                              {safeParseArray(item.order_items)?.reduce(
+                                (acc, item) => acc + +item.qty,
+                                0
+                              )}{" "}
+                              pcs
+                            </span>
+                          </div>
+                          <div className="line-clamp-2" title={productDisplay}>
+                            {productDisplay}
+                          </div>
+                        </div>
+
+                        {/* Review Bubble if exists */}
+                        {item.review && (
+                          <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 text-xs relative mt-2">
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-bold text-gray-700 truncate max-w-[150px]">
+                                {item.pemesanName || "Customer"}
+                              </span>
+                              <div className="flex gap-0.5 text-yellow-400 flex-shrink-0">
+                                {Array.from({ length: item.rating || 5 }).map(
+                                  (_, i) => (
+                                    <Star
+                                      key={i}
+                                      size={10}
+                                      fill="currentColor"
+                                    />
+                                  )
+                                )}
+                              </div>
+                            </div>
+                            <p className="text-gray-600 italic line-clamp-3">
+                              "{item.review}"
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Slider Navigation */}
+                        {/* {images.length > 1 && (
+                          <div className="flex justify-between mt-2">
+                            <button
+                              onClick={(e) =>
+                                handlePrevImage(e, item.id, images.length)
+                              }
+                              className="bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-full"
+                            >
+                              <ChevronLeft size={20} />
+                            </button>
+                            <button
+                              onClick={(e) =>
+                                handleNextImage(e, item.id, images.length)
+                              }
+                              className="bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-full"
+                            >
+                              <ChevronRight size={20} />
+                            </button>
+                          </div>
+                        )} */}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Lightbox Modal */}
+      {zoomedImage && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setZoomedImage(null)}
+        >
+          <button
+            onClick={() => setZoomedImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 z-50 p-2 bg-black/50 rounded-full"
+          >
+            <X size={32} />
+          </button>
+          <img
+            src={zoomedImage}
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
+          />
+        </div>
+      )}
     </>
   );
 };
 export const Products = ({ products }: { products: any[] }) => {
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
   return (
     <>
-      {/* Products & Pricing */}
       <section id="produk" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Daftar Produk & Harga
+              Daftar Produk
             </h2>
             <p className="text-gray-600">
-              Harga transparan, tanpa biaya tersembunyi.
+              Pilih produk terbaik untuk kebutuhan acara anda.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {products.length === 0 ? (
-              <div className="col-span-3 text-center text-gray-400">
-                Belum ada produk.
-              </div>
-            ) : (
-              products.map((product) => (
-                <div
-                  key={product.id}
-                  className="border border-gray-200 rounded-2xl p-6 hover:border-blue-500 transition relative overflow-hidden"
-                >
-                  {product.category === "Paket" && (
-                    <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">
-                      BEST SELLER
-                    </div>
-                  )}
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    {product.name}
-                  </h3>
-                  <p className="text-gray-500 text-sm mb-6 h-10">
-                    {product.description ||
-                      "Kualitas terbaik untuk kebutuhan anda."}
-                  </p>
-                  {/* <div className="text-3xl font-bold text-gray-900 mb-6">
-                    {toMoney(product.price)}{" "}
-                    <span className="text-sm text-gray-400 font-normal">
-                      / pcs
-                    </span>
-                  </div> */}
-                  {product.product_price_rules &&
-                  safeParseArray(product.product_price_rules).length > 0 ? (
-                    <div className="mb-6">
-                      <p className="text-xs font-bold text-blue-600 uppercase mb-1">
-                        Mulai dari
-                      </p>
-                      <div className="text-3xl font-bold text-gray-900">
-                        {toMoney(
-                          Math.min(
-                            ...safeParseArray(product.product_price_rules).map(
-                              (r: any) => r.price
-                            )
-                          )
+          <div className="w-full overflow-x-auto pb-8 hide-scrollbar">
+            <div className="flex gap-6">
+              {products.length === 0 ? (
+                <div className="w-full text-center text-gray-400">
+                  Belum ada produk ditampilkan.
+                </div>
+              ) : (
+                products.map((product) => {
+                  // const sold = getProductSales(product.id);
+                  const sold = 1000;
+                  return (
+                    <div
+                      key={product.id}
+                      className="w-[280px] md:w-[320px] flex-shrink-0 group relative"
+                    >
+                      {/* Card Image 4:5 */}
+                      <div
+                        className="w-full aspect-[4/5] rounded-2xl overflow-hidden bg-gray-100 relative cursor-pointer shadow-sm group-hover:shadow-lg transition mb-4 border border-gray-100"
+                        onClick={() =>
+                          product.image && setZoomedImage(product.image)
+                        }
+                      >
+                        {product.image ? (
+                          <img
+                            src={product.image}
+                            className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+                            alt={product.name}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 flex-col gap-2">
+                            <Package size={48} />
+                            <span className="text-sm">No Image</span>
+                          </div>
                         )}
-                        <span className="text-sm text-gray-400 font-normal ml-1">
-                          / pcs
-                        </span>
+
+                        {/* SOLD COUNT BADGE */}
+                        {sold > 0 && (
+                          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-gray-900 text-[10px] font-bold px-2 py-1 rounded-full shadow-sm border border-gray-200 flex items-center gap-1">
+                            <ShoppingBag size={10} className="text-blue-600" />
+                            Terjual {fmt(sold)} pcs
+                          </div>
+                        )}
+
+                        {/* Zoom Icon Overlay */}
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white">
+                          <ZoomIn size={32} />
+                        </div>
+                      </div>
+
+                      {/* Info */}
+                      <div className="text-center px-2">
+                        <h3 className="font-bold text-gray-900 text-lg mb-2">
+                          {product.name}
+                        </h3>
+                        <a
+                          href={getWhatsAppLink(
+                            ADMIN_WA,
+                            `Halo, saya mau pesan ${product.name}...`
+                          )}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-gray-900 text-white text-sm font-bold hover:bg-gray-800 transition"
+                        >
+                          Pesan Sekarang
+                        </a>
                       </div>
                     </div>
-                  ) : (
-                    <div className="text-3xl font-bold text-gray-900 mb-6">
-                      {toMoney(product.price)}{" "}
-                      <span className="text-sm text-gray-400 font-normal">
-                        / pcs
-                      </span>
-                    </div>
-                  )}
-                  <ul className="space-y-3 mb-8">
-                    <li className="flex items-center gap-2 text-sm text-gray-600">
-                      <CheckCircle size={16} className="text-green-500" /> Free
-                      Desain (S&K)
-                    </li>
-                    <li className="flex items-center gap-2 text-sm text-gray-600">
-                      <CheckCircle size={16} className="text-green-500" />{" "}
-                      Pengerjaan Cepat
-                    </li>
-                    <li className="flex items-center gap-2 text-sm text-gray-600">
-                      <CheckCircle size={16} className="text-green-500" />{" "}
-                      Garansi Retur
-                    </li>
-                  </ul>
-                  <a
-                    href={getWhatsAppLink(
-                      ADMIN_WA,
-                      `Halo, saya mau pesan ${product.name}...`
-                    )}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block w-full text-center py-3 rounded-xl border-2 border-gray-900 text-gray-900 font-bold hover:bg-gray-900 hover:text-white transition"
-                  >
-                    Pesan via WA
-                  </a>
-                </div>
-              ))
-            )}
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Lightbox Modal */}
+      {zoomedImage && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setZoomedImage(null)}
+        >
+          <button
+            onClick={() => setZoomedImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 z-50 p-2 bg-black/50 rounded-full"
+          >
+            <X size={32} />
+          </button>
+          <img
+            src={zoomedImage}
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
+          />
+        </div>
+      )}
     </>
   );
 };
@@ -650,6 +837,7 @@ export const Navbar = () => {
 };
 
 export const Footer = () => {
+  const navigate = useNavigate();
   return (
     <>
       {/* Footer */}
@@ -661,22 +849,16 @@ export const Footer = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div className="md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                {/* <div className="w-8 h-8 bg-gray-900 text-white rounded-lg flex items-center justify-center font-bold text-lg">
+                <div className="w-8 h-8 bg-gray-900 text-white rounded-lg flex items-center justify-center font-bold text-lg">
                   K
                 </div>
                 <span className="font-bold text-xl tracking-tight">
                   Kinau.id
-                </span> */}
-                <img
-                  src="/kinau-logo.png"
-                  className="w-28 h-auto"
-                  alt="Logo"
-                  onClick={() => {}}
-                />
+                </span>
               </div>
               <p className="text-sm text-gray-500 leading-relaxed">
-                Partner percetakan terpercaya di Lampung. Melayani pembuatan ID
-                Card, Lanyard, dan Merchandise dengan kualitas premium.
+                Melayani pembuatan produk custom seperti ID Card, Lanyard,
+                Baju/Seragam, dan Merchandise dengan kualitas premium.
               </p>
             </div>
 
@@ -684,14 +866,31 @@ export const Footer = () => {
               <h4 className="font-bold text-gray-900 mb-4">Kontak Kami</h4>
               <ul className="space-y-3 text-sm text-gray-600">
                 <li className="flex items-center gap-2">
-                  <Phone size={16} className="text-blue-600" /> +62 852-1933-747
+                  <Phone size={16} className="text-blue-600" />
+                  <a
+                    href={getWhatsAppLink(
+                      ADMIN_WA,
+                      "Halo Kinau.id, saya ingin bertanya..."
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-blue-600"
+                  >
+                    +62 852-1933-7474
+                  </a>
                 </li>
                 <li className="flex items-center gap-2">
                   <Mail size={16} className="text-blue-600" /> admin@kinau.id
                 </li>
                 <li className="flex items-start gap-2">
-                  <MapPin size={16} className="text-blue-600 mt-1" /> Jl.
-                  Cengkeh No. 12, Bandar Lampung
+                  <MapPin
+                    size={16}
+                    className="text-blue-600 mt-1 min-w-[16px]"
+                  />
+                  <span>
+                    Jalan Terusan Jl. Murai 1 No.7 , Kel. Korpri Raya, Kec.
+                    Sukarame, Kota Bandar Lampung, Lampung.
+                  </span>
                 </li>
               </ul>
             </div>
@@ -701,7 +900,7 @@ export const Footer = () => {
               <ul className="space-y-2 text-sm text-gray-600">
                 <li>
                   <a href="#portfolio" className="hover:text-blue-600">
-                    Portfolio
+                    Produksi
                   </a>
                 </li>
                 <li>
@@ -710,15 +909,15 @@ export const Footer = () => {
                   </a>
                 </li>
                 <li>
-                  <a href="#ulasan" className="hover:text-blue-600">
-                    Testimoni
+                  <a href="#kontak" className="hover:text-blue-600">
+                    Kontak
                   </a>
                 </li>
                 <li>
                   <a
                     href="#"
-                    onClick={() => {}}
-                    className="hover:text-blue-600 cursor-pointer"
+                    onClick={() => navigate("/login")}
+                    className="hover:text-blue-600"
                   >
                     Login Admin
                   </a>
@@ -730,16 +929,15 @@ export const Footer = () => {
               <h4 className="font-bold text-gray-900 mb-4">Sosial Media</h4>
               <div className="flex gap-4">
                 <a
-                  href="#"
-                  className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-blue-600 hover:text-white transition"
+                  href="https://instagram.com/kinau.id"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition"
                 >
-                  <Instagram size={20} />
-                </a>
-                <a
-                  href="#"
-                  className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-blue-600 hover:text-white transition"
-                >
-                  <Globe size={20} />
+                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                    <Instagram size={20} />
+                  </div>
+                  <span className="font-medium">@kinau.id</span>
                 </a>
               </div>
             </div>

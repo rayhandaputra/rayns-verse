@@ -117,9 +117,6 @@ export default function UserManagementPage() {
       })
       .build(),
   });
-  console.log(
-    safeParseArray(cmsContentData?.data?.items?.[0]?.image_gallery)?.[0]
-  );
 
   const { data: usersData, reload } = useFetcherData({
     endpoint: nexus()

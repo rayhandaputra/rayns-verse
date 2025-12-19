@@ -280,7 +280,6 @@ export default function DriveInternalPage() {
       .build(),
     autoLoad: true,
   });
-  console.log(realFiles);
 
   useEffect(() => {
     if (actionData) {
@@ -423,6 +422,7 @@ export default function DriveInternalPage() {
           level: currentFolderId ? 2 : 1,
           order_number: null,
         };
+        console.log(newFilePayload);
 
         const result = await API.ORDER_UPLOAD.create_single_file({
           session: {},
