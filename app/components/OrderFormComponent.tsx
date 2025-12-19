@@ -182,7 +182,8 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
       return (result?.items || []).map((v: any) => ({
         ...v,
         value: v?.id,
-        label: `${v?.type === "package" ? "[PAKET] " : ""}${v?.name} - Rp${formatCurrency(v?.total_price || 0)}`,
+        // label: `${v?.type === "package" ? "[PAKET] " : ""}${v?.name} - Rp${formatCurrency(v?.total_price || 0)}`,
+        label: `${v?.name} - Rp${formatCurrency(v?.total_price || 0)}`,
       }));
     } catch (error) {
       console.log(error);

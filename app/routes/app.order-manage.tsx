@@ -201,7 +201,8 @@ export default function CreatePesanan() {
       return result?.items?.map((v: any) => ({
         ...v,
         value: v?.id,
-        label: `${v?.type === "package" ? "[PAKET] " : ""}${v?.name} - Rp${toMoney(v?.total_price)}`,
+        // label: `${v?.type === "package" ? "[PAKET] " : ""}${v?.name} - Rp${toMoney(v?.total_price)}`,
+        label: `${v?.name} - Rp${toMoney(v?.total_price)}`,
       }));
     } catch (error) {
       console.log(error);

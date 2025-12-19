@@ -145,8 +145,6 @@ export const action: ActionFunction = async ({ request }) => {
       ...(+id > 0 ? { id } : {}),
     };
 
-    console.log(payload);
-
     // Use create for both create and update (it handles both)
     let response;
     if (+id > 0) {
@@ -221,6 +219,7 @@ export default function ProductListPage() {
 
   // ========== STATE ==========
   const [modal, setModal] = useModal<any>();
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ========== DATA MAPPING ==========
@@ -304,7 +303,7 @@ export default function ProductListPage() {
       category: modal.data?.category || "Paket",
       description: modal.data?.description,
       image: modal.data?.image,
-      show_in_dashboard: modal.data?.show_in_dashboard,
+      show_in_dashboard: +(modal?.data?.show_in_dashboard ?? 1) ? 1 : 0,
       product_price_rules: JSON.stringify(
         modal?.data?.product_price_rules || []
       ),
@@ -343,7 +342,7 @@ export default function ProductListPage() {
       category: product.category,
       description: product.description || "",
       image: product.image || "",
-      show_in_dashboard: +(product?.show_in_dashboard ?? 0) ? 1 : 0,
+      show_in_dashboard: +(product?.show_in_dashboard ?? 1) ? 1 : 0,
       product_price_rules: JSON.stringify(product.product_price_rules || []),
       product_variants: JSON.stringify(product.product_variants || []),
     });
@@ -351,12 +350,19 @@ export default function ProductListPage() {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const response = await API.ASSET.upload(file);
-      setModal({
-        ...modal,
-        data: { ...modal?.data, image: response.url },
-      });
+      try {
+        setIsUploadingImage(true);
+        const file = e.target.files[0];
+        const response = await API.ASSET.upload(file);
+        setModal({
+          ...modal,
+          data: { ...modal?.data, image: response.url },
+        });
+      } catch (error) {
+        toast.error("Gagal mengupload gambar");
+      } finally {
+        setIsUploadingImage(false);
+      }
     }
   };
 
@@ -643,8 +649,13 @@ export default function ProductListPage() {
                       Gambar Produk
                     </label>
                     <div className="flex gap-2 items-center">
-                      {modal?.data?.image &&
-                      modal.data.image !== "undefined" ? (
+                      {isUploadingImage ? (
+                        <div className="flex items-center gap-2 p-2 border border-blue-300 bg-blue-50 rounded text-xs text-blue-600">
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
+                          <span>Uploading...</span>
+                        </div>
+                      ) : modal?.data?.image &&
+                        modal.data.image !== "undefined" ? (
                         <div className="relative w-10 h-10 group">
                           <img
                             src={modal?.data?.image}
@@ -679,6 +690,7 @@ export default function ProductListPage() {
                         ref={fileInputRef}
                         accept="image/*"
                         onChange={handleImageUpload}
+                        disabled={isUploadingImage}
                       />
                     </div>
                   </div>
@@ -829,14 +841,16 @@ export default function ProductListPage() {
                     <input
                       type="checkbox"
                       className="rounded text-blue-600 focus:ring-blue-500"
-                      checked={+modal?.data?.show_in_dashboard > 0}
+                      checked={+(modal?.data?.show_in_dashboard ?? 1) > 0}
                       onChange={(e) =>
                         setModal({
                           ...modal,
                           data: {
                             ...modal?.data,
                             show_in_dashboard:
-                              +modal?.data?.show_in_dashboard > 0 ? 0 : 1,
+                              +(modal?.data?.show_in_dashboard ?? 0) > 0
+                                ? 1
+                                : 0,
                           },
                         })
                       }
