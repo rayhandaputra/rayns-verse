@@ -33,6 +33,7 @@ export const ProductAPI = {
           "other_fee",
           "total_price",
           `(SELECT COUNT(id) FROM product_components WHERE product_id = products.id) AS total_components`,
+          `(SELECT SUM(qty) FROM order_items WHERE product_id = products.id) AS total_sold_items`,
         ],
         where: {
           deleted_on: "null",

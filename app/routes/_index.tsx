@@ -700,7 +700,7 @@ export const Products = ({ products }: { products: any[] }) => {
               ) : (
                 products.map((product) => {
                   // const sold = getProductSales(product.id);
-                  const sold = 1000;
+                  const sold = product?.total_sold_items || 0;
                   return (
                     <div
                       key={product.id}
