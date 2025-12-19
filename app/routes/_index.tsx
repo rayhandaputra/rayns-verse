@@ -78,7 +78,7 @@ export async function loader() {
     req: {
       query: {
         status: "done",
-        is_portfolio: "done",
+        is_portfolio: "1",
         page: 0,
         size: 200,
         pagination: "true",
@@ -848,18 +848,12 @@ export const Footer = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div className="md:col-span-1">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-gray-900 text-white rounded-lg flex items-center justify-center font-bold text-lg">
-                  K
-                </div>
-                <span className="font-bold text-xl tracking-tight">
-                  Kinau.id
-                </span>
-              </div>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                Melayani pembuatan produk custom seperti ID Card, Lanyard,
-                Baju/Seragam, dan Merchandise dengan kualitas premium.
-              </p>
+              <img
+                src="/kinau-logo.png"
+                className="w-28 h-auto"
+                alt="Logo"
+                onClick={() => {}}
+              />
             </div>
 
             <div>

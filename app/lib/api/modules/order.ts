@@ -19,6 +19,8 @@ export const OrderAPI = {
       payment_status,
       order_type,
       start_date,
+      is_kkn,
+      is_portfolio,
       end_date,
     } = req.query || {};
 
@@ -31,6 +33,8 @@ export const OrderAPI = {
     if (status) where.status = status;
     if (payment_status) where.payment_status = payment_status;
     if (order_type) where.order_type = order_type;
+    if (is_kkn) where.is_kkn = is_kkn;
+    if (is_portfolio) where.is_portfolio = is_portfolio;
 
     // ✅ FILTER TANGGAL
     if (start_date && end_date) {
@@ -40,6 +44,8 @@ export const OrderAPI = {
     } else if (end_date) {
       where.created_on = { lte: end_date };
     }
+
+    where.deleted_on = "null";
 
     // ✅ SEARCH MULTI FIELD (format OR)
     const searchConfig = search
@@ -87,6 +93,9 @@ export const OrderAPI = {
             "is_portfolio",
             "is_sponsor",
             "is_kkn",
+            "kkn_source",
+            "kkn_type",
+            "kkn_detail",
             "pic_name",
             "pic_phone",
             "drive_folder_id",
@@ -164,6 +173,9 @@ export const OrderAPI = {
       dp_amount = 0,
       is_sponsor = 0,
       is_kkn = 0,
+      kkn_source = "",
+      kkn_type = "",
+      kkn_detail = "",
       tax_percent = 0,
       shipping_fee = 0,
       other_fee = 0,
@@ -245,6 +257,9 @@ export const OrderAPI = {
       dp_amount,
       is_sponsor,
       is_kkn,
+      kkn_source,
+      kkn_type,
+      kkn_detail,
       // grand_total,
       deadline,
       status,
@@ -272,7 +287,6 @@ export const OrderAPI = {
             },
           },
         });
-        console.log("MBIKIN INSTITUSI => ", result);
 
         newOrder.institution_id = result?.insert_id;
       }

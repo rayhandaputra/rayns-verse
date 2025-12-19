@@ -48,7 +48,7 @@ export const action: ActionFunction = async ({ request }) => {
   if (actionType === "delete") {
     const res = await API.ORDERS.update({
       session: { user, token },
-      req: { body: { id, deleted: 1 } },
+      req: { body: { id, deleted_on: new Date().toISOString() } },
     });
     return Response.json({
       success: res.success,
@@ -112,6 +112,12 @@ export const action: ActionFunction = async ({ request }) => {
 export default function OrderList() {
   const navigate = useNavigate();
 
+  const [viewMode, setViewMode] = useState<"reguler" | "kkn">("reguler");
+  const [filterYear, setFilterYear] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+
+  const [modal, setModal] = useModal();
+
   // Fetch orders with Nexus
   // ... existing code ...
   const onUpdateReview = (id: string, rating: number, review: string) => {
@@ -144,60 +150,12 @@ export default function OrderList() {
         page: 0,
         size: 10,
         pagination: "true",
+        ...(viewMode === "kkn" && {
+          is_kkn: "1",
+        }),
       })
       .build(),
   });
-
-  // const orders: Order[] = useMemo(() => {
-  //   if (!ordersData?.data?.items) return [];
-
-  //   return ordersData.data.items.map((item: any) => {
-  //     const isKKN = item.notes?.includes("KKN") || false;
-  //     const dpMatch = item.notes?.match(/DP:\s*(\d+)/);
-  //     const dpAmount = dpMatch ? Number(dpMatch[1]) : 0;
-
-  //     let statusPengerjaan: any = "pending";
-  //     if (item.status === "done") statusPengerjaan = "selesai";
-  //     else if (
-  //       ["in_production", "process", "ready", "shipped"].includes(item.status)
-  //     )
-  //       statusPengerjaan = "sedang dikerjakan";
-
-  //     let statusPembayaran: any = "Tidak Ada";
-  //     if (item.payment_status === "paid") statusPembayaran = "Lunas";
-  //     else if (item.payment_status === "down_payment") statusPembayaran = "DP";
-
-  //     return {
-  //       id: item.id,
-  //       instansi: item.institution_name,
-  //       singkatan: item.institution_abbr || "",
-  //       jenisPesanan: getOrderLabel(item.order_type) || item.order_type,
-  //       jumlah: Number(item.total_product || 0),
-  //       deadline: item.deadline || "",
-  //       statusPembayaran,
-  //       dpAmount,
-  //       domain: item.institution_domain || "",
-  //       accessCode: item.order_number,
-  //       statusPengerjaan,
-  //       finishedAt: item.status === "done" ? item.modified_on : null,
-  //       unitPrice: 0,
-  //       totalAmount: Number(item.grand_total || 0),
-  //       createdAt: item.created_on,
-  //       isKKN,
-  //       pjName: item.shipping_contact || "",
-  //       pjPhone: item.shipping_contact || "",
-  //       customItems: [],
-  //       driveFolderId: "",
-  //     };
-  //   });
-  // }, [ordersData]);
-
-  const [viewMode, setViewMode] = useState<"reguler" | "kkn">("reguler");
-  const [filterYear, setFilterYear] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
-  const [showNota, setShowNota] = useState<string | null>(null);
-
-  const [modal, setModal] = useModal();
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);

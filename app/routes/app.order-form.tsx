@@ -36,6 +36,7 @@ import { useFetcherData } from "~/hooks/use-fetcher-data";
 import { nexus } from "~/lib/nexus-client";
 import { safeParseObject } from "~/lib/utils";
 import OrderFormComponent from "~/components/OrderFormComponent";
+import moment from "moment";
 
 // ============================================
 // TYPES & INTERFACES
@@ -109,6 +110,16 @@ export const action: ActionFunction = async ({ request }) => {
         total_amount: payload.totalAmount,
         is_sponsor: !payload?.isSponsor ? 0 : 1,
         is_kkn: !payload?.isKKN ? 0 : 1,
+        ...(+payload?.isKKN && {
+          kkn_source: "kkn_itera",
+          kkn_type: payload?.kknDetails?.tipe ?? "PPM",
+          kkn_detail: {
+            period: payload?.kknDetails?.periode ?? 1,
+            tahun: payload?.kknDetails?.tahun ?? moment().year(),
+            value: payload?.kknDetails?.nilai ?? 0,
+            total_group: payload?.kknDetails?.jumlahKelompok ?? 0,
+          },
+        }),
         discount_type: payload?.discount?.type || null,
         discount_value: payload?.discount?.value || 0,
         status: "ordered",
