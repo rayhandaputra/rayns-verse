@@ -37,11 +37,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         // size: 10,
       } as any,
     });
+    console.log(commodity)
 
     return {
       // search,
       // APP_CONFIG: CONFIG,
-      suppliers: suppliers?.items,
+      suppliers: suppliers?.items ?? [],
       table: {
         data: commodity,
         page: 0,

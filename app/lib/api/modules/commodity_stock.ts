@@ -9,11 +9,38 @@ export const CommodityStockAPI = {
       const result = await APIProvider({
         endpoint: "select",
         method: "POST",
+        table: "commodities",
+        action: "select",
         body: {
-          table: "commodities",
+          columns: [
+            "id",
+            "code",
+            "name",
+            "unit",
+            "base_price",
+            "created_on",
+            "(SELECT SUM(qty) FROM supplier_commodities WHERE commodity_id = commodities.id AND deleted_on IS NULL) AS stock",
+          ],
+          where: { deleted_on: "null" },
           page: Number(page),
           size: Number(size),
           search: search || null,
+          include: [
+            {
+              table: "supplier_commodities",
+              alias: "supplier_commodities",
+              foreign_key: "commodity_id",
+              reference_key: "id",
+              columns: [
+                "supplier_id",
+                "supplier_name",
+                "commodity_id",
+                "commodity_name",
+                "qty",
+                "price",
+              ],
+            },
+          ],
         },
       });
 
