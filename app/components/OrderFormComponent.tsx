@@ -944,26 +944,62 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                             className="w-full rounded-lg border-gray-300 border p-2 text-sm"
                             disabled={!item.productId}
                             value={item.variant_id || ""}
+                            // onChange={(e) => {
+                            //   const selected = safeParseArray(
+                            //     item?.product_variants
+                            //   ).find((v) => v.id === Number(e.target.value));
+
+                            //   // Calculate final variant price
+                            //   // const min_price = item?.quantity
+                            //   //   ? safeParseArray(
+                            //   //       item?.product_price_rules
+                            //   //     ).find(
+                            //   //       (p) => p.min_qty === Number(item.quantity)
+                            //   //     )
+                            //   //   : {};
+
+                            //   // const currentPrice = min_price?.price || 0;
+
+                            //   // const finalVariantPrice =
+                            //   //   (Number(item.quantity) ?? 0) * currentPrice +
+                            //   //   (Number(item.quantity) ?? 0) *
+                            //   //     (selected?.base_price || 0);
+                            //   // END -- Calculate final variant price
+
+                            //   handleItemChange(
+                            //     idx,
+                            //     "variant_id",
+                            //     selected?.id || null,
+                            //     {
+                            //       variant_name: selected?.variant_name || "",
+                            //       variant_price: selected?.base_price || 0,
+                            //       // variant_final_price: finalVariantPrice,
+                            //     }
+                            //   );
+                            // }}
                             onChange={(e) => {
                               const selected = safeParseArray(
                                 item?.product_variants
                               ).find((v) => v.id === Number(e.target.value));
 
-                              // Calculate final variant price
-                              const min_price = item?.quantity
-                                ? safeParseArray(
-                                    item?.product_price_rules
-                                  ).find(
-                                    (p) => p.min_qty === Number(item.quantity)
-                                  )
-                                : {};
+                              const qty = Number(item.quantity) || 0;
 
-                              const currentPrice =
-                                min_price?.price || selected?.base_price || 0;
+                              // cari price rule berdasarkan qty
+                              const priceRules = safeParseArray(
+                                item?.product_price_rules
+                              ).sort((a, b) => b.min_qty - a.min_qty);
 
-                              const finalVariantPrice =
-                                (Number(item.quantity) ?? 0) * currentPrice;
-                              // END -- Calculate final variant price
+                              const matchedRule = priceRules.find(
+                                (rule) => qty >= Number(rule.min_qty)
+                              );
+
+                              const basePrice = Number(matchedRule?.price || 0);
+                              const addonPrice = Number(
+                                selected?.base_price || 0
+                              );
+
+                              const totalPrice =
+                                qty * basePrice + qty * addonPrice;
 
                               handleItemChange(
                                 idx,
@@ -971,8 +1007,16 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                                 selected?.id || null,
                                 {
                                   variant_name: selected?.variant_name || "",
-                                  variant_price: selected?.base_price || 0,
-                                  variant_final_price: finalVariantPrice,
+                                  variant_price: addonPrice,
+
+                                  // snapshot price rule
+                                  price_rule_id: matchedRule?.id || null,
+                                  price_rule_min_qty:
+                                    matchedRule?.min_qty || null,
+                                  price_rule: basePrice,
+
+                                  // final total
+                                  variant_final_price: totalPrice,
                                 }
                               );
                             }}
@@ -992,27 +1036,67 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                             min="1"
                             className="w-20 rounded-lg border-gray-300 border p-2 text-sm text-center"
                             value={item.quantity}
+                            // onChange={(e) => {
+                            //   const min_price = safeParseArray(
+                            //     item?.product_price_rules
+                            //   )
+                            //     .sort((a, b) => a.min_qty - b.min_qty)
+                            //     .find(
+                            //       (p) => p.min_qty >= Number(e.target.value)
+                            //     );
+                            //   console.log("MIN PRICE => ", min_price);
+
+                            //   const finalVariantPrice = Number(
+                            //     +(e.target.value ?? 0) *
+                            //       +(min_price?.price ?? 0)
+                            //   );
+
+                            //   console.log("FINAL PRICE => ", finalVariantPrice);
+                            //   console.log(
+                            //     "VARIANT PRICE => ",
+                            //     Number(+item?.variant_price * +e.target.value)
+                            //   );
+
+                            //   handleItemChange(
+                            //     idx,
+                            //     "quantity",
+                            //     Number(e.target.value) ?? 0,
+                            //     {
+                            //       variant_final_price:
+                            //         finalVariantPrice +
+                            //         Number(
+                            //           +item?.variant_price * +e.target.value
+                            //         ),
+                            //     }
+                            //   );
+                            // }}
                             onChange={(e) => {
-                              const min_price = safeParseArray(
+                              const qty = Number(e.target.value) || 0;
+
+                              // ambil price rule berdasarkan qty
+                              const priceRules = safeParseArray(
                                 item?.product_price_rules
-                              ).find(
-                                (p) => p.min_qty === Number(e.target.value)
+                              ).sort((a, b) => b.min_qty - a.min_qty); // DESC
+
+                              const matchedRule = priceRules.find(
+                                (rule) => qty >= Number(rule.min_qty)
                               );
 
-                              const currentPrice =
-                                min_price?.price || item?.variant_price || 0;
-
-                              const finalVariantPrice =
-                                (Number(e.target.value) ?? 0) * currentPrice;
-
-                              handleItemChange(
-                                idx,
-                                "quantity",
-                                Number(e.target.value) ?? 0,
-                                {
-                                  variant_final_price: finalVariantPrice,
-                                }
+                              const basePrice = Number(matchedRule?.price || 0);
+                              const addonPrice = Number(
+                                item?.variant_price || 0
                               );
+
+                              const totalPrice =
+                                qty * basePrice + qty * addonPrice;
+
+                              handleItemChange(idx, "quantity", qty, {
+                                price_rule_id: matchedRule?.id || null,
+                                price_rule_min_qty:
+                                  matchedRule?.min_qty || null,
+                                price_rule: basePrice,
+                                variant_final_price: totalPrice,
+                              });
                             }}
                             placeholder="Qty"
                           />
