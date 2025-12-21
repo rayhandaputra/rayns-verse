@@ -124,6 +124,13 @@ export const OrderAPI = {
                 "subtotal",
                 "discount_value",
                 "tax_percent",
+                "variant_id",
+                "variant_name",
+                "variant_price",
+                "variant_final_price",
+                "price_rule_id",
+                "price_rule_min_qty",
+                "price_rule_value",
                 // "total_amount",
               ],
             },
@@ -371,6 +378,13 @@ export const OrderAPI = {
             tax_value,
             total_after_tax: subtotal - discount_total + tax_value,
             notes: item?.notes || null,
+            variant_id: item?.variant_id || null,
+            variant_name: item?.variant_name || null,
+            variant_price: item?.variant_price || null,
+            variant_final_price: item?.variant_final_price || null,
+            price_rule_id: item?.price_rule_id || null,
+            price_rule_min_qty: item?.price_rule_min_qty || null,
+            price_rule_value: item?.price_rule_value || null,
           };
         });
 

@@ -112,6 +112,7 @@ export const action: ActionFunction = async ({ request, params }) => {
         session: {},
         req: {
           body: {
+            ...(id && { id }),
             folder_name,
             parent_id,
             order_number,
@@ -326,9 +327,19 @@ export default function PublicDriveLinkPage() {
 
     submitAction({
       intent: "create_folder",
-      folder_name: modal?.data?.name,
+      folder_name: modal?.data?.folder_name,
       order_number: orderData?.order_number,
       parent_id: current_folder?.id || query?.folder_id || null,
+    });
+  };
+
+  const handleRenameSave = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    submitAction({
+      intent: "create_folder",
+      id: modal?.data?.id,
+      folder_name: modal?.data?.folder_name,
     });
   };
 
@@ -556,17 +567,20 @@ export default function PublicDriveLinkPage() {
                         <input
                           autoFocus
                           className="w-full text-center text-xs border border-blue-300 rounded px-1 py-0.5"
-                          value={modal?.data?.name}
+                          value={modal?.data?.folder_name}
                           onChange={(e) =>
                             setModal({
                               ...modal,
-                              data: { ...modal?.data, name: e.target.value },
+                              data: {
+                                ...modal?.data,
+                                folder_name: e.target.value,
+                              },
                             })
                           }
-                          // onBlur={handleRenameSave}
-                          // onKeyDown={(e) =>
-                          //   e.key === "Enter" && handleRenameSave()
-                          // }
+                          onBlur={handleRenameSave}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleRenameSave()
+                          }
                           onClick={(e) => e.stopPropagation()}
                         />
                       ) : (
@@ -654,6 +668,26 @@ export default function PublicDriveLinkPage() {
                     }`}
                   >
                     <FileText size={40} className="text-blue-500" />
+
+                    {/* Preview Button Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // handleOpenFolder(file.file_url);
+                          setModal({
+                            ...modal,
+                            open: true,
+                            type: "zoom_image",
+                            data: file,
+                          });
+                        }}
+                        className="p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg text-blue-600 pointer-events-auto hover:scale-110 transition-transform"
+                      >
+                        <Eye size={20} />
+                      </button>
+                    </div>
+
                     <div className="text-center w-full">
                       <div
                         className="text-xs font-medium truncate w-full text-gray-700"
@@ -711,6 +745,26 @@ export default function PublicDriveLinkPage() {
             )}
           </div>
 
+          {/* Lightbox Modal */}
+          {modal?.type === "zoom_image" && (
+            <div
+              className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-fade-in"
+              onClick={() => setModal({ ...modal, type: "", open: false })}
+            >
+              <button
+                onClick={() => setModal({ ...modal, type: "", open: false })}
+                className="absolute top-4 right-4 text-white hover:text-gray-300 z-50 p-2 bg-black/50 rounded-full"
+              >
+                <X size={32} />
+              </button>
+              <img
+                src={modal?.data?.file_url}
+                className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
+              />
+            </div>
+          )}
+
           {/* Footer Hint */}
           <FooterHint />
 
@@ -750,11 +804,11 @@ export default function PublicDriveLinkPage() {
                   autoFocus
                   className="w-full border border-gray-300 rounded-lg p-3 text-sm mb-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
                   placeholder="Nama Folder..."
-                  value={modal?.data?.name || ""}
+                  value={modal?.data?.folder_name || ""}
                   onChange={(e) =>
                     setModal({
                       ...modal,
-                      data: { ...modal?.data, name: e.target.value },
+                      data: { ...modal?.data, folder_name: e.target.value },
                     })
                   }
                 />

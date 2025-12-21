@@ -212,9 +212,9 @@ export default function OrderList() {
   };
 
   const getStatusColor = (status: string) => {
-    if (status === "selesai")
+    if (status === "done")
       return "bg-green-100 text-green-700 border border-green-200";
-    if (status === "sedang dikerjakan")
+    if (status === "confirmed")
       return "bg-blue-100 text-blue-700 border border-blue-200";
     return "bg-gray-100 text-gray-700 border border-gray-200";
   };
@@ -356,13 +356,10 @@ export default function OrderList() {
               <option value="pending" className="bg-white text-gray-700">
                 Pending
               </option>
-              <option
-                value="sedang dikerjakan"
-                className="bg-white text-blue-700"
-              >
-                Proses
+              <option value="confirmed" className="bg-white text-blue-700">
+                Diproses
               </option>
-              <option value="selesai" className="bg-white text-green-700">
+              <option value="done" className="bg-white text-green-700">
                 Selesai
               </option>
             </select>

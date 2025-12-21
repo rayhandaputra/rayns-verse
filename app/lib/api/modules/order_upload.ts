@@ -290,10 +290,10 @@ export const OrderUploadAPI = {
 
     try {
       const folderData: any = {
-        parent_id: parent_id || null,
-        order_number: order_number || null,
-        product_id: product_id || null,
-        product_name: product_name || null,
+        ...(parent_id && { parent_id: parent_id }),
+        ...(order_number && { order_number: order_number }),
+        ...(product_id && { product_id: product_id }),
+        ...(product_name && { product_name: product_name }),
         folder_name,
       };
 

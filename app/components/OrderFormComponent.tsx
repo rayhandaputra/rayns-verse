@@ -24,6 +24,7 @@ import {
 import AsyncReactSelect from "react-select/async";
 import { API } from "~/lib/api";
 import { toast } from "sonner";
+import { safeParseArray } from "~/lib/utils";
 
 // ============================================
 // TYPES
@@ -183,7 +184,8 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
         ...v,
         value: v?.id,
         // label: `${v?.type === "package" ? "[PAKET] " : ""}${v?.name} - Rp${formatCurrency(v?.total_price || 0)}`,
-        label: `${v?.name} - Rp${formatCurrency(v?.total_price || 0)}`,
+        // label: `${v?.name} - Rp${formatCurrency(v?.total_price || 0)}`,
+        label: `${v?.name}`,
       }));
     } catch (error) {
       console.log(error);
@@ -256,7 +258,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
           if (p) {
             const unitPrice = getPriceForProduct(item.productId, qtyNum);
             const lineTotal = unitPrice * qtyNum;
-            subTotal += lineTotal;
+            // subTotal += lineTotal;
             totalQty += qtyNum;
             items.push({
               productId: p.id,
@@ -279,7 +281,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
       if (p && qtyNum > 0) {
         const unitPrice = getPriceForProduct(kknArchiveProductId, qtyNum);
         const lineTotal = unitPrice * qtyNum;
-        subTotal = lineTotal;
+        // subTotal = lineTotal;
         totalQty = qtyNum;
         items.push({
           productId: p.id,
@@ -290,6 +292,11 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
         });
       }
     }
+
+    subTotal += orderItems.reduce(
+      (acc, item) => acc + (item.variant_final_price ?? 0),
+      0
+    );
 
     let discountAmount = 0;
     if (!isKKN && !isArchive) {
@@ -321,10 +328,14 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
   const handleItemChange = (
     index: number,
     field: "productId" | "quantity",
-    val: any
+    val: any,
+    add_on?: any
   ) => {
     const list = [...orderItems];
     list[index] = { ...list[index], [field]: val };
+    if (add_on) {
+      list[index] = { ...list[index], ...add_on };
+    }
     setOrderItems(list);
   };
 
@@ -892,7 +903,22 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                             placeholder="Cari dan Pilih Produk..."
                             onChange={(val: any) => {
                               if (val) {
-                                handleItemChange(idx, "productId", val.value);
+                                handleItemChange(idx, "productId", val.value, {
+                                  product_variants: safeParseArray(
+                                    val?.product_variants
+                                  ),
+                                  product_price_rules: safeParseArray(
+                                    val?.product_price_rules
+                                  ),
+                                  variant_id: null,
+                                  variant_name: null,
+                                  variant_price: null,
+                                  variant_final_price: null,
+                                  price_rule_id: null,
+                                  price_rule_min_qty: null,
+                                  price_rule_value: null,
+                                  quantity: 0,
+                                });
                                 setSelectedProductsData((prev) => ({
                                   ...prev,
                                   [val.value]: val,
@@ -911,20 +937,91 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                             }}
                           />
                         </div>
+
+                        {/* Variant / Option (BARU) */}
+                        <div className="w-full md:w-48">
+                          <select
+                            className="w-full rounded-lg border-gray-300 border p-2 text-sm"
+                            disabled={!item.productId}
+                            value={item.variant_id || ""}
+                            onChange={(e) => {
+                              const selected = safeParseArray(
+                                item?.product_variants
+                              ).find((v) => v.id === Number(e.target.value));
+
+                              // Calculate final variant price
+                              const min_price = item?.quantity
+                                ? safeParseArray(
+                                    item?.product_price_rules
+                                  ).find(
+                                    (p) => p.min_qty === Number(item.quantity)
+                                  )
+                                : {};
+
+                              const currentPrice =
+                                min_price?.price || selected?.base_price || 0;
+
+                              const finalVariantPrice =
+                                (Number(item.quantity) ?? 0) * currentPrice;
+                              // END -- Calculate final variant price
+
+                              handleItemChange(
+                                idx,
+                                "variant_id",
+                                selected?.id || null,
+                                {
+                                  variant_name: selected?.variant_name || "",
+                                  variant_price: selected?.base_price || 0,
+                                  variant_final_price: finalVariantPrice,
+                                }
+                              );
+                            }}
+                          >
+                            <option value="">Pilih Varian</option>
+                            {safeParseArray(item?.product_variants).map((v) => (
+                              <option key={v.id} value={v.id}>
+                                {v.variant_name} ({v.base_price})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
                         <div className="flex gap-2 w-full md:w-auto">
                           <input
                             type="number"
                             min="1"
                             className="w-20 rounded-lg border-gray-300 border p-2 text-sm text-center"
                             value={item.quantity}
-                            onChange={(e) =>
-                              handleItemChange(idx, "quantity", e.target.value)
-                            }
+                            onChange={(e) => {
+                              const min_price = safeParseArray(
+                                item?.product_price_rules
+                              ).find(
+                                (p) => p.min_qty === Number(e.target.value)
+                              );
+
+                              const currentPrice =
+                                min_price?.price || item?.variant_price || 0;
+
+                              const finalVariantPrice =
+                                (Number(e.target.value) ?? 0) * currentPrice;
+
+                              handleItemChange(
+                                idx,
+                                "quantity",
+                                Number(e.target.value) ?? 0,
+                                {
+                                  variant_final_price: finalVariantPrice,
+                                }
+                              );
+                            }}
                             placeholder="Qty"
                           />
                           <div className="w-32 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-sm font-semibold text-gray-700">
-                            {item.productId && unitPrice > 0
+                            {/* {item.productId && unitPrice > 0
                               ? formatCurrency(unitPrice)
+                              : "Rp 0"} */}
+                            {item.productId && item.variant_final_price > 0
+                              ? formatCurrency(item.variant_final_price)
                               : "Rp 0"}
                           </div>
                           {orderItems.length > 1 && (
