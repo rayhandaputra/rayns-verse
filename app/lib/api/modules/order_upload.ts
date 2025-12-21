@@ -269,6 +269,74 @@ export const OrderUploadAPI = {
     }
   },
   // ============================================================
+  // ✅ CREATE SINGLE FOLDER
+  // ============================================================
+  create_single_folder: async ({ req }: any) => {
+    const {
+      id,
+      order_number,
+      folder_name,
+      parent_id,
+      product_id,
+      product_name,
+    } = req.body || {};
+
+    if (!folder_name) {
+      return {
+        success: false,
+        message: "folder_name wajib diisi",
+      };
+    }
+
+    try {
+      const folderData: any = {
+        parent_id: parent_id || null,
+        order_number: order_number || null,
+        product_id: product_id || null,
+        product_name: product_name || null,
+        folder_name,
+      };
+
+      // generate code baru jika insert
+      if (!id) {
+        const insertResult = await APIProvider({
+          endpoint: "insert",
+          table: "order_upload_folders",
+          action: "insert",
+          method: "POST",
+          body: { data: folderData },
+        });
+
+        return {
+          success: true,
+          message: "Berhasil menambahkan folder",
+          insert_id: insertResult.insert_id,
+        };
+      }
+
+      // update
+      await APIProvider({
+        endpoint: "update",
+        table: "order_upload_folders",
+        action: "update",
+        method: "POST",
+        body: {
+          data: folderData,
+          where: { id },
+        },
+      });
+
+      return {
+        success: true,
+        message: "Berhasil mengupdate folder",
+        id,
+      };
+    } catch (err: any) {
+      console.error("❌ Error create_single_folder:", err);
+      return { success: false, message: err.message };
+    }
+  },
+  // ============================================================
   // ✅ CREATE SINGLE FILE
   // ============================================================
   create_single_file: async ({ req }: any) => {

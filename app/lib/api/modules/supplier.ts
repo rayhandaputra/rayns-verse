@@ -2,7 +2,7 @@ import { APIProvider } from "../client";
 
 export const SupplierAPI = {
   get: async ({ req }: any) => {
-    const { page = 0, size = 10, search } = req.query || {};
+    const { id = "", page = 0, size = 10, search } = req.query || {};
 
     return APIProvider({
       endpoint: "select",
@@ -11,11 +11,20 @@ export const SupplierAPI = {
       action: "select",
       body: {
         columns: ["id", "name", "phone", "address"],
-        where: { deleted_on: "null" },
+        where: { deleted_on: "null", ...(id ? { id } : {}) },
         search,
         page,
-        size
-      }
+        size,
+        include: [
+          {
+            table: "supplier_commodities",
+            alias: "supplier_commodities",
+            foreign_key: "supplier_id",
+            reference_key: "id",
+            columns: ["commodity_id", "commodity_name", "qty", "price"],
+          },
+        ],
+      },
     });
   },
 
@@ -29,7 +38,7 @@ export const SupplierAPI = {
     const newSupplier = {
       name,
       phone,
-      address
+      address,
     };
 
     try {
@@ -38,13 +47,13 @@ export const SupplierAPI = {
         method: "POST",
         table: "suppliers",
         action: "insert",
-        body: { data: newSupplier }
+        body: { data: newSupplier },
       });
 
       return {
         success: true,
         message: "Toko berhasil ditambahkan",
-        supplier: { id: result.insert_id, ...newSupplier }
+        supplier: { id: result.insert_id, ...newSupplier },
       };
     } catch (err: any) {
       console.error(err);
@@ -61,7 +70,7 @@ export const SupplierAPI = {
 
     const updatedData = {
       ...fields,
-      modified_on: new Date().toISOString()
+      modified_on: new Date().toISOString(),
     };
 
     try {
@@ -72,17 +81,17 @@ export const SupplierAPI = {
         action: "update",
         body: {
           data: updatedData,
-          where: { id }
-        }
+          where: { id },
+        },
       });
 
       return {
         success: true,
         message: "Toko berhasil diperbarui",
-        affected: result.affected_rows
+        affected: result.affected_rows,
       };
     } catch (err: any) {
       return { success: false, message: err.message };
     }
-  }
+  },
 };

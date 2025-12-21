@@ -5,6 +5,7 @@ interface ModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
+  icon?: React.ReactNode;
   size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
   children: React.ReactNode;
   footer?: React.ReactNode;
@@ -14,6 +15,7 @@ const ModalSecond: React.FC<ModalProps> = ({
   open,
   onClose,
   title,
+  icon,
   size = "md",
   children,
   footer,
@@ -31,11 +33,14 @@ const ModalSecond: React.FC<ModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
+      {/* animate-in zoom-in-95 duration-200 */}
       <div
         className={`bg-white rounded-xl shadow-2xl w-full ${sizeClasses[size]} overflow-hidden max-h-[90vh] flex flex-col`}
       >
         <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-          <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+          <h3 className="text-lg font-bold text-gray-800 flex items-center gap-22">
+            {icon && icon} {title}
+          </h3>
           <button
             type="button"
             onClick={onClose}
