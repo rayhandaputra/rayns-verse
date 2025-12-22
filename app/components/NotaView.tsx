@@ -14,6 +14,8 @@ import {
   Printer,
   CheckCircle,
   Star,
+  X,
+  EyeIcon,
 } from "lucide-react";
 import {
   getOrderStatusLabel,
@@ -23,6 +25,7 @@ import {
 } from "~/lib/utils";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
+import { useModal } from "~/provider/modal-provider";
 
 interface NotaViewProps {
   order: Order;
@@ -39,6 +42,8 @@ const NotaView: React.FC<NotaViewProps> = ({
 }) => {
   const [rating, setRating] = React.useState(order.rating || 0);
   const [review, setReview] = React.useState(order.review || "");
+  const [proofModalOpen, setProofModalOpen] = React.useState(false);
+  // const [modal, setModal] = useModal();
 
   const [paymentProof, setPaymentProof] = React.useState(
     order.payment_proof || ""
@@ -379,13 +384,14 @@ const NotaView: React.FC<NotaViewProps> = ({
         <>
           <button
             type="button"
-            onClick={handleClick}
+            // onClick={handleClick}
+            onClick={() => setProofModalOpen(true)}
             className="flex items-center justify-center gap-2 py-2 px-3
                    bg-blue-50 text-blue-700 border border-blue-200
                    rounded-lg text-xs font-semibold hover:bg-blue-100"
           >
-            <UploadCloud size={14} />
-            {!paymentProof ? "Unggah" : "Lihat"} Bukti Bayar
+            <EyeIcon size={14} />
+            Lihat Bukti Bayar
           </button>
 
           {/* Hidden file input */}
@@ -415,13 +421,66 @@ const NotaView: React.FC<NotaViewProps> = ({
         <p>Terima kasih atas kepercayaan Anda.</p>
       </div>
 
-      <style>{`
-        @media print {
-            .no-print { display: none; }
-            body { background: white; }
-            .bg-gray-50 { background-color: #f9fafb !important; -webkit-print-color-adjust: exact; }
-        }
-      `}</style>
+      {proofModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 animate-fade-in"
+          onClick={() => setProofModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-xl p-4 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+              <h3 className="font-bold text-lg text-gray-800">
+                Bukti Pembayaran
+              </h3>
+              <button
+                onClick={() => setProofModalOpen(false)}
+                className="p-1 hover:bg-gray-100 rounded-full"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {order?.dp_payment_proof && (
+                <div className="border rounded-lg p-3 bg-gray-50">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-700">
+                      Bukti DP
+                    </span>
+                  </div>
+
+                  <div className="rounded-lg overflow-hidden border border-gray-200">
+                    <img
+                      src={order?.dp_payment_proof}
+                      alt="Bukti Pelunasan"
+                      className="w-full max-h-[320px] object-contain bg-white"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {order?.payment_proof && (
+                <div className="border rounded-lg p-3 bg-gray-50">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-700">
+                      Bukti Pelunasan
+                    </span>
+                  </div>
+
+                  <div className="rounded-lg overflow-hidden border border-gray-200">
+                    <img
+                      src={order?.payment_proof}
+                      alt="Bukti Pelunasan"
+                      className="w-full max-h-[320px] object-contain bg-white"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
