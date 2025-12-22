@@ -115,7 +115,7 @@ export const action: ActionFunction = async ({ request }) => {
           kkn_type: payload?.kknDetails?.tipe ?? "PPM",
           kkn_detail: {
             period: payload?.kknDetails?.periode ?? 1,
-            tahun: payload?.kknDetails?.tahun ?? moment().year(),
+            year: payload?.kknDetails?.tahun ?? moment().year(),
             value: payload?.kknDetails?.nilai ?? 0,
             total_group: payload?.kknDetails?.jumlahKelompok ?? 0,
           },

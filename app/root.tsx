@@ -40,7 +40,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Your Digital Specialist" },
+    { title: "Your Custom Specialist" },
     { name: "description", content: "" },
   ];
 }

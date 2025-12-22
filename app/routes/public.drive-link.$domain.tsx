@@ -43,6 +43,7 @@ import ModalSecond from "~/components/modal/ModalSecond";
 import { Button } from "~/components/ui/button";
 import { DriveBreadcrumb } from "~/components/breadcrumb/DriveBreadcrumb";
 import Swal from "sweetalert2";
+import { safeParseObject } from "~/lib/utils";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const domain = params?.domain;
@@ -849,15 +850,23 @@ const Header = ({ orderData, domain }: { orderData: any; domain: string }) => {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-blue-600 p-2 rounded-lg">
-                <HardDrive size={24} className="text-white" />
+              <div className="p-2 rounded-lg">
+                {/* <HardDrive size={24} className="text-white" /> */}
+                <img
+                  src="/head-icon-kinau.png"
+                  alt="Kinau"
+                  className="w-8 opacity-80"
+                />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-800">
-                  Drive Management
+                  Drive File Cetak
                 </h1>
                 <p className="text-sm text-gray-500">
-                  {orderData?.institution_name || "Shared Drive"} - {domain}
+                  {orderData?.institution_name || "Shared Drive"} -{" "}
+                  {orderData?.is_kkn
+                    ? `${orderData?.kkn_source?.split("_")?.join(" ")?.toUpperCase()} ${safeParseObject(orderData?.kkn_detail)?.year ?? ""} - PERIODE ${safeParseObject(orderData?.kkn_detail)?.period ?? ""}`
+                    : domain}
                 </p>
               </div>
             </div>

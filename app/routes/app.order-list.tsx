@@ -10,6 +10,8 @@ import {
   FolderOpen,
   Handshake,
   X,
+  Upload,
+  Image,
 } from "lucide-react";
 import NotaView from "../components/NotaView";
 import {
@@ -26,12 +28,18 @@ import { API } from "~/lib/api";
 import { requireAuth } from "~/lib/session.server";
 import { toast } from "sonner";
 import moment from "moment";
-import { getOrderLabel, safeParseArray } from "~/lib/utils";
+import {
+  getOrderLabel,
+  getPaymentStatusLabel,
+  safeParseArray,
+  uploadFile,
+} from "~/lib/utils";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
 import { nexus } from "~/lib/nexus-client";
 import { useModal } from "~/hooks";
 import Swal from "sweetalert2";
 import ModalSecond from "~/components/modal/ModalSecond";
+import { Button } from "~/components/ui/button";
 
 export const loader: LoaderFunction = async ({ request }) => {
   // Only check authentication
@@ -91,12 +99,30 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   if (actionType === "update_payment_proof") {
-    const proof = formData.get("proof") as string;
+    const {
+      id,
+      payment_proof,
+      payment_method,
+      payment_detail,
+      dp_payment_proof,
+      dp_payment_method,
+      dp_payment_detail,
+    } = Object.fromEntries(formData.entries());
 
     // Only update if valid
     const res = await API.ORDERS.update({
       session: { user, token },
-      req: { body: { id, payment_proof: proof } },
+      req: {
+        body: {
+          id,
+          payment_proof,
+          payment_method,
+          payment_detail,
+          dp_payment_proof,
+          dp_payment_method,
+          dp_payment_detail,
+        },
+      },
     });
     return Response.json({
       success: res.success,
@@ -168,6 +194,22 @@ export default function OrderList() {
     autoLoad: false,
   });
 
+  const handleSubmitPaymentProof = (e: any) => {
+    e.preventDefault();
+    submitAction({
+      action: "update_payment_proof",
+      id: modal?.data?.id,
+      ...(modal?.data?.source_upload !== "down_payment"
+        ? {
+            payment_proof: modal?.data?.file,
+            payment_detail: null,
+          }
+        : {
+            dp_payment_proof: modal?.data?.file,
+            dp_payment_detail: null,
+          }),
+    });
+  };
   const onUpdateStatus = (id: string, status: string) => {
     submitAction({ action: "update_status", id, status });
   };
@@ -198,6 +240,7 @@ export default function OrderList() {
   // Reload orders after action
   useEffect(() => {
     if (actionData?.success) {
+      setModal({ ...modal, open: false, type: "" });
       toast.success(actionData.message || "Berhasil");
       reload();
     } else if (actionData?.success === false) {
@@ -237,7 +280,7 @@ export default function OrderList() {
         cellClassName: "max-w-[180px]",
         cell: (order) => (
           <>
-            <div className="font-bold text-gray-900 flex items-center gap-2 text-sm">
+            {/* <div className="font-bold text-gray-900 flex items-center gap-2 text-sm">
               {order.institution_name}
               {+(order?.is_sponsor ?? 0) === 1 && (
                 <span
@@ -247,6 +290,20 @@ export default function OrderList() {
                   <Handshake size={10} className="mr-0.5" /> SPONSOR
                 </span>
               )}
+            </div> */}
+            <div className="font-bold text-gray-900 flex items-center gap-2">
+              {order.institution_name}
+              {+(order?.is_sponsor ?? 0) === 1 && (
+                <span
+                  title="Sponsor / Kerja Sama"
+                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700 border border-purple-200"
+                >
+                  <Handshake size={10} className="mr-0.5" /> PARTNER
+                </span>
+              )}
+            </div>
+            <div className="text-xs text-gray-500">
+              {order.pic_name || "-"} ({order.pic_phone || "-"})
             </div>
           </>
         ),
@@ -288,7 +345,27 @@ export default function OrderList() {
         key: "totalAmount",
         header: "Total Bayar",
         cellClassName: "whitespace-nowrap text-sm font-bold text-gray-900",
-        cell: (order) => formatCurrency(order.total_amount ?? 0),
+        // cell: (order) => formatCurrency(order.total_amount ?? 0),
+        cell: (order) => (
+          <div className="px-6 py-4">
+            <div className="text-xs font-bold text-gray-900">
+              {new Intl.NumberFormat("id-ID").format(order.total_amount)}
+            </div>
+            {+(order.is_sponsor ?? 0) === 0 && (
+              <span
+                className={`px-2 py-0.5 rounded text-[10px] font-medium mt-1 inline-block ${
+                  order.payment_status === "paid"
+                    ? "bg-green-100 text-green-700"
+                    : order.payment_status === "down_payment"
+                      ? "bg-yellow-100 text-yellow-700"
+                      : "bg-red-100 text-red-600"
+                }`}
+              >
+                {getPaymentStatusLabel(order.payment_status)}
+              </span>
+            )}
+          </div>
+        ),
       },
       {
         key: "link",
@@ -369,26 +446,94 @@ export default function OrderList() {
         key: "statusPembayaran",
         header: "Status Pembayaran",
         cellClassName: "whitespace-nowrap",
-        cell: (order) => (
-          <>
-            <span
-              className={`px-2 py-1 rounded text-xs font-medium inline-block ${
-                order.payment_status === "paid"
-                  ? "bg-green-100 text-green-700 border border-green-200"
-                  : order.payment_status === "down_payment"
-                    ? "bg-yellow-100 text-yellow-700 border border-yellow-200"
-                    : "bg-gray-100 text-gray-600 border border-gray-200"
-              }`}
-            >
-              {order.payment_status === "down_payment" ? "DP" : "Lunas"}
-            </span>
-            {order.payment_status === "down_payment" && (
-              <div className="text-xs mt-1 text-gray-500 font-medium">
-                {formatCurrency(order.dp_amount)}
-              </div>
-            )}
-          </>
-        ),
+        cell: (order) => {
+          const hasDpProof = Boolean(order?.dp_payment_proof);
+          const hasPaidProof = Boolean(order?.payment_proof);
+
+          const canUploadDp =
+            order.payment_status === "down_payment" && !hasDpProof;
+
+          const canUploadPaid =
+            (order.payment_status === "down_payment" && hasDpProof) ||
+            (order.payment_status === "paid" && !hasPaidProof);
+
+          const openUploadModal = (source: "down_payment" | "paid") =>
+            setModal({
+              ...modal,
+              open: true,
+              type: "upload_payment_proof",
+              data: {
+                ...order,
+                source_upload: source,
+              },
+            });
+
+          const openViewModal = () =>
+            setModal({
+              ...modal,
+              open: true,
+              type: "view_payment_proof",
+              data: order,
+            });
+
+          const buttonBase =
+            "flex items-center justify-center gap-1 px-2 py-1 rounded text-[10px] font-bold border transition";
+
+          const activeBtn =
+            "bg-white text-gray-600 border-gray-300 hover:bg-gray-50";
+
+          const disabledBtn =
+            "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
+
+          const successBtn = "bg-green-100 text-green-700 border-green-200";
+
+          return (
+            <div className="flex flex-col gap-1.5">
+              {/* DP */}
+              <button
+                disabled={!canUploadDp}
+                onClick={() => openUploadModal("down_payment")}
+                className={`${buttonBase} ${
+                  hasDpProof
+                    ? successBtn
+                    : canUploadDp
+                      ? activeBtn
+                      : disabledBtn
+                }`}
+              >
+                {hasDpProof ? <Check size={10} /> : <Upload size={10} />}
+                DP
+              </button>
+
+              {/* LUNAS */}
+              <button
+                disabled={!canUploadPaid}
+                onClick={() => openUploadModal("paid")}
+                className={`${buttonBase} ${
+                  hasPaidProof
+                    ? successBtn
+                    : canUploadPaid
+                      ? activeBtn
+                      : disabledBtn
+                }`}
+              >
+                {hasPaidProof ? <Check size={10} /> : <Upload size={10} />}
+                LUNAS
+              </button>
+
+              {/* VIEW PROOF */}
+              {(hasDpProof || hasPaidProof) && (
+                <button
+                  onClick={openViewModal}
+                  className="mt-1 text-[10px] text-blue-600 hover:underline flex items-center justify-center gap-1"
+                >
+                  <Image size={10} />
+                  Lihat Bukti
+                </button>
+              )}
+            </div>
+          );
+        },
       },
       {
         key: "aksi",
@@ -512,6 +657,233 @@ export default function OrderList() {
         className="mt-auto"
       />
 
+      {/* Upload Payment Modal with Bank Selection */}
+      {modal?.type === "upload_payment_proof" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+            <h3 className="text-lg font-bold mb-4">Upload Bukti Bayar</h3>
+            <form onSubmit={handleSubmitPaymentProof} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Tujuan Transfer
+                </label>
+                <select
+                  className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                  value={modal?.data?.payment_method || ""}
+                  onChange={(e) => {
+                    setModal({
+                      ...modal,
+                      data: {
+                        ...modal?.data,
+                        payment_method: e.target.value,
+                      },
+                    });
+                  }}
+                  required
+                >
+                  <option value="">-- Pilih Rekening --</option>
+                  <option value="manual_transfer">Transfer</option>
+                  <option value="cash">Tunai / Cash</option>
+                </select>
+              </div>
+
+              {/* {modal?.data?.payment_method &&
+                modal?.data?.payment_method !== "cash" && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        Nomor Rekening Pengirim
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                        placeholder="Contoh: 1234567890"
+                        value={modal?.data?.ref_account_number || ""}
+                        onChange={(e) =>
+                          setModal({
+                            ...modal,
+                            data: {
+                              ...modal.data,
+                              ref_account_number: e.target.value,
+                            },
+                          })
+                        }
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        Nama Pemilik Rekening
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                        placeholder="Contoh: John Doe"
+                        value={modal?.data?.ref_account_holder || ""}
+                        onChange={(e) =>
+                          setModal({
+                            ...modal,
+                            data: {
+                              ...modal.data,
+                              ref_account_holder: e.target.value,
+                            },
+                          })
+                        }
+                        required
+                      />
+                    </div>
+                  </>
+                )} */}
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  File Bukti Pembayaran
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const url = await uploadFile(file);
+                    if (url) {
+                      setModal({
+                        ...modal,
+                        data: { ...modal.data, file: url },
+                      });
+                    }
+                  }}
+                  required
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setModal({ ...modal, open: false, type: "" })}
+                  className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  <Upload size={16} /> Simpan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {modal?.type === "view_payment_proof" && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 animate-fade-in"
+          onClick={() => setModal({ ...modal, open: false, type: "" })}
+        >
+          <div
+            className="bg-white rounded-xl p-4 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+              <h3 className="font-bold text-lg text-gray-800">
+                Bukti Pembayaran
+              </h3>
+              <button
+                onClick={() => setModal({ ...modal, open: false, type: "" })}
+                className="p-1 hover:bg-gray-100 rounded-full"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* ===================== */}
+              {/* PELUNASAN (SINGLE) */}
+              {/* ===================== */}
+              {modal?.data?.dp_payment_proof && (
+                <div className="border rounded-lg p-3 bg-gray-50">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-700">
+                      Bukti DP
+                    </span>
+                  </div>
+
+                  <div className="rounded-lg overflow-hidden border border-gray-200">
+                    <img
+                      src={modal.data.dp_payment_proof}
+                      alt="Bukti Pelunasan"
+                      className="w-full max-h-[320px] object-contain bg-white"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {modal?.data?.payment_proof && (
+                <div className="border rounded-lg p-3 bg-gray-50">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-700">
+                      Bukti Pelunasan
+                    </span>
+                  </div>
+
+                  <div className="rounded-lg overflow-hidden border border-gray-200">
+                    <img
+                      src={modal.data.payment_proof}
+                      alt="Bukti Pelunasan"
+                      className="w-full max-h-[320px] object-contain bg-white"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* ===================== */}
+              {/* DP (MULTIPLE) */}
+              {/* ===================== */}
+              {/* {safeParseArray(modal?.data?.dp_payment_proofs).map(
+                (proof, idx) => (
+                  <div key={idx} className="border rounded-lg p-3 bg-gray-50">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-yellow-100 text-yellow-700">
+                        Bukti DP
+                      </span>
+
+                      {proof.proof_date && (
+                        <span className="text-[10px] text-gray-400">
+                          {new Date(proof.proof_date).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+
+                    {(proof.proof_method || proof.proof_channel) && (
+                      <div className="text-xs text-gray-600 mb-2">
+                        {proof.proof_method && (
+                          <span>
+                            via <b>{proof.proof_method}</b>
+                          </span>
+                        )}
+                        {proof.proof_channel && (
+                          <span className="ml-1 text-gray-400">
+                            ({proof.proof_channel})
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="rounded-lg overflow-hidden border border-gray-200">
+                      <img
+                        src={proof.proof_url}
+                        alt={`Bukti DP ${idx + 1}`}
+                        className="w-full max-h-[320px] object-contain bg-white"
+                      />
+                    </div>
+                  </div>
+                )
+              )} */}
+            </div>
+          </div>
+        </div>
+      )}
       {modal?.type === "view_nota" && (
         <ModalSecond
           open={modal?.open}

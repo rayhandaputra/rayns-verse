@@ -15,8 +15,14 @@ import {
   CheckCircle,
   Star,
 } from "lucide-react";
-import { safeParseArray, uploadFile } from "~/lib/utils";
+import {
+  getOrderStatusLabel,
+  getPaymentStatusLabel,
+  safeParseArray,
+  uploadFile,
+} from "~/lib/utils";
 import { toast } from "sonner";
+import { Button } from "./ui/button";
 
 interface NotaViewProps {
   order: Order;
@@ -104,14 +110,14 @@ const NotaView: React.FC<NotaViewProps> = ({
               className="w-24 opacity-80 cursor-pointer"
             />
           </div>
-          <p className="text-xs text-gray-500">Percetakan ID Card & Lanyard</p>
+          <p className="text-xs text-gray-500">Your Custom Specialist</p>
         </div>
         <div className="text-right">
           <h2 className="text-lg font-bold text-gray-400 uppercase tracking-widest">
             NOTA
           </h2>
           <p className="text-xs font-mono text-gray-500">
-            #{order?.id.slice(-6)}
+            {/* #{order?.id.slice(-6)} */}#{order?.order_number}
           </p>
           <p className="text-xs text-gray-500">
             {formatFullDate(order?.created_on)}
@@ -141,7 +147,17 @@ const NotaView: React.FC<NotaViewProps> = ({
           </div>
           <div>
             <span className="block text-gray-400">Status Produksi</span>
-            <span className="font-semibold capitalize">{order.status}</span>
+            <span className="font-semibold capitalize">
+              {getOrderStatusLabel(order.status)}
+            </span>
+          </div>
+          <div>
+            <span className="block text-gray-400">Status Pembayaran</span>
+            <span
+              className={`font-semibold capitalize ${order.payment_status === "paid" ? "text-green-600" : "text-gray-600"}`}
+            >
+              {getPaymentStatusLabel(order.payment_status)}
+            </span>
           </div>
         </div>
       </div>
@@ -152,7 +168,7 @@ const NotaView: React.FC<NotaViewProps> = ({
           <thead className="border-b border-gray-200">
             <tr>
               <th className="text-left py-2 font-semibold text-gray-600">
-                Deskripsi
+                Produk
               </th>
               <th className="text-right py-2 font-semibold text-gray-600">
                 Qty
@@ -169,23 +185,31 @@ const NotaView: React.FC<NotaViewProps> = ({
             {safeParseArray(order?.order_items)?.map((item: any) => (
               <tr>
                 <td className="py-3">
-                  <div className="font-medium">{item.product_name}</div>
-                  {/* {item.order_items && item.order_items.length > 0 && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    {item.order_items.map((item, i) => (
-                      <div key={i}>
-                        + {item.name} ({item.quantity} pcs)
-                      </div>
-                    ))}
+                  <div className="font-medium flex flex-col">
+                    <span>{item.product_name}</span>
+
+                    {item.variant_name && (
+                      <span className="text-gray-500 font-normal text-xs">
+                        ({item.variant_name})
+                      </span>
+                    )}
+
+                    {item.variant_price && item.variant_price > 0 && (
+                      <span className="text-xs text-emerald-600 font-medium">
+                        + {formatCurrency(item.variant_price)} / pcs
+                      </span>
+                    )}
                   </div>
-                )} */}
                 </td>
+
                 <td className="py-3 text-right">{item.qty}</td>
                 <td className="py-3 text-right">
-                  {formatCurrency(item.unit_price)}
+                  {/* {formatCurrency(item.unit_price)} */}
+                  {formatCurrency(item?.price_rule_value ?? 0)}
                 </td>
                 <td className="py-3 text-right font-medium">
-                  {formatCurrency(item.subtotal)}
+                  {/* {formatCurrency(item.subtotal)} */}
+                  {formatCurrency(item?.variant_final_price ?? 0)}
                 </td>
               </tr>
             ))}
@@ -228,7 +252,7 @@ const NotaView: React.FC<NotaViewProps> = ({
         className={`mb-6 p-4 border rounded-lg ${isEditable ? "bg-blue-50 border-blue-200" : "bg-yellow-50 border-yellow-100"}`}
       >
         <h3 className="text-xs font-bold text-gray-500 uppercase mb-3">
-          {isEditable ? "✨ Berikan Ulasan Pelanggan" : "Ulasan Pelanggan"}
+          {isEditable ? "✨ Berikan Ulasan Kamu" : "Ulasan Pelanggan"}
         </h3>
 
         {/* Rating Stars */}
@@ -240,7 +264,8 @@ const NotaView: React.FC<NotaViewProps> = ({
             {Array.from({ length: 5 }).map((_, i) => (
               <button
                 key={i}
-                onClick={() => isEditable && handleRatingChange(i + 1)}
+                // onClick={() => isEditable && handleRatingChange(i + 1)}
+                onClick={() => isEditable && setRating(i + 1)}
                 disabled={!isEditable}
                 className={`transition ${
                   i < rating ? "text-yellow-400" : "text-gray-300"
@@ -257,7 +282,7 @@ const NotaView: React.FC<NotaViewProps> = ({
           <textarea
             value={review}
             onChange={(e) => setReview(e.target.value)}
-            onBlur={() => onReviewChange?.(rating, review)}
+            // onBlur={() => onReviewChange?.(rating, review)}
             placeholder="Tulis ulasan Anda tentang produk kami..."
             className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
             rows={4}
@@ -269,11 +294,21 @@ const NotaView: React.FC<NotaViewProps> = ({
           <p className="text-xs text-gray-400 italic">Belum ada ulasan</p>
         )}
 
-        {isEditable && (
-          <div className="text-xs text-gray-500 mt-2">
-            {review.length}/500 karakter
-          </div>
-        )}
+        <div className="flex justify-between items-center gap-2">
+          {isEditable && (
+            <div className="text-xs text-gray-500 mt-2">
+              {review.length}/500 karakter
+            </div>
+          )}
+          <Button
+            onClick={() => onReviewChange?.(rating, review)}
+            disabled={!isEditable}
+            size="sm"
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Kirim
+          </Button>
+        </div>
       </div>
 
       {/* Action Buttons */}

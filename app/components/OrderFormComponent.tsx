@@ -261,6 +261,8 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
             // subTotal += lineTotal;
             totalQty += qtyNum;
             items.push({
+              ...p,
+              ...item,
               productId: p.id,
               productName: p.name,
               price: unitPrice,
@@ -284,6 +286,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
         // subTotal = lineTotal;
         totalQty = qtyNum;
         items.push({
+          ...p,
           productId: p.id,
           productName: p.name,
           price: unitPrice,
@@ -1013,7 +1016,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                                   price_rule_id: matchedRule?.id || null,
                                   price_rule_min_qty:
                                     matchedRule?.min_qty || null,
-                                  price_rule: basePrice,
+                                  price_rule_value: basePrice,
 
                                   // final total
                                   variant_final_price: totalPrice,
@@ -1094,7 +1097,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                                 price_rule_id: matchedRule?.id || null,
                                 price_rule_min_qty:
                                   matchedRule?.min_qty || null,
-                                price_rule: basePrice,
+                                price_rule_value: basePrice,
                                 variant_final_price: totalPrice,
                               });
                             }}
@@ -1414,7 +1417,9 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                         className="flex justify-between text-xs font-semibold"
                       >
                         <span>
-                          {it.productName} (x{it.quantity})
+                          {it.productName}
+                          {it.variant_name && <span className="text-blue-600"> ({it.variant_name})</span>}
+                          (x{it.quantity})
                         </span>
                         <span>{formatCurrency(it.total)}</span>
                       </div>

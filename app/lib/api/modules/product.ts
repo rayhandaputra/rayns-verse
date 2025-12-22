@@ -57,7 +57,7 @@ export const ProductAPI = {
             alias: "product_price_rules",
             foreign_key: "product_id",
             reference_key: "id",
-            columns: ["min_qty", "price"],
+            columns: ["id", "min_qty", "price"],
           },
           {
             table: "product_variants",
