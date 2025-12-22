@@ -107,7 +107,10 @@ export const loader: LoaderFunction = async ({ request }) => {
   const { user } = await requireAuth(request);
 
   return {
-    user,
+    user: {
+      ...user,
+      name: user?.fullname || "",
+    },
     message: "OK",
   };
 };
@@ -234,6 +237,16 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Time Greeting Logic
+  const getGreeting = () => {
+    const h = currentTime.getHours();
+    if (h < 11) return "Selamat Pagi";
+    if (h < 15) return "Selamat Siang";
+    if (h < 18) return "Selamat Sore";
+    if (h < 19) return "Selamat Petang";
+    return "Selamat Malam";
+  };
+
   const handleLogout = async () => {
     const result = await Swal.fire({
       title: "Konfirmasi Logout",
@@ -270,7 +283,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
       {/* NEW TOP BAR */}
       <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm h-[88px]">
         {/* Left: User Info & Mobile Toggle */}
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <button
             onClick={() => sidebar.setMobileMenuOpen(true)}
             className="lg:hidden p-2 -ml-2 text-gray-500"
@@ -289,6 +302,19 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
             </h2>
             <p className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full w-fit">
               {currentUser?.role || "Staff"}
+            </p>
+          </div>
+        </div> */}
+        <div className="flex items-center gap-3">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800 leading-tight flex items-center gap-2">
+              {getGreeting()}, {currentUser?.name}
+              <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                {currentUser?.role}
+              </span>
+            </h2>
+            <p className="text-xs text-gray-400">
+              Selamat bekerja, semoga harimu menyenangkan.
             </p>
           </div>
         </div>

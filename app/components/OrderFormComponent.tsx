@@ -1418,10 +1418,15 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                       >
                         <span>
                           {it.productName}
-                          {it.variant_name && <span className="text-blue-600"> ({it.variant_name})</span>}
+                          {it.variant_name && (
+                            <span className="text-blue-600">
+                              {" "}
+                              ({it.variant_name})
+                            </span>
+                          )}
                           (x{it.quantity})
                         </span>
-                        <span>{formatCurrency(it.total)}</span>
+                        <span>{formatCurrency(it.variant_final_price)}</span>
                       </div>
                     ))}
                   </div>

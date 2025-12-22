@@ -103,9 +103,11 @@ export const action: ActionFunction = async ({ request }) => {
         pic_phone: payload.pemesanPhone,
         deadline: payload.deadline,
         payment_status:
-          payload.statusPembayaran?.toLowerCase() === "dp"
-            ? "down_payment"
-            : "paid",
+          payload.statusPembayaran?.toLowerCase() === "lunas"
+            ? "paid"
+            : payload.statusPembayaran?.toLowerCase() === "dp"
+              ? "down_payment"
+              : "none",
         ...(payload?.dpAmount > 0 ? { dp_amount: payload?.dpAmount } : {}),
         total_amount: payload.totalAmount,
         is_sponsor: !payload?.isSponsor ? 0 : 1,
@@ -193,7 +195,7 @@ const transformToAPIFormat = (orderData: OrderFormData) => {
         ? "paid"
         : orderData.statusPembayaran === "DP"
           ? "down_payment"
-          : "unpaid",
+          : "none",
     payment_method: "manual_transfer",
     discount_value: discountValue,
     discount_type: orderData.discount?.type === "percent" ? "percent" : "fixed",
@@ -529,118 +531,6 @@ export default function OrderFormPage() {
         onSubmit={handleOrderSubmit}
         isArchive={false}
       />
-
-      {/* CONFIRMATION MODAL */}
-      {showConfirm && pendingData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div className="p-6">
-              <div className="flex items-center gap-3 text-yellow-600 mb-4">
-                <div className="bg-yellow-100 p-2 rounded-full">
-                  <AlertTriangle size={24} />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900">
-                  Konfirmasi Pesanan
-                </h3>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-700 space-y-2 mb-4">
-                <div className="flex justify-between border-b border-gray-200 pb-2">
-                  <span className="text-gray-500">
-                    {isKKN ? "KELOMPOK" : "Pemesan"}:
-                  </span>
-                  <span className="font-bold text-right truncate w-40">
-                    {pendingData.instansi}
-                  </span>
-                </div>
-
-                <div className="border-b border-gray-200 pb-2">
-                  <span className="text-gray-500 text-xs block mb-1">
-                    Item:
-                  </span>
-                  {pendingData.items?.map((it, i) => (
-                    <div
-                      key={i}
-                      className="flex justify-between text-xs font-semibold"
-                    >
-                      <span>
-                        {it.productName} (x{it.quantity})
-                      </span>
-                      <span>{formatCurrency(it.total)}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {pendingData.isSponsor && (
-                  <div className="text-center font-bold text-purple-600 border-b border-gray-200 pb-2">
-                    SPONSOR / PARTNER
-                  </div>
-                )}
-
-                <div className="flex justify-between items-center pt-1">
-                  <span className="text-gray-500">Total Akhir:</span>
-                  <span className="font-bold text-lg">
-                    {formatCurrency(pendingData.totalAmount)}
-                  </span>
-                </div>
-
-                <div className="mt-4 pt-2 border-t border-gray-200">
-                  <div className="text-xs text-gray-500 mb-1">
-                    Link Akses (Untuk Klien):
-                  </div>
-                  <div className="flex gap-2">
-                    <div className="bg-white border border-gray-300 rounded p-2 text-xs font-mono text-center select-all flex-1 truncate">
-                      kinau.id/public/drive-link/{pendingData.accessCode}
-                    </div>
-                    <button
-                      onClick={() => copyLink(pendingData.accessCode)}
-                      className="bg-gray-200 hover:bg-gray-300 p-2 rounded text-gray-700"
-                      title="Copy Link"
-                    >
-                      <Copy size={14} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-sm text-gray-600 mb-6">
-                Pastikan data sudah benar.
-              </p>
-
-              <Form method="post" className="flex gap-3">
-                <input type="hidden" name="intent" value="create_order" />
-                <input
-                  type="hidden"
-                  name="state"
-                  value={JSON.stringify(
-                    transformToAPIFormat(pendingData).state
-                  )}
-                />
-                <input
-                  type="hidden"
-                  name="items"
-                  value={JSON.stringify(
-                    transformToAPIFormat(pendingData).items
-                  )}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm(false)}
-                  className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2"
-                >
-                  <X size={16} /> Batal
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 flex items-center justify-center gap-2 shadow-lg"
-                >
-                  <Check size={16} /> Ya, Simpan
-                </button>
-              </Form>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

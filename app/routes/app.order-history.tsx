@@ -116,6 +116,7 @@ export const action: ActionFunction = async ({ request }) => {
         pic_name: payload.pemesanName,
         pic_phone: payload.pemesanPhone,
         status: "done",
+        payment_status: "none",
         images: payload.portfolioImages,
         items: payload.items,
       };

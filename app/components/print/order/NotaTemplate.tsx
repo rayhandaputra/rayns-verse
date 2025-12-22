@@ -2,6 +2,7 @@ import React from "react";
 // import { formatCurrency, formatFullDate } from "../constants"; // Pastikan path benar
 import { CheckCircle } from "lucide-react";
 import { formatCurrency, formatFullDate } from "~/constants";
+import { getOrderStatusLabel, getPaymentStatusLabel } from "~/lib/utils";
 
 interface PrintNotaTemplateProps {
   order: any;
@@ -78,7 +79,7 @@ export const PrintNotaTemplate = React.forwardRef<
                 Status
               </h3>
               <span className="text-xs font-bold px-2 py-1 bg-gray-200 rounded uppercase">
-                {order?.status}
+                {getOrderStatusLabel(order?.status ?? "none")}
               </span>
             </div>
           </div>
@@ -107,21 +108,26 @@ export const PrintNotaTemplate = React.forwardRef<
           {items?.map((item, idx) => (
             <tr key={idx} className="break-inside-avoid">
               <td className="py-4">
-                <div className="font-bold text-gray-900">
+                {/* <div className="font-bold text-gray-900">
                   {item.product_name}
                 </div>
                 {item.notes && (
                   <div className="text-[10px] text-gray-500 mt-0.5">
                     {item.notes}
                   </div>
+                )} */}
+                {item.product_name}
+                {item.variant_name && (
+                  <span className="text-blue-600"> ({item.variant_name})</span>
                 )}
+                {/* (x{item.qty}) */}
               </td>
               <td className="py-4 text-right text-sm">{item.qty}</td>
               <td className="py-4 text-right text-sm">
-                {formatCurrency(item.unit_price)}
+                {formatCurrency(item.price_rule_value)}
               </td>
               <td className="py-4 text-right font-bold text-sm">
-                {formatCurrency(item.subtotal)}
+                {formatCurrency(item.variant_final_price)}
               </td>
             </tr>
           ))}
@@ -164,10 +170,19 @@ export const PrintNotaTemplate = React.forwardRef<
 
       {/* Footer Cetak */}
       <div className="mt-16 pt-8 border-t border-dashed border-gray-200 flex justify-between items-end">
-        <div className="text-[10px] text-gray-400 leading-relaxed">
-          <p className="font-bold text-gray-500">Syarat & Ketentuan:</p>
-          <p>1. Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.</p>
-          <p>2. Bukti nota ini sah sebagai bukti pengambilan barang.</p>
+        <div>
+          <p className="text-xs">
+            Link akses bukti pesanan:{" "}
+            <span className="text-blue-600">
+              kinau.id/public/drive-link/{order?.institution_domain}
+            </span>
+          </p>
+
+          <div className="text-[10px] text-gray-400 leading-relaxed">
+            <p className="font-bold text-gray-500">Syarat & Ketentuan:</p>
+            <p>1. Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.</p>
+            <p>2. Bukti nota ini sah sebagai bukti pengambilan barang.</p>
+          </div>
         </div>
         <div className="text-center border-t border-gray-800 w-40 pt-1">
           <p className="text-[10px] uppercase font-bold">Hormat Kami,</p>

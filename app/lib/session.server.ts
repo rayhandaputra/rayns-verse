@@ -74,6 +74,7 @@ export async function requireAuth(request: Request) {
   );
 
   const token = session.get("token");
+  const user = session.get("user");
   if (!token) {
     throw redirect("/");
   }
@@ -83,7 +84,7 @@ export async function requireAuth(request: Request) {
   //   throw redirect("/");
   // }
 
-  return { user: {}, session, token };
+  return { user, session, token };
 }
 
 /**

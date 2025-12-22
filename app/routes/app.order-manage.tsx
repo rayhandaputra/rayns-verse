@@ -97,7 +97,7 @@ export default function CreatePesanan() {
     institution_abbr_id: "",
     institution_domain: "",
     order_type: "package",
-    payment_status: "unpaid",
+    payment_status: "none",
     payment_method: "manual_transfer",
     discount_value: 0,
     tax_percent: 0,

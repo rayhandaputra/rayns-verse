@@ -74,8 +74,10 @@ export const getPaymentStatusLabel = (status: string) => {
 
 export const getOrderStatusLabel = (status: string) => {
   switch (status) {
+    case "none":
+      return "Tidak Ada";
     case "ordered":
-      return "Dipesan";
+      return "Diproses";
     case "confirmed":
       return "Dikonfirmasi";
     case "in_production":
