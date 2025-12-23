@@ -96,9 +96,9 @@ export const AuthAPI = {
     }
 
     // check locked
-    if (auth.locked_until && new Date(auth.locked_until) > new Date()) {
-      return { success: false, message: "Akun terkunci sementara" };
-    }
+    // if (auth.locked_until && new Date(auth.locked_until) > new Date()) {
+    //   return { success: false, message: "Akun terkunci sementara" };
+    // }
 
     const valid = await bcrypt.compare(password, auth.password_hash);
 
