@@ -22,9 +22,11 @@ export const OrderAPI = {
       is_kkn,
       is_portfolio,
       end_date,
+      year,
+      sort = "",
     } = req.query || {};
 
-    const where: any = {};
+    let where: any = {};
 
     if (id) where.id = id;
     if (institution_id) where.institution_id = institution_id;
@@ -45,6 +47,12 @@ export const OrderAPI = {
       where.created_on = { lte: end_date };
     }
 
+    if (year)
+      where = {
+        ...where,
+        "year:order_date": parseInt(year),
+      };
+
     where.deleted_on = "null";
 
     // ✅ SEARCH MULTI FIELD (format OR)
@@ -60,6 +68,14 @@ export const OrderAPI = {
           keyword: search,
         }
       : undefined;
+
+    let sort_by = "created_on";
+    let sort_type = "desc";
+    if (sort) {
+      const [column, type] = sort.split(":");
+      sort_by = column;
+      sort_type = type;
+    }
 
     try {
       const result = await APIProvider({
@@ -113,7 +129,9 @@ export const OrderAPI = {
           page: Number(page),
           size: Number(size),
           pagination: pagination === "true",
-          order_by: { created_on: "desc" },
+          // order_by: { created_on: "desc" },
+          orderBy: [sort_by, sort_type],
+
           include: [
             {
               table: "order_items",

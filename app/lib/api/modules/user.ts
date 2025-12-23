@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import { APIProvider } from "../client";
 import { AuthAPI } from "./user_auth";
 
@@ -61,7 +62,6 @@ export const UserAPI = {
     });
 
     if (password) {
-      console.log("CREATE USER AUTH");
       await AuthAPI.upsertAuth({
         user_id: result.insert_id,
         email,
@@ -151,7 +151,7 @@ export const UserAPI = {
   },
 
   update: async ({ req }: any) => {
-    const { id, ...fields } = req.body || {};
+    const { id, password, ...fields } = req.body || {};
 
     if (!id) return { success: false, message: "ID user wajib diisi" };
 
@@ -160,6 +160,7 @@ export const UserAPI = {
       modified_on: new Date().toISOString(),
     };
 
+    console.log("updatedData => ", updatedData);
     const result = await APIProvider({
       endpoint: "update",
       method: "POST",
@@ -170,6 +171,21 @@ export const UserAPI = {
         where: { id },
       },
     });
+
+    if (password) {
+      await APIProvider({
+        endpoint: "update",
+        method: "POST",
+        table: "user_auth",
+        action: "update",
+        body: {
+          data: {
+            password_hash: await bcrypt.hash(password, 10),
+          },
+          where: { user_id: id },
+        },
+      });
+    }
 
     return {
       success: true,

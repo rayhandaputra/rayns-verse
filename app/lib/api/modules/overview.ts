@@ -80,13 +80,8 @@ export const OverviewAPI = {
   // ✅ GET COMPREHENSIVE OVERVIEW
   // ============================================================
   get: async ({ req }: any): Promise<OverviewResponse> => {
-    const {
-      start_date,
-      end_date,
-      status,
-      payment_status,
-      institution_id,
-    } = req.query || {};
+    const { start_date, end_date, status, payment_status, institution_id } =
+      req.query || {};
 
     try {
       // Build where clause for filtering
@@ -192,19 +187,31 @@ export const OverviewAPI = {
       });
 
       const monthNames = [
-        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+        "Januari",
+        "Februari",
+        "Maret",
+        "April",
+        "Mei",
+        "Juni",
+        "Juli",
+        "Agustus",
+        "September",
+        "Oktober",
+        "November",
+        "Desember",
       ];
 
-      const monthly_report: MonthlyReport[] = (monthlyResult.items || []).map((item: any) => ({
-        month: Number(item.month),
-        year: Number(item.year),
-        month_name: monthNames[Number(item.month) - 1],
-        total_orders: Number(item.total_orders),
-        total_revenue: Number(item.total_revenue),
-        total_paid: Number(item.total_paid),
-        total_unpaid: Number(item.total_unpaid),
-      }));
+      const monthly_report: MonthlyReport[] = (monthlyResult.items || []).map(
+        (item: any) => ({
+          month: Number(item.month),
+          year: Number(item.year),
+          month_name: monthNames[Number(item.month) - 1],
+          total_orders: Number(item.total_orders),
+          total_revenue: Number(item.total_revenue),
+          total_paid: Number(item.total_paid),
+          total_unpaid: Number(item.total_unpaid),
+        })
+      );
 
       // ============================================
       // 3. STATUS BREAKDOWN
@@ -233,7 +240,9 @@ export const OverviewAPI = {
         cancelled: "Dibatalkan",
       };
 
-      const status_breakdown: StatusBreakdown[] = (statusResult.items || []).map((item: any) => ({
+      const status_breakdown: StatusBreakdown[] = (
+        statusResult.items || []
+      ).map((item: any) => ({
         status: item.status,
         status_label: statusLabels[item.status] || item.status,
         count: Number(item.count),
@@ -267,9 +276,12 @@ export const OverviewAPI = {
         paid: "Lunas",
       };
 
-      const payment_breakdown: PaymentBreakdown[] = (paymentResult.items || []).map((item: any) => ({
+      const payment_breakdown: PaymentBreakdown[] = (
+        paymentResult.items || []
+      ).map((item: any) => ({
         payment_status: item.payment_status,
-        payment_label: paymentLabels[item.payment_status] || item.payment_status,
+        payment_label:
+          paymentLabels[item.payment_status] || item.payment_status,
         count: Number(item.count),
         total_amount: Number(item.total_amount),
         percentage: Number(item.percentage) || 0,
@@ -298,7 +310,9 @@ export const OverviewAPI = {
         },
       });
 
-      const top_institutions: TopInstitution[] = (topInstResult.items || []).map((item: any) => ({
+      const top_institutions: TopInstitution[] = (
+        topInstResult.items || []
+      ).map((item: any) => ({
         institution_name: item.institution_name,
         institution_abbr: item.institution_abbr,
         order_count: Number(item.order_count),
@@ -332,17 +346,19 @@ export const OverviewAPI = {
         },
       });
 
-      const recent_orders: RecentOrder[] = (recentResult.items || []).map((item: any) => ({
-        id: Number(item.id),
-        order_number: item.order_number,
-        institution_name: item.institution_name,
-        institution_abbr: item.institution_abbr,
-        status: item.status,
-        payment_status: item.payment_status,
-        grand_total: Number(item.grand_total),
-        created_on: item.created_on,
-        deadline: item.deadline,
-      }));
+      const recent_orders: RecentOrder[] = (recentResult.items || []).map(
+        (item: any) => ({
+          id: Number(item.id),
+          order_number: item.order_number,
+          institution_name: item.institution_name,
+          institution_abbr: item.institution_abbr,
+          status: item.status,
+          payment_status: item.payment_status,
+          grand_total: Number(item.grand_total),
+          created_on: item.created_on,
+          deadline: item.deadline,
+        })
+      );
 
       // ============================================
       // RETURN COMPREHENSIVE OVERVIEW
@@ -355,7 +371,6 @@ export const OverviewAPI = {
         top_institutions,
         recent_orders,
       };
-
     } catch (err: any) {
       console.error("❌ ERROR OverviewAPI.get:", err);
 
@@ -381,10 +396,86 @@ export const OverviewAPI = {
       };
     }
   },
+  summary: async ({ req }: any) => {
+    try {
+      const order = await APIProvider({
+        endpoint: "select",
+        method: "POST",
+        table: "orders",
+        action: "select",
+        body: {
+          columns: [
+            `(SELECT SUM(total_amount) FROM orders WHERE deleted_on IS NULL) AS total_order_amount`,
+            `(SELECT SUM(total_amount) FROM orders WHERE payment_status = 'paid' AND deleted_on IS NULL) AS total_paid`,
+            `(SELECT SUM(dp_amount) FROM orders WHERE payment_status = 'down_payment' AND deleted_on IS NULL) AS total_dp`,
+            `(SELECT SUM(total_amount - dp_amount) FROM orders WHERE payment_status = 'down_payment' AND deleted_on IS NULL) AS total_piutang`,
+            `(SELECT COUNT(id) FROM orders WHERE status = 'pending' AND deleted_on IS NULL) AS total_pending`,
+            `(SELECT COUNT(id) FROM orders WHERE status = 'confirmed' AND deleted_on IS NULL) AS total_confirmed`,
+            `(SELECT COUNT(id) FROM orders WHERE status = 'done' AND deleted_on IS NULL) AS total_done`,
+            `(SELECT SUM(qty) FROM order_items WHERE deleted_on IS NULL) AS total_product_sales`,
+            `(SELECT COUNT(DISTINCT institution_id) FROM orders WHERE is_sponsor = 0 AND deleted_on IS NULL) AS total_institution`,
+            `(SELECT COUNT(DISTINCT institution_id) FROM orders WHERE is_sponsor = 1 AND deleted_on IS NULL) AS total_sponsor`,
+            `(SELECT JSON_OBJECT(
+                'id', id, 
+                'institution_name', institution_name, 
+                'total_amount', total_amount
+            ) FROM orders 
+              WHERE payment_status = 'paid' AND deleted_on IS NULL 
+              ORDER BY total_amount DESC LIMIT 1) AS highest_order`,
+            `(SELECT COALESCE(SUM(grand_total), 0) / COUNT(id) FROM orders WHERE deleted_on IS NULL) AS avg_order_value`,
+          ],
+          where: { deleted_on: "null" },
+        },
+      });
 
-  // ============================================================
-  // ✅ GET STATS ONLY (Quick Query)
-  // ============================================================
+      const getLastSixMonths = () => {
+        return Array.from({ length: 6 }, (_, i) => {
+          const d = new Date();
+          d.setMonth(d.getMonth() - i);
+          return {
+            month: d.getMonth() + 1,
+            year: d.getFullYear(),
+            label: d.toLocaleString("id-ID", { month: "long" }),
+          };
+        }).reverse();
+      };
+
+      const months = getLastSixMonths();
+
+      // Buat 2 kolom per bulan: Total Omzet & Total Paid
+      const monthlySubqueries = months.flatMap((m) => {
+        const monthLabel = +m.month;
+        return [
+          // Kolom 1: Total Semua (Tanpa filter payment_status)
+          `SUM(IF(MONTH(order_date) = ${m.month} AND YEAR(order_date) = ${m.year}, total_amount, 0)) AS total_${monthLabel}`,
+
+          // Kolom 2: Total Paid Sahaja
+          `SUM(IF(MONTH(order_date) = ${m.month} AND YEAR(order_date) = ${m.year} AND payment_status = 'paid', total_amount, 0)) AS paid_${monthLabel}`,
+        ];
+      });
+
+      const quartarlySixMonths = await APIProvider({
+        endpoint: "select",
+        method: "POST",
+        table: "orders",
+        action: "select",
+        body: {
+          columns: [...monthlySubqueries],
+          where: { deleted_on: "null" },
+          size: 1,
+        },
+      });
+
+      const dataGrafik = quartarlySixMonths.items[0];
+
+      return {
+        ...order.items?.[0],
+        report_six_months: dataGrafik,
+      };
+    } catch (err) {
+      console.error("❌ ERROR OverviewAPI.summary:", err);
+    }
+  },
   getStats: async ({ req }: any): Promise<OverviewStats> => {
     try {
       const result = await APIProvider({
@@ -410,18 +501,20 @@ export const OverviewAPI = {
         },
       });
 
-      return result.items?.[0] || {
-        total_order_pending: 0,
-        total_order_process: 0,
-        total_order_done: 0,
-        total_order_done_this_month: 0,
-        total_revenue: 0,
-        total_revenue_this_month: 0,
-        total_revenue_this_year: 0,
-        total_paid: 0,
-        total_unpaid: 0,
-        avg_order_value: 0,
-      };
+      return (
+        result.items?.[0] || {
+          total_order_pending: 0,
+          total_order_process: 0,
+          total_order_done: 0,
+          total_order_done_this_month: 0,
+          total_revenue: 0,
+          total_revenue_this_month: 0,
+          total_revenue_this_year: 0,
+          total_paid: 0,
+          total_unpaid: 0,
+          avg_order_value: 0,
+        }
+      );
     } catch (err: any) {
       console.error("❌ ERROR OverviewAPI.getStats:", err);
       return {

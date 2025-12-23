@@ -140,7 +140,8 @@ export default function OrderList() {
 
   const [viewMode, setViewMode] = useState<"reguler" | "kkn">("reguler");
   const [filterYear, setFilterYear] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
+  const [sortBy, setSortBy] = useState("");
+  const [page, setPage] = useState(1);
 
   const [modal, setModal] = useModal();
 
@@ -173,11 +174,17 @@ export default function OrderList() {
       .module("ORDERS")
       .action("get")
       .params({
-        page: 0,
+        page: page ? page - 1 : 0,
         size: 10,
         pagination: "true",
         ...(viewMode === "kkn" && {
           is_kkn: "1",
+        }),
+        ...(filterYear && {
+          year: filterYear,
+        }),
+        ...(sortBy && {
+          sort: sortBy,
         }),
       })
       .build(),
@@ -271,6 +278,9 @@ export default function OrderList() {
     return STATUS_OPTIONS.includes(value as any) ? value : "";
   }
 
+  const isValidUploadedProof = (proof?: unknown) =>
+    typeof proof === "string" && proof.includes("data.kinau.id");
+
   // Column definitions for DataTable
   const columns: ColumnDef<Order>[] = useMemo(
     () => [
@@ -278,7 +288,12 @@ export default function OrderList() {
         key: "createdAt",
         header: "Tgl. Order",
         cellClassName: "whitespace-nowrap text-xs text-gray-600 font-medium",
-        cell: (order) => formatFullDate(order.created_on),
+        cell: (order) => (
+          <div className="flex flex-col">
+            <p className="font-semibold">{order.order_number}</p>
+            <p>{formatFullDate(order.created_on)}</p>
+          </div>
+        ),
       },
       {
         key: "instansi",
@@ -465,16 +480,30 @@ export default function OrderList() {
         header: "Status Pembayaran",
         cellClassName: "whitespace-nowrap",
         cell: (order) => {
-          const hasDpProof = Boolean(order?.dp_payment_proof);
-          const hasPaidProof = Boolean(order?.payment_proof);
+          // =========================
+          // PROOF CHECKER
+          // =========================
+          const hasDpProof =
+            Boolean(order?.dp_payment_proof) &&
+            isValidUploadedProof(order.dp_payment_proof);
 
+          const hasPaidProof =
+            Boolean(order?.payment_proof) &&
+            isValidUploadedProof(order.payment_proof);
+
+          // =========================
+          // UPLOAD RULES
+          // =========================
           const canUploadDp =
             order.payment_status === "down_payment" && !hasDpProof;
 
           const canUploadPaid =
-            (order.payment_status === "down_payment" && hasDpProof) ||
+            (order.payment_status === "down_payment" && hasDpProof === false) ||
             (order.payment_status === "paid" && !hasPaidProof);
 
+          // =========================
+          // MODALS
+          // =========================
           const openUploadModal = (source: "down_payment" | "paid") =>
             setModal({
               ...modal,
@@ -494,6 +523,9 @@ export default function OrderList() {
               data: order,
             });
 
+          // =========================
+          // STYLES
+          // =========================
           const buttonBase =
             "flex items-center justify-center gap-1 px-2 py-1 rounded text-[10px] font-bold border transition";
 
@@ -644,12 +676,12 @@ export default function OrderList() {
               setSortBy(e.target.value);
             }}
           >
-            <option value="newest">Terbaru</option>
-            <option value="oldest">Terlama</option>
-            <option value="name_az">Instansi (A-Z)</option>
-            <option value="name_za">Instansi (Z-A)</option>
-            <option value="product">Jenis Produk</option>
-            <option value="payment">Status Bayar (Lunas-DP)</option>
+            <option value="created_on:desc">Terbaru</option>
+            <option value="created_on:asc">Terlama</option>
+            <option value="institution_name:asc">Instansi (A-Z)</option>
+            <option value="institution_name:desc">Instansi (Z-A)</option>
+            {/* <option value="product">Jenis Produk</option> */}
+            <option value="payment_status:desc">Status Bayar (Lunas-DP)</option>
           </select>
         </div>
         <div className="text-sm text-gray-500">
@@ -669,9 +701,11 @@ export default function OrderList() {
 
       {/* Pagination */}
       <TablePagination
-        currentPage={orders?.data?.current_page || 1}
+        currentPage={page || orders?.data?.current_page || 1}
         totalPages={orders?.data?.total_pages || 0}
-        onPageChange={(page) => {}}
+        onPageChange={(page) => {
+          setPage(page);
+        }}
         className="mt-auto"
       />
 
@@ -828,11 +862,19 @@ export default function OrderList() {
                   </div>
 
                   <div className="rounded-lg overflow-hidden border border-gray-200">
-                    <img
-                      src={modal.data.dp_payment_proof}
-                      alt="Bukti Pelunasan"
-                      className="w-full max-h-[320px] object-contain bg-white"
-                    />
+                    {typeof modal?.data?.dp_payment_proof === "string" &&
+                    modal?.data?.dp_payment_proof &&
+                    modal?.data?.dp_payment_proof.includes("data.kinau.id") ? (
+                      <img
+                        src={modal.data.dp_payment_proof}
+                        alt="Bukti DP"
+                        className="w-full max-h-[320px] object-contain bg-white"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <p>Tidak ada Bukti, silahkan unggah kembali</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

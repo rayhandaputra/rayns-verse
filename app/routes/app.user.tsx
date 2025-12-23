@@ -246,7 +246,7 @@ export default function UserManagementPage() {
           <thead className="bg-gray-50 text-xs uppercase text-gray-700">
             <tr>
               <th className="px-6 py-3">Nama Lengkap</th>
-              <th className="px-6 py-3">Username / Email</th>
+              <th className="px-6 py-3">Email</th>
               <th className="px-6 py-3">Password</th>
               <th className="px-6 py-3">Role / Posisi</th>
               <th className="px-6 py-3 text-center">Aksi</th>
@@ -364,7 +364,7 @@ export default function UserManagementPage() {
                 <X className="text-gray-400" />
               </button>
             </div>
-            <Form method="post" className="space-y-4">
+            <Form method="post" className="space-y-4" autoComplete="off">
               {editingId && <input type="hidden" name="id" value={editingId} />}
 
               <div>
@@ -385,17 +385,18 @@ export default function UserManagementPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Username / Email
+                    Email
                   </label>
                   <input
                     name="email"
+                    autoComplete="off"
                     className="w-full border border-gray-300 rounded-lg p-2 text-sm"
                     value={formData.email || ""}
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
                     required
-                    placeholder="user@example.com"
+                    placeholder="Masukkan Email"
                   />
                 </div>
                 <div>
@@ -405,6 +406,7 @@ export default function UserManagementPage() {
                   <input
                     name="password"
                     type="password"
+                    autoComplete="off"
                     className="w-full border border-gray-300 rounded-lg p-2 text-sm"
                     value={formData.password || ""}
                     onChange={(e) =>
@@ -427,10 +429,10 @@ export default function UserManagementPage() {
                     setFormData({ ...formData, role: e.target.value as any })
                   }
                 >
-                  <option value="Staff">Staff (Absensi Only)</option>
-                  <option value="CEO">CEO (Full Access)</option>
-                  <option value="Developer">Developer (Full Access)</option>
-                  <option value="Admin">Admin</option>
+                  <option value="staff">Staff (Absensi Only)</option>
+                  <option value="ceo">CEO (Full Access)</option>
+                  <option value="developer">Developer (Full Access)</option>
+                  <option value="admin">Admin</option>
                 </select>
                 <p className="text-[10px] text-gray-500 mt-1">
                   * Staff hanya bisa mengakses halaman absensi/kepegawaian.

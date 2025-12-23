@@ -8,8 +8,10 @@ export const AccountAPI = {
       search,
       group_type = "",
       id = "",
+      sort = "",
     } = req.query || {};
 
+    // console.log([sortBy, sortDirection]);
     return APIProvider({
       endpoint: "select",
       method: "POST",
@@ -24,6 +26,9 @@ export const AccountAPI = {
           "group_code",
           "group_type",
           "group_name",
+          "is_bank",
+          "ref_account_number",
+          "ref_account_holder",
           `(
                 SELECT
                     CASE
@@ -41,10 +46,74 @@ export const AccountAPI = {
           ...(group_type ? { group_type } : {}),
           ...(id ? { id } : {}),
         },
+        orderBy: ["created_on", "desc"],
         search,
         page: Number(page),
         size: Number(size),
       },
     });
+  },
+  create_update: async ({ req }: any) => {
+    const { id, ...fields } = req.body || {};
+    if (!id) {
+      const createdOrder = {
+        ...fields,
+        created_on: new Date().toISOString(),
+      };
+
+      try {
+        const result = await APIProvider({
+          endpoint: "insert",
+          method: "POST",
+          table: "accounts",
+          action: "insert",
+          body: {
+            data: createdOrder,
+          },
+        });
+        console.log("CREATE RESULT => ", result);
+
+        return {
+          success: true,
+          message: "Akun berhasil dibuat",
+          affected: result.affected_rows,
+        };
+      } catch (err: any) {
+        console.error("❌ ERROR AccountAPI.create_update:", err);
+        return { success: false, message: err.message };
+      }
+    } else {
+      const updatedOrder = {
+        ...fields,
+        ...(fields?.payment_proof && {
+          payment_status: "paid",
+        }),
+        modified_on: new Date().toISOString(),
+        ...(fields.deleted === 1
+          ? { deleted_on: new Date().toISOString() }
+          : {}),
+      };
+
+      try {
+        const result = await APIProvider({
+          endpoint: "update",
+          method: "POST",
+          table: "accounts",
+          action: "update",
+          body: {
+            data: updatedOrder,
+            where: { id },
+          },
+        });
+
+        return {
+          success: true,
+          message: "Akun berhasil diperbarui",
+          affected: result.affected_rows,
+        };
+      } catch (err: any) {
+        return { success: false, message: err.message };
+      }
+    }
   },
 };

@@ -446,7 +446,7 @@ export const action: ActionFunction = async ({ params, request }) => {
     return new Response(readable, {
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="folder-${folderId}.zip"`,
+        "Content-Disposition": `attachment; filename="${filesRes?.items?.[0]?.folder_name}.zip"`,
         "X-Content-Type-Options": "nosniff",
         "Cache-Control": "no-cache",
       },

@@ -105,6 +105,56 @@ export const action: ActionFunction = async ({ request }) => {
   const intent = formData.get("intent");
 
   try {
+    if (intent === "delete_account") {
+      const { id } = Object.fromEntries(formData.entries());
+
+      const payload = {
+        id,
+        deleted_on: new Date().toISOString(),
+      };
+      // Only update if valid
+      const res = await API.ACCOUNT.create_update({
+        session: { user, token },
+        req: {
+          body: payload,
+        },
+      });
+      return Response.json({
+        success: res.success,
+        message: res.success ? "Akun dihapus" : "Gagal menghapus akun",
+      });
+    }
+    if (intent === "save_account_bank") {
+      const { id, code, name, ref_account_number, ref_account_holder } =
+        Object.fromEntries(formData.entries());
+
+      const payload = {
+        ...(+id > 0
+          ? { id }
+          : {
+              code,
+              is_bank: 1,
+              group_code: 1,
+              group_type: "asset",
+              group_name: "Aset Lancar",
+            }),
+        name,
+        ref_account_number,
+        ref_account_holder,
+      };
+      // Only update if valid
+      const res = await API.ACCOUNT.create_update({
+        session: { user, token },
+        req: {
+          body: payload,
+        },
+      });
+      return Response.json({
+        success: res.success,
+        message: res.success ? "Akun diperbarui" : "Gagal memperbarui akun",
+      });
+    }
+
     if (intent === "create_transaction") {
       const type = formData.get("type") as string;
       const category = formData.get("category") as string;
@@ -633,12 +683,12 @@ const FinancePage: React.FC<FinancePageProps> = ({
         >
           <CreditCard size={16} className="inline mr-2" /> Daftar Akun
         </button>
-        <button
+        {/* <button
           onClick={() => setActiveTab("banks")}
           className={`flex-1 py-3 text-sm font-medium ${activeTab === "banks" ? "bg-gray-900 text-white" : "text-gray-600 hover:bg-gray-50"}`}
         >
           <CreditCard size={16} className="inline mr-2" /> Rekening Bank
-        </button>
+        </button> */}
       </div>
 
       {activeTab === "report" && (

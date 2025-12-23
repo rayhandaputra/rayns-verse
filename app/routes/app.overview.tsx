@@ -10,7 +10,7 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 import { API } from "~/lib/api";
-import { getOrderStatusLabel, toMoney } from "~/lib/utils";
+import { getOrderStatusLabel, safeParseObject, toMoney } from "~/lib/utils";
 import { requireAuth } from "~/lib/session.server";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
 import { nexus } from "~/lib/nexus-client";
@@ -115,8 +115,10 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 export default function DashboardOverview() {
   // Fetch overview data
   const { data: overviewData } = useFetcherData({
-    endpoint: nexus().module("OVERVIEW").action("get").build(),
+    endpoint: nexus().module("OVERVIEW").action("summary").build(),
   });
+
+  console.log("OVERVIEW DATA => ", overviewData);
 
   // Fetch orders
   const { data: ordersData } = useFetcherData({
@@ -254,7 +256,12 @@ export default function DashboardOverview() {
         </p>
       </div>
 
-      <DashboardHome orders={orders} stock={stock} prices={prices} />
+      <DashboardHome
+        overview={overview}
+        orders={orders}
+        stock={stock}
+        prices={prices}
+      />
 
       {/* Statistik Cards */}
       {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -421,12 +428,14 @@ interface DashboardHomeProps {
   orders: Order[];
   stock: StockState;
   prices?: PriceList;
+  overview?: any;
 }
 
 const DashboardHome: React.FC<DashboardHomeProps> = ({
   orders,
   stock,
   prices: pricesFromProps,
+  overview,
 }) => {
   // Safe orders array
   const safeOrders = orders || [];
@@ -564,32 +573,24 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
       : null;
 
   const monthlyData = useMemo(() => {
-    const data: Record<string, { name: string; total: number; paid: number }> =
-      {};
+    const report = (overview?.report_six_months || {}) as Record<
+      string,
+      string
+    >;
     const now = new Date();
+    const result = [];
 
-    // Init last 6 months
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      data[key] = {
+      const m = d.getMonth() + 1;
+      result.push({
         name: d.toLocaleDateString("id-ID", { month: "long" }),
-        total: 0,
-        paid: 0,
-      };
+        total: parseFloat(report[`total_${m}`] || "0"),
+        paid: parseFloat(report[`paid_${m}`] || "0"),
+      });
     }
-
-    safeOrders.forEach((o) => {
-      const d = new Date(o.createdAt);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (data[key]) {
-        data[key].total += o.totalAmount || 0;
-        data[key].paid += o.dpAmount || 0;
-      }
-    });
-
-    return Object.values(data);
-  }, [safeOrders]);
+    return result;
+  }, [overview]);
 
   // Accumulated Stats
   const completedOrders = safeOrders.filter((o) => o.finishedAt);
@@ -625,7 +626,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
             Total Nilai Pesanan
           </h3>
           <div className="text-2xl font-bold text-gray-900">
-            {formatCurrency(totalValue)}
+            {formatCurrency(overview?.total_order_amount || 0)}
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
@@ -633,7 +634,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
             Terbayar (DP + Lunas)
           </h3>
           <div className="text-2xl font-bold text-green-600">
-            {formatCurrency(totalPaid)}
+            {formatCurrency(+overview?.total_paid + +overview?.total_dp)}
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
@@ -641,7 +642,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
             Sisa Piutang
           </h3>
           <div className="text-2xl font-bold text-red-500">
-            {formatCurrency(outstanding)}
+            {formatCurrency(overview?.total_piutang)}
           </div>
         </div>
       </div>
@@ -689,13 +690,15 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
                 Pesanan Nominal Terbesar
               </span>
             </div>
-            {maxOrder ? (
+            {safeParseObject(overview?.highest_order) ? (
               <>
                 <h3 className="text-2xl font-bold mb-1">
-                  {formatCurrency(maxOrder.totalAmount)}
+                  {formatCurrency(
+                    safeParseObject(overview?.highest_order)?.total_amount
+                  )}
                 </h3>
                 <p className="text-sm text-purple-100 font-medium truncate">
-                  {maxOrder.instansi}
+                  {safeParseObject(overview?.highest_order)?.institution_name}
                 </p>
               </>
             ) : (
@@ -719,7 +722,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
             <div className="flex items-center justify-between p-3 border border-gray-100 rounded-xl bg-gray-50">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-xs">
-                  {pending}
+                  {overview?.total_pending}
                 </div>
                 <span className="text-sm font-medium text-gray-600">
                   Pending
@@ -729,7 +732,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
             <div className="flex items-center justify-between p-3 border border-blue-100 rounded-xl bg-blue-50">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold text-xs">
-                  {inprogress}
+                  {overview?.total_confirmed}
                 </div>
                 <span className="text-sm font-medium text-blue-700 flex items-center gap-1">
                   <Loader2 size={12} className="animate-spin" /> Proses
@@ -739,7 +742,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
             <div className="flex items-center justify-between p-3 border border-green-100 rounded-xl bg-green-50">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-200 flex items-center justify-center text-green-700 font-bold text-xs">
-                  {done}
+                  {overview?.total_done}
                 </div>
                 <span className="text-sm font-medium text-green-700 flex items-center gap-1">
                   <CheckCircle2 size={12} /> Selesai
@@ -806,7 +809,8 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
             <CheckCircle2 size={32} />
           </div>
           <div className="text-2xl font-bold text-gray-900 mb-1">
-            {fmt(countFinished)}
+            {/* {fmt(overview?.total_done)} */}
+            {Number(overview?.total_done)}
           </div>
           <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">
             Pesanan Selesai
@@ -818,7 +822,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
             <Layers size={32} />
           </div>
           <div className="text-2xl font-bold text-gray-900 mb-1">
-            {fmt(countItems)}
+            {Number(overview?.total_product_sales)}
           </div>
           <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">
             Produk Dibuat (Pcs)
@@ -830,7 +834,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
             <Building2 size={32} />
           </div>
           <div className="text-2xl font-bold text-gray-900 mb-1">
-            {fmt(uniqueClients)}
+            {Number(overview?.total_institution)}
           </div>
           <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">
             Instansi / Event
@@ -842,7 +846,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
             <Handshake size={32} />
           </div>
           <div className="text-2xl font-bold text-gray-900 mb-1">
-            {fmt(countSponsors)}
+            {Number(overview?.total_sponsor)}
           </div>
           <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">
             Sponsor & Partner
