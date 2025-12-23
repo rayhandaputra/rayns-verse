@@ -13,6 +13,7 @@ import {
   HardDrive,
   FileText,
   Lock,
+  Download,
 } from "lucide-react";
 import {
   useLoaderData,
@@ -21,6 +22,7 @@ import {
   type LoaderFunction,
   type ActionFunction,
   useActionData,
+  Form,
 } from "react-router";
 import { API } from "~/lib/api";
 import { requireAuth } from "~/lib/session.server";
@@ -31,6 +33,8 @@ import { useQueryParams } from "~/hooks/use-query-params";
 import ModalSecond from "~/components/modal/ModalSecond";
 import { Button } from "~/components/ui/button";
 import { useModal } from "~/hooks";
+import { DriveBreadcrumb } from "~/components/breadcrumb/DriveBreadcrumb";
+import { Link } from "react-router";
 
 // ============================================
 // TYPES & INTERFACES
@@ -38,6 +42,7 @@ import { useModal } from "~/hooks";
 
 interface LoaderData {
   items: DriveItem[];
+  current_folder?: any;
 }
 
 // Special folder ID for "Drive Pesanan"
@@ -49,6 +54,9 @@ const ORDERS_DRIVE_FOLDER_ID = "SYSTEM_ORDERS_DRIVE";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { user, token } = await requireAuth(request);
+
+  const url = new URL(request.url);
+  const { folder_id } = Object.fromEntries(url.searchParams.entries());
 
   // Fetch folders and files with order_number IS NULL (admin general drive)
   const foldersRes = await API.ORDER_UPLOAD.get_folder({
@@ -71,6 +79,11 @@ export const loader: LoaderFunction = async ({ request }) => {
         order_number: null, // Filter: only files without order_number
       },
     },
+  });
+
+  const detailFolder = await API.ORDER_UPLOAD.get_folder({
+    session: { user, token },
+    req: { query: { id: folder_id || "null", size: 1 } },
   });
 
   // Map to DriveItem
@@ -102,7 +115,10 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
   }
 
-  return Response.json({ items });
+  return Response.json({
+    items,
+    current_folder: detailFolder?.items?.[0] ?? null,
+  });
 };
 
 // ============================================
@@ -235,7 +251,7 @@ export const action: ActionFunction = async ({ request }) => {
 // ============================================
 
 export default function DriveInternalPage() {
-  const { items: initialItems } = useLoaderData<LoaderData>();
+  const { items: initialItems, current_folder } = useLoaderData<LoaderData>();
   const fetcher = useFetcher();
   const navigate = useNavigate();
   const query = useQueryParams();
@@ -332,22 +348,6 @@ export default function DriveInternalPage() {
   // Check if item is system folder
   const isSystemFolder = (itemId: string) => {
     return itemId === ORDERS_DRIVE_FOLDER_ID;
-  };
-
-  const getBreadcrumbs = () => {
-    const crumbs = [];
-    let curr = currentFolderId;
-
-    while (curr) {
-      const folder = items.find((i) => i.id === curr);
-      if (folder) {
-        crumbs.unshift({ id: folder.id, name: folder.name });
-        curr = folder.parentId;
-      } else {
-        curr = null;
-      }
-    }
-    return crumbs;
   };
 
   // --- Actions ---
@@ -615,6 +615,86 @@ export default function DriveInternalPage() {
     navigate(`/app/drive/internal?folder_id=${item.id}`);
   };
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadAll = async (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    // 1. Validasi Awal
+    if (!currentFolderId) {
+      toast.error("Tidak ada folder yang dipilih");
+      return;
+    }
+
+    if (files.length === 0) {
+      toast.error("Tidak ada file untuk diunduh");
+      return;
+    }
+
+    setIsDownloading(true);
+    const loadingToast = toast.loading("Menyiapkan dan mengompres file...");
+
+    try {
+      // 2. Eksekusi Request ke Server Action
+      const res = await fetch(`/server/drive/${currentFolderId}/download`, {
+        method: "POST",
+      });
+
+      // 3. Penanganan Error dari Server
+      if (!res.ok) {
+        // Mencoba membaca pesan error dari body response (JSON)
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(
+          errData.message || errData.error || "Gagal mengunduh file dari server"
+        );
+      }
+
+      // 4. Konversi Stream ke Blob
+      const blob = await res.blob();
+      if (blob.size === 0) throw new Error("File ZIP kosong");
+
+      // 5. Ekstraksi Nama File dari Content-Disposition Header
+      const contentDisposition = res.headers.get("Content-Disposition");
+      let filename = `folder-${currentFolderId}.zip`; // Nama default
+
+      if (contentDisposition) {
+        // Regex untuk mengambil nama file di dalam tanda kutip atau setelah 'filename='
+        const filenameMatch = contentDisposition.match(
+          /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
+        );
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, "");
+        }
+      }
+
+      // 6. Proses Trigger Download di Browser
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+
+      // Append ke body (penting untuk kompabilitas Firefox)
+      document.body.appendChild(a);
+      a.click();
+
+      // 7. Cleanup & Notifikasi Sukses
+      toast.success("Download berhasil dimulai", { id: loadingToast });
+
+      // Beri jeda sedikit sebelum menghapus URL untuk memastikan browser menangkap kliknya
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 150);
+    } catch (err: any) {
+      console.error("Download error:", err);
+      toast.error(err.message || "Terjadi kesalahan saat mengunduh", {
+        id: loadingToast,
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const folders = realFolders?.data?.items ?? [];
   const files = realFiles?.data?.items ?? [];
 
@@ -645,7 +725,6 @@ export default function DriveInternalPage() {
             <Upload size={16} />
             <span className="hidden md:inline">Upload</span>
           </button>
-
           {currentFolderId && (
             <button
               onClick={() => handleShare()}
@@ -663,6 +742,23 @@ export default function DriveInternalPage() {
               <Clipboard size={16} /> Paste
             </button>
           )}
+          {currentFolderId && files.length > 0 && (
+            <button
+              onClick={handleDownloadAll}
+              disabled={isDownloading}
+              className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download
+                size={16}
+                className={isDownloading ? "animate-bounce" : ""}
+              />
+              <span className="hidden md:inline">
+                {isDownloading
+                  ? "Mengunduh..."
+                  : `Download All (${files.length})`}
+              </span>
+            </button>
+          )}
         </div>
         <div className="text-xs text-gray-400">
           {folders.length + files.length} Items
@@ -670,27 +766,22 @@ export default function DriveInternalPage() {
       </div>
 
       {/* Breadcrumbs */}
-      <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 text-sm text-gray-600 overflow-x-auto">
-        <button
-          onClick={() => navigate(`/app/drive/internal`)}
-          className={`flex items-center hover:bg-gray-100 px-2 py-1 rounded ${!currentFolderId ? "font-bold text-blue-600" : ""}`}
-        >
-          <HardDrive size={14} className="mr-1" /> Internal Ops
-        </button>
-        {getBreadcrumbs().map((crumb, idx) => (
-          <React.Fragment key={crumb.id}>
-            <span className="text-gray-300">/</span>
-            <button
-              onClick={() =>
-                navigate(`/app/drive/internal?folder_id=${crumb.id}`)
-              }
-              className={`hover:bg-gray-100 px-2 py-1 rounded whitespace-nowrap flex items-center gap-1 ${idx === getBreadcrumbs().length - 1 ? "font-bold text-blue-600" : ""}`}
-            >
-              {crumb.name}
-            </button>
-          </React.Fragment>
-        ))}
-      </div>
+      <DriveBreadcrumb
+        domain="internal"
+        currentFolderId={current_folder?.id || query?.folder_id}
+        rootFolderId={null}
+        breadcrumbs={[
+          ...(current_folder?.id
+            ? [
+                {
+                  id: current_folder?.id,
+                  name: current_folder?.folder_name,
+                },
+              ]
+            : []),
+        ]}
+        onOpenFolder={(folderId) => handleOpenFolder({ id: folderId })}
+      />
 
       {/* Content Area */}
       <div

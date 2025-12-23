@@ -26,6 +26,18 @@ export function DriveBreadcrumb({
 
   const isRootActive = !currentFolderId || currentFolderId === rootFolderId;
 
+  const getRootPath = () => {
+    if (domain === "customer") return "/app/drive/customer";
+    if (domain === "internal") return "/app/drive/internal";
+    return `/public/drive-link/${domain}`;
+  };
+
+  const getRootLabel = () => {
+    if (domain === "customer") return "Customer Drive";
+    if (domain === "internal") return "Internal Ops";
+    return "Root";
+  };
+
   return (
     <nav
       aria-label="Breadcrumb"
@@ -33,7 +45,7 @@ export function DriveBreadcrumb({
     >
       {/* Root */}
       <button
-        onClick={() => navigate(`/public/drive-link/${domain}`)}
+        onClick={() => navigate(getRootPath())}
         className={`flex items-center px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
           isRootActive
             ? "font-semibold text-blue-600 bg-blue-50"
@@ -41,7 +53,7 @@ export function DriveBreadcrumb({
         }`}
       >
         <HardDrive size={14} className="mr-1.5" />
-        Root
+        {getRootLabel()}
       </button>
 
       {breadcrumbs.map((crumb, idx) => {

@@ -194,7 +194,7 @@ export const OrderAPI = {
       shipping_address = null,
       shipping_contact = null,
       created_by = null,
-      status = "ordered",
+      status = "pending",
       pic_name = null,
       pic_phone = null,
       items = [],
@@ -404,33 +404,39 @@ export const OrderAPI = {
         });
       }
 
-      await APIProvider({
-        endpoint: "bulk-insert",
-        method: "POST",
-        table: "account_ledger_mutations",
-        action: "bulk-insert",
-        body: {
-          rows: [
-            {
-              account_code: "4-101",
-              account_name: "Pendapatan Usaha",
-              credit:
-                payment_status === "down_payment" ? dp_amount : total_amount,
-              debit: 0,
-              notes: "SISTEM",
-            },
-            {
-              account_code: "1-101",
-              account_name: "Kas Utama (Cash on Hand)",
-              credit: 0,
-              debit:
-                payment_status === "down_payment" ? dp_amount : total_amount,
-              notes: "SISTEM",
-            },
-          ],
-          updateOnDuplicate: true,
-        },
-      });
+      if (total_amount > 0) {
+        await APIProvider({
+          endpoint: "bulk-insert",
+          method: "POST",
+          table: "account_ledger_mutations",
+          action: "bulk-insert",
+          body: {
+            rows: [
+              {
+                account_code: "4-101",
+                account_name: "Pendapatan Usaha",
+                credit:
+                  payment_status === "down_payment"
+                    ? total_amount - dp_amount
+                    : total_amount,
+                debit: 0,
+                notes: order_number,
+              },
+              {
+                account_code: "1-102",
+                account_name: "Piutang Usaha",
+                credit: 0,
+                debit:
+                  payment_status === "down_payment"
+                    ? total_amount - dp_amount
+                    : total_amount,
+                notes: order_number,
+              },
+            ],
+            updateOnDuplicate: true,
+          },
+        });
+      }
 
       return {
         success: true,
@@ -487,7 +493,7 @@ export const OrderAPI = {
         institution_id,
         institution_name,
         order_type,
-        status: status || "ordered",
+        status: status || "pending",
         created_on: new Date().toISOString(),
         modified_on: new Date().toISOString(),
       };
@@ -522,6 +528,9 @@ export const OrderAPI = {
 
     const updatedOrder = {
       ...fields,
+      ...(fields?.payment_proof && {
+        payment_status: "paid",
+      }),
       modified_on: new Date().toISOString(),
       ...(fields.deleted === 1 ? { deleted_on: new Date().toISOString() } : {}),
     };
@@ -542,6 +551,65 @@ export const OrderAPI = {
           where: { id },
         },
       });
+
+      if (fields?.dp_payment_proof) {
+        await APIProvider({
+          endpoint: "bulk-insert",
+          method: "POST",
+          table: "account_ledger_mutations",
+          action: "bulk-insert",
+          body: {
+            rows: [
+              {
+                account_code: "4-101",
+                account_name: "Pendapatan Usaha",
+                credit: updatedOrder?.dp_amount,
+                debit: 0,
+                notes: updatedOrder?.order_number,
+                receipt_url: fields?.dp_payment_proof,
+              },
+              {
+                account_code: "1-101",
+                account_name: "Kas Utama (Cash on Hand)",
+                credit: 0,
+                debit: updatedOrder?.dp_amount,
+                notes: updatedOrder?.order_number,
+                receipt_url: fields?.dp_payment_proof,
+              },
+            ],
+            updateOnDuplicate: true,
+          },
+        });
+      }
+      if (fields?.payment_proof) {
+        await APIProvider({
+          endpoint: "bulk-insert",
+          method: "POST",
+          table: "account_ledger_mutations",
+          action: "bulk-insert",
+          body: {
+            rows: [
+              {
+                account_code: "4-101",
+                account_name: "Pendapatan Usaha",
+                credit: updatedOrder?.total_amount,
+                debit: 0,
+                notes: updatedOrder?.order_number,
+                receipt_url: fields?.payment_proof,
+              },
+              {
+                account_code: "1-101",
+                account_name: "Kas Utama (Cash on Hand)",
+                credit: 0,
+                debit: updatedOrder?.total_amount,
+                notes: updatedOrder?.order_number,
+                receipt_url: fields?.payment_proof,
+              },
+            ],
+            updateOnDuplicate: true,
+          },
+        });
+      }
 
       return {
         success: true,

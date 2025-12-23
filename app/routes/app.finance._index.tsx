@@ -34,6 +34,7 @@ import {
   Cell,
 } from "recharts";
 import AssetInventoryPage from "./app.asset.inventory";
+import AccountCoaPage from "./app.finance.account";
 import { requireAuth } from "~/lib/session.server";
 import { API } from "~/lib/api";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
@@ -273,7 +274,7 @@ const FinancePage: React.FC<FinancePageProps> = ({
   onUpdateAssets,
 }) => {
   const [activeTab, setActiveTab] = useState<
-    "report" | "product_cost" | "assets" | "banks"
+    "report" | "product_cost" | "assets" | "banks" | "accounts"
   >("report");
 
   // State
@@ -627,6 +628,12 @@ const FinancePage: React.FC<FinancePageProps> = ({
           <Monitor size={16} className="inline mr-2" /> Aset Perusahaan
         </button>
         <button
+          onClick={() => setActiveTab("accounts")}
+          className={`flex-1 py-3 text-sm font-medium ${activeTab === "accounts" ? "bg-gray-900 text-white" : "text-gray-600 hover:bg-gray-50"}`}
+        >
+          <CreditCard size={16} className="inline mr-2" /> Daftar Akun
+        </button>
+        <button
           onClick={() => setActiveTab("banks")}
           className={`flex-1 py-3 text-sm font-medium ${activeTab === "banks" ? "bg-gray-900 text-white" : "text-gray-600 hover:bg-gray-50"}`}
         >
@@ -950,6 +957,8 @@ const FinancePage: React.FC<FinancePageProps> = ({
       {activeTab === "assets" && (
         <AssetInventoryPage assets={assets} onUpdateAssets={onUpdateAssets} />
       )}
+
+      {activeTab === "accounts" && <AccountCoaPage />}
 
       {activeTab === "banks" && (
         <div className="space-y-6 animate-fade-in">

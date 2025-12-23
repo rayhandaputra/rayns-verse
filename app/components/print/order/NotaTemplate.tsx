@@ -30,7 +30,7 @@ export const PrintNotaTemplate = React.forwardRef<
             <img src="/kinau-logo.png" alt="Kinau" className="w-28" />
           </div>
           <p className="text-xs text-gray-500 font-medium">
-            Percetakan ID Card & Lanyard
+            Your Custom Specialist
           </p>
           <p className="text-[10px] text-gray-400">
             Kinau.id Production • Lampung
@@ -41,7 +41,7 @@ export const PrintNotaTemplate = React.forwardRef<
             NOTA PESANAN
           </h2>
           <p className="text-sm font-mono text-gray-600 font-bold">
-            #{order?.id.slice(-6).toUpperCase()}
+            #{order?.order_number}
           </p>
           <p className="text-xs text-gray-500">
             Tanggal: {formatFullDate(order?.created_on)}
@@ -182,6 +182,14 @@ export const PrintNotaTemplate = React.forwardRef<
             <p className="font-bold text-gray-500">Syarat & Ketentuan:</p>
             <p>1. Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.</p>
             <p>2. Bukti nota ini sah sebagai bukti pengambilan barang.</p>
+            <p>
+              3. Nota ini digunakan untuk claim garansi atau cetak ulang jika
+              cacat produksi (Oleh PJ atau pemesan bersangkutan).
+            </p>
+            <p>
+              4. Cap basah dapat diminta, dengan membawa hardcopy nota ini pada
+              saat pengambilan
+            </p>
           </div>
         </div>
         <div className="text-center border-t border-gray-800 w-40 pt-1">

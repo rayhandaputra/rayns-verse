@@ -76,26 +76,12 @@ export const getOrderStatusLabel = (status: string) => {
   switch (status) {
     case "none":
       return "Tidak Ada";
-    case "ordered":
-      return "Diproses";
+    case "pending":
+      return "Pending";
     case "confirmed":
-      return "Dikonfirmasi";
-    case "in_production":
-      return "Produksi";
-    case "ready":
-      return "Siap";
-    case "shipped":
-      return "Dikirim";
-    case "delivered":
-      return "Diterima";
+      return "Diproses";
     case "done":
       return "Selesai";
-    case "rejected":
-      return "Ditolak";
-    case "cancelled":
-      return "Dibatalkan";
-    case "pending":
-      return "Menunggu";
     default:
       return "-";
   }

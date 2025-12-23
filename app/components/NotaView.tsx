@@ -199,11 +199,11 @@ const NotaView: React.FC<NotaViewProps> = ({
                       </span>
                     )}
 
-                    {item.variant_price && item.variant_price > 0 && (
+                    {/* {item.variant_price && item.variant_price > 0 && (
                       <span className="text-xs text-emerald-600 font-medium">
                         + {formatCurrency(item.variant_price)} / pcs
                       </span>
-                    )}
+                    )} */}
                   </div>
                 </td>
 

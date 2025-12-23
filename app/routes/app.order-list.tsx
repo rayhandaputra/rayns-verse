@@ -265,6 +265,12 @@ export default function OrderList() {
   const getFunctionalLink = (accessCode: string) =>
     `/public/drive-link/${accessCode}`;
 
+  const STATUS_OPTIONS = ["pending", "confirmed", "done"] as const;
+
+  function normalizeStatus(value?: string | null) {
+    return STATUS_OPTIONS.includes(value as any) ? value : "";
+  }
+
   // Column definitions for DataTable
   const columns: ColumnDef<Order>[] = useMemo(
     () => [
@@ -419,17 +425,28 @@ export default function OrderList() {
       {
         key: "statusPengerjaan",
         header: "Status Produksi",
-        cell: (order) =>
-          order.finishedAt ? (
-            <span className="inline-flex items-center justify-center gap-1 px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-700 border border-green-200 whitespace-nowrap">
-              <Check size={12} /> Selesai
-            </span>
-          ) : (
+        cell: (order) => {
+          if (order.finishedAt) {
+            return (
+              <span className="inline-flex items-center justify-center gap-1 px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-700 border border-green-200 whitespace-nowrap">
+                <Check size={12} /> Selesai
+              </span>
+            );
+          }
+
+          return (
             <select
-              className={`text-xs border rounded py-1 px-2 font-medium ${getStatusColor(order.status)} cursor-pointer`}
-              value={order.status}
+              className={`text-xs border rounded py-1 px-2 font-medium ${getStatusColor(
+                order.status
+              )} cursor-pointer`}
+              value={normalizeStatus(order.status)}
               onChange={(e) => onUpdateStatus(order.id, e.target.value as any)}
             >
+              {/* fallback default */}
+              <option value="" disabled hidden>
+                {order.status === "ordered" ? "Ordered" : "Pilih status"}
+              </option>
+
               <option value="pending" className="bg-white text-gray-700">
                 Pending
               </option>
@@ -440,7 +457,8 @@ export default function OrderList() {
                 Selesai
               </option>
             </select>
-          ),
+          );
+        },
       },
       {
         key: "statusPembayaran",
@@ -556,13 +574,13 @@ export default function OrderList() {
             >
               <FileText size={16} />
             </button>
-            <button
+            {/* <button
               title="Selesai"
               onClick={() => onMarkDone(order.id)}
               className="p-1.5 text-green-600 bg-green-50 rounded hover:bg-green-100 transition"
             >
               <Check size={16} />
-            </button>
+            </button> */}
             <button
               title="Hapus"
               onClick={() => onDelete(order)}

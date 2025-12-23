@@ -124,7 +124,7 @@ export const action: ActionFunction = async ({ request }) => {
         }),
         discount_type: payload?.discount?.type || null,
         discount_value: payload?.discount?.value || 0,
-        status: "ordered",
+        status: "pending",
         images: payload.portfolioImages,
         items: payload.items,
       };

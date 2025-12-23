@@ -420,6 +420,88 @@ export default function PublicDriveLinkPage() {
     navigate(url);
   };
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadAll = async (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    const targetFolderId = query.folder_id || orderData?.drive_folder_id;
+
+    // 1. Validasi Awal
+    if (!targetFolderId) {
+      toast.error("Tidak ada folder yang dipilih");
+      return;
+    }
+
+    if (files.length === 0) {
+      toast.error("Tidak ada file untuk diunduh");
+      return;
+    }
+
+    setIsDownloading(true);
+    const loadingToast = toast.loading("Menyiapkan dan mengompres file...");
+
+    try {
+      // 2. Eksekusi Request ke Server Action
+      const res = await fetch(`/server/drive/${targetFolderId}/download`, {
+        method: "POST",
+      });
+
+      // 3. Penanganan Error dari Server
+      if (!res.ok) {
+        // Mencoba membaca pesan error dari body response (JSON)
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(
+          errData.message || errData.error || "Gagal mengunduh file dari server"
+        );
+      }
+
+      // 4. Konversi Stream ke Blob
+      const blob = await res.blob();
+      if (blob.size === 0) throw new Error("File ZIP kosong");
+
+      // 5. Ekstraksi Nama File dari Content-Disposition Header
+      const contentDisposition = res.headers.get("Content-Disposition");
+      let filename = `folder-${targetFolderId}.zip`; // Nama default
+
+      if (contentDisposition) {
+        // Regex untuk mengambil nama file di dalam tanda kutip atau setelah 'filename='
+        const filenameMatch = contentDisposition.match(
+          /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
+        );
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, "");
+        }
+      }
+
+      // 6. Proses Trigger Download di Browser
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+
+      // Append ke body (penting untuk kompabilitas Firefox)
+      document.body.appendChild(a);
+      a.click();
+
+      // 7. Cleanup & Notifikasi Sukses
+      toast.success("Download berhasil dimulai", { id: loadingToast });
+
+      // Beri jeda sedikit sebelum menghapus URL untuk memastikan browser menangkap kliknya
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 150);
+    } catch (err: any) {
+      console.error("Download error:", err);
+      toast.error(err.message || "Terjadi kesalahan saat mengunduh", {
+        id: loadingToast,
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const isNotFound = useMemo(() => {
     return !orderData?.order_number && !current_folder ? true : false;
   }, [orderData, current_folder]);
@@ -469,20 +551,6 @@ export default function PublicDriveLinkPage() {
                 </span>
               </button>
               <button
-                onClick={() =>
-                  setModal({
-                    ...modal,
-                    open: true,
-                    type: "view_nota",
-                    data: orderData,
-                  })
-                }
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700 shadow-sm transition-all hover:shadow-md"
-              >
-                <FileText size={16} />
-                <span>Lihat Nota</span>
-              </button>
-              <button
                 onClick={() => {
                   if (fileInputRef.current) {
                     fileInputRef.current.click();
@@ -502,8 +570,39 @@ export default function PublicDriveLinkPage() {
                   <Clipboard size={16} /> Paste
                 </button>
               )} */}
+              {files.length > 0 && (
+                <button
+                  onClick={handleDownloadAll}
+                  disabled={isDownloading}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 shadow-sm transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Download
+                    size={16}
+                    className={isDownloading ? "animate-bounce" : ""}
+                  />
+                  <span>
+                    {isDownloading
+                      ? "Mengunduh..."
+                      : `Download All (${files.length})`}
+                  </span>
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() =>
+                  setModal({
+                    ...modal,
+                    open: true,
+                    type: "view_nota",
+                    data: orderData,
+                  })
+                }
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 text-gray-700 shadow-sm transition-all hover:shadow-md"
+              >
+                <FileText size={16} />
+                <span>Lihat Nota</span>
+              </button>
               <div className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold">
                 {realFolders?.data?.total_items + realFiles?.data?.total_items}{" "}
                 Items
