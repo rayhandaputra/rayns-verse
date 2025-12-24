@@ -8,6 +8,7 @@ export const AccountAPI = {
       search,
       group_type = "",
       is_bank = "",
+      year = "",
       id = "",
       sort = "",
     } = req.query || {};
@@ -44,6 +45,7 @@ export const AccountAPI = {
         ],
         where: {
           deleted_on: "null",
+          ...(year ? { "year:created_on": parseInt(year) } : {}),
           ...(group_type ? { group_type } : {}),
           ...(is_bank ? { is_bank } : {}),
           ...(id ? { id } : {}),

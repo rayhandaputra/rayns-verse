@@ -41,7 +41,10 @@ import { useFetcherData } from "~/hooks/use-fetcher-data";
 import { nexus, NexusHelpers } from "~/lib/nexus-client";
 import { toast } from "sonner";
 import { APIProvider } from "~/lib/api/client";
-import { safeParseArray } from "~/lib/utils";
+import { safeParseArray, uploadFile } from "~/lib/utils";
+import { useModal } from "~/hooks";
+import { Button } from "~/components/ui/button";
+import { TablePagination } from "~/components/ui/data-table";
 
 interface Transaction {
   id: string;
@@ -192,39 +195,66 @@ export const action: ActionFunction = async ({ request }) => {
         });
       }
 
-      await API.TRANSACTION.create({
-        session: { user, token },
-        req: {
-          body: {
-            type,
-            category,
-            amount,
-            date: date || new Date().toISOString().split("T")[0],
-            description: description || "",
-            bank_id: bank_id || null,
-            proof_image: proof_image || null,
-            is_auto: false,
-          },
-        },
-      });
-
-      // Auto-create asset if category is "Pembelian Aset"
-      if (category === "Pembelian Aset" && type === "Expense") {
-        await API.INVENTORY_ASSET.create({
+      let accountBank = null;
+      if (bank_id !== "cash") {
+        accountBank = await API.ACCOUNT.get({
           session: { user, token },
           req: {
-            body: {
-              name: description || "Aset Baru",
-              category: "Baru",
-              purchase_date: date || new Date().toISOString().split("T")[0],
-              value: amount,
-              condition: "Baik",
-              location: "Kantor",
-              image: proof_image || null,
+            query: {
+              id: bank_id,
             },
           },
         });
       }
+      await APIProvider({
+        endpoint: "bulk-insert",
+        method: "POST",
+        table: "account_ledger_mutations",
+        action: "bulk-insert",
+        body: {
+          rows: [
+            {
+              account_code: type === "Income" ? "4-101" : "5-101",
+              account_name: type === "Income" ? "Pendapatan Usaha" : "Beban Operasional",
+              credit: type === "Income" ? amount : 0,
+              debit: type === "Expense" ? amount : 0,
+              category,
+              notes: description,
+              created_on: date || new Date().toISOString(),
+              receipt_url: proof_image
+            },
+            {
+              account_code: !accountBank ? "1-101" : accountBank?.items?.[0]?.code,
+              account_name: !accountBank ? "Kas Utama (Cash on Hand)" : accountBank?.items?.[0]?.name,
+              credit: type === "Expense" ? amount : 0,
+              debit: type === "Income" ? amount : 0,
+              category,
+              notes: description,
+              created_on: date || new Date().toISOString(),
+              receipt_url: proof_image
+            },
+          ],
+          updateOnDuplicate: true,
+        },
+      });
+
+      // Auto-create asset if category is "Pembelian Aset"
+      // if (category === "Pembelian Aset" && type === "Expense") {
+      //   await API.INVENTORY_ASSET.create({
+      //     session: { user, token },
+      //     req: {
+      //       body: {
+      //         name: description || "Aset Baru",
+      //         category: "Baru",
+      //         purchase_date: date || new Date().toISOString().split("T")[0],
+      //         value: amount,
+      //         condition: "Baik",
+      //         location: "Kantor",
+      //         image: proof_image || null,
+      //       },
+      //     },
+      //   });
+      // }
 
       return Response.json({
         success: true,
@@ -339,8 +369,6 @@ export const action: ActionFunction = async ({ request }) => {
 // ============================================
 
 const FinancePage: React.FC<FinancePageProps> = ({
-  products,
-  onUpdateProducts,
   assets,
   onUpdateAssets,
 }) => {
@@ -368,6 +396,10 @@ const FinancePage: React.FC<FinancePageProps> = ({
   // Bank form state
   const [bankForm, setBankForm] = useState<Partial<BankAccount>>({});
   const [editingBankId, setEditingBankId] = useState<string | null>(null);
+
+  const [modal, setModal] = useModal()
+    const [sortBy, setSortBy] = useState("");
+    const [page, setPage] = useState(1);
 
   // Action form for creating/updating
   const actionFetcher = useFetcher();
@@ -423,6 +455,9 @@ const FinancePage: React.FC<FinancePageProps> = ({
         page: 0,
         size: 1,
         id: 4,
+        ...(filterYear && {
+          year: filterYear,
+        }),
       })
       .build(),
     autoLoad: true,
@@ -440,6 +475,9 @@ const FinancePage: React.FC<FinancePageProps> = ({
         page: 0,
         size: 1,
         id: 5,
+        ...(filterYear && {
+          year: filterYear,
+        }),
       })
       .build(),
     autoLoad: true,
@@ -453,12 +491,57 @@ const FinancePage: React.FC<FinancePageProps> = ({
       .module("ACCOUNT_MUTATION")
       .action("get")
       .params({
-        page: 0,
+        page: page ? page - 1 : 0,
         size: 10,
+        pagination: "true",
+        ...(filterYear && {
+          year: filterYear,
+        }),
+        ...(sortBy && {
+          sort: sortBy,
+        }),
       })
       .build(),
     autoLoad: true,
   });
+
+  const {
+    data: financeReport,
+    loading: loadingFinanceReport,
+    reload: reloadFinanceReport,
+  } = useFetcherData<any>({
+    endpoint: nexus()
+      .module("ACCOUNT_MUTATION")
+      .action("getFinanceReport")
+      .params({
+        page: 0,
+        size: 100,
+        ...(filterYear && {
+          year: filterYear,
+        }),
+      })
+      .build(),
+    autoLoad: true,
+  });
+  const {
+    data: expenseComposition,
+    loading: loadingExpenseComposition,
+    reload: reloadExpenseComposition,
+  } = useFetcherData<any>({
+    endpoint: nexus()
+      .module("ACCOUNT_MUTATION")
+      .action("getExpenseComposition")
+      .params({
+        page: 0,
+        size: 100,
+        ...(filterYear && {
+          year: filterYear,
+        }),
+      })
+      .build(),
+    autoLoad: true,
+  });
+
   const {
     data: accounts,
     loading: loadingAccounts,
@@ -474,6 +557,22 @@ const FinancePage: React.FC<FinancePageProps> = ({
       .build(),
     autoLoad: true,
   });
+
+  const {
+      data: bankList,
+      loading: loadingBank,
+      reload: reloadBank,
+    } = useFetcherData({
+      endpoint: nexus()
+        .module("ACCOUNT")
+        .action("get")
+        .params({
+          size: 100,
+          pagination: "true",
+          is_bank: "1",
+        })
+        .build(),
+    });
 
   const balance = {
     income: incomeBalance?.data?.items?.[0]?.balance,
@@ -517,63 +616,6 @@ const FinancePage: React.FC<FinancePageProps> = ({
     }
   }, [actionFetcher.data]);
 
-  // Available years from transactions
-  const availableYears = useMemo(() => {
-    const years = new Set<number>(
-      transactions?.map((t) => new Date(t.date).getFullYear())
-    );
-    years.add(new Date().getFullYear());
-    return Array.from(years).sort((a, b) => b - a);
-  }, [transactions]);
-
-  // Analytics
-  const totalIncome = transactions
-    .filter((t) => t.type === "Income")
-    .reduce((sum, t) => sum + Number(t.amount), 0);
-  const totalExpense = transactions
-    .filter((t) => t.type === "Expense")
-    .reduce((sum, t) => sum + Number(t.amount), 0);
-  const netIncome = totalIncome - totalExpense;
-
-  const monthlyChartData = useMemo(() => {
-    const data = Array.from({ length: 12 }, (_, i) => ({
-      name: new Date(filterYear, i, 1).toLocaleString("id-ID", {
-        month: "short",
-      }),
-      income: 0,
-      expense: 0,
-      net: 0,
-    }));
-
-    transactions.forEach((t) => {
-      const d = new Date(t.date);
-      if (!isNaN(d.getTime())) {
-        const m = d.getMonth();
-        const amt = Number(t.amount);
-        if (t.type === "Income") data[m].income += amt;
-        else data[m].expense += amt;
-      }
-    });
-
-    return data.map((d) => ({ ...d, net: d.income - d.expense }));
-  }, [transactions, filterYear]);
-
-  const categoryPieData = useMemo(() => {
-    const inc: Record<string, number> = {};
-    const exp: Record<string, number> = {};
-
-    transactions.forEach((t) => {
-      const amt = Number(t.amount);
-      if (t.type === "Income") inc[t.category] = (inc[t.category] || 0) + amt;
-      else exp[t.category] = (exp[t.category] || 0) + amt;
-    });
-
-    const toChart = (rec: Record<string, number>) =>
-      Object.entries(rec).map(([name, value]) => ({ name, value }));
-
-    return { income: toChart(inc), expense: toChart(exp) };
-  }, [transactions]);
-
   // Export logic
   const handleExportExcel = () => {
     const headers = [
@@ -582,15 +624,17 @@ const FinancePage: React.FC<FinancePageProps> = ({
       "Kategori",
       "Deskripsi",
       "Rekening",
+      "Bukti",
       "Jumlah",
     ];
-    const rows = transactions?.map((t) => [
-      t.date,
-      t.type,
-      t.category,
-      `"${t.description.replace(/"/g, '""')}"`,
-      t.bank_id || "-",
-      t.amount,
+    const rows = transactionBalance?.data?.items?.map((t) => [
+      t.created_on,
+      t.account_name,
+      t.notes,
+      `"${t.account_name.replace(/"/g, '""')}"`,
+      t.bank_id || "",
+      t.receipt_url || "",
+      t.amount || 0,
     ]);
 
     const csvContent = [
@@ -660,13 +704,15 @@ const FinancePage: React.FC<FinancePageProps> = ({
     }
   };
 
-  const handleProofUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProofUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProofImage(reader.result as string);
-      };
-      reader.readAsDataURL(e.target.files[0]);
+      const url = await uploadFile(e.target.files[0]);
+      setProofImage(url);
+      // const reader = new FileReader();
+      // reader.onloadend = () => {
+      //   setProofImage(reader.result as string);
+      // };
+      // reader.readAsDataURL(e.target.files[0]);
     }
   };
 
@@ -761,11 +807,19 @@ const FinancePage: React.FC<FinancePageProps> = ({
                 value={filterYear}
                 onChange={(e) => setFilterYear(Number(e.target.value))}
               >
-                {availableYears?.map((y) => (
+                {/* {availableYears?.map((y) => (
                   <option key={y} value={y}>
                     {y}
                   </option>
-                ))}
+                ))} */}
+                {Array.from(
+              { length: new Date().getFullYear() - 2017 + 1 },
+              (_, i) => (new Date().getFullYear() - i).toString()
+            ).map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
               </select>
             </div>
             <button
@@ -816,7 +870,7 @@ const FinancePage: React.FC<FinancePageProps> = ({
               </h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyChartData}>
+                  <BarChart data={financeReport?.data}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis
                       dataKey="name"
@@ -858,7 +912,10 @@ const FinancePage: React.FC<FinancePageProps> = ({
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={categoryPieData.expense}
+                      data={expenseComposition?.data?.items?.map((v: any) => ({
+                        name: v.name,
+                        value: +v.value,
+                      }))}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
@@ -883,7 +940,7 @@ const FinancePage: React.FC<FinancePageProps> = ({
                       }}
                       labelLine={false}
                     >
-                      {categoryPieData?.expense?.map((entry, index) => (
+                      {expenseComposition?.data?.items?.map((entry, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={COLORS[index % COLORS.length]}
@@ -938,6 +995,7 @@ const FinancePage: React.FC<FinancePageProps> = ({
                     <th className="px-6 py-3">Kategori</th>
                     <th className="px-6 py-3">Deskripsi</th>
                     <th className="px-6 py-3">Rekening</th>
+                    <th className="px-6 py-3">Bukti</th>
                     <th className="px-6 py-3 text-right">Nominal</th>
                     {/* <th className="px-6 py-3 text-right">Debit</th>
                     <th className="px-6 py-3 text-right">Kredit</th> */}
@@ -970,20 +1028,34 @@ const FinancePage: React.FC<FinancePageProps> = ({
                         </td>
                         <td className="px-6 py-3">
                           <span
-                            className={`px-2 py-1 rounded text-xs font-bold ${t.type === "Income" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                            className={`px-2 py-1 rounded text-xs font-bold ${t.group_type === "income" || t.group_type === "asset" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
                           >
                             {t.account_name}
                           </span>
                         </td>
                         <td className="px-6 py-3 text-gray-700 max-w-xs truncate font-medium">
-                          {t.description}
+                          {t.notes || "-"}
                         </td>
                         <td className="px-6 py-3 text-gray-500 text-xs">
                           {/* {t.bank_id || "-"} */}
                           {t.account_name || "-"}
                         </td>
+                        <td className="px-6 py-3 text-gray-500 text-xs">
+                          {/* {t.bank_id || "-"} */}
+                          {t.receipt_url ? (
+                            <Button className="text-blue-600" onClick={() => setModal({
+                            open: true,
+                            type: "zoom_receipt_url",
+                            data: {
+                              receipt_url: t.receipt_url
+                            }
+                          })}>Lihat</Button>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
                         <td
-                          className={`px-6 py-3 text-right font-bold whitespace-nowrap ${t.type === "Income" ? "text-green-600" : "text-red-600"}`}
+                          className={`px-6 py-3 text-right font-bold whitespace-nowrap ${t.group_type === "income" || t.group_type === "asset" ? "text-green-600" : "text-red-600"}`}
                         >
                           {/* {t.type === "Income" ? "+" : "-"}{" "} */}
                           {formatCurrency(
@@ -1008,9 +1080,36 @@ const FinancePage: React.FC<FinancePageProps> = ({
                 </tbody>
               </table>
             </div>
+            <TablePagination
+                    currentPage={page || transactionBalance?.data?.current_page || 1}
+                    totalPages={transactionBalance?.data?.total_pages || 0}
+                    onPageChange={(page) => {
+                      setPage(page);
+                    }}
+                    className="mt-auto"
+                  />
           </div>
         </div>
       )}
+
+      {modal?.type === "zoom_receipt_url" && (
+              <div
+                className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-fade-in"
+                onClick={() => setModal({...modal, open: false, type: ""})}
+              >
+                <button
+                  onClick={() => setModal({...modal, open: false, type: ""})}
+                  className="absolute top-4 right-4 text-white hover:text-gray-300 z-50 p-2 bg-black/50 rounded-full"
+                >
+                  <X size={32} />
+                </button>
+                <img
+                  src={modal?.data?.receipt_url}
+                  className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                  onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
+                />
+              </div>
+            )}
 
       {/* HPP MANUAL TAB */}
       {activeTab === "product_cost" && (
@@ -1272,15 +1371,20 @@ const FinancePage: React.FC<FinancePageProps> = ({
                   }
                 >
                   <option value="">-- Pilih Rekening --</option>
-                  {banks?.map((b) => (
+                  {/* {banks?.map((b) => (
                     <option
                       key={b.id}
                       value={`${b.bank_name} - ${b.holder_name}`}
                     >
                       {b.bank_name} ({b.account_number})
                     </option>
+                  ))} */}
+                  {bankList?.data?.items?.map((bank: any) => (
+                    <option key={bank.id} value={bank.id}>
+                      {bank.name} - {bank.ref_account_number}- {bank.ref_account_holder}
+                    </option>
                   ))}
-                  <option value="Tunai">Tunai / Cash</option>
+                  <option value="cash">Tunai / Cash</option>
                 </select>
               </div>
 
