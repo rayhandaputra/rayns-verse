@@ -20,8 +20,10 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { useFetcherData } from "~/hooks";
 import { useModal } from "~/hooks/use-modal";
 import { API } from "~/lib/api";
+import { nexus } from "~/lib/nexus-client";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const url = new URL(request.url);
@@ -110,8 +112,8 @@ export const action: ActionFunction = async ({ request }) => {
   }
 };
 
-export default function AccountPage() {
-  const { table } = useLoaderData();
+export default function SupplierPage() {
+  const {} = useLoaderData();
   const actionData = useActionData();
   const [modal, setModal] = useModal();
 
@@ -141,35 +143,76 @@ export default function AccountPage() {
     if (result.isConfirmed) {
       fetcher.submit(
         { id: data?.id, deleted_on: moment().format("YYYY-MM-DD HH:mm:ss") },
-        {
-          method: "delete",
-          action: "/app/master/supplier",
-        }
+        { method: "delete", action: "/app/master/supplier" }
       );
-
-      // console.log("HASIL FETCHER => ", fetcher);
-      toast.success("Berhasil", {
-        // description: fetcher.data.message,
-        description: "Berhasil menghapus Toko",
-      });
+      toast.success("Berhasil menghapus Toko");
+      reloadSupplier();
     }
   };
 
-  useEffect(() => {
-    if (actionData) {
-      setModal({ ...modal, open: false });
+  // table: {
+  //       ...supplier,
+  //       page: 0,
+  //       size: 10,
+  //     },
+  const { data: supplier, reload: reloadSupplier } = useFetcherData({
+    endpoint: nexus()
+      .module("SUPPLIER")
+      .action("get")
+      .params({
+        pagination: "true",
+        page: 0,
+        size: 10,
+      })
+      .build(),
+  });
+  const table = {
+    ...supplier?.data,
+    page: 0,
+    size: 10,
+  };
 
-      if (actionData.success) {
+  const {
+    data: fetcherDataAction,
+    load: submitAction,
+    loading: isSubmitting,
+  } = useFetcherData({
+    endpoint: "/app/master/supplier",
+    method: "POST",
+    autoLoad: false,
+  });
+
+  // 3. Handle pengiriman form secara manual
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const payload = Object.fromEntries(formData.entries());
+
+    // Kirim data menggunakan submitAction
+    submitAction(payload);
+  };
+
+  // 4. Effect untuk handle response dari submitAction
+  useEffect(() => {
+    if (fetcherDataAction) {
+      if (fetcherDataAction.success) {
+        setModal({ ...modal, open: false });
         toast.success("Berhasil", {
-          description: actionData.message,
+          description: fetcherDataAction.message || "Data berhasil disimpan",
         });
+        reloadSupplier(); // Refresh data tabel
       } else {
         toast.error("Terjadi Kesalahan", {
           description:
-            actionData.error_message || "Terjadi kesalahan. Hubungi Tim Teknis",
+            fetcherDataAction.error_message || "Terjadi kesalahan teknis",
         });
       }
     }
+  }, [fetcherDataAction]);
+
+  // Reload tabel jika DELETE berhasil (via actionData Remix)
+  useEffect(() => {
+    if (actionData?.success) reloadSupplier();
   }, [actionData]);
 
   const columns = [
@@ -261,8 +304,9 @@ export default function AccountPage() {
           onClose={() => setModal({ ...modal, open: false })}
           title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Toko`}
         >
-          <Form method="post" className="space-y-3">
-            <input type="hidden" name="id" value={modal?.data?.id} />
+          {/* 5. Ubah Form menjadi standard form dengan onSubmit */}
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <input type="hidden" name="id" value={modal?.data?.id || ""} />
             <div className="space-y-1">
               <Label>Nama Toko</Label>
               <Input
@@ -300,6 +344,7 @@ export default function AccountPage() {
                 variant="outline"
                 className="text-gray-600"
                 onClick={() => setModal({ ...modal, open: false })}
+                disabled={isSubmitting}
               >
                 Batal
               </Button>
@@ -307,11 +352,12 @@ export default function AccountPage() {
                 size="sm"
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-500 text-white"
+                disabled={isSubmitting}
               >
-                Simpan
+                {isSubmitting ? "Menyimpan..." : "Simpan"}
               </Button>
             </div>
-          </Form>
+          </form>
         </Modal>
       )}
     </div>

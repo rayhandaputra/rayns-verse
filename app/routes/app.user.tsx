@@ -13,7 +13,7 @@ import { AuthAPI } from "~/lib/api/modules/user_auth";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
 import { nexus } from "~/lib/nexus-client";
 import { requireAuth } from "~/lib/session.server";
-import { safeParseArray } from "~/lib/utils";
+import { safeParseArray, uploadFile } from "~/lib/utils";
 
 export const loader: LoaderFunction = async ({ request }) => {
   // Only check authentication
@@ -29,7 +29,23 @@ export const action: ActionFunction = async ({ request }) => {
 
   try {
     let res: any = {};
-    console.log("PAYLOAD => ", payload);
+    console.log(payload)
+    if (payload.intent === "update-settings") {
+      res = await API.CMS_CONTENT.update({
+        session: {},
+        req: {
+          body: {
+            id,
+            image_gallery: JSON.stringify([payload.headerBackground]),
+          } as any,
+        },
+      });
+
+      return {
+        success: true,
+        message: "Settings updated successfully",
+      }
+    }
     if (request.method === "DELETE") {
       res = await API.USER.update({
         session: {},
@@ -155,22 +171,29 @@ export default function UserManagementPage() {
     role: "Staff",
   });
 
+  const { data: fetcherDataAction, load: submitAction } = useFetcherData({
+      endpoint: "",
+      method: "POST",
+      autoLoad: false,
+    });
+
   useEffect(() => {
-    if (actionData) {
-      if (actionData.success) {
+    if (actionData || fetcherDataAction) {
+      if (actionData?.success || fetcherDataAction?.success) {
         setIsModalOpen(false);
+        reloadCmsContent()
         toast.success("Berhasil", {
-          description: actionData.message || "Berhasil",
+          description: actionData?.message || fetcherDataAction?.message || "Berhasil",
         });
         reload(); // Reload users data
       } else {
         toast.error("Terjadi Kesalahan", {
           description:
-            actionData.error_message || "Terjadi kesalahan. Hubungi Tim Teknis",
+            actionData?.error_message || fetcherDataAction?.error_message || "Terjadi kesalahan. Hubungi Tim Teknis",
         });
       }
     }
-  }, [actionData]);
+  }, [actionData, fetcherDataAction]);
 
   useEffect(() => {
     if (deleteData?.success) {
@@ -333,9 +356,17 @@ export default function UserManagementPage() {
             >
               <Upload size={16} /> Upload Background
             </button>
-            {settings.headerBackground && (
+            {(safeParseArray(
+              cmsContentData?.data?.items?.[0]?.image_gallery
+            )?.[0] || settings.headerBackground) && (
               <button
-                onClick={() => {}}
+                onClick={() => {
+                  submitAction({
+                        intent: "update-settings",
+                        id: cmsContentData?.data?.items?.[0]?.id,
+                        headerBackground: "",
+                      })
+                }}
                 className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 text-sm font-medium rounded-lg"
               >
                 <Trash2 size={16} /> Hapus
@@ -346,7 +377,21 @@ export default function UserManagementPage() {
               ref={fileInputRef}
               className="hidden"
               accept="image/*"
-              onChange={() => {}}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const url = await uploadFile(file);
+                  setSettings({
+                        ...settings,
+                        headerBackground: url,
+                      });
+                      submitAction({
+                        intent: "update-settings",
+                        id: cmsContentData?.data?.items?.[0]?.id,
+                        headerBackground: url,
+                      })
+                }
+              }}
             />
           </div>
         </div>

@@ -313,18 +313,24 @@ export default function LandingPage() {
     <div>
       <Navbar />
 
-      {/* {safeParseArray(cmsContentData?.data?.items?.[0]?.image_gallery)?.[0] ? (
-        <img
-          src={
-            safeParseArray(cmsContentData?.data?.items?.[0]?.image_gallery)?.[0]
-          }
-          className="w-full h-96px object-cover"
-        />
-      ) : (
-        <span className=""></span>
-      )} */}
+      {safeParseArray(cmsContentData?.data?.items?.[0]?.image_gallery)?.[0] ? (
+  <div className="relative w-full overflow-hidden bg-gray-200">
+    <img
+      src={
+        safeParseArray(cmsContentData?.data?.items?.[0]?.image_gallery)?.[0]
+      }
+      // h-96 = 384px, md:h-[500px] = custom height on desktop
+      className="w-full h-96 md:h-[500px] lg:h-[600px] object-cover transition-transform duration-500 hover:scale-105"
+      alt="Hero Gallery"
+    />
+    {/* Overlay opsional agar teks di atasnya mudah dibaca */}
+    <div className="absolute inset-0 bg-black/20"></div>
+  </div>
+) : (
+  <Hero products={products} />
+)}
 
-      <Hero products={products} />
+      
       <Stats
         countFinished={stats.countFinished}
         countItems={stats.countItems}
