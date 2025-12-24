@@ -56,6 +56,7 @@ import {
   ADMIN_WA,
   getWhatsAppLink,
   safeParseArray,
+  safeParseObject,
   toMoney,
 } from "~/lib/utils";
 import { API } from "~/lib/api";
@@ -580,7 +581,7 @@ export const Portfolio = ({ portfolioItems }: { portfolioItems: any[] }) => {
                           className="font-bold text-gray-800 text-lg leading-tight mb-1 truncate"
                           title={item.institution_name}
                         >
-                          {item.institution_name}
+                          {item?.kkn_detail ? `Kelompok ${safeParseObject(item?.kkn_detail)?.value} - ` : ""} {item.institution_name} {item?.kkn_detail ? `Periode ${safeParseObject(item?.kkn_detail)?.period}` : ""}
                         </h3>
                         <div className="flex flex-col gap-1 text-xs text-gray-500 mb-3">
                           <div className="flex items-center gap-2">
@@ -603,7 +604,7 @@ export const Portfolio = ({ portfolioItems }: { portfolioItems: any[] }) => {
                           <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 text-xs relative mt-2">
                             <div className="flex justify-between items-center mb-1">
                               <span className="font-bold text-gray-700 truncate max-w-[150px]">
-                                {item.pemesanName || "Customer"}
+                                {item.pic_name || "Customer"}
                               </span>
                               <div className="flex gap-0.5 text-yellow-400 flex-shrink-0">
                                 {Array.from({ length: item.rating || 5 }).map(

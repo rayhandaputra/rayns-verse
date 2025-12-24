@@ -59,6 +59,8 @@ export function toMoney(value: number, locale: string = "id-ID"): string {
 
 export const getPaymentStatusLabel = (status: string) => {
   switch (status) {
+    case "none":
+      return "Tidak Ada";
     case "paid":
       return "Lunas";
     case "down_payment":

@@ -1,5 +1,5 @@
 // app/routes/app.finance.tsx
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import type { LoaderFunction, ActionFunction } from "react-router";
 import { Form, useFetcher } from "react-router";
 import { formatCurrency } from "../constants";
@@ -41,6 +41,7 @@ import { useFetcherData } from "~/hooks/use-fetcher-data";
 import { nexus, NexusHelpers } from "~/lib/nexus-client";
 import { toast } from "sonner";
 import { APIProvider } from "~/lib/api/client";
+import { safeParseArray } from "~/lib/utils";
 
 interface Transaction {
   id: string;
@@ -105,6 +106,26 @@ export const action: ActionFunction = async ({ request }) => {
   const intent = formData.get("intent");
 
   try {
+    if (intent === "update_hpp_product") {
+      const { id, hpp_price } = Object.fromEntries(formData.entries());
+
+      const payload = {
+        id,
+        hpp_price,
+      };
+      
+      // Only update if valid
+      const res = await API.PRODUCT.update({
+        session: { user, token },
+        req: {
+          body: payload,
+        },
+      });
+      return Response.json({
+        success: res.success,
+        message: res.success ? "HPP berhasil diperbarui" : "Gagal memperbarui HPP",
+      });
+    }
     if (intent === "delete_account") {
       const { id } = Object.fromEntries(formData.entries());
 
@@ -366,6 +387,29 @@ const FinancePage: React.FC<FinancePageProps> = ({
     }),
   });
 
+  const {
+    data: productCost,
+    loading: loadingProductCost,
+    reload: reloadProductCost,
+  } = useFetcherData<any>({
+    endpoint: nexus()
+      .module("PRODUCT")
+      .action("get")
+      .params({
+        page: 0,
+        size: 100,
+        pagination: "true",
+      })
+      .build(),
+    autoLoad: true,
+  });
+  
+  const [productCostData, setProductCostData] = useState<any>(productCost?.data?.items)
+
+  useEffect(() => {
+    setProductCostData(productCost?.data?.items)
+  }, [productCost])
+
   // Fetch transactions with filters
   const {
     data: incomeBalance,
@@ -383,6 +427,7 @@ const FinancePage: React.FC<FinancePageProps> = ({
       .build(),
     autoLoad: true,
   });
+  
   const {
     data: expensesBalance,
     loading: loadingBalanceExpenses,
@@ -625,12 +670,22 @@ const FinancePage: React.FC<FinancePageProps> = ({
     }
   };
 
+  const { data: actionData, load: submitAction } = useFetcherData({
+    endpoint: "",
+    method: "POST",
+    autoLoad: false,
+  });
+
   const handleUpdateHpp = (id: string, val: number) => {
-    const updated = products?.map((p) =>
-      p.id === id ? { ...p, productionCost: val } : p
-    );
-    onUpdateProducts(updated);
+    submitAction({ intent: "update_hpp_product", id, hpp_price: val });
   };
+
+  useEffect(() => {
+    if (actionData?.success) {
+      reloadProductCost()
+      toast.success("HPP berhasil diperbarui");
+    }
+  }, [actionData])
 
   const formatFullDateTime = (isoString: string) => {
     try {
@@ -978,11 +1033,15 @@ const FinancePage: React.FC<FinancePageProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {products?.map((p) => (
+              {productCostData?.map((p, i) => (
                 <tr key={p.id} className="hover:bg-gray-50">
                   <td className="px-6 py-3 font-medium">{p.name}</td>
                   <td className="px-6 py-3 text-gray-500">
-                    {formatCurrency(p.price)}
+                    {formatCurrency(
+                      safeParseArray(p.product_price_rules)?.sort(
+                        (a: any, b: any) => a.min_qty - b.min_qty
+                      )[0]?.price || 0
+                    )}
                   </td>
                   <td className="px-6 py-3">
                     <div className="flex items-center gap-2">
@@ -991,10 +1050,23 @@ const FinancePage: React.FC<FinancePageProps> = ({
                         type="number"
                         className="border border-gray-300 rounded px-2 py-1 w-32 font-bold text-gray-700"
                         placeholder="0"
-                        value={p.productionCost || ""}
-                        onChange={(e) =>
+                        value={p.hpp_price || ""}
+                        // defaultValue={p.hpp_price || ""}
+                        onChange={(e) => {
+                        //   handleUpdateHpp(p.id, Number(e.target.value))
+                        let tmp = [...productCostData]
+                          tmp[i].hpp_price = Number(e.target.value)
+                          setProductCostData(tmp)
+                        }}
+                        onBlur={(e) => {
+                          // setProductCostData((prev) =>
+                          //   prev.map((item) =>
+                          //     item.id === p.id ? { ...item, hpp_price: Number(e.target.value) } : item
+                          //   )
+                          // );
+                          
                           handleUpdateHpp(p.id, Number(e.target.value))
-                        }
+                        }}
                       />
                     </div>
                   </td>

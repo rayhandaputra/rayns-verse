@@ -190,6 +190,22 @@ export default function OrderList() {
       .build(),
   });
 
+  const {
+    data: bankList,
+    loading: loadingBank,
+    reload: reloadBank,
+  } = useFetcherData({
+    endpoint: nexus()
+      .module("ACCOUNT")
+      .action("get")
+      .params({
+        size: 100,
+        pagination: "true",
+        is_bank: "1",
+      })
+      .build(),
+  });
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Disalin ke clipboard");
@@ -206,14 +222,15 @@ export default function OrderList() {
     submitAction({
       action: "update_payment_proof",
       id: modal?.data?.id,
+      payment_method: modal?.data?.payment_method,
       ...(modal?.data?.source_upload !== "down_payment"
         ? {
             payment_proof: modal?.data?.file,
-            payment_detail: null,
+            payment_detail: modal?.data?.payment_detail,
           }
         : {
             dp_payment_proof: modal?.data?.file,
-            dp_payment_detail: null,
+            dp_payment_detail: modal?.data?.payment_detail,
           }),
     });
   };
@@ -498,8 +515,9 @@ export default function OrderList() {
             order.payment_status === "down_payment" && !hasDpProof;
 
           const canUploadPaid =
-            (order.payment_status === "down_payment" && hasDpProof === false) ||
-            (order.payment_status === "paid" && !hasPaidProof);
+            (order.payment_status === "down_payment" && !hasDpProof) ||
+            (hasDpProof && !order?.payment_proof) || 
+            (order.payment_status === "paid" && !hasPaidProof) || order?.payment_status === "none" || order?.payment_status === "unpaid";
 
           // =========================
           // MODALS
@@ -727,13 +745,28 @@ export default function OrderList() {
                       ...modal,
                       data: {
                         ...modal?.data,
-                        payment_method: e.target.value,
+                        ...(+e.target.value > 0 ? {
+                          payment_method: "manual_transfer",
+                          payment_detail: {
+                            account_id: e.target.value,
+                            account_name: bankList?.data?.items?.find((bank: any) => bank.id === e.target.value)?.name,
+                            account_number: bankList?.data?.items?.find((bank: any) => bank.id === e.target.value)?.ref_account_number,
+                            account_holder: bankList?.data?.items?.find((bank: any) => bank.id === e.target.value)?.ref_account_holder,
+                          }
+                        } : {
+                          payment_method: e.target.value,
+                        })
                       },
                     });
                   }}
                   required
                 >
                   <option value="">-- Pilih Rekening --</option>
+                  {bankList?.data?.items?.map((bank: any) => (
+                    <option key={bank.id} value={bank.id}>
+                      {bank.name} - {bank.ref_account_number}- {bank.ref_account_holder}
+                    </option>
+                  ))}
                   <option value="manual_transfer">Transfer</option>
                   <option value="cash">Tunai / Cash</option>
                 </select>

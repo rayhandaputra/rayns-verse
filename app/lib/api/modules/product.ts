@@ -28,6 +28,7 @@ export const ProductAPI = {
           "show_in_dashboard",
           "description",
           "subtotal",
+          "hpp_price",
           "discount_value",
           "tax_fee",
           "other_fee",

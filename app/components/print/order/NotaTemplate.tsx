@@ -1,7 +1,7 @@
 import React from "react";
 // import { formatCurrency, formatFullDate } from "../constants"; // Pastikan path benar
 import { CheckCircle } from "lucide-react";
-import { formatCurrency, formatFullDate } from "~/constants";
+import { ADMIN_WA, formatCurrency, formatFullDate } from "~/constants";
 import { getOrderStatusLabel, getPaymentStatusLabel } from "~/lib/utils";
 
 interface PrintNotaTemplateProps {
@@ -21,8 +21,10 @@ export const PrintNotaTemplate = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="p-8 bg-white text-gray-800 font-sans w-full max-w-[210mm] mx-auto"
+      className="p-8 bg-white text-gray-800 font-sans w-full max-w-[210mm] mx-auto min-h-[297mm] flex flex-col"
     >
+      {/* Content Wrapper */}
+      <div className="flex-1">
       {/* Header */}
       <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-6">
         <div>
@@ -196,6 +198,37 @@ export const PrintNotaTemplate = React.forwardRef<
           <p className="text-[10px] uppercase font-bold">Hormat Kami,</p>
           <div className="h-12"></div>
           <p className="text-xs font-bold">Admin Kinau.id</p>
+        </div>
+      </div>
+      </div>
+
+      {/* Footer Informasi Kontak - Fixed Bottom */}
+      <div className="mt-auto pt-6 border-t-2 border-gray-800">
+        <div className="text-center">
+          <p className="text-xs font-bold text-gray-700 mb-3">
+            HUBUNGI KAMI
+          </p>
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 text-[10px] text-gray-600">
+            <div className="flex items-center gap-1">
+              <span className="font-semibold">WhatsApp:</span>
+              <span>{ADMIN_WA}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="font-semibold">Instagram:</span>
+              <span>@kinauid</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="font-semibold">Email:</span>
+              <span>admin@kinau.id</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="font-semibold">Website:</span>
+              <span>www.kinau.id</span>
+            </div>
+          </div>
+          <p className="text-[9px] text-gray-400 mt-2">
+            Jalan Terusan Jl. Murai 1 No.7 , Kel. Korpri Raya, Kec. Sukarame, Kota Bandar Lampung, Lampung.
+          </p>
         </div>
       </div>
 

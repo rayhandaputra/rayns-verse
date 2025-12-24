@@ -1,4 +1,4 @@
-import { safeParseArray } from "~/lib/utils";
+import { safeParseArray, safeParseObject } from "~/lib/utils";
 import { APIProvider } from "../client";
 
 export const OrderAPI = {
@@ -19,7 +19,7 @@ export const OrderAPI = {
       payment_status,
       order_type,
       start_date,
-      is_kkn,
+      is_kkn = "0",
       is_portfolio,
       end_date,
       year,
@@ -35,7 +35,7 @@ export const OrderAPI = {
     if (status) where.status = status;
     if (payment_status) where.payment_status = payment_status;
     if (order_type) where.order_type = order_type;
-    if (is_kkn) where.is_kkn = is_kkn;
+    if (+is_kkn===1 || +is_kkn===0 ) where.is_kkn = is_kkn;
     if (is_portfolio) where.is_portfolio = is_portfolio;
 
     // ✅ FILTER TANGGAL
@@ -47,12 +47,12 @@ export const OrderAPI = {
       where.created_on = { lte: end_date };
     }
 
-    if (year)
+    if (year) {
       where = {
         ...where,
         "year:order_date": parseInt(year),
       };
-
+    }
     where.deleted_on = "null";
 
     // ✅ SEARCH MULTI FIELD (format OR)
@@ -565,12 +565,40 @@ export const OrderAPI = {
             ...(safeParseArray(updatedOrder?.images)?.length > 0
               ? { images: JSON.stringify(updatedOrder?.images) }
               : {}),
+            ...(safeParseObject(updatedOrder?.payment_detail)
+              ? { payment_detail: JSON.stringify(updatedOrder?.payment_detail) }
+              : {}),
+            ...(safeParseObject(updatedOrder?.dp_payment_detail)
+              ? { dp_payment_detail: JSON.stringify(updatedOrder?.dp_payment_detail) }
+              : {}),
           },
           where: { id },
         },
       });
 
+      let accBank = null
+      if (updatedOrder?.payment_detail?.account_id) {
+        accBank = await APIProvider({
+          endpoint: "select",
+          method: "POST",
+          table: "accounts",
+          action: "select",
+          body: {
+            columns: [
+              "id",
+              "code",
+              "name",
+            ],
+            where: {
+              id: updatedOrder?.payment_detail?.account_id
+            },
+            size: Number(1),
+          },
+        });
+      }
+      
       if (fields?.dp_payment_proof) {
+        // safeParseObject(updatedOrder?.payment_detail)
         await APIProvider({
           endpoint: "bulk-insert",
           method: "POST",
@@ -579,8 +607,8 @@ export const OrderAPI = {
           body: {
             rows: [
               {
-                account_code: "4-101",
-                account_name: "Pendapatan Usaha",
+                account_code: accBank?.items?.[0]?.code || "4-101",
+                account_name: accBank?.items?.[0]?.name || "Pendapatan Usaha",
                 credit: updatedOrder?.dp_amount,
                 debit: 0,
                 notes: updatedOrder?.order_number,

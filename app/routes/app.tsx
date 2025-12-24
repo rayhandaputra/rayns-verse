@@ -51,7 +51,7 @@ export const ADMIN_NAVIGATION: MenuItem[] = [
   },
   {
     id: "form",
-    label: "Form Order",
+    label: "Input Pesanan",
     href: "/app/order-form",
     icon: PlusCircle,
   },

@@ -7,6 +7,7 @@ export const AccountAPI = {
       size = 10,
       search,
       group_type = "",
+      is_bank = "",
       id = "",
       sort = "",
     } = req.query || {};
@@ -44,6 +45,7 @@ export const AccountAPI = {
         where: {
           deleted_on: "null",
           ...(group_type ? { group_type } : {}),
+          ...(is_bank ? { is_bank } : {}),
           ...(id ? { id } : {}),
         },
         orderBy: ["created_on", "desc"],
