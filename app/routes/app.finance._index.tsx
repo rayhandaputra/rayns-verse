@@ -361,7 +361,8 @@ const FinancePage: React.FC<FinancePageProps> = ({
       year: filterYear,
       sort_by: sortOption.includes("amount") ? "amount" : "date",
       sort_order: sortOption.includes("desc") ? "desc" : "asc",
-      pagination: "false",
+      pagination: "true",
+      size: "100",
     }),
   });
 
