@@ -256,6 +256,7 @@ export default function DriveInternalPage() {
   const navigate = useNavigate();
   const query = useQueryParams();
   const actionData = useActionData();
+  const [sortBy, setSortBy] = useState("created_on:desc");
 
   const {
     data: realFolders,
@@ -272,6 +273,7 @@ export default function DriveInternalPage() {
         ...(query.folder_id
           ? { folder_id: query.folder_id }
           : { folder_id: "null" }),
+        ...(sortBy && { sort: sortBy }),
       })
       .build(),
     autoLoad: true,
@@ -292,6 +294,7 @@ export default function DriveInternalPage() {
         ...(query.folder_id
           ? { folder_id: query.folder_id }
           : { folder_id: "null" }),
+        ...(sortBy && { sort: sortBy }),
       })
       .build(),
     autoLoad: true,
@@ -422,7 +425,6 @@ export default function DriveInternalPage() {
           level: currentFolderId ? 2 : 1,
           order_number: null,
         };
-        console.log(newFilePayload);
 
         const result = await API.ORDER_UPLOAD.create_single_file({
           session: {},
@@ -765,23 +767,39 @@ export default function DriveInternalPage() {
         </div>
       </div>
 
-      {/* Breadcrumbs */}
-      <DriveBreadcrumb
-        domain="internal"
-        currentFolderId={current_folder?.id || query?.folder_id}
-        rootFolderId={null}
-        breadcrumbs={[
-          ...(current_folder?.id
-            ? [
-                {
-                  id: current_folder?.id,
-                  name: current_folder?.folder_name,
-                },
-              ]
-            : []),
-        ]}
-        onOpenFolder={(folderId) => handleOpenFolder({ id: folderId })}
-      />
+      <div className="flex justify-between items-center px-2 gap-2">
+        {/* Breadcrumbs */}
+        <DriveBreadcrumb
+          domain="internal"
+          currentFolderId={current_folder?.id || query?.folder_id}
+          rootFolderId={null}
+          breadcrumbs={[
+            ...(current_folder?.id
+              ? [
+                  {
+                    id: current_folder?.id,
+                    name: current_folder?.folder_name,
+                  },
+                ]
+              : []),
+          ]}
+          onOpenFolder={(folderId) => handleOpenFolder({ id: folderId })}
+        />
+        <div>
+          <select
+            className="text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
+            value={sortBy}
+            onChange={(e) => {
+              setSortBy(e.target.value);
+            }}
+          >
+            <option value="created_on:desc">Terbaru</option>
+            <option value="created_on:asc">Terlama</option>
+            <option value="folder_name:asc">Folder (A-Z)</option>
+            <option value="folder_name:desc">Folder (Z-A)</option>
+          </select>
+        </div>
+      </div>
 
       {/* Content Area */}
       <div

@@ -33,8 +33,38 @@ export const ProductAPI = {
           "tax_fee",
           "other_fee",
           "total_price",
-          `(SELECT COUNT(id) FROM product_components WHERE product_id = products.id) AS total_components`,
-          `(SELECT SUM(qty) FROM order_items WHERE product_id = products.id) AS total_sold_items`,
+
+          `(SELECT COUNT(id)
+            FROM product_components
+            WHERE product_id = products.id
+              AND deleted_on IS NULL
+          ) AS total_components`,
+
+          `(SELECT SUM(qty)
+            FROM order_items
+            WHERE product_id = products.id
+              AND deleted_on IS NULL
+          ) AS total_sold_items`,
+
+          `(SELECT SUM(oi.qty * oi.variant_final_price)
+            FROM order_items oi
+            WHERE oi.product_id = products.id
+              AND oi.deleted_on IS NULL
+          ) AS revenue`,
+
+          `(SELECT SUM(oi.qty * products.hpp_price)
+            FROM order_items oi
+            WHERE oi.product_id = products.id
+              AND oi.deleted_on IS NULL
+          ) AS hpp_income`,
+
+          `(SELECT
+            SUM(oi.qty * oi.variant_final_price)
+            - SUM(oi.qty * products.hpp_price)
+            FROM order_items oi
+            WHERE oi.product_id = products.id
+              AND oi.deleted_on IS NULL
+          ) AS net_income`,
         ],
         where: {
           deleted_on: "null",
@@ -297,8 +327,6 @@ export const ProductAPI = {
             base_price: Number(rule.base_price),
             created_on: new Date().toISOString(),
           }));
-
-          console.log(variantRows);
 
           await APIProvider({
             endpoint: "bulk-insert",

@@ -1,5 +1,6 @@
 import { safeParseArray, safeParseObject } from "~/lib/utils";
 import { APIProvider } from "../client";
+import moment from "moment";
 
 export const OrderAPI = {
   // ================================
@@ -19,11 +20,12 @@ export const OrderAPI = {
       payment_status,
       order_type,
       start_date,
-      is_kkn = "0",
+      is_kkn = "",
       is_portfolio,
       end_date,
       year,
       sort = "",
+      deleted_on,
     } = req.query || {};
 
     let where: any = {};
@@ -35,7 +37,7 @@ export const OrderAPI = {
     if (status) where.status = status;
     if (payment_status) where.payment_status = payment_status;
     if (order_type) where.order_type = order_type;
-    if (+is_kkn===1 || +is_kkn===0 ) where.is_kkn = is_kkn;
+    if (is_kkn?.toString() !== "") where.is_kkn = is_kkn;
     if (is_portfolio) where.is_portfolio = is_portfolio;
 
     // ✅ FILTER TANGGAL
@@ -53,7 +55,7 @@ export const OrderAPI = {
         "year:order_date": parseInt(year),
       };
     }
-    where.deleted_on = "null";
+    where.deleted_on = deleted_on || "null";
 
     // ✅ SEARCH MULTI FIELD (format OR)
     const searchConfig = search
@@ -105,6 +107,7 @@ export const OrderAPI = {
             "dp_payment_detail",
             "discount_value",
             "tax_value",
+            "order_date",
             "shipping_fee",
             "subtotal",
             "total_amount",
@@ -113,6 +116,7 @@ export const OrderAPI = {
             "is_portfolio",
             "is_sponsor",
             "is_kkn",
+            "is_archive",
             "kkn_source",
             "kkn_type",
             "kkn_detail",
@@ -202,6 +206,7 @@ export const OrderAPI = {
       dp_amount = 0,
       is_sponsor = 0,
       is_kkn = 0,
+      is_archive = 0,
       kkn_source = "",
       kkn_type = "",
       kkn_detail = "",
@@ -211,6 +216,7 @@ export const OrderAPI = {
       notes = null,
       shipping_address = null,
       shipping_contact = null,
+      order_date = moment().format("YYYY-MM-DD HH:mm:ss"),
       created_by = null,
       status = "pending",
       pic_name = null,
@@ -270,6 +276,7 @@ export const OrderAPI = {
       pic_name,
       pic_phone,
       order_type,
+      order_date,
       payment_status,
       payment_method,
       payment_reference,
@@ -286,6 +293,7 @@ export const OrderAPI = {
       dp_amount,
       is_sponsor,
       is_kkn,
+      is_archive,
       kkn_source,
       kkn_type,
       kkn_detail: kkn_detail ? JSON.stringify(kkn_detail) : null,
@@ -296,7 +304,9 @@ export const OrderAPI = {
       shipping_address,
       shipping_contact,
       images: JSON.stringify(images || []),
-      created_by,
+      created_by: safeParseObject(created_by)
+        ? JSON.stringify(created_by)
+        : null,
       created_on: new Date().toISOString(),
       modified_on: new Date().toISOString(),
     };
@@ -320,20 +330,22 @@ export const OrderAPI = {
         newOrder.institution_id = result?.insert_id;
       }
 
-      // CREATE 1 FOLDER DRIVE
-      const createFolder = await APIProvider({
-        endpoint: "insert",
-        method: "POST",
-        table: "order_upload_folders",
-        action: "insert",
-        body: {
-          data: {
-            order_number,
-            folder_name: `${institution_name} - ${order_number}`,
+      if (+is_archive === 0) {
+        // CREATE 1 FOLDER DRIVE
+        const createFolder = await APIProvider({
+          endpoint: "insert",
+          method: "POST",
+          table: "order_upload_folders",
+          action: "insert",
+          body: {
+            data: {
+              order_number,
+              folder_name: `${institution_name} - ${order_number}`,
+            },
           },
-        },
-      });
-      newOrder.drive_folder_id = createFolder?.insert_id;
+        });
+        newOrder.drive_folder_id = createFolder?.insert_id;
+      }
 
       // ✅ Insert ke table orders
       const result = await APIProvider({
@@ -422,7 +434,7 @@ export const OrderAPI = {
         });
       }
 
-      if (total_amount > 0) {
+      if (total_amount > 0 && +is_archive === 1) {
         await APIProvider({
           endpoint: "bulk-insert",
           method: "POST",
@@ -538,8 +550,9 @@ export const OrderAPI = {
   // ✅ UPDATE ORDER
   // ================================
   update: async ({ req }: any) => {
-    const { id, ...fields } = req.body || {};
+    let { id, order, ...fields } = req.body || {};
 
+    const existOrder = order ? safeParseObject(order) : null;
     if (!id) {
       return { success: false, message: "ID order wajib diisi untuk update" };
     }
@@ -548,10 +561,34 @@ export const OrderAPI = {
       ...fields,
       ...(fields?.payment_proof && {
         payment_status: "paid",
+        status: "done",
       }),
       modified_on: new Date().toISOString(),
       ...(fields.deleted === 1 ? { deleted_on: new Date().toISOString() } : {}),
     };
+
+    // if (+fields.deleted === 1 || fields.deleted_on) {
+    //   await APIProvider({
+    //     endpoint: "update",
+    //     method: "POST",
+    //     table: "account_ledger_mutations",
+    //     action: "update",
+    //     body: {
+    //       data: { deleted_on: new Date().toISOString() },
+    //       where: { notes: existOrder?.order_number },
+    //     },
+    //   });
+    //   await APIProvider({
+    //     endpoint: "update",
+    //     method: "POST",
+    //     table: "order_items",
+    //     action: "update",
+    //     body: {
+    //       data: { deleted_on: new Date().toISOString() },
+    //       where: { order_number: existOrder?.order_number },
+    //     },
+    //   });
+    // }
 
     try {
       const result = await APIProvider({
@@ -569,14 +606,18 @@ export const OrderAPI = {
               ? { payment_detail: JSON.stringify(updatedOrder?.payment_detail) }
               : {}),
             ...(safeParseObject(updatedOrder?.dp_payment_detail)
-              ? { dp_payment_detail: JSON.stringify(updatedOrder?.dp_payment_detail) }
+              ? {
+                  dp_payment_detail: JSON.stringify(
+                    updatedOrder?.dp_payment_detail
+                  ),
+                }
               : {}),
           },
           where: { id },
         },
       });
 
-      let accBank = null
+      let accBank = null;
       if (updatedOrder?.payment_detail?.account_id) {
         accBank = await APIProvider({
           endpoint: "select",
@@ -584,19 +625,15 @@ export const OrderAPI = {
           table: "accounts",
           action: "select",
           body: {
-            columns: [
-              "id",
-              "code",
-              "name",
-            ],
+            columns: ["id", "code", "name"],
             where: {
-              id: updatedOrder?.payment_detail?.account_id
+              id: updatedOrder?.payment_detail?.account_id,
             },
             size: Number(1),
           },
         });
       }
-      
+
       if (fields?.dp_payment_proof) {
         // safeParseObject(updatedOrder?.payment_detail)
         await APIProvider({
@@ -609,18 +646,20 @@ export const OrderAPI = {
               {
                 account_code: accBank?.items?.[0]?.code || "4-101",
                 account_name: accBank?.items?.[0]?.name || "Pendapatan Usaha",
-                credit: updatedOrder?.dp_amount,
+                credit: existOrder?.dp_amount,
                 debit: 0,
-                notes: updatedOrder?.order_number,
+                notes: existOrder?.order_number,
                 receipt_url: fields?.dp_payment_proof,
+                category: "DP Pesanan",
               },
               {
                 account_code: "1-101",
                 account_name: "Kas Utama (Cash on Hand)",
                 credit: 0,
-                debit: updatedOrder?.dp_amount,
-                notes: updatedOrder?.order_number,
+                debit: existOrder?.dp_amount,
+                notes: existOrder?.order_number,
                 receipt_url: fields?.dp_payment_proof,
+                category: "DP Pesanan",
               },
             ],
             updateOnDuplicate: true,
@@ -628,6 +667,10 @@ export const OrderAPI = {
         });
       }
       if (fields?.payment_proof) {
+        const amountMutation =
+          existOrder?.payment_status === "down_payment"
+            ? existOrder?.total_amount - existOrder?.dp_amount
+            : existOrder?.total_amount;
         await APIProvider({
           endpoint: "bulk-insert",
           method: "POST",
@@ -638,17 +681,17 @@ export const OrderAPI = {
               {
                 account_code: "4-101",
                 account_name: "Pendapatan Usaha",
-                credit: updatedOrder?.total_amount,
+                credit: amountMutation,
                 debit: 0,
-                notes: updatedOrder?.order_number,
+                notes: existOrder?.order_number,
                 receipt_url: fields?.payment_proof,
               },
               {
                 account_code: "1-101",
                 account_name: "Kas Utama (Cash on Hand)",
                 credit: 0,
-                debit: updatedOrder?.total_amount,
-                notes: updatedOrder?.order_number,
+                debit: amountMutation,
+                notes: existOrder?.order_number,
                 receipt_url: fields?.payment_proof,
               },
             ],

@@ -3,7 +3,12 @@ import { APIProvider } from "../client";
 export const CommodityAPI = {
   // ✅ GET / LIST
   get: async ({ req }: any) => {
-    const { pagination = "true", page = 0, size = 10, search } = req.query || {};
+    const {
+      pagination = "true",
+      page = 0,
+      size = 10,
+      search,
+    } = req.query || {};
 
     try {
       const result = await APIProvider({
@@ -52,6 +57,7 @@ export const CommodityAPI = {
       name,
       unit,
       base_price,
+      component_id: req.body.component_id,
     };
 
     try {

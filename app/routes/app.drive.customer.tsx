@@ -9,16 +9,7 @@ import { nexus } from "~/lib/nexus-client";
 import { useQueryParams } from "~/hooks/use-query-params";
 import { DriveBreadcrumb } from "~/components/breadcrumb/DriveBreadcrumb";
 import { toast } from "sonner";
-import type { Order } from "~/types";
-
-// ============================================
-// TYPES & INTERFACES
-// ============================================
-
-interface LoaderData {
-  orders: Order[];
-  current_folder?: any;
-}
+// import type { Order } from "~/types";
 
 // ============================================
 // LOADER FUNCTION
@@ -30,18 +21,12 @@ export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const { folder_id } = Object.fromEntries(url.searchParams.entries());
 
-  const ordersRes = await API.ORDERS.get({
-    session: { user, token },
-    req: { query: { size: 100 } },
-  });
-
   const detailFolder = await API.ORDER_UPLOAD.get_folder({
     session: { user, token },
     req: { query: { id: folder_id || "null", size: 1 } },
   });
 
   return Response.json({
-    orders: ordersRes.items || [],
     current_folder: detailFolder?.items?.[0] ?? null,
   });
 };
@@ -51,9 +36,10 @@ export const loader: LoaderFunction = async ({ request }) => {
 // ============================================
 
 export default function DriveCustomerPage() {
-  const { orders, current_folder } = useLoaderData<LoaderData>();
+  const { current_folder } = useLoaderData();
   const navigate = useNavigate();
   const query = useQueryParams();
+  const [sortBy, setSortBy] = useState("created_on:desc");
 
   const {
     data: realFolders,
@@ -68,6 +54,7 @@ export default function DriveCustomerPage() {
         size: 100,
         order_number: "is_not_null",
         ...(query.folder_id && { folder_id: query.folder_id }),
+        ...(sortBy && { sort: sortBy }),
       })
       .build(),
     autoLoad: true,
@@ -88,6 +75,7 @@ export default function DriveCustomerPage() {
         ...(query.folder_id
           ? { folder_id: query.folder_id }
           : { folder_id: "null" }),
+        ...(sortBy && { sort: sortBy }),
       })
       .build(),
     autoLoad: true,
@@ -183,22 +171,39 @@ export default function DriveCustomerPage() {
   return (
     <>
       {/* Breadcrumbs */}
-      <DriveBreadcrumb
-        domain="customer"
-        currentFolderId={current_folder?.id || query?.folder_id}
-        rootFolderId={null}
-        breadcrumbs={[
-          ...(current_folder?.id
-            ? [
-                {
-                  id: current_folder?.id,
-                  name: current_folder?.folder_name,
-                },
-              ]
-            : []),
-        ]}
-        onOpenFolder={(folderId) => handleOpenFolder(folderId!)}
-      />
+      <div className="flex justify-between items-center px-4 gap-2">
+        <DriveBreadcrumb
+          domain="customer"
+          currentFolderId={current_folder?.id || query?.folder_id}
+          rootFolderId={null}
+          breadcrumbs={[
+            ...(current_folder?.id
+              ? [
+                  {
+                    id: current_folder?.id,
+                    name: current_folder?.folder_name,
+                  },
+                ]
+              : []),
+          ]}
+          onOpenFolder={(folderId) => handleOpenFolder(folderId!)}
+        />
+
+        <div>
+          <select
+            className="text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
+            value={sortBy}
+            onChange={(e) => {
+              setSortBy(e.target.value);
+            }}
+          >
+            <option value="created_on:desc">Terbaru</option>
+            <option value="created_on:asc">Terlama</option>
+            <option value="folder_name:asc">Folder (A-Z)</option>
+            <option value="folder_name:desc">Folder (Z-A)</option>
+          </select>
+        </div>
+      </div>
 
       {/* Download All Button - Only show when in a folder */}
       {query.folder_id && files.length > 0 && (

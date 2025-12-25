@@ -15,6 +15,7 @@ export const SupplierAPI = {
         search,
         page,
         size,
+        orderBy: ["name", "asc"],
         include: [
           {
             table: "supplier_commodities",

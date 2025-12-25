@@ -7,6 +7,7 @@ export const AccountMutationAPI = {
       size = 10,
       search,
       group_type = "",
+      account_code = "",
       id = "",
       year = "",
     } = req.query || {};
@@ -32,6 +33,7 @@ export const AccountMutationAPI = {
         where: {
           deleted_on: "null",
           ...(group_type ? { group_type } : {}),
+          ...(account_code ? { account_code } : {}),
           ...(year ? { "year:created_on": parseInt(year) } : {}),
           ...(id ? { id } : {}),
         },
@@ -82,9 +84,7 @@ export const AccountMutationAPI = {
   //   });
   // },
   getFinanceReport: async ({ req }: any) => {
-    const {
-      year = new Date().getFullYear(),
-    } = req.query || {};
+    const { year = new Date().getFullYear() } = req.query || {};
 
     const startDate = `${year}-01-01 00:00:00`;
     const endDate = `${year}-12-31 23:59:59`;
@@ -120,8 +120,18 @@ export const AccountMutationAPI = {
 
     // 2. Buat template 12 bulan default dengan nilai 0
     const monthsName = [
-      "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-      "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+      "Januari",
+      "Februari",
+      "Maret",
+      "April",
+      "Mei",
+      "Juni",
+      "Juli",
+      "Agustus",
+      "September",
+      "Oktober",
+      "November",
+      "Desember",
     ];
 
     const defaultTwelveMonths = Array.from({ length: 12 }, (_, i) => ({
@@ -129,22 +139,22 @@ export const AccountMutationAPI = {
       month_name: monthsName[i],
       name: monthsName[i],
       income: 0,
-      expense: 0
+      expense: 0,
     }));
 
     // 3. Gabungkan data dari database ke dalam template 12 bulan
     // Asumsi: hasil APIProvider ada di dalam response.data atau response langsung
-    const dbData = response?.items || []; 
+    const dbData = response?.items || [];
 
-    const finalReport = defaultTwelveMonths.map(item => {
+    const finalReport = defaultTwelveMonths.map((item) => {
       // Cari apakah di hasil database ada bulan yang cocok
-      const found = dbData.find(d => parseInt(d.month) === item.month);
-      
+      const found = dbData.find((d) => parseInt(d.month) === item.month);
+
       if (found) {
         return {
           ...item,
           income: parseFloat(found.total_income) || 0,
-          expense: parseFloat(found.total_expense) || 0
+          expense: parseFloat(found.total_expense) || 0,
         };
       }
       return item;
@@ -153,9 +163,7 @@ export const AccountMutationAPI = {
     return finalReport;
   },
   getExpenseComposition: async ({ req }: any) => {
-    const {
-      year = new Date().getFullYear(),
-    } = req.query || {};
+    const { year = new Date().getFullYear() } = req.query || {};
 
     const startDate = `${year}-01-01 00:00:00`;
     const endDate = `${year}-12-31 23:59:59`;
@@ -187,7 +195,7 @@ export const AccountMutationAPI = {
           // },
           // Mengambil semua akun yang berawalan '5' (Pengeluaran/Beban)
           // account_code: {
-          //   _like: "5%", 
+          //   _like: "5%",
           // },
         },
         groupBy: ["account_code", "account_name"],

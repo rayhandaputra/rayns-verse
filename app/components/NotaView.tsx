@@ -8,6 +8,14 @@ import {
   ADMIN_WA,
 } from "../constants";
 import {
+  getOrderStatusLabel,
+  getPaymentStatusLabel,
+  safeParseArray,
+  uploadFile,
+} from "~/lib/utils";
+import { nexus } from "~/lib/nexus-client";
+import { useFetcherData } from "~/hooks";
+import {
   MapPin,
   Phone,
   UploadCloud,
@@ -16,13 +24,8 @@ import {
   Star,
   X,
   EyeIcon,
+  MessageSquare,
 } from "lucide-react";
-import {
-  getOrderStatusLabel,
-  getPaymentStatusLabel,
-  safeParseArray,
-  uploadFile,
-} from "~/lib/utils";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { useModal } from "~/provider/modal-provider";
@@ -53,6 +56,24 @@ const NotaView: React.FC<NotaViewProps> = ({
     useState<React.ComponentType<any> | null>(null);
   const [client, setClient] = useState<boolean>(false);
 
+  // Fetch header background from CMS
+  const { data: cmsContentData } = useFetcherData({
+    endpoint: nexus()
+      .module("CMS_CONTENT")
+      .action("get")
+      .params({
+        pagination: "true",
+        type: "hero-section",
+        page: 0,
+        size: 1,
+      })
+      .build(),
+  });
+
+  const headerBackground = (safeParseArray(
+    cmsContentData?.data?.items?.[0]?.image_gallery
+  )?.[0] as string) || "";
+
   useEffect(() => {
     setClient(true);
   }, []);
@@ -64,8 +85,8 @@ const NotaView: React.FC<NotaViewProps> = ({
     );
   }, [client]);
 
-  const total = order?.total_amount;
-  const paid = order?.dp_amount;
+  const total = order?.total_amount || 0;
+  const paid = order?.dp_amount || 0;
   const remain = Math.max(0, total - paid);
   const isPaidOff = remain === 0;
 
@@ -103,69 +124,108 @@ const NotaView: React.FC<NotaViewProps> = ({
   };
 
   return (
-    <div className="bg-white p-6 max-w-lg mx-auto font-sans text-gray-800">
-      {/* Header */}
-      <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <img
-              src="/kinau-logo.png"
-              onClick={() => (window.location.href = "/")}
-              alt="Kinau"
-              className="w-24 opacity-80 cursor-pointer"
-            />
+    <>
+      <div className="bg-white p-6 max-w-lg mx-auto font-sans text-gray-800 print-container relative">
+        {/* Header */}
+        <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <img
+                src="/kinau-logo.png"
+                onClick={() => (window.location.href = "/")}
+                alt="Kinau"
+                className="w-24 opacity-80 cursor-pointer"
+              />
+            </div>
+            <p className="text-xs text-gray-500">Your Custom Specialist</p>
           </div>
-          <p className="text-xs text-gray-500">Your Custom Specialist</p>
+          <div className="text-right">
+            <h2 className="text-lg font-bold text-gray-400 uppercase tracking-widest">
+              NOTA
+            </h2>
+            <p className="text-xs font-mono text-gray-500">
+              #{order?.order_number || order?.id.slice(-6)}
+            </p>
+            <p className="text-xs text-gray-500">
+              {formatFullDate(order?.created_on || order?.createdAt || "")}
+            </p>
+          </div>
         </div>
-        <div className="text-right">
-          <h2 className="text-lg font-bold text-gray-400 uppercase tracking-widest">
-            NOTA
-          </h2>
-          <p className="text-xs font-mono text-gray-500">
-            {/* #{order?.id.slice(-6)} */}#{order?.order_number}
-          </p>
-          <p className="text-xs text-gray-500">
-            {formatFullDate(order?.created_on)}
-          </p>
-        </div>
-      </div>
 
-      {/* Customer Details */}
-      <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-100">
-        <h3 className="text-xs font-bold text-gray-400 uppercase mb-2">
-          Pemesan
-        </h3>
-        <p className="font-bold text-lg leading-tight">
-          {order.institution_name}
-        </p>
-        {order.pic_name && (
-          <p className="text-sm text-gray-600 mt-1">
-            PJ: {order.pic_name} ({order.pic_phone})
-          </p>
-        )}
-        <div className="mt-3 flex gap-4 text-xs">
-          <div>
-            <span className="block text-gray-400">Deadline</span>
-            <span className="font-semibold text-red-600">
-              {formatFullDate(order.deadline)}
-            </span>
-          </div>
-          <div>
-            <span className="block text-gray-400">Status Produksi</span>
-            <span className="font-semibold capitalize">
-              {getOrderStatusLabel(order.status)}
-            </span>
-          </div>
-          <div>
-            <span className="block text-gray-400">Status Pembayaran</span>
-            <span
-              className={`font-semibold capitalize ${order.payment_status === "paid" ? "text-green-600" : "text-gray-600"}`}
-            >
-              {getPaymentStatusLabel(order.payment_status)}
-            </span>
+        {/* Customer Details & Status Blocks - With Background Setting */}
+        <div
+          className="mb-6 p-4 rounded-lg border border-gray-100 print:border-gray-200 relative overflow-hidden"
+          style={{
+            backgroundColor: headerBackground ? "transparent" : "#f9fafb",
+          }}
+        >
+          {headerBackground && (
+            <div className="absolute inset-0 z-0">
+              <img
+                src={headerBackground}
+                className="w-full h-full object-cover opacity-15 print:opacity-10"
+                alt="Background"
+              />
+              <div className="absolute inset-0 bg-white/50"></div>
+            </div>
+          )}
+
+          <div className="relative z-10">
+            <h3 className="text-xs font-bold text-gray-400 uppercase mb-2">
+              Pemesan
+            </h3>
+            <p className="font-bold text-lg leading-tight">
+              {order.institution_name || order.instansi}
+            </p>
+            {order.pic_name && (
+              <p className="text-sm text-gray-600 mt-1">
+                PJ: {order.pic_name} ({order.pic_phone})
+              </p>
+            )}
+
+            <div className="mt-4 pt-4 border-t border-gray-200/50 grid grid-cols-2 gap-4">
+              <div>
+                <span className="block text-gray-400 text-xs mb-1">
+                  Status Produksi
+                </span>
+                <span className="font-bold text-sm capitalize bg-gray-200 px-2 py-1 rounded print:bg-transparent print:p-0 print:border print:border-gray-300">
+                  {getOrderStatusLabel(order.status || order.statusPengerjaan || "")}
+                </span>
+              </div>
+              <div>
+                <span className="block text-gray-400 text-xs mb-1">
+                  Status Pembayaran
+                </span>
+                <div className="flex flex-col items-start">
+                  <span
+                    className={`font-bold text-sm px-2 py-1 rounded print:bg-transparent print:p-0 print:text-black print:border print:border-gray-300 ${
+                      order.payment_status === "paid"
+                        ? "bg-green-100 text-green-700"
+                        : order.payment_status === "partial"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-red-100 text-red-600"
+                    }`}
+                  >
+                    {getPaymentStatusLabel(order.payment_status || "")}
+                  </span>
+                  {(order.dp_payment_proof || order.payment_proof) && (
+                    <span className="text-[10px] text-gray-500 mt-0.5 flex items-center gap-1">
+                      <CheckCircle size={10} className="text-green-500" /> Bukti
+                      Uploaded
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 text-xs pt-2 border-t border-gray-200/50">
+              <span className="text-gray-400 mr-2">Deadline:</span>
+              <span className="font-semibold text-red-600 print:text-black">
+                {formatFullDate(order.deadline)}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Items Table */}
       <div className="mb-6">
@@ -222,144 +282,142 @@ const NotaView: React.FC<NotaViewProps> = ({
         </table>
       </div>
 
-      {/* Totals */}
-      <div className="flex justify-end mb-8">
-        <div className="w-1/2 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Total Tagihan</span>
-            <span className="font-bold">{formatCurrency(total)}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Sudah Bayar (DP)</span>
-            <span className="font-medium text-green-600">
-              {formatCurrency(paid)}
-            </span>
-          </div>
-          <div className="flex justify-between text-base border-t border-gray-200 pt-2">
-            <span className="font-bold">Sisa Pembayaran</span>
-            <span
-              className={`font-bold ${isPaidOff ? "text-green-600" : "text-red-600"}`}
-            >
-              {formatCurrency(remain)}
-            </span>
-          </div>
-          {isPaidOff && (
-            <div className="flex items-center justify-end gap-1 text-xs text-green-600 font-bold uppercase mt-1">
-              <CheckCircle size={12} /> Lunas
+        {/* Totals */}
+        <div className="flex justify-end mb-8">
+          <div className="w-3/5 space-y-2">
+            <div className="flex justify-between text-sm pt-2 border-t border-gray-100">
+              <span className="text-gray-500">Total Tagihan</span>
+              <span className="font-bold">{formatCurrency(total || 0)}</span>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Review Section (Shown on Nota) */}
-      {/* Review Section (Editable if isEditable) */}
-      <div
-        className={`mb-6 p-4 border rounded-lg ${isEditable ? "bg-blue-50 border-blue-200" : "bg-yellow-50 border-yellow-100"}`}
-      >
-        <h3 className="text-xs font-bold text-gray-500 uppercase mb-3">
-          {isEditable ? "✨ Berikan Ulasan Kamu" : "Ulasan Pelanggan"}
-        </h3>
-
-        {/* Rating Stars */}
-        <div className="mb-4">
-          <label className="text-xs font-semibold text-gray-600 block mb-2">
-            Rating:
-          </label>
-          <div className="flex gap-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <button
-                key={i}
-                // onClick={() => isEditable && handleRatingChange(i + 1)}
-                onClick={() => isEditable && setRating(i + 1)}
-                disabled={!isEditable}
-                className={`transition ${
-                  i < rating ? "text-yellow-400" : "text-gray-300"
-                } ${isEditable ? "cursor-pointer hover:scale-110" : "cursor-default"}`}
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Sudah Bayar (DP)</span>
+              <span className="font-medium text-green-600 print:text-black">
+                {formatCurrency(paid || 0)}
+              </span>
+            </div>
+            <div className="flex justify-between text-base border-t border-gray-200 pt-2">
+              <span className="font-bold">Sisa Pembayaran</span>
+              <span
+                className={`font-bold ${isPaidOff ? "text-green-600" : "text-red-600"} print:text-black`}
               >
-                <Star size={24} fill={i < rating ? "currentColor" : "none"} />
-              </button>
-            ))}
+                {formatCurrency(remain)}
+              </span>
+            </div>
+            {isPaidOff && (
+              <div className="flex items-center justify-end gap-1 text-xs text-green-600 font-bold uppercase mt-1 print:text-black">
+                <CheckCircle size={12} /> Lunas
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Review Text */}
+        {/* Review Section (Editable if isEditable) */}
         {isEditable ? (
-          <textarea
-            value={review}
-            onChange={(e) => setReview(e.target.value)}
-            // onBlur={() => onReviewChange?.(rating, review)}
-            placeholder="Tulis ulasan Anda tentang produk kami..."
-            className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
-            rows={4}
-            maxLength={500}
-          />
+          <div className="mb-6 p-6 bg-white border border-gray-200 rounded-xl shadow-sm no-print">
+            <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2 mb-3">
+              <MessageSquare size={16} /> Berikan Ulasan
+            </h3>
+            <div className="mb-4">
+              <label className="text-xs font-semibold text-gray-600 block mb-2">
+                Rating:
+              </label>
+              <div className="flex gap-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setRating(i + 1)}
+                    className={`transition ${
+                      i < rating ? "text-yellow-400" : "text-gray-300"
+                    } cursor-pointer hover:scale-110`}
+                  >
+                    <Star size={24} fill={i < rating ? "currentColor" : "none"} />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <textarea
+              value={review}
+              onChange={(e) => setReview(e.target.value)}
+              placeholder="Bagaimana hasil produksi kami? Tulis ulasan Anda disini..."
+              className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none mb-3"
+              rows={3}
+              maxLength={500}
+            />
+            <div className="flex justify-between items-center gap-2">
+              <div className="text-xs text-gray-500">
+                {review.length}/500 karakter
+              </div>
+              <Button
+                onClick={() => onReviewChange?.(rating, review)}
+                size="sm"
+                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                Kirim Ulasan
+              </Button>
+            </div>
+          </div>
         ) : review ? (
-          <p className="text-sm italic text-gray-700">"{review}"</p>
-        ) : (
-          <p className="text-xs text-gray-400 italic">Belum ada ulasan</p>
-        )}
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-100 rounded-lg print:bg-white print:border-gray-200">
+            <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">
+              Ulasan Pelanggan
+            </h3>
+            <div className="flex text-yellow-400 mb-1 print:text-black">
+              {Array.from({ length: rating || 5 }).map((_, i) => (
+                <Star key={i} size={14} fill="currentColor" />
+              ))}
+            </div>
+            <p className="text-sm italic text-gray-700">"{review}"</p>
+          </div>
+        ) : null}
 
-        <div className="flex justify-between items-center gap-2">
-          {isEditable && (
-            <div className="text-xs text-gray-500 mt-2">
-              {review.length}/500 karakter
+        {/* Action Buttons (Hidden on Print) */}
+        <div className="grid grid-cols-2 gap-3 mb-4 no-print">
+          <a
+            href={getGoogleMapsLink()}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center justify-center gap-2 py-2 px-3 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50"
+          >
+            <MapPin size={14} className="text-red-500" /> Lokasi Pengambilan
+          </a>
+          <a
+            href={getWhatsAppLink(
+              ADMIN_WA,
+              `Halo Admin, saya ingin konfirmasi pesanan #${order?.id.slice(-4)} (${order.institution_name || order.instansi})`
+            )}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center justify-center gap-2 py-2 px-3 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50"
+          >
+            <Phone size={14} className="text-green-500" /> Hubungi Admin
+          </a>
+        </div>
+
+        {/* Print & View Proof Row */}
+        <div className="grid grid-cols-2 gap-3 mb-4 no-print">
+          {(order?.dp_payment_proof || order?.payment_proof) ? (
+            <button
+              type="button"
+              onClick={() => setProofModalOpen(true)}
+              className="flex items-center justify-center gap-2 py-2 px-3 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold hover:bg-blue-100"
+            >
+              <EyeIcon size={14} /> Lihat Bukti Pembayaran
+            </button>
+          ) : (
+            <div className="flex items-center justify-center py-2 px-3 bg-gray-50 text-gray-400 border border-gray-200 rounded-lg text-xs font-medium cursor-not-allowed">
+              <EyeIcon size={14} className="mr-2" /> Belum ada bukti
             </div>
           )}
-          <Button
-            onClick={() => onReviewChange?.(rating, review)}
-            disabled={!isEditable}
-            size="sm"
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Kirim
-          </Button>
-        </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className="grid grid-cols-2 gap-3 mb-4 no-print">
-        <a
-          href={getGoogleMapsLink()}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center justify-center gap-2 py-2 px-3 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50"
-        >
-          <MapPin size={14} className="text-red-500" /> Lokasi Pengambilan
-        </a>
-        <a
-          href={getWhatsAppLink(
-            ADMIN_WA,
-            `Halo Admin, saya ingin konfirmasi pesanan #${order?.id.slice(-4)} (${order.instansi})`
-          )}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center justify-center gap-2 py-2 px-3 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50"
-        >
-          <Phone size={14} className="text-green-500" /> Hubungi Admin
-        </a>
-
-        <>
           {PrintButton ? (
             <PrintButton>
               {({ handlePrint }: any) => (
                 <button
-                  // onClick={() => window.print()}
                   onClick={async () => {
                     try {
-                      // 2️⃣ Siapkan QR Code
-                      // const qrContent = `https://kinau.id/track/${row.order_number}`;
-                      // const qrUrl = await import("qrcode").then((qr) =>
-                      //   qr.default.toDataURL(qrContent, {
-                      //     width: 200,
-                      //     margin: 1,
-                      //   })
-                      // );
-
-                      // 3️⃣ Kirim data ke print
                       handlePrint({
                         order: order,
                         items: safeParseArray(order.order_items),
-                        // qrCodeUrl: qrUrl,
                       });
                     } catch (err) {
                       console.error("Gagal print nota:", err);
@@ -375,24 +433,11 @@ const NotaView: React.FC<NotaViewProps> = ({
           ) : (
             <button
               disabled
-              className="bg-gray-300 text-gray-600 px-4 py-2 rounded cursor-not-allowed"
+              className="flex items-center justify-center gap-2 py-2 px-3 bg-gray-300 text-gray-600 rounded-lg text-xs font-semibold cursor-not-allowed"
             >
-              Loading Print...
+              <Printer size={14} /> Loading Print...
             </button>
           )}
-        </>
-        <>
-          <button
-            type="button"
-            // onClick={handleClick}
-            onClick={() => setProofModalOpen(true)}
-            className="flex items-center justify-center gap-2 py-2 px-3
-                   bg-blue-50 text-blue-700 border border-blue-200
-                   rounded-lg text-xs font-semibold hover:bg-blue-100"
-          >
-            <EyeIcon size={14} />
-            Lihat Bukti Bayar
-          </button>
 
           {/* Hidden file input */}
           <input
@@ -402,28 +447,41 @@ const NotaView: React.FC<NotaViewProps> = ({
             className="hidden"
             onChange={handleFileChange}
           />
-        </>
-        {/* <button
-          onClick={() =>
-            alert(
-              "Fitur upload bukti bayar akan tersedia di update berikutnya."
-            )
-          }
-          className="flex items-center justify-center gap-2 py-2 px-3 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold hover:bg-blue-100"
-        >
-          <UploadCloud size={14} /> Bukti Bayar
-        </button> */}
-      </div>
+        </div>
 
-      {/* Footer */}
-      <div className="text-center text-[10px] text-gray-400 mt-6 pt-4 border-t border-gray-100">
-        <p>Kinau.id Production • Lampung</p>
-        <p>Terima kasih atas kepercayaan Anda.</p>
+        {/* Footer */}
+        <div className="text-center text-[10px] text-gray-400 mt-6 pt-4 border-t border-gray-100">
+          <p>Kinau.id Production</p>
+          <p>Terima kasih atas kepercayaan Anda.</p>
+        </div>
+
+        <style>{`
+        @media print {
+            @page {
+                size: A5 portrait;
+                margin: 0;
+            }
+            body {
+                background: white;
+                margin: 0;
+            }
+            .print-container {
+                width: 148mm;
+                min-height: 210mm;
+                padding: 10mm;
+                margin: 0;
+                box-shadow: none !important;
+                border: none !important;
+            }
+            .no-print { display: none !important; }
+            .bg-gray-50 { background-color: #f9fafb !important; -webkit-print-color-adjust: exact; }
+        }
+      `}</style>
       </div>
 
       {proofModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 animate-fade-in"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 animate-fade-in no-print"
           onClick={() => setProofModalOpen(false)}
         >
           <div
@@ -443,36 +501,34 @@ const NotaView: React.FC<NotaViewProps> = ({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {order?.dp_payment_proof && (
-                <div className="border rounded-lg p-3 bg-gray-50">
+                <div className="border rounded-lg p-2 bg-gray-50">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-700">
+                    <div className="text-xs font-bold px-2 py-0.5 rounded bg-yellow-100 text-yellow-700">
                       Bukti DP
-                    </span>
+                    </div>
                   </div>
-
-                  <div className="rounded-lg overflow-hidden border border-gray-200">
+                  <div className="rounded overflow-hidden border border-gray-200">
                     <img
                       src={order?.dp_payment_proof}
-                      alt="Bukti Pelunasan"
-                      className="w-full max-h-[320px] object-contain bg-white"
+                      alt="Bukti DP"
+                      className="w-full h-auto object-contain max-h-[300px]"
                     />
                   </div>
                 </div>
               )}
 
               {order?.payment_proof && (
-                <div className="border rounded-lg p-3 bg-gray-50">
+                <div className="border rounded-lg p-2 bg-gray-50">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-700">
+                    <div className="text-xs font-bold px-2 py-0.5 rounded bg-green-100 text-green-700">
                       Bukti Pelunasan
-                    </span>
+                    </div>
                   </div>
-
-                  <div className="rounded-lg overflow-hidden border border-gray-200">
+                  <div className="rounded overflow-hidden border border-gray-200">
                     <img
                       src={order?.payment_proof}
                       alt="Bukti Pelunasan"
-                      className="w-full max-h-[320px] object-contain bg-white"
+                      className="w-full h-auto object-contain max-h-[300px]"
                     />
                   </div>
                 </div>
@@ -481,7 +537,7 @@ const NotaView: React.FC<NotaViewProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

@@ -127,6 +127,7 @@ export const action: ActionFunction = async ({ request }) => {
         status: "pending",
         images: payload.portfolioImages,
         items: payload.items,
+        created_by: user,
       };
 
       const response = await API.ORDERS.create({
@@ -157,65 +158,6 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   return Response.json({ success: false, message: "Invalid intent" });
-};
-
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
-
-const transformToAPIFormat = (orderData: OrderFormData) => {
-  // Transform items to API format
-  const apiItems = orderData.items.map((item) => ({
-    product_id: item.productId,
-    product_name: item.productName,
-    product_type: "single",
-    unit_price: item.price,
-    qty: item.quantity,
-    subtotal: item.total,
-  }));
-
-  // Calculate discount
-  let discountValue = 0;
-  if (orderData.discount) {
-    discountValue = orderData.discount.value;
-  }
-
-  // Build state object for API
-  const state = {
-    institution_name: orderData.instansi,
-    institution_abbr: orderData.instansi,
-    institution_domain: orderData.domain,
-    order_type: orderData.isKKN
-      ? "kkn"
-      : orderData.items.length > 1
-        ? "custom"
-        : "single",
-    payment_status:
-      orderData.statusPembayaran === "Lunas"
-        ? "paid"
-        : orderData.statusPembayaran === "DP"
-          ? "down_payment"
-          : "none",
-    payment_method: "manual_transfer",
-    discount_value: discountValue,
-    discount_type: orderData.discount?.type === "percent" ? "percent" : "fixed",
-    tax_percent: 0,
-    shipping_fee: 0,
-    other_fee: 0,
-    deadline: orderData.deadline || new Date().toISOString().split("T")[0],
-    notes: JSON.stringify({
-      pemesanName: orderData.pemesanName,
-      pemesanPhone: orderData.pemesanPhone,
-      isSponsor: orderData.isSponsor,
-      isKKN: orderData.isKKN,
-      kknDetails: orderData.kknDetails,
-      is_portfolio: orderData.is_portfolio,
-      portfolioImages: orderData.portfolioImages,
-    }),
-    is_portfolio: orderData.is_portfolio ? 1 : 0,
-  };
-
-  return { state, items: apiItems };
 };
 
 // ============================================

@@ -14,6 +14,7 @@ export const OrderUploadAPI = {
       folder_id,
       level,
       id,
+      sort,
     } = req.query || {};
 
     const where: any = { deleted_on: "null" };
@@ -28,6 +29,14 @@ export const OrderUploadAPI = {
       where.level = level === null ? "null" : level;
     }
     if (id) where.id = id;
+
+    let sort_by = "created_on";
+    let sort_type = "desc";
+    if (sort) {
+      const [column, type] = sort.split(":");
+      sort_by = column;
+      sort_type = type;
+    }
 
     const searchConfig = search
       ? {
@@ -62,7 +71,8 @@ export const OrderUploadAPI = {
           pagination: pagination === "true",
           page: Number(page),
           size: Number(size),
-          order_by: { id: "asc" },
+          // order_by: { id: "asc" },
+          orderBy: [sort_by, sort_type],
         },
       });
 
@@ -95,6 +105,7 @@ export const OrderUploadAPI = {
       search,
       order_number,
       folder_id,
+      sort,
     } = req.query || {};
 
     const where: any = { deleted_on: "null" };
@@ -104,6 +115,16 @@ export const OrderUploadAPI = {
     }
     if (folder_id !== undefined) {
       where.folder_id = folder_id === null ? "null" : folder_id;
+    }
+
+    let sort_by = "created_on";
+    let sort_type = "desc";
+    if (sort) {
+      let [column, type] = sort.split(":");
+
+      if (column === "folder_name") column = "file_name";
+      sort_by = column;
+      sort_type = type;
     }
 
     const searchConfig = search
@@ -139,7 +160,8 @@ export const OrderUploadAPI = {
           pagination: pagination === "true",
           page: Number(page),
           size: Number(size),
-          order_by: { id: "asc" },
+          // order_by: { id: "asc" },
+          orderBy: [sort_by, sort_type],
         },
       });
 

@@ -313,24 +313,14 @@ export default function LandingPage() {
     <div>
       <Navbar />
 
-      {safeParseArray(cmsContentData?.data?.items?.[0]?.image_gallery)?.[0] ? (
-  <div className="relative w-full overflow-hidden bg-gray-200">
-    <img
-      src={
-        safeParseArray(cmsContentData?.data?.items?.[0]?.image_gallery)?.[0]
-      }
-      // h-96 = 384px, md:h-[500px] = custom height on desktop
-      className="w-full h-96 md:h-[500px] lg:h-[600px] object-cover transition-transform duration-500 hover:scale-105"
-      alt="Hero Gallery"
-    />
-    {/* Overlay opsional agar teks di atasnya mudah dibaca */}
-    <div className="absolute inset-0 bg-black/20"></div>
-  </div>
-) : (
-  <Hero products={products} />
-)}
+      <Hero
+        bg_image={
+          safeParseArray(
+            cmsContentData?.data?.items?.[0]?.image_gallery
+          )?.[0] as string
+        }
+      />
 
-      
       <Stats
         countFinished={stats.countFinished}
         countItems={stats.countItems}
@@ -344,12 +334,29 @@ export default function LandingPage() {
   );
 }
 
-export const Hero = ({ products }: { products: any[] }) => {
+export const Hero = ({ bg_image }: { bg_image: string }) => {
   return (
     <>
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto text-center">
+      <section
+        className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
+        style={{
+          backgroundColor: bg_image ? "transparent" : "#f9fafb",
+        }}
+      >
+        {/* Dynamic Background */}
+        {bg_image && (
+          <div className="absolute inset-0 z-0">
+            <img
+              src={bg_image}
+              className="w-full h-full object-cover opacity-20"
+              alt="Background"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/60 to-white"></div>
+          </div>
+        )}
+
+        <div className="max-w-7xl mx-auto text-center relative z-10">
           <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 tracking-tight mb-6">
             Cetak ID Card & Lanyard <br />
             <span className="text-blue-600">Berkualitas Tinggi</span>
@@ -358,7 +365,9 @@ export const Hero = ({ products }: { products: any[] }) => {
             Solusi percetakan profesional untuk kebutuhan event, kantor, dan
             komunitas Anda. Cepat, presisi, dan harga bersahabat.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+
+          {/* New Button Layout */}
+          <div className="flex flex-wrap gap-4 justify-center">
             <a
               href={getWhatsAppLink(
                 ADMIN_WA,
@@ -366,15 +375,27 @@ export const Hero = ({ products }: { products: any[] }) => {
               )}
               target="_blank"
               rel="noreferrer"
-              className="px-8 py-3.5 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
+              className="px-6 py-3 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
             >
               Pesan Sekarang <ArrowRight size={18} />
             </a>
             <a
-              href="#portfolio"
-              className="px-8 py-3.5 rounded-full bg-white text-gray-700 font-bold border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center gap-2"
+              href="#produk"
+              className="px-6 py-3 rounded-full bg-white text-gray-700 font-bold border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center gap-2"
             >
-              Lihat Hasil Produksi
+              Daftar Produk
+            </a>
+            <a
+              href="#portfolio"
+              className="px-6 py-3 rounded-full bg-white text-gray-700 font-bold border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center gap-2"
+            >
+              Produksi Terbaru
+            </a>
+            <a
+              href="#kontak"
+              className="px-6 py-3 rounded-full bg-white text-gray-700 font-bold border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center gap-2"
+            >
+              Kontak
             </a>
           </div>
         </div>
@@ -587,7 +608,13 @@ export const Portfolio = ({ portfolioItems }: { portfolioItems: any[] }) => {
                           className="font-bold text-gray-800 text-lg leading-tight mb-1 truncate"
                           title={item.institution_name}
                         >
-                          {item?.kkn_detail ? `Kelompok ${safeParseObject(item?.kkn_detail)?.value} - ` : ""} {item.institution_name} {item?.kkn_detail ? `Periode ${safeParseObject(item?.kkn_detail)?.period}` : ""}
+                          {item?.kkn_detail
+                            ? `Kelompok ${safeParseObject(item?.kkn_detail)?.value} - `
+                            : ""}{" "}
+                          {item.institution_name}{" "}
+                          {item?.kkn_detail
+                            ? `Periode ${safeParseObject(item?.kkn_detail)?.period}`
+                            : ""}
                         </h3>
                         <div className="flex flex-col gap-1 text-xs text-gray-500 mb-3">
                           <div className="flex items-center gap-2">
@@ -814,7 +841,7 @@ export const Navbar = () => {
                 onClick={() => {}}
               />
             </div>
-            <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
+            {/* <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
               <a href="#portfolio" className="hover:text-gray-900 transition">
                 Portfolio
               </a>
@@ -827,7 +854,7 @@ export const Navbar = () => {
               <a href="#kontak" className="hover:text-gray-900 transition">
                 Kontak
               </a>
-            </div>
+            </div> */}
             <button
               onClick={() => {
                 navigate("/login");

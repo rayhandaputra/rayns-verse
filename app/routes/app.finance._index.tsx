@@ -116,7 +116,7 @@ export const action: ActionFunction = async ({ request }) => {
         id,
         hpp_price,
       };
-      
+
       // Only update if valid
       const res = await API.PRODUCT.update({
         session: { user, token },
@@ -126,7 +126,9 @@ export const action: ActionFunction = async ({ request }) => {
       });
       return Response.json({
         success: res.success,
-        message: res.success ? "HPP berhasil diperbarui" : "Gagal memperbarui HPP",
+        message: res.success
+          ? "HPP berhasil diperbarui"
+          : "Gagal memperbarui HPP",
       });
     }
     if (intent === "delete_account") {
@@ -215,23 +217,28 @@ export const action: ActionFunction = async ({ request }) => {
           rows: [
             {
               account_code: type === "Income" ? "4-101" : "5-101",
-              account_name: type === "Income" ? "Pendapatan Usaha" : "Beban Operasional",
+              account_name:
+                type === "Income" ? "Pendapatan Usaha" : "Beban Operasional",
               credit: type === "Income" ? amount : 0,
               debit: type === "Expense" ? amount : 0,
               category,
               notes: description,
               created_on: date || new Date().toISOString(),
-              receipt_url: proof_image
+              receipt_url: proof_image,
             },
             {
-              account_code: !accountBank ? "1-101" : accountBank?.items?.[0]?.code,
-              account_name: !accountBank ? "Kas Utama (Cash on Hand)" : accountBank?.items?.[0]?.name,
+              account_code: !accountBank
+                ? "1-101"
+                : accountBank?.items?.[0]?.code,
+              account_name: !accountBank
+                ? "Kas Utama (Cash on Hand)"
+                : accountBank?.items?.[0]?.name,
               credit: type === "Expense" ? amount : 0,
               debit: type === "Income" ? amount : 0,
               category,
               notes: description,
               created_on: date || new Date().toISOString(),
-              receipt_url: proof_image
+              receipt_url: proof_image,
             },
           ],
           updateOnDuplicate: true,
@@ -397,9 +404,9 @@ const FinancePage: React.FC<FinancePageProps> = ({
   const [bankForm, setBankForm] = useState<Partial<BankAccount>>({});
   const [editingBankId, setEditingBankId] = useState<string | null>(null);
 
-  const [modal, setModal] = useModal()
-    const [sortBy, setSortBy] = useState("");
-    const [page, setPage] = useState(1);
+  const [modal, setModal] = useModal();
+  const [sortBy, setSortBy] = useState("");
+  const [page, setPage] = useState(1);
 
   // Action form for creating/updating
   const actionFetcher = useFetcher();
@@ -435,12 +442,14 @@ const FinancePage: React.FC<FinancePageProps> = ({
       .build(),
     autoLoad: true,
   });
-  
-  const [productCostData, setProductCostData] = useState<any>(productCost?.data?.items)
+
+  const [productCostData, setProductCostData] = useState<any>(
+    productCost?.data?.items
+  );
 
   useEffect(() => {
-    setProductCostData(productCost?.data?.items)
-  }, [productCost])
+    setProductCostData(productCost?.data?.items);
+  }, [productCost]);
 
   // Fetch transactions with filters
   const {
@@ -462,7 +471,7 @@ const FinancePage: React.FC<FinancePageProps> = ({
       .build(),
     autoLoad: true,
   });
-  
+
   const {
     data: expensesBalance,
     loading: loadingBalanceExpenses,
@@ -494,6 +503,7 @@ const FinancePage: React.FC<FinancePageProps> = ({
         page: page ? page - 1 : 0,
         size: 10,
         pagination: "true",
+        account_code: "4-101,5-101",
         ...(filterYear && {
           year: filterYear,
         }),
@@ -559,20 +569,20 @@ const FinancePage: React.FC<FinancePageProps> = ({
   });
 
   const {
-      data: bankList,
-      loading: loadingBank,
-      reload: reloadBank,
-    } = useFetcherData({
-      endpoint: nexus()
-        .module("ACCOUNT")
-        .action("get")
-        .params({
-          size: 100,
-          pagination: "true",
-          is_bank: "1",
-        })
-        .build(),
-    });
+    data: bankList,
+    loading: loadingBank,
+    reload: reloadBank,
+  } = useFetcherData({
+    endpoint: nexus()
+      .module("ACCOUNT")
+      .action("get")
+      .params({
+        size: 100,
+        pagination: "true",
+        is_bank: "1",
+      })
+      .build(),
+  });
 
   const balance = {
     income: incomeBalance?.data?.items?.[0]?.balance,
@@ -728,10 +738,10 @@ const FinancePage: React.FC<FinancePageProps> = ({
 
   useEffect(() => {
     if (actionData?.success) {
-      reloadProductCost()
+      reloadProductCost();
       toast.success("HPP berhasil diperbarui");
     }
-  }, [actionData])
+  }, [actionData]);
 
   const formatFullDateTime = (isoString: string) => {
     try {
@@ -756,6 +766,11 @@ const FinancePage: React.FC<FinancePageProps> = ({
     "#8884d8",
     "#82ca9d",
   ];
+
+  const safeDivide = (a?: number, b?: number) => {
+    if (!a || !b || b === 0) return 0;
+    return a / b;
+  };
 
   return (
     <div className="space-y-6">
@@ -813,13 +828,13 @@ const FinancePage: React.FC<FinancePageProps> = ({
                   </option>
                 ))} */}
                 {Array.from(
-              { length: new Date().getFullYear() - 2017 + 1 },
-              (_, i) => (new Date().getFullYear() - i).toString()
-            ).map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
+                  { length: new Date().getFullYear() - 2017 + 1 },
+                  (_, i) => (new Date().getFullYear() - i).toString()
+                ).map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
               </select>
             </div>
             <button
@@ -1043,13 +1058,20 @@ const FinancePage: React.FC<FinancePageProps> = ({
                         <td className="px-6 py-3 text-gray-500 text-xs">
                           {/* {t.bank_id || "-"} */}
                           {t.receipt_url ? (
-                            <Button className="text-blue-600" onClick={() => setModal({
-                            open: true,
-                            type: "zoom_receipt_url",
-                            data: {
-                              receipt_url: t.receipt_url
-                            }
-                          })}>Lihat</Button>
+                            <Button
+                              className="text-blue-600"
+                              onClick={() =>
+                                setModal({
+                                  open: true,
+                                  type: "zoom_receipt_url",
+                                  data: {
+                                    receipt_url: t.receipt_url,
+                                  },
+                                })
+                              }
+                            >
+                              Lihat
+                            </Button>
                           ) : (
                             "-"
                           )}
@@ -1081,35 +1103,35 @@ const FinancePage: React.FC<FinancePageProps> = ({
               </table>
             </div>
             <TablePagination
-                    currentPage={page || transactionBalance?.data?.current_page || 1}
-                    totalPages={transactionBalance?.data?.total_pages || 0}
-                    onPageChange={(page) => {
-                      setPage(page);
-                    }}
-                    className="mt-auto"
-                  />
+              currentPage={page || transactionBalance?.data?.current_page || 1}
+              totalPages={transactionBalance?.data?.total_pages || 0}
+              onPageChange={(page) => {
+                setPage(page);
+              }}
+              className="mt-auto"
+            />
           </div>
         </div>
       )}
 
       {modal?.type === "zoom_receipt_url" && (
-              <div
-                className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-fade-in"
-                onClick={() => setModal({...modal, open: false, type: ""})}
-              >
-                <button
-                  onClick={() => setModal({...modal, open: false, type: ""})}
-                  className="absolute top-4 right-4 text-white hover:text-gray-300 z-50 p-2 bg-black/50 rounded-full"
-                >
-                  <X size={32} />
-                </button>
-                <img
-                  src={modal?.data?.receipt_url}
-                  className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
-                  onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
-                />
-              </div>
-            )}
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setModal({ ...modal, open: false, type: "" })}
+        >
+          <button
+            onClick={() => setModal({ ...modal, open: false, type: "" })}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 z-50 p-2 bg-black/50 rounded-full"
+          >
+            <X size={32} />
+          </button>
+          <img
+            src={modal?.data?.receipt_url}
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
+          />
+        </div>
+      )}
 
       {/* HPP MANUAL TAB */}
       {activeTab === "product_cost" && (
@@ -1127,50 +1149,75 @@ const FinancePage: React.FC<FinancePageProps> = ({
             <thead className="bg-gray-50 text-xs uppercase text-gray-700">
               <tr>
                 <th className="px-6 py-3">Nama Produk</th>
-                <th className="px-6 py-3">Harga Jual Dasar</th>
-                <th className="px-6 py-3">Modal HPP (Per Pcs)</th>
+                <th className="px-6 py-3 text-right">Total Pcs Terjual</th>
+                <th className="px-6 py-3 text-right">Total HPP</th>
+                <th className="px-6 py-3 text-right">
+                  Pendapatan Bersih (Total)
+                </th>
+                <th className="px-6 py-3 text-right">
+                  Pendapatan Bersih (Per Pcs)
+                </th>
+                <th className="px-6 py-3">HPP (Per Pcs)</th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-gray-100">
-              {productCostData?.map((p, i) => (
-                <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-3 font-medium">{p.name}</td>
-                  <td className="px-6 py-3 text-gray-500">
-                    {formatCurrency(
-                      safeParseArray(p.product_price_rules)?.sort(
-                        (a: any, b: any) => a.min_qty - b.min_qty
-                      )[0]?.price || 0
-                    )}
-                  </td>
-                  <td className="px-6 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-400">Rp</span>
-                      <input
-                        type="number"
-                        className="border border-gray-300 rounded px-2 py-1 w-32 font-bold text-gray-700"
-                        placeholder="0"
-                        value={p.hpp_price || ""}
-                        // defaultValue={p.hpp_price || ""}
-                        onChange={(e) => {
-                        //   handleUpdateHpp(p.id, Number(e.target.value))
-                        let tmp = [...productCostData]
-                          tmp[i].hpp_price = Number(e.target.value)
-                          setProductCostData(tmp)
-                        }}
-                        onBlur={(e) => {
-                          // setProductCostData((prev) =>
-                          //   prev.map((item) =>
-                          //     item.id === p.id ? { ...item, hpp_price: Number(e.target.value) } : item
-                          //   )
-                          // );
-                          
-                          handleUpdateHpp(p.id, Number(e.target.value))
-                        }}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {productCostData?.map((p, i) => {
+                const totalSold = p?.total_sold_items ?? 0;
+                const netIncome = p?.net_income ?? 0;
+
+                const netIncomePerPcs = safeDivide(netIncome, totalSold);
+
+                return (
+                  <tr key={p.id} className="hover:bg-gray-50">
+                    {/* Nama */}
+                    <td className="px-6 py-3 font-medium">{p.name}</td>
+
+                    {/* Total pcs */}
+                    <td className="px-6 py-3 text-right text-gray-500">
+                      {totalSold}
+                    </td>
+
+                    {/* Total HPP */}
+                    <td className="px-6 py-3 text-right text-gray-500">
+                      {formatCurrency(p?.hpp_income ?? 0)}
+                    </td>
+
+                    {/* Net Income Total */}
+                    <td className="px-6 py-3 text-right font-semibold text-gray-700">
+                      {formatCurrency(netIncome)}
+                    </td>
+
+                    {/* Net Income Per Pcs */}
+                    <td className="px-6 py-3 text-right text-gray-600">
+                      {formatCurrency(netIncomePerPcs)}
+                    </td>
+
+                    {/* HPP per pcs (editable) */}
+                    <td className="px-6 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400">Rp</span>
+                        <input
+                          type="number"
+                          className="border border-gray-300 rounded px-2 py-1 w-32 font-bold text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                          value={p.hpp_price ?? 0}
+                          onChange={(e) => {
+                            const tmp = [...productCostData];
+                            tmp[i] = {
+                              ...tmp[i],
+                              hpp_price: Number(e.target.value),
+                            };
+                            setProductCostData(tmp);
+                          }}
+                          onBlur={(e) => {
+                            handleUpdateHpp(p.id, Number(e.target.value));
+                          }}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -1381,7 +1428,8 @@ const FinancePage: React.FC<FinancePageProps> = ({
                   ))} */}
                   {bankList?.data?.items?.map((bank: any) => (
                     <option key={bank.id} value={bank.id}>
-                      {bank.name} - {bank.ref_account_number}- {bank.ref_account_holder}
+                      {bank.name} - {bank.ref_account_number}-{" "}
+                      {bank.ref_account_holder}
                     </option>
                   ))}
                   <option value="cash">Tunai / Cash</option>

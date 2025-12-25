@@ -457,6 +457,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
       jenisPesanan: mainProduct,
       jumlah: totalQty,
       deadline: isArchive ? "" : deadline,
+      tanggalPemesanan: isArchive ? archiveDate : "",
       statusPembayaran: isArchive ? "Lunas" : pay,
       dpAmount: finalDp,
       domain: "kinau.id/public/drive-link/" + accessCode,
@@ -1445,24 +1446,26 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                   </span>
                 </div>
 
-                <div className="mt-4 pt-2 border-t border-gray-200">
-                  <div className="text-xs text-gray-500 mb-1">
-                    Link Akses (Untuk Klien):
-                  </div>
-                  <div className="flex gap-2">
-                    <div className="bg-white border border-gray-300 rounded p-2 text-xs font-mono text-center select-all flex-1 truncate">
-                      kinau.id/public/drive-link/{pendingData.accessCode}
+                {!isArchive && (
+                  <div className="mt-4 pt-2 border-t border-gray-200">
+                    <div className="text-xs text-gray-500 mb-1">
+                      Link Akses (Untuk Klien):
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => copyLink(pendingData.accessCode)}
-                      className="bg-gray-200 hover:bg-gray-300 p-2 rounded text-gray-700"
-                      title="Copy Link"
-                    >
-                      <Copy size={14} />
-                    </button>
+                    <div className="flex gap-2">
+                      <div className="bg-white border border-gray-300 rounded p-2 text-xs font-mono text-center select-all flex-1 truncate">
+                        kinau.id/public/drive-link/{pendingData.accessCode}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => copyLink(pendingData.accessCode)}
+                        className="bg-gray-200 hover:bg-gray-300 p-2 rounded text-gray-700"
+                        title="Copy Link"
+                      >
+                        <Copy size={14} />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <p className="text-sm text-gray-600 mb-6">

@@ -32,6 +32,7 @@ import {
   getOrderLabel,
   getPaymentStatusLabel,
   safeParseArray,
+  safeParseObject,
   uploadFile,
 } from "~/lib/utils";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
@@ -54,9 +55,10 @@ export const action: ActionFunction = async ({ request }) => {
   const id = formData.get("id") as string;
 
   if (actionType === "delete") {
+    const { id, order } = Object.fromEntries(formData.entries());
     const res = await API.ORDERS.update({
       session: { user, token },
-      req: { body: { id, deleted_on: new Date().toISOString() } },
+      req: { body: { id, order, deleted_on: new Date().toISOString() } },
     });
     return Response.json({
       success: res.success,
@@ -106,6 +108,7 @@ export const action: ActionFunction = async ({ request }) => {
       payment_detail,
       dp_payment_proof,
       dp_payment_method,
+      order,
       dp_payment_detail,
     } = Object.fromEntries(formData.entries());
 
@@ -115,6 +118,7 @@ export const action: ActionFunction = async ({ request }) => {
       req: {
         body: {
           id,
+          order,
           payment_proof,
           payment_method,
           payment_detail,
@@ -177,9 +181,13 @@ export default function OrderList() {
         page: page ? page - 1 : 0,
         size: 10,
         pagination: "true",
-        ...(viewMode === "kkn" && {
-          is_kkn: "1",
-        }),
+        ...(viewMode === "kkn"
+          ? {
+              is_kkn: "1",
+            }
+          : {
+              is_kkn: "0",
+            }),
         ...(filterYear && {
           year: filterYear,
         }),
@@ -222,6 +230,7 @@ export default function OrderList() {
     submitAction({
       action: "update_payment_proof",
       id: modal?.data?.id,
+      order: JSON.stringify(modal?.data),
       payment_method: modal?.data?.payment_method,
       ...(modal?.data?.source_upload !== "down_payment"
         ? {
@@ -307,8 +316,14 @@ export default function OrderList() {
         cellClassName: "whitespace-nowrap text-xs text-gray-600 font-medium",
         cell: (order) => (
           <div className="flex flex-col">
-            <p className="font-semibold">{order.order_number}</p>
-            <p>{formatFullDate(order.created_on)}</p>
+            <p className="font-semibold">
+              {+order?.is_archive === 1 ? "Arsip" : order.order_number}
+            </p>
+            <p>
+              {order?.order_date
+                ? moment(order.order_date).format("DD MMM YYYY HH:mm")
+                : "-"}
+            </p>
           </div>
         ),
       },
@@ -409,50 +424,53 @@ export default function OrderList() {
         key: "link",
         header: "Folder",
         cellClassName: "max-w-[120px]",
-        cell: (order) => (
-          // <div className="flex flex-col gap-2">
-          //   {order.driveFolderId ? (
-          //     <button
-          //       onClick={() => onOpenDrive(order.driveFolderId!)}
-          //       className="flex items-center justify-center gap-1 text-xs font-medium text-yellow-700 bg-yellow-50 border border-yellow-200 rounded px-2 py-1 hover:bg-yellow-100 whitespace-nowrap"
-          //     >
-          //       <FolderOpen size={14} /> Buka
-          //     </button>
-          //   ) : (
-          //     <span className="text-xs text-gray-400 italic">-</span>
-          //   )}
-          // </div>
-          <div className="flex flex-col gap-2">
-            {order.drive_folder_id ? (
-              <button
-                onClick={() => onOpenDrive(order.drive_folder_id!)}
-                className="flex items-center gap-1 text-[10px] font-medium text-gray-700 bg-white border border-gray-200 rounded px-2 py-1 hover:bg-gray-50 shadow-sm w-fit"
-              >
-                <FolderOpen size={10} className="text-yellow-500" /> Buka
-              </button>
-            ) : (
-              "-"
-            )}
-            <div className="flex items-center gap-1 group">
-              <a
-                href={`/public/drive-link/${order.institution_domain}`}
-                className="truncate text-blue-600 hover:underline text-[10px] font-mono w-16"
-              >
-                link
-              </a>
-              <button
-                onClick={() =>
-                  copyToClipboard(
-                    "kinau.id/public/drive-link/" + order.institution_domain
-                  )
-                }
-                className="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition"
-              >
-                <Copy size={10} />
-              </button>
+        cell: (order) =>
+          +order?.is_archive !== 1 ? (
+            // <div className="flex flex-col gap-2">
+            //   {order.driveFolderId ? (
+            //     <button
+            //       onClick={() => onOpenDrive(order.driveFolderId!)}
+            //       className="flex items-center justify-center gap-1 text-xs font-medium text-yellow-700 bg-yellow-50 border border-yellow-200 rounded px-2 py-1 hover:bg-yellow-100 whitespace-nowrap"
+            //     >
+            //       <FolderOpen size={14} /> Buka
+            //     </button>
+            //   ) : (
+            //     <span className="text-xs text-gray-400 italic">-</span>
+            //   )}
+            // </div>
+            <div className="flex flex-col gap-2">
+              {order.drive_folder_id ? (
+                <button
+                  onClick={() => onOpenDrive(order.drive_folder_id!)}
+                  className="flex items-center gap-1 text-[10px] font-medium text-gray-700 bg-white border border-gray-200 rounded px-2 py-1 hover:bg-gray-50 shadow-sm w-fit"
+                >
+                  <FolderOpen size={10} className="text-yellow-500" /> Buka
+                </button>
+              ) : (
+                "-"
+              )}
+              <div className="flex items-center gap-1 group">
+                <a
+                  href={`/public/drive-link/${order.institution_domain}`}
+                  className="truncate text-blue-600 hover:underline text-[10px] font-mono w-16"
+                >
+                  link
+                </a>
+                <button
+                  onClick={() =>
+                    copyToClipboard(
+                      "kinau.id/public/drive-link/" + order.institution_domain
+                    )
+                  }
+                  className="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition"
+                >
+                  <Copy size={10} />
+                </button>
+              </div>
             </div>
-          </div>
-        ),
+          ) : (
+            "Arsip"
+          ),
       },
       {
         key: "statusPengerjaan",
@@ -512,12 +530,17 @@ export default function OrderList() {
           // UPLOAD RULES
           // =========================
           const canUploadDp =
-            order.payment_status === "down_payment" && !hasDpProof;
+            order.payment_status === "down_payment" &&
+            !hasDpProof &&
+            +order?.is_archive !== 1;
 
           const canUploadPaid =
-            (order.payment_status === "down_payment" && !hasDpProof) ||
-            (hasDpProof && !order?.payment_proof) || 
-            (order.payment_status === "paid" && !hasPaidProof) || order?.payment_status === "none" || order?.payment_status === "unpaid";
+            ((order.payment_status === "down_payment" && !hasDpProof) ||
+              (hasDpProof && !order?.payment_proof) ||
+              (order.payment_status === "paid" && !hasPaidProof) ||
+              order?.payment_status === "none" ||
+              order?.payment_status === "unpaid") &&
+            +order?.is_archive !== 1;
 
           // =========================
           // MODALS
@@ -604,6 +627,22 @@ export default function OrderList() {
         },
       },
       {
+        key: "created_by",
+        header: "Dibuat Oleh",
+        headerClassName: "text-center",
+        cellClassName: "text-center",
+        cell: (order) => (
+          <div className="flex flex-col">
+            <p className="text-xs">
+              {safeParseObject(order.created_by)?.fullname ?? "-"}
+            </p>
+            <p className="text-[0.675rem]">
+              {moment(order.created_on).format("DD MMM YYYY HH:mm")}
+            </p>
+          </div>
+        ),
+      },
+      {
         key: "aksi",
         header: "Aksi",
         headerClassName: "text-center",
@@ -612,6 +651,7 @@ export default function OrderList() {
           <div className="flex justify-center gap-2 relative">
             <button
               title="Nota"
+              disabled={+order?.is_archive === 1}
               onClick={() =>
                 setModal({
                   ...modal,
@@ -739,23 +779,39 @@ export default function OrderList() {
                 </label>
                 <select
                   className="w-full border border-gray-300 rounded-lg p-2 text-sm"
-                  value={modal?.data?.payment_method || ""}
+                  value={
+                    modal?.data?.payment_detail?.account_id ||
+                    modal?.data?.payment_method ||
+                    ""
+                  }
                   onChange={(e) => {
                     setModal({
                       ...modal,
                       data: {
                         ...modal?.data,
-                        ...(+e.target.value > 0 ? {
-                          payment_method: "manual_transfer",
-                          payment_detail: {
-                            account_id: e.target.value,
-                            account_name: bankList?.data?.items?.find((bank: any) => bank.id === e.target.value)?.name,
-                            account_number: bankList?.data?.items?.find((bank: any) => bank.id === e.target.value)?.ref_account_number,
-                            account_holder: bankList?.data?.items?.find((bank: any) => bank.id === e.target.value)?.ref_account_holder,
-                          }
-                        } : {
-                          payment_method: e.target.value,
-                        })
+                        ...(+e.target.value > 0
+                          ? {
+                              payment_method: "manual_transfer",
+                              payment_detail: {
+                                account_id: e.target.value,
+                                account_code: bankList?.data?.items?.find(
+                                  (bank: any) => bank.id === +e.target.value
+                                )?.code,
+                                account_name: bankList?.data?.items?.find(
+                                  (bank: any) => bank.id === +e.target.value
+                                )?.name,
+                                account_number: bankList?.data?.items?.find(
+                                  (bank: any) => bank.id === +e.target.value
+                                )?.ref_account_number,
+                                account_holder: bankList?.data?.items?.find(
+                                  (bank: any) => bank.id === +e.target.value
+                                )?.ref_account_holder,
+                              },
+                            }
+                          : {
+                              payment_method: e.target.value,
+                              payment_detail: null,
+                            }),
                       },
                     });
                   }}
@@ -764,7 +820,8 @@ export default function OrderList() {
                   <option value="">-- Pilih Rekening --</option>
                   {bankList?.data?.items?.map((bank: any) => (
                     <option key={bank.id} value={bank.id}>
-                      {bank.name} - {bank.ref_account_number}- {bank.ref_account_holder}
+                      {bank.name} - {bank.ref_account_number}-{" "}
+                      {bank.ref_account_holder}
                     </option>
                   ))}
                   <option value="manual_transfer">Transfer</option>

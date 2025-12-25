@@ -118,7 +118,14 @@ export const action: ActionFunction = async ({ request }) => {
         status: "done",
         payment_status: "none",
         images: payload.portfolioImages,
+        discount_type: payload?.discount?.type || null,
+        discount_value: payload?.discount?.value || 0,
         items: payload.items,
+        is_archive: 1,
+        total_amount: payload.totalAmount,
+        is_sponsor: !payload?.isSponsor ? 0 : 1,
+        order_date: payload.tanggalPemesanan,
+        created_by: user,
       };
 
       const response = await API.ORDERS.create({
@@ -167,6 +174,7 @@ export default function OrderHistoryPage() {
         status: "done",
         page: 0,
         size: 200,
+        sort: "order_date:desc",
         pagination: "true",
       })
       .build(),
@@ -281,7 +289,20 @@ export default function OrderHistoryPage() {
           <>
             {row.institution_name}
             <div className="text-xs text-gray-400">
-              {row.created_on ? formatFullDate(row.created_on) : "-"}
+              {row.pic_name ? row.pic_name : "-"}
+            </div>
+          </>
+        ),
+      },
+      {
+        key: "order_date",
+        header: "Tanggal Pesanan",
+        cellClassName:
+          "whitespace-nowrap text-xs text-gray-600 min-w-[180px] font-medium",
+        cell: (row) => (
+          <>
+            <div className="text-xs text-gray-400">
+              {row.order_date ? formatFullDate(row.order_date) : "-"}
             </div>
           </>
         ),
@@ -302,6 +323,32 @@ export default function OrderHistoryPage() {
                 )
               : "-"}
           </ul>
+        ),
+      },
+      {
+        key: "totalAmount",
+        header: "Total Bayar",
+        cellClassName: "whitespace-nowrap text-sm font-bold text-gray-900",
+        // cell: (order) => formatCurrency(order.total_amount ?? 0),
+        cell: (order) => (
+          <div className="px-6 py-4">
+            <div className="text-xs font-bold text-gray-900">
+              {new Intl.NumberFormat("id-ID").format(order.total_amount)}
+            </div>
+            {/* {+(order.is_sponsor ?? 0) === 0 && (
+              <span
+                className={`px-2 py-0.5 rounded text-[10px] font-medium mt-1 inline-block ${
+                  order.payment_status === "paid"
+                    ? "bg-green-100 text-green-700"
+                    : order.payment_status === "down_payment"
+                      ? "bg-yellow-100 text-yellow-700"
+                      : "bg-red-100 text-red-600"
+                }`}
+              >
+                {getPaymentStatusLabel(order.payment_status)}
+              </span>
+            )} */}
+          </div>
         ),
       },
       {

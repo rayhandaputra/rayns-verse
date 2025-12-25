@@ -8,8 +8,10 @@ import { AccountMutationAPI } from "./modules/account_mutation";
 import { AssetAPI } from "./modules/asset";
 import { BankAccountAPI } from "./modules/bank_account";
 import { CmsContentAPI } from "./modules/cms_content";
+import { CommoditiesAPI } from "./modules/commodities";
 import { CommodityAPI } from "./modules/commodity";
 import { CommodityStockAPI } from "./modules/commodity_stock";
+import { ComponentsAPI } from "./modules/components";
 import { DiscountAPI } from "./modules/discount_codes";
 import { EmployeeAPI } from "./modules/employee";
 import { EmployeeAttendanceAPI } from "./modules/employee_attendance";
@@ -26,6 +28,8 @@ import { ProductCategoryAPI } from "./modules/product_category";
 import { ProductComponentAPI } from "./modules/product_component";
 import { ProductPackageItemsAPI } from "./modules/product_package_item";
 import { ProductPriceRulesAPI } from "./modules/product_price_rules";
+import { RestockAPI } from "./modules/restock";
+import { SettingsAPI } from "./modules/settings";
 import { SupplierAPI } from "./modules/supplier";
 import { SupplierCommodityAPI } from "./modules/supplier_commodity";
 import { TestimonialAPI } from "./modules/testimonial";
@@ -62,4 +66,8 @@ export const API = {
   BANK_ACCOUNT: BankAccountAPI,
   ACCOUNT: AccountAPI,
   ACCOUNT_MUTATION: AccountMutationAPI,
+  RESTOCK: RestockAPI,
+  SETTINGS: SettingsAPI,
+  COMPONENTS: ComponentsAPI,
+  COMMODITIES: CommoditiesAPI,
 };

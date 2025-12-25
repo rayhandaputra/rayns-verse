@@ -92,6 +92,23 @@ export interface Order {
   portfolioImages?: string[]; // Base64 strings
   review?: string;
   rating?: number; // 1-5
+
+  // API snake_case properties (from backend/Supabase)
+  order_number?: string;
+  institution_name?: string;
+  pic_name?: string;
+  pic_phone?: string;
+  total_amount?: number;
+  dp_amount?: number;
+  created_on?: string;
+  status?: string;
+  payment_status?: string;
+  payment_proof?: string;
+  dp_payment_proof?: string;
+  order_items?: any;
+  items?: OrderItem[];
+  pemesanName?: string;
+  pemesanPhone?: string;
 }
 
 export interface OrderItem {

@@ -27,6 +27,7 @@ import {
   Users2Icon,
   UserCog2Icon,
   MonitorCogIcon,
+  RecycleIcon,
 } from "lucide-react";
 import { Sheet, SheetContent } from "~/components/ui/sheet";
 import { requireAuth } from "~/lib/session.server";
@@ -99,6 +100,12 @@ export const ADMIN_NAVIGATION: MenuItem[] = [
     label: "Manajemen Akun",
     href: "/app/user",
     icon: UserCog2Icon,
+  },
+  {
+    id: "bin",
+    label: "Recycle Bin",
+    href: "/app/setting/recycle-bin",
+    icon: RecycleIcon,
   },
 ];
 
@@ -342,7 +349,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
           {!isStaff && (
             <>
               <button
-                onClick={() => navigate("/app/drive")}
+                onClick={() => navigate("/app/drive/customer")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition transform hover:-translate-y-0.5 ${location.pathname === "/app/drive" ? "bg-gray-800 text-white shadow-lg" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"}`}
               >
                 <HardDrive size={16} />{" "}
