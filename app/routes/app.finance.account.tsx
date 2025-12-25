@@ -17,6 +17,7 @@ import { requireAuth } from "~/lib/session.server";
 import { API } from "~/lib/api";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
+import { formatCurrency } from "~/constants";
 
 // Tipe Data untuk Akun
 interface Account {
@@ -267,7 +268,7 @@ const ChartOfAccounts = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right font-mono">
-                    {account.balance}
+                    {formatCurrency(account?.balance ?? 0)}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex justify-center gap-3 text-gray-400">
