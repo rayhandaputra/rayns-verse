@@ -26,9 +26,10 @@ export const AccountMutationAPI = {
           "credit",
           "category",
           "notes",
+          "trx_code",
           "receipt_url",
           "created_on",
-          `(SELECT group_type FROM accounts WHERE code = account_code) as group_type`,
+          `(SELECT group_type FROM accounts WHERE code = account_code LIMIT 1) as group_type`,
         ],
         where: {
           deleted_on: "null",
@@ -41,6 +42,34 @@ export const AccountMutationAPI = {
         page: Number(page),
         size: Number(size),
         orderBy: ["created_on", "desc"],
+        include: [
+          {
+            table: "account_ledger_mutations",
+            alias: "account_ledger_mutations",
+            foreign_key: "trx_code",
+            reference_key: "trx_code",
+            columns: ["account_code", "account_name"],
+          },
+          {
+            table: "orders",
+            alias: "orders",
+            foreign_key: "order_number",
+            reference_key: "trx_code",
+            columns: ["institution_name", "pic_name", "total_amount"],
+          },
+          {
+            table: "order_items",
+            alias: "order_items",
+            foreign_key: "order_number",
+            reference_key: "trx_code",
+            columns: [
+              "product_name",
+              "qty",
+              "price_rule_value",
+              "variant_final_price",
+            ],
+          },
+        ],
       },
     });
   },

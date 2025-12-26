@@ -127,7 +127,10 @@ export const action: ActionFunction = async ({ request }) => {
         status: "pending",
         images: payload.portfolioImages,
         items: payload.items,
-        created_by: user,
+        created_by: {
+          id: user?.id,
+          fullname: user?.fullname,
+        },
       };
 
       const response = await API.ORDERS.create({

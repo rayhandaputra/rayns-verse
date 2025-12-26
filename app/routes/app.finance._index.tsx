@@ -19,6 +19,7 @@ import {
   Filter,
   PieChart as PieIcon,
   BarChart3,
+  Trash2Icon,
 } from "lucide-react";
 import {
   BarChart,
@@ -45,6 +46,7 @@ import { safeParseArray, uploadFile } from "~/lib/utils";
 import { useModal } from "~/hooks";
 import { Button } from "~/components/ui/button";
 import { TablePagination } from "~/components/ui/data-table";
+import Swal from "sweetalert2";
 
 interface Transaction {
   id: string;
@@ -109,6 +111,28 @@ export const action: ActionFunction = async ({ request }) => {
   const intent = formData.get("intent");
 
   try {
+    if (intent === "delete_transaction") {
+      const { id } = Object.fromEntries(formData.entries());
+
+      const payload = {
+        id,
+        deleted_on: new Date().toISOString(),
+      };
+
+      // Only update if valid
+      const res = await API.TRANSACTION.update({
+        session: { user, token },
+        req: {
+          body: payload,
+        },
+      });
+      return Response.json({
+        success: res.success,
+        message: res.success
+          ? "Transaksi berhasil dihapus"
+          : "Gagal menghapus transaksi",
+      });
+    }
     if (intent === "update_hpp_product") {
       const { id, hpp_price } = Object.fromEntries(formData.entries());
 
@@ -503,7 +527,7 @@ const FinancePage: React.FC<FinancePageProps> = ({
         page: page ? page - 1 : 0,
         size: 10,
         pagination: "true",
-        account_code: "4-101,5-101",
+        account_code: "1-103,4-101,5-101",
         ...(filterYear && {
           year: filterYear,
         }),
@@ -739,7 +763,10 @@ const FinancePage: React.FC<FinancePageProps> = ({
   useEffect(() => {
     if (actionData?.success) {
       reloadProductCost();
-      toast.success("HPP berhasil diperbarui");
+      reloadTrx();
+      toast.success(
+        actionData?.message || actionData?.error_message || "Berhasil"
+      );
     }
   }, [actionData]);
 
@@ -1008,10 +1035,13 @@ const FinancePage: React.FC<FinancePageProps> = ({
                   <tr>
                     <th className="px-6 py-3">Waktu</th>
                     <th className="px-6 py-3">Kategori</th>
-                    <th className="px-6 py-3">Deskripsi</th>
+                    <th className="px-6 py-3">No. Transaksi</th>
+                    <th className="px-6 py-3">Instansi/Pemesan</th>
+                    <th className="px-6 py-3">Produk</th>
                     <th className="px-6 py-3">Rekening</th>
                     <th className="px-6 py-3">Bukti</th>
                     <th className="px-6 py-3 text-right">Nominal</th>
+                    <th className="px-6 py-3">Aksi</th>
                     {/* <th className="px-6 py-3 text-right">Debit</th>
                     <th className="px-6 py-3 text-right">Kredit</th> */}
                   </tr>
@@ -1049,11 +1079,46 @@ const FinancePage: React.FC<FinancePageProps> = ({
                           </span>
                         </td>
                         <td className="px-6 py-3 text-gray-700 max-w-xs truncate font-medium">
-                          {t.notes || "-"}
+                          {/* {t.notes || "-"} */}
+                          {t.trx_code || "-"}
+                        </td>
+                        <td className="px-6 py-3 text-gray-700 max-w-xs truncate font-medium">
+                          <p className="text-xs">
+                            {safeParseArray(t.orders)?.[0]?.institution_name ||
+                              "-"}
+                          </p>
+                          <p className="text-[0.675rem] text-gray-700">
+                            {safeParseArray(t.orders)?.[0]?.pic_name || "-"}
+                          </p>
+                        </td>
+                        <td className="px-6 py-3 text-gray-700 max-w-xs truncate font-medium">
+                          <ul className="list-disc space-y-0.5">
+                            {safeParseArray(t.order_items)?.map(
+                              (v: any, i: number) => (
+                                <li
+                                  key={i}
+                                  className="flex items-center gap-1 text-xs text-gray-600"
+                                >
+                                  <span className="truncate">
+                                    {v.product_name}
+                                  </span>
+                                  <span className="text-gray-400">:</span>
+                                  <span className="font-medium text-gray-800">
+                                    {v.qty}
+                                  </span>
+                                </li>
+                              )
+                            )}
+                          </ul>
                         </td>
                         <td className="px-6 py-3 text-gray-500 text-xs">
                           {/* {t.bank_id || "-"} */}
-                          {t.account_name || "-"}
+                          {/* {t.account_name || "-"} */}
+                          {safeParseArray(t.account_ledger_mutations)?.filter(
+                            (v: any) => v?.account_code !== t.account_code
+                          )?.[0]?.account_name ||
+                            t.account_name ||
+                            "-"}
                         </td>
                         <td className="px-6 py-3 text-gray-500 text-xs">
                           {/* {t.bank_id || "-"} */}
@@ -1090,12 +1155,34 @@ const FinancePage: React.FC<FinancePageProps> = ({
                           className={`px-6 py-3 text-right font-bold whitespace-nowrap ${t.type === "Income" ? "text-green-600" : "text-red-600"}`}
                         >
                           {formatCurrency(t.debit)}
-                        </td>
-                        <td
-                          className={`px-6 py-3 text-right font-bold whitespace-nowrap ${t.type === "Income" ? "text-green-600" : "text-red-600"}`}
-                        >
-                          {formatCurrency(t.credit)}
                         </td> */}
+                        <td className={`px-6 py-3`}>
+                          <Button
+                            onClick={() => {
+                              Swal.fire({
+                                title: "Hapus Transaksi?",
+                                text: `Yakin ingin menghapus Transaksi ${t.account_name}?`,
+                                icon: "warning",
+                                showCancelButton: true,
+                                confirmButtonText: "Ya, Hapus",
+                                cancelButtonText: "Batal",
+                                customClass: {
+                                  confirmButton: "bg-red-600 text-white",
+                                  cancelButton: "bg-gray-200 text-gray-800",
+                                },
+                              }).then((result) => {
+                                if (result.isConfirmed) {
+                                  submitAction({
+                                    intent: "delete_transaction",
+                                    id: t.id,
+                                  });
+                                }
+                              });
+                            }}
+                          >
+                            <Trash2Icon className="w-4" />
+                          </Button>
+                        </td>
                       </tr>
                     ))
                   )}

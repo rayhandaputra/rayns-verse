@@ -80,7 +80,7 @@ export const TransactionAPI = {
     //     size: Number(size),
     //   }
     // });
-    return []
+    return [];
   },
 
   // ================================
@@ -115,28 +115,62 @@ export const TransactionAPI = {
   // ================================
   // ✅ UPDATE TRANSACTION
   // ================================
+  // update: async ({ req }: any) => {
+  //   const { body, query } = req;
+  //   const { id } = query;
+
+  //   if (!id) {
+  //     throw new Error("Transaction ID is required");
+  //   }
+
+  //   const data = {
+  //     ...body,
+  //     updated_at: new Date().toISOString(),
+  //   };
+
+  //   // Remove fields that shouldn't be updated
+  //   delete data.id;
+  //   delete data.created_at;
+
+  //   return await APIProvider.update({
+  //     table: "transaction",
+  //     data,
+  //     where: { id },
+  //   });
+  // },
   update: async ({ req }: any) => {
-    const { body, query } = req;
-    const { id } = query;
+    const { id, ...fields } = req.body || {};
 
     if (!id) {
-      throw new Error("Transaction ID is required");
+      return { success: false, message: "ID wajib diisi" };
     }
 
-    const data = {
-      ...body,
-      updated_at: new Date().toISOString(),
+    const updatedData: Record<string, any> = {
+      ...fields,
+      modified_on: new Date().toISOString(),
     };
 
-    // Remove fields that shouldn't be updated
-    delete data.id;
-    delete data.created_at;
+    try {
+      const result = await APIProvider({
+        endpoint: "update",
+        method: "POST",
+        table: "account_ledger_mutations",
+        action: "update",
+        body: {
+          data: updatedData,
+          where: { id },
+        },
+      });
 
-    return await APIProvider.update({
-      table: "transaction",
-      data,
-      where: { id },
-    });
+      return {
+        success: true,
+        message: `Transaksi berhasil ${fields?.deleted_on ? "Dihapus" : "Diperbarui"}`,
+        affected: result.affected_rows,
+      };
+    } catch (err: any) {
+      console.log(err);
+      return { success: false, message: err.message };
+    }
   },
 
   // ================================

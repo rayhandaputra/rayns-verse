@@ -12,6 +12,7 @@ import {
   X,
   Upload,
   Image,
+  Loader2,
 } from "lucide-react";
 import NotaView from "../components/NotaView";
 import {
@@ -41,6 +42,7 @@ import { useModal } from "~/hooks";
 import Swal from "sweetalert2";
 import ModalSecond from "~/components/modal/ModalSecond";
 import { Button } from "~/components/ui/button";
+import { dateFormat } from "~/lib/dateFormatter";
 
 export const loader: LoaderFunction = async ({ request }) => {
   // Only check authentication
@@ -219,7 +221,11 @@ export default function OrderList() {
     toast.success("Disalin ke clipboard");
   };
 
-  const { data: actionData, load: submitAction } = useFetcherData({
+  const {
+    data: actionData,
+    load: submitAction,
+    loading: actionLoading,
+  } = useFetcherData({
     endpoint: "",
     method: "POST",
     autoLoad: false,
@@ -235,11 +241,11 @@ export default function OrderList() {
       ...(modal?.data?.source_upload !== "down_payment"
         ? {
             payment_proof: modal?.data?.file,
-            payment_detail: modal?.data?.payment_detail,
+            payment_detail: JSON.stringify(modal?.data?.payment_detail),
           }
         : {
             dp_payment_proof: modal?.data?.file,
-            dp_payment_detail: modal?.data?.payment_detail,
+            dp_payment_detail: JSON.stringify(modal?.data?.payment_detail),
           }),
     });
   };
@@ -312,18 +318,18 @@ export default function OrderList() {
     () => [
       {
         key: "createdAt",
-        header: "Tgl. Order",
+        header: "No Order",
         cellClassName: "whitespace-nowrap text-xs text-gray-600 font-medium",
         cell: (order) => (
           <div className="flex flex-col">
             <p className="font-semibold">
               {+order?.is_archive === 1 ? "Arsip" : order.order_number}
             </p>
-            <p>
+            {/* <p>
               {order?.order_date
                 ? moment(order.order_date).format("DD MMM YYYY HH:mm")
                 : "-"}
-            </p>
+            </p> */}
           </div>
         ),
       },
@@ -385,7 +391,14 @@ export default function OrderList() {
         cellClassName:
           "whitespace-nowrap text-center text-sm font-medium text-gray-900",
         cell: (order) => (
-          <span>{safeParseArray(order.order_items)?.length}</span>
+          <span>
+            {
+              safeParseArray(order.order_items)?.reduce(
+                (acc: number, item: any) => acc + +item?.qty,
+                0
+              ) as any
+            }
+          </span>
         ),
       },
       {
@@ -637,7 +650,10 @@ export default function OrderList() {
               {safeParseObject(order.created_by)?.fullname ?? "-"}
             </p>
             <p className="text-[0.675rem]">
-              {moment(order.created_on).format("DD MMM YYYY HH:mm")}
+              {/* {moment(order.created_on)
+                .locale("id")
+                .format("DD MMMM YYYY (HH:mm)")} */}
+              {dateFormat(order.created_on, "DD MMM YYYY (HH:mm)")}
             </p>
           </div>
         ),
@@ -910,9 +926,11 @@ export default function OrderList() {
                 </button>
                 <button
                   type="submit"
+                  disabled={actionLoading}
                   className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2"
                 >
-                  <Upload size={16} /> Simpan
+                  {actionLoading ? <Loader2 size={16} /> : <Upload size={16} />}{" "}
+                  {actionLoading ? "Menyimpan..." : "Simpan"}
                 </button>
               </div>
             </form>

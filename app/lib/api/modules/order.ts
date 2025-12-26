@@ -126,6 +126,7 @@ export const OrderAPI = {
             "status",
             "deadline",
             "created_on",
+            "created_by",
             `(SELECT COUNT(id) FROM order_items) AS total_product`,
           ],
           where,
@@ -307,8 +308,9 @@ export const OrderAPI = {
       created_by: safeParseObject(created_by)
         ? JSON.stringify(created_by)
         : null,
-      created_on: new Date().toISOString(),
-      modified_on: new Date().toISOString(),
+      // created_on: moment().subtract(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
+      created_on: moment().format("YYYY-MM-DD HH:mm:ss"),
+      modified_on: null,
     };
 
     try {
@@ -451,6 +453,7 @@ export const OrderAPI = {
                     : total_amount,
                 debit: 0,
                 notes: order_number,
+                trx_code: order_number,
               },
               {
                 account_code: "1-102",
@@ -461,6 +464,7 @@ export const OrderAPI = {
                     ? total_amount - dp_amount
                     : total_amount,
                 notes: order_number,
+                trx_code: order_number,
               },
             ],
             updateOnDuplicate: true,
@@ -618,8 +622,8 @@ export const OrderAPI = {
       });
 
       let accBank = null;
-      if (updatedOrder?.payment_detail?.account_id) {
-        accBank = await APIProvider({
+      if (safeParseObject(updatedOrder?.payment_detail)?.account_id) {
+        const resBank = await APIProvider({
           endpoint: "select",
           method: "POST",
           table: "accounts",
@@ -627,11 +631,12 @@ export const OrderAPI = {
           body: {
             columns: ["id", "code", "name"],
             where: {
-              id: updatedOrder?.payment_detail?.account_id,
+              id: safeParseObject(updatedOrder?.payment_detail)?.account_id,
             },
             size: Number(1),
           },
         });
+        accBank = resBank?.items?.[0] || null;
       }
 
       if (fields?.dp_payment_proof) {
@@ -644,22 +649,24 @@ export const OrderAPI = {
           body: {
             rows: [
               {
-                account_code: accBank?.items?.[0]?.code || "4-101",
-                account_name: accBank?.items?.[0]?.name || "Pendapatan Usaha",
+                account_code: "4-101",
+                account_name: "Pendapatan Usaha",
                 credit: existOrder?.dp_amount,
                 debit: 0,
                 notes: existOrder?.order_number,
                 receipt_url: fields?.dp_payment_proof,
                 category: "DP Pesanan",
+                trx_code: existOrder?.order_number,
               },
               {
-                account_code: "1-101",
-                account_name: "Kas Utama (Cash on Hand)",
+                account_code: accBank?.code || "1-101",
+                account_name: accBank?.name || "Kas Utama (Cash on Hand)",
                 credit: 0,
                 debit: existOrder?.dp_amount,
                 notes: existOrder?.order_number,
                 receipt_url: fields?.dp_payment_proof,
                 category: "DP Pesanan",
+                trx_code: existOrder?.order_number,
               },
             ],
             updateOnDuplicate: true,
@@ -685,14 +692,16 @@ export const OrderAPI = {
                 debit: 0,
                 notes: existOrder?.order_number,
                 receipt_url: fields?.payment_proof,
+                trx_code: existOrder?.order_number,
               },
               {
-                account_code: "1-101",
-                account_name: "Kas Utama (Cash on Hand)",
+                account_code: accBank?.code || "1-101",
+                account_name: accBank?.name || "Kas Utama (Cash on Hand)",
                 credit: 0,
                 debit: amountMutation,
                 notes: existOrder?.order_number,
                 receipt_url: fields?.payment_proof,
+                trx_code: existOrder?.order_number,
               },
             ],
             updateOnDuplicate: true,
