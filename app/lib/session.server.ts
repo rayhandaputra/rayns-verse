@@ -76,7 +76,9 @@ export async function requireAuth(request: Request) {
   const token = session.get("token");
   const user = session.get("user");
   if (!token) {
-    throw redirect("/");
+    // throw redirect("/");
+    return Response.json({ unauthorized: true }, { status: 401 });
+    // return ;
   }
 
   // const user = await getSessionUser(token);
