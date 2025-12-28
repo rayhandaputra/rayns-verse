@@ -295,8 +295,12 @@ export default function OrderList() {
 
         await navigator.share({
           files: [file],
-          title: `Link Order ${order.institution_name}`,
-          text: `Dokumen Drive: ${order.institution_name}`,
+          title: `Pesanan ${order.institution_name}`,
+          text:
+            `Halo, berikut adalah QR Drive untuk *${order.institution_name}*.\n\n` +
+            `Nomor Pesanan: #${order.order_number}\n` +
+            `Link Drive: https://kinau.id/public/drive-link/${order.order_number}\n\n` +
+            `Silahkan scan atau klik link di atas.`,
         });
         toast.success("Berhasil dibagikan");
       } else {
