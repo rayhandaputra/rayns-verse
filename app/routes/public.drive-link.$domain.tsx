@@ -351,55 +351,126 @@ export default function PublicDriveLinkPage() {
     });
   };
 
+  // const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (e.target.files && e.target.files.length > 0) {
+  //     const file = e.target.files[0];
+  //     const ext = file.name.split(".").pop()?.toLowerCase();
+
+  //     let mime = "file";
+  //     if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext || ""))
+  //       mime = "image";
+  //     if (["pdf", "doc", "docx", "xls", "xlsx"].includes(ext || ""))
+  //       mime = "doc";
+
+  //     setLoadingUpload(true);
+
+  //     try {
+  //       const uploadRes = await API.ASSET.upload(file);
+
+  //       const newFilePayload = {
+  //         file_type: mime,
+  //         file_url: uploadRes.url,
+  //         file_name: uploadRes.original_name,
+  //         folder_id: currentFolderId || orderData?.drive_folder_id || null,
+  //         level: currentFolderId ? 2 : 1,
+  //         order_number: orderData?.order_number, // Associate with order_number
+  //       };
+
+  //       const result = await API.ORDER_UPLOAD.create_single_file({
+  //         session: {},
+  //         req: { body: newFilePayload },
+  //       });
+  //       if (!result.success) {
+  //         throw new Error(result.message || "Gagal menambahkan file");
+  //       }
+  //       // submitAction({
+  //       //   intent: "create_file",
+  //       //   ...newFilePayload,
+  //       // });
+
+  //       // Reload real-time data
+  //       reloadRealFolders();
+  //       reloadRealFiles();
+
+  //       setLoadingUpload(false);
+  //       toast.success("Upload File berhasil");
+  //       e.target.value = "";
+  //     } catch (err: any) {
+  //       setLoadingUpload(false);
+  //       toast.error(err.message || "Upload gagal");
+  //       console.error(err);
+  //     }
+  //   }
+  // };
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      const ext = file.name.split(".").pop()?.toLowerCase();
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
 
-      let mime = "file";
-      if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext || ""))
-        mime = "image";
-      if (["pdf", "doc", "docx", "xls", "xlsx"].includes(ext || ""))
-        mime = "doc";
+    const files = Array.from(fileList);
+    setLoadingUpload(true);
 
-      setLoadingUpload(true);
+    // Helper untuk menentukan tipe mime
+    const getMimeType = (fileName: string) => {
+      const ext = fileName.split(".").pop()?.toLowerCase() || "";
+      if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return "image";
+      if (["pdf", "doc", "docx", "xls", "xlsx", "zip", "rar"].includes(ext))
+        return "doc";
+      return "file";
+    };
 
-      try {
-        const uploadRes = await API.ASSET.upload(file);
+    try {
+      // Gunakan Promise.all untuk upload paralel
+      const uploadPromises = files.map(async (file) => {
+        try {
+          // 1. Upload ke Storage/Server
+          const uploadRes = await API.ASSET.upload(file);
 
-        const newFilePayload = {
-          file_type: mime,
-          file_url: uploadRes.url,
-          file_name: uploadRes.original_name,
-          folder_id: currentFolderId || orderData?.drive_folder_id || null,
-          level: currentFolderId ? 2 : 1,
-          order_number: orderData?.order_number, // Associate with order_number
-        };
+          // 2. Siapkan Payload untuk Database
+          const newFilePayload = {
+            file_type: getMimeType(file.name),
+            file_url: uploadRes.url,
+            file_name: uploadRes.original_name || file.name,
+            folder_id: currentFolderId || orderData?.drive_folder_id || null,
+            level: currentFolderId ? 2 : 1,
+            order_number: orderData?.order_number,
+          };
 
-        const result = await API.ORDER_UPLOAD.create_single_file({
-          session: {},
-          req: { body: newFilePayload },
-        });
-        if (!result.success) {
-          throw new Error(result.message || "Gagal menambahkan file");
+          // 3. Simpan record ke Database
+          const result = await API.ORDER_UPLOAD.create_single_file({
+            session: {},
+            req: { body: newFilePayload },
+          });
+
+          if (!result.success) throw new Error(result.message);
+
+          return { success: true, fileName: file.name };
+        } catch (err) {
+          return { success: false, fileName: file.name, error: err };
         }
-        // submitAction({
-        //   intent: "create_file",
-        //   ...newFilePayload,
-        // });
+      });
 
-        // Reload real-time data
-        reloadRealFolders();
-        reloadRealFiles();
+      const results = await Promise.all(uploadPromises);
 
-        setLoadingUpload(false);
-        toast.success("Upload File berhasil");
-        e.target.value = "";
-      } catch (err: any) {
-        setLoadingUpload(false);
-        toast.error(err.message || "Upload gagal");
-        console.error(err);
+      // Hitung statistik hasil
+      const successful = results.filter((r) => r.success).length;
+      const failed = results.filter((r) => !r.success).length;
+
+      // Notifikasi hasil akhir
+      if (failed === 0) {
+        toast.success(`${successful} File berhasil diunggah`);
+      } else {
+        toast.warning(`${successful} Berhasil, ${failed} Gagal diunggah`);
       }
+
+      // Refresh data
+      reloadRealFolders();
+      reloadRealFiles();
+    } catch (err: any) {
+      toast.error("Terjadi kesalahan sistem saat upload");
+      console.error(err);
+    } finally {
+      setLoadingUpload(false);
+      e.target.value = ""; // Reset input agar bisa pilih file yang sama lagi
     }
   };
 
@@ -541,6 +612,7 @@ export default function PublicDriveLinkPage() {
             className="hidden"
             onChange={handleFileChange}
             accept="*/*"
+            multiple
           />
 
           {/* Toolbar */}
