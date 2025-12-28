@@ -457,6 +457,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
       jenisPesanan: mainProduct,
       jumlah: totalQty,
       deadline: isArchive ? "" : deadline,
+      instansiMode: instansiMode ?? "",
       tanggalPemesanan: isArchive ? archiveDate : "",
       statusPembayaran: isArchive ? "Lunas" : pay,
       dpAmount: finalDp,

@@ -11,6 +11,7 @@ import {
   getOrderStatusLabel,
   getPaymentStatusLabel,
   safeParseArray,
+  safeParseObject,
   uploadFile,
 } from "~/lib/utils";
 import { nexus } from "~/lib/nexus-client";
@@ -176,7 +177,9 @@ const NotaView: React.FC<NotaViewProps> = ({
               Pemesan
             </h3>
             <p className="font-bold text-lg leading-tight">
-              {order.institution_name || order.instansi}
+              {+order?.is_kkn !== 1
+                ? order.institution_name
+                : `${order?.kkn_type?.toLowerCase() === "ppm" ? `Kelompok ${safeParseObject(order?.kkn_detail)?.value}` : `Desa ${safeParseObject(order?.kkn_detail)?.value}`}`}
             </p>
             {order.pic_name && (
               <p className="text-sm text-gray-600 mt-1">

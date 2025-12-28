@@ -131,8 +131,13 @@ export const action: ActionFunction = async ({ request }) => {
           id: user?.id,
           fullname: user?.fullname,
         },
+        is_pesonal: payload?.instansiMode === "perorangan" ? 1 : 0,
+        kkn_period: payload?.kknDetails?.periode ?? 1,
+        kkn_year: payload?.kknDetails?.tahun ?? moment().year(),
       };
 
+      // console.log(payload);
+      // const response = { success: true };
       const response = await API.ORDERS.create({
         session: { user, token },
         req: {

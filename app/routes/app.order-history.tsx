@@ -116,7 +116,7 @@ export const action: ActionFunction = async ({ request }) => {
         pic_name: payload.pemesanName,
         pic_phone: payload.pemesanPhone,
         status: "done",
-        payment_status: "none",
+        payment_status: "paid",
         images: payload.portfolioImages,
         discount_type: payload?.discount?.type || null,
         discount_value: payload?.discount?.value || 0,
@@ -287,7 +287,9 @@ export default function OrderHistoryPage() {
           "whitespace-nowrap text-xs text-gray-600 min-w-[180px] font-medium",
         cell: (row) => (
           <>
-            {row.institution_name}
+            {+row?.is_kkn !== 1
+              ? row.institution_name
+              : `${row?.kkn_type?.toLowerCase() === "ppm" ? `Kelompok ${safeParseObject(row?.kkn_detail)?.value}` : `Desa ${safeParseObject(row?.kkn_detail)?.value}`}`}
             <div className="text-xs text-gray-400">
               {row.pic_name ? row.pic_name : "-"}
             </div>

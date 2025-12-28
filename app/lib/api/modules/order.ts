@@ -120,6 +120,9 @@ export const OrderAPI = {
             "kkn_source",
             "kkn_type",
             "kkn_detail",
+            "kkn_period",
+            "kkn_year",
+            "is_personal",
             "pic_name",
             "pic_phone",
             "drive_folder_id",
@@ -211,6 +214,9 @@ export const OrderAPI = {
       kkn_source = "kkn_itera",
       kkn_type = "",
       kkn_detail = "",
+      kkn_period = "",
+      kkn_year = "",
+      is_personal = 0,
       tax_percent = 0,
       shipping_fee = 0,
       other_fee = 0,
@@ -325,6 +331,9 @@ export const OrderAPI = {
       kkn_source,
       kkn_type,
       kkn_detail: kkn_detail ? JSON.stringify(kkn_detail) : null,
+      kkn_period,
+      kkn_year,
+      is_personal,
       // grand_total,
       deadline,
       status,
@@ -482,10 +491,16 @@ export const OrderAPI = {
                 debit: 0,
                 notes: order_number,
                 trx_code: order_number,
+                trx_date:
+                  order_date ??
+                  moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
               },
               {
-                account_code: "1-102",
-                account_name: "Piutang Usaha",
+                account_code: +is_archive !== 1 ? "1-102" : "1-101",
+                account_name:
+                  +is_archive !== 1
+                    ? "Piutang Usaha"
+                    : "Kas Utama (Cash on Hand)",
                 credit: 0,
                 debit:
                   payment_status === "down_payment"
@@ -493,12 +508,17 @@ export const OrderAPI = {
                     : total_amount,
                 notes: order_number,
                 trx_code: order_number,
+                trx_date:
+                  order_date ??
+                  moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
               },
             ],
             updateOnDuplicate: true,
           },
         });
       }
+      // account_code: accBank?.code || "1-101",
+      //           account_name: accBank?.name || "Kas Utama (Cash on Hand)",
 
       return {
         success: true,
@@ -685,6 +705,9 @@ export const OrderAPI = {
                 receipt_url: fields?.dp_payment_proof,
                 category: "DP Pesanan",
                 trx_code: existOrder?.order_number,
+                trx_date:
+                  existOrder?.order_date ??
+                  moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
               },
               {
                 account_code: accBank?.code || "1-101",
@@ -695,6 +718,9 @@ export const OrderAPI = {
                 receipt_url: fields?.dp_payment_proof,
                 category: "DP Pesanan",
                 trx_code: existOrder?.order_number,
+                trx_date:
+                  existOrder?.order_date ??
+                  moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
               },
             ],
             updateOnDuplicate: true,
@@ -721,6 +747,9 @@ export const OrderAPI = {
                 notes: existOrder?.order_number,
                 receipt_url: fields?.payment_proof,
                 trx_code: existOrder?.order_number,
+                trx_date:
+                  existOrder?.order_date ??
+                  moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
               },
               {
                 account_code: accBank?.code || "1-101",
@@ -730,6 +759,9 @@ export const OrderAPI = {
                 notes: existOrder?.order_number,
                 receipt_url: fields?.payment_proof,
                 trx_code: existOrder?.order_number,
+                trx_date:
+                  existOrder?.order_date ??
+                  moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
               },
             ],
             updateOnDuplicate: true,

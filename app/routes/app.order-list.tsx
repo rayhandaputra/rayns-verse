@@ -20,6 +20,7 @@ import {
   Loader2,
   ExternalLink,
   Share2Icon,
+  QrCode,
 } from "lucide-react";
 import NotaView from "../components/NotaView";
 import {
@@ -327,6 +328,53 @@ export default function OrderList() {
     }
   };
 
+  const handleCopyImageQrCode = async (order: any) => {
+    if (isProcessingShare !== null) return;
+
+    try {
+      setIsProcessingShare(order.id);
+      setSelectedOrder(order);
+
+      const qrContent = `https://kinau.id/public/drive-link/${order.order_number}`;
+      const qrUrl = await QRCode.toDataURL(qrContent, {
+        width: 400,
+        margin: 2,
+      });
+      setTempQr(qrUrl);
+
+      // Tunggu render template
+      await new Promise((r) => setTimeout(r, 500));
+
+      if (!cardRef.current) throw new Error("Template ref is not ready");
+
+      const captureOptions = {
+        pixelRatio: 2, // Untuk clipboard, ratio 2 sudah cukup agar tidak terlalu berat
+        skipFonts: true,
+        cacheBust: true,
+      };
+
+      // 1. Generate Blob dari elemen
+      const blob = await toBlob(cardRef.current, captureOptions);
+      if (!blob) throw new Error("Gagal membuat gambar");
+
+      // 2. Gunakan Clipboard API untuk menyalin Blob
+      if (navigator.clipboard && window.ClipboardItem) {
+        const data = [new ClipboardItem({ [blob.type]: blob })];
+        await navigator.clipboard.write(data);
+        toast.success("Gambar berhasil disalin ke clipboard!");
+      } else {
+        throw new Error("Browser tidak mendukung copy gambar");
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Gagal menyalin gambar: " + (error.message || ""));
+    } finally {
+      setIsProcessingShare(null);
+      setTempQr("");
+      setSelectedOrder(null);
+    }
+  };
+
   const handleSubmitPaymentProof = (e: any) => {
     e.preventDefault();
     submitAction({
@@ -590,45 +638,55 @@ export default function OrderList() {
             //     </button>
             //   </div>
             // </div>
-            <div className="flex items-center whitespace-nowrap gap-2">
-              {/* Aksi 1: Buka Link Publik */}
-              <a
-                href={`/public/drive-link/${order.order_number}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-[10px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-1 hover:bg-blue-100 shadow-sm transition w-fit"
-              >
-                <ExternalLink size={10} /> Buka Link
-              </a>
+            <div className="flex flex-col">
+              <div className="flex items-center whitespace-nowrap gap-2">
+                <button
+                  onClick={() => handleCopyImageQrCode(order)}
+                  className="flex items-center gap-1 text-[10px] font-medium text-gray-700 bg-white border border-gray-200 rounded px-2 py-1 hover:bg-gray-50 shadow-sm transition w-fit"
+                >
+                  <QrCode size={10} /> Salin QR
+                </button>
 
-              {/* Aksi 2: Copy Link Publik */}
-              <button
-                onClick={() =>
-                  copyToClipboard(
-                    `kinau.id/public/drive-link/${order.order_number}`
-                  )
-                }
-                className="flex items-center gap-1 text-[10px] font-medium text-gray-700 bg-white border border-gray-200 rounded px-2 py-1 hover:bg-gray-50 shadow-sm transition w-fit"
-              >
-                <Copy size={10} /> Salin
-              </button>
-              <button
-                title="Share Link"
-                // Gunakan perbandingan langsung tanpa tanda + jika ID sudah pasti angka/string
-                disabled={isProcessingShare === order.id}
-                onClick={() => handleShare(order)}
-                className={`p-1.5 rounded transition flex items-center justify-center min-w-[32px] ${
-                  isProcessingShare === order.id
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
-                }`}
-              >
-                {isProcessingShare === order.id ? (
-                  <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Share2Icon size={16} />
-                )}
-              </button>
+                {/* Aksi 2: Copy Link Publik */}
+                <button
+                  onClick={() =>
+                    copyToClipboard(
+                      `kinau.id/public/drive-link/${order.order_number}`
+                    )
+                  }
+                  className="flex items-center gap-1 text-[10px] font-medium text-gray-700 bg-white border border-gray-200 rounded px-2 py-1 hover:bg-gray-50 shadow-sm transition w-fit"
+                >
+                  <Copy size={10} /> Salin
+                </button>
+              </div>
+              <div className="flex items-center whitespace-nowrap gap-2">
+                {/* Aksi 1: Buka Link Publik */}
+                <a
+                  href={`/public/drive-link/${order.order_number}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[10px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-1 hover:bg-blue-100 shadow-sm transition w-fit"
+                >
+                  <ExternalLink size={10} /> Buka Link
+                </a>
+                <button
+                  title="Share Link"
+                  // Gunakan perbandingan langsung tanpa tanda + jika ID sudah pasti angka/string
+                  disabled={isProcessingShare === order.id}
+                  onClick={() => handleShare(order)}
+                  className={`p-1.5 rounded transition flex items-center justify-center min-w-[32px] ${
+                    isProcessingShare === order.id
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
+                  }`}
+                >
+                  {isProcessingShare === order.id ? (
+                    <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Share2Icon size={16} />
+                  )}
+                </button>
+              </div>
             </div>
           ) : (
             "Arsip"

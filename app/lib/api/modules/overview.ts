@@ -423,10 +423,31 @@ export const OverviewAPI = {
               WHERE payment_status = 'paid' AND deleted_on IS NULL 
               ORDER BY total_amount DESC LIMIT 1) AS highest_order`,
             `(SELECT COALESCE(SUM(grand_total), 0) / COUNT(id) FROM orders WHERE deleted_on IS NULL) AS avg_order_value`,
+            // `(
+            //   SELECT JSON_ARRAYAGG(
+            //     JSON_OBJECT(
+            //       'institution_name', top_ten.institution_name,
+            //       'freq', top_ten.freq,
+            //       'total_sales', top_ten.total_sales
+            //     )
+            //   )
+            //   FROM (
+            //     SELECT
+            //       institution_id,
+            //       institution_name,
+            //       COUNT(id) AS freq,
+            //       SUM(total_amount) AS total_sales
+            //     FROM orders
+            //     WHERE deleted_on IS NULL
+            //     GROUP BY institution_id, kkn_period, kkn_year
+            //     ORDER BY total_sales DESC
+            //     LIMIT 10
+            //   ) AS top_ten
+            // ) AS institution_ranks`,
             `(
               SELECT JSON_ARRAYAGG(
                 JSON_OBJECT(
-                  'institution_name', top_ten.institution_name,
+                  'institution_name', top_ten.display_name,
                   'freq', top_ten.freq,
                   'total_sales', top_ten.total_sales
                 )
@@ -434,12 +455,17 @@ export const OverviewAPI = {
               FROM (
                 SELECT 
                   institution_id, 
-                  institution_name, 
+                  -- Logika penambahan teks periode
+                  CASE 
+                    WHEN kkn_period IS NOT NULL AND kkn_period != '' AND kkn_period != '0'
+                    THEN CONCAT(institution_name, ' Periode ', kkn_period)
+                    ELSE institution_name 
+                  END AS display_name,
                   COUNT(id) AS freq,
                   SUM(total_amount) AS total_sales
                 FROM orders
                 WHERE deleted_on IS NULL
-                GROUP BY institution_id
+                GROUP BY institution_id, kkn_period, kkn_year, institution_name
                 ORDER BY total_sales DESC
                 LIMIT 10
               ) AS top_ten

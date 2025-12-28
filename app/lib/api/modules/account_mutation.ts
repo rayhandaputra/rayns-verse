@@ -35,7 +35,7 @@ export const AccountMutationAPI = {
           deleted_on: "null",
           ...(group_type ? { group_type } : {}),
           ...(account_code ? { account_code } : {}),
-          ...(year ? { "year:created_on": parseInt(year) } : {}),
+          ...(year ? { "year:trx_code": parseInt(year) } : {}),
           ...(id ? { id } : {}),
         },
         search,
@@ -55,7 +55,12 @@ export const AccountMutationAPI = {
             alias: "orders",
             foreign_key: "order_number",
             reference_key: "trx_code",
-            columns: ["institution_name", "pic_name", "total_amount"],
+            columns: [
+              "institution_name",
+              "pic_name",
+              "total_amount",
+              "is_archive",
+            ],
           },
           {
             table: "order_items",
