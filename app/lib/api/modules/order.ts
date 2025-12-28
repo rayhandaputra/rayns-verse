@@ -188,7 +188,7 @@ export const OrderAPI = {
   // ✅ CREATE ORDER
   // ================================
   create: async ({ req }: any) => {
-    const {
+    let {
       institution_id = null,
       institution_name = null,
       institution_abbr = null,
@@ -208,7 +208,7 @@ export const OrderAPI = {
       is_sponsor = 0,
       is_kkn = 0,
       is_archive = 0,
-      kkn_source = "",
+      kkn_source = "kkn_itera",
       kkn_type = "",
       kkn_detail = "",
       tax_percent = 0,
@@ -232,6 +232,33 @@ export const OrderAPI = {
     //     message: "institution_id dan institution_name wajib diisi",
     //   };
     // }
+
+    const formatKknSource = (source: string): string => {
+      if (!source) return "";
+
+      // Menghapus underscore, menggantinya dengan spasi, lalu mengubah ke Huruf Kapital Semua
+      return source.replace(/_/g, " ").toUpperCase();
+    };
+
+    if (+is_kkn > 0 && kkn_source) {
+      const kkn = await APIProvider({
+        endpoint: "select",
+        method: "POST",
+        table: "institutions",
+        action: "select",
+        body: {
+          columns: ["id", "name", "abbr"],
+          where: {
+            abbr: kkn_source,
+          },
+        },
+      });
+      institution_id = !kkn?.items?.[0] ? null : kkn?.items?.[0]?.id;
+      institution_name = !kkn?.items?.[0]
+        ? formatKknSource(kkn_source)
+        : kkn?.items?.[0]?.name;
+      institution_abbr = !kkn?.items?.[0] ? kkn_source : kkn?.items?.[0]?.abbr;
+    }
 
     // ✅ Generate nomor order
     const generateOrderNumber = () => {
@@ -324,6 +351,7 @@ export const OrderAPI = {
           body: {
             data: {
               name: institution_name,
+              abbr: institution_abbr,
               created_on: new Date().toISOString(),
             },
           },

@@ -418,20 +418,50 @@ export const formatFullDate = (dateStr: string) => {
   });
 };
 
+// export const getKKNPeriod = () => {
+//   const now = new Date();
+//   const month = now.getMonth(); // 0-11
+//   const year = now.getFullYear();
+
+//   // Logic:
+//   // Juli(6) - Agustus(7) -> Periode 1
+//   // Desember(11) - Januari(0) -> Periode 2
+
+//   if (month >= 5 && month <= 8) {
+//     return { period: "1", year: String(year) };
+//   } else {
+//     const targetYear = month === 11 ? year + 1 : year;
+//     return { period: "2", year: String(targetYear) };
+//   }
+// };
 export const getKKNPeriod = () => {
   const now = new Date();
   const month = now.getMonth(); // 0-11
   const year = now.getFullYear();
 
-  // Logic:
-  // Juli(6) - Agustus(7) -> Periode 1
-  // Desember(11) - Januari(0) -> Periode 2
+  /**
+   * Logika Pembagian:
+   * Februari (1) s/d Agustus (7) -> Masuk Periode 2 (Tahun berjalan)
+   * September (8) s/d Januari (0) -> Masuk Periode 1 (Tahun Januari)
+   */
 
-  if (month >= 5 && month <= 8) {
-    return { period: "1", year: String(year) };
+  if (month >= 1 && month <= 7) {
+    // Range Februari sampai Agustus
+    return {
+      period: "2",
+      year: String(year),
+      label: `KKN ITERA ${year} - PERIODE 2`,
+    };
   } else {
-    const targetYear = month === 11 ? year + 1 : year;
-    return { period: "2", year: String(targetYear) };
+    // Range September sampai Januari (Periode 1)
+    // Jika sekarang bulan Sept-Des (8-11), maka tahun Januari-nya adalah tahun depan
+    const targetYear = month >= 8 ? year + 1 : year;
+
+    return {
+      period: "1",
+      year: String(targetYear),
+      label: `KKN ITERA ${targetYear} - PERIODE 1`,
+    };
   }
 };
 

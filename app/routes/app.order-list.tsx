@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import type { Order } from "../types";
 import {
   ADMIN_WA,
@@ -19,6 +19,7 @@ import {
   Image,
   Loader2,
   ExternalLink,
+  Share2Icon,
 } from "lucide-react";
 import NotaView from "../components/NotaView";
 import {
@@ -49,6 +50,9 @@ import Swal from "sweetalert2";
 import ModalSecond from "~/components/modal/ModalSecond";
 import { Button } from "~/components/ui/button";
 import { dateFormat } from "~/lib/dateFormatter";
+import { toBlob, toPng } from "html-to-image";
+import QRCode from "qrcode";
+import OrderShareCard from "~/components/print/order/OrderShareTemplate";
 
 export const loader: LoaderFunction = async ({ request }) => {
   // Only check authentication
@@ -236,6 +240,88 @@ export default function OrderList() {
     method: "POST",
     autoLoad: false,
   });
+
+  // ... di dalam komponen utama
+  const cardRef = useRef(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [tempQr, setTempQr] = useState("");
+  const [isProcessingShare, setIsProcessingShare] = useState<number | null>(
+    null
+  );
+
+  const handleShare = async (order: any) => {
+    // Pastikan ID valid sebelum membandingkan
+    if (isProcessingShare !== null) return;
+
+    try {
+      setIsProcessingShare(order.id);
+      setSelectedOrder(order);
+
+      const qrContent = `https://kinau.id/public/drive-link/${order.order_number}`;
+
+      // 1. Generate QR Code (Ini cepat karena library lokal)
+      const qrUrl = await QRCode.toDataURL(qrContent, {
+        width: 400,
+        margin: 2,
+      });
+      setTempQr(qrUrl);
+
+      // 2. TUNGGU LEBIH LAMA (PENTING!)
+      // Render state di React butuh waktu, apalagi jika ada image tag (QR)
+      await new Promise((r) => setTimeout(r, 500));
+
+      if (!cardRef.current) {
+        throw new Error("Template ref is not ready");
+      }
+
+      // 3. Opsi Capture (Pindahkan ke sini agar Error CSS hilang)
+      const captureOptions = {
+        pixelRatio: 3,
+        cacheBust: true,
+        skipFonts: true, // INI yang menghentikan error Security CSS Rules
+        style: {
+          fontFamily: "sans-serif",
+        },
+      };
+
+      if (navigator.share) {
+        // --- LOGIC MOBILE ---
+        const blob = await toBlob(cardRef.current, captureOptions);
+        if (!blob) throw new Error("Gagal membuat file gambar");
+
+        const file = new File([blob], `Order-${order.order_number}.png`, {
+          type: "image/png",
+        });
+
+        await navigator.share({
+          files: [file],
+          title: `Link Order ${order.institution_name}`,
+          text: `Dokumen Drive: ${order.institution_name}`,
+        });
+        toast.success("Berhasil dibagikan");
+      } else {
+        // --- LOGIC DESKTOP ---
+        const dataUrl = await toPng(cardRef.current, captureOptions);
+        const link = document.createElement("a");
+        link.download = `QR-${order.institution_name}.png`;
+        link.href = dataUrl;
+        link.click();
+
+        navigator.clipboard.writeText(qrContent);
+        toast.success("Link disalin & QR didownload");
+      }
+    } catch (error: any) {
+      if (error.name !== "AbortError") {
+        console.error(error);
+        toast.error("Gagal memproses gambar");
+      }
+    } finally {
+      setIsProcessingShare(null);
+      // Membersihkan state setelah selesai agar memori lega
+      setTempQr("");
+      setSelectedOrder(null);
+    }
+  };
 
   const handleSubmitPaymentProof = (e: any) => {
     e.preventDefault();
@@ -521,6 +607,23 @@ export default function OrderList() {
                 className="flex items-center gap-1 text-[10px] font-medium text-gray-700 bg-white border border-gray-200 rounded px-2 py-1 hover:bg-gray-50 shadow-sm transition w-fit"
               >
                 <Copy size={10} /> Salin
+              </button>
+              <button
+                title="Share Link"
+                // Gunakan perbandingan langsung tanpa tanda + jika ID sudah pasti angka/string
+                disabled={isProcessingShare === order.id}
+                onClick={() => handleShare(order)}
+                className={`p-1.5 rounded transition flex items-center justify-center min-w-[32px] ${
+                  isProcessingShare === order.id
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
+                }`}
+              >
+                {isProcessingShare === order.id ? (
+                  <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Share2Icon size={16} />
+                )}
               </button>
             </div>
           ) : (
@@ -824,6 +927,8 @@ export default function OrderList() {
         }}
         className="mt-auto"
       />
+
+      <OrderShareCard order={selectedOrder} qrCodeUrl={tempQr} ref={cardRef} />
 
       {/* Upload Payment Modal with Bank Selection */}
       {modal?.type === "upload_payment_proof" && (

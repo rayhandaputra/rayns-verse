@@ -50,6 +50,7 @@
     "embla-carousel-react": "^8.6.0",
     "firebase": "^12.1.0",
     "framer-motion": "^12.23.12",
+    "html-to-image": "^1.11.13",
     "input-otp": "^1.4.2",
     "iron": "^5.0.6",
     "iron-session": "^8.0.4",
