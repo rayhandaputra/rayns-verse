@@ -63,7 +63,14 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       req: {
         query: {
           // order_number: domain,
-          institution_domain: domain,
+          ...(!domain?.includes("ORD")
+            ? {
+                institution_domain: domain,
+              }
+            : {
+                order_number: domain,
+              }),
+
           size: 1,
         },
       },

@@ -1,6 +1,11 @@
 import React, { useState, useMemo, useEffect } from "react";
 import type { Order } from "../types";
-import { formatCurrency, formatFullDate, getWhatsAppLink } from "../constants";
+import {
+  ADMIN_WA,
+  formatCurrency,
+  formatFullDate,
+  getWhatsAppLink,
+} from "../constants";
 import {
   Check,
   Trash2,
@@ -13,6 +18,7 @@ import {
   Upload,
   Image,
   Loader2,
+  ExternalLink,
 } from "lucide-react";
 import NotaView from "../components/NotaView";
 import {
@@ -351,7 +357,9 @@ export default function OrderList() {
               )}
             </div> */}
             <div className="font-bold text-gray-900 flex items-center gap-2">
-              {order.institution_name}
+              {+(order?.is_kkn ?? 0) === 1
+                ? `${order?.kkn_type?.toLowerCase() === "ppm" ? "Kelompok" : "Desa"} ${safeParseObject(order?.kkn_detail)?.value}`
+                : order.institution_name}
               {+(order?.is_sponsor ?? 0) === 1 && (
                 <span
                   title="Sponsor / Kerja Sama"
@@ -362,7 +370,18 @@ export default function OrderList() {
               )}
             </div>
             <div className="text-xs text-gray-500">
-              {order.pic_name || "-"} ({order.pic_phone || "-"})
+              {order.pic_name || "-"}{" "}
+              <a
+                className="text-blue-600 hover:underline"
+                href={getWhatsAppLink(
+                  order.pic_phone || "",
+                  `Halo ${order.pic_name}, saya ingin bertanya tentang pemesanan ${order.order_number}`
+                )}
+                target="_blank"
+                rel="noreferrer"
+              >
+                ({order.pic_phone || "-"})
+              </a>
             </div>
           </>
         ),
@@ -436,7 +455,7 @@ export default function OrderList() {
       {
         key: "link",
         header: "Folder",
-        cellClassName: "max-w-[120px]",
+        cellClassName: "max-w-[220px]",
         cell: (order) =>
           +order?.is_archive !== 1 ? (
             // <div className="flex flex-col gap-2">
@@ -451,35 +470,58 @@ export default function OrderList() {
             //     <span className="text-xs text-gray-400 italic">-</span>
             //   )}
             // </div>
-            <div className="flex flex-col gap-2">
-              {order.drive_folder_id ? (
-                <button
-                  onClick={() => onOpenDrive(order.drive_folder_id!)}
-                  className="flex items-center gap-1 text-[10px] font-medium text-gray-700 bg-white border border-gray-200 rounded px-2 py-1 hover:bg-gray-50 shadow-sm w-fit"
-                >
-                  <FolderOpen size={10} className="text-yellow-500" /> Buka
-                </button>
-              ) : (
-                "-"
-              )}
-              <div className="flex items-center gap-1 group">
-                <a
-                  href={`/public/drive-link/${order.institution_domain}`}
-                  className="truncate text-blue-600 hover:underline text-[10px] font-mono w-16"
-                >
-                  link
-                </a>
-                <button
-                  onClick={() =>
-                    copyToClipboard(
-                      "kinau.id/public/drive-link/" + order.institution_domain
-                    )
-                  }
-                  className="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition"
-                >
-                  <Copy size={10} />
-                </button>
-              </div>
+            // <div className="flex flex-col gap-2">
+            //   {order.drive_folder_id ? (
+            //     <button
+            //       onClick={() => onOpenDrive(order.drive_folder_id!)}
+            //       className="flex items-center gap-1 text-[10px] font-medium text-gray-700 bg-white border border-gray-200 rounded px-2 py-1 hover:bg-gray-50 shadow-sm w-fit"
+            //     >
+            //       <FolderOpen size={10} className="text-yellow-500" /> Buka
+            //     </button>
+            //   ) : (
+            //     "-"
+            //   )}
+            //   <div className="flex items-center gap-1 group">
+            //     <a
+            //       href={`/public/drive-link/${order.order_number}`}
+            //       className="truncate text-blue-600 hover:underline text-[10px] font-mono w-16"
+            //     >
+            //       link
+            //     </a>
+            //     <button
+            //       onClick={() =>
+            //         copyToClipboard(
+            //           "kinau.id/public/drive-link/" + order.order_number
+            //         )
+            //       }
+            //       className="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition"
+            //     >
+            //       <Copy size={10} />
+            //     </button>
+            //   </div>
+            // </div>
+            <div className="flex items-center whitespace-nowrap gap-2">
+              {/* Aksi 1: Buka Link Publik */}
+              <a
+                href={`/public/drive-link/${order.order_number}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-[10px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-1 hover:bg-blue-100 shadow-sm transition w-fit"
+              >
+                <ExternalLink size={10} /> Buka Link
+              </a>
+
+              {/* Aksi 2: Copy Link Publik */}
+              <button
+                onClick={() =>
+                  copyToClipboard(
+                    `kinau.id/public/drive-link/${order.order_number}`
+                  )
+                }
+                className="flex items-center gap-1 text-[10px] font-medium text-gray-700 bg-white border border-gray-200 rounded px-2 py-1 hover:bg-gray-50 shadow-sm transition w-fit"
+              >
+                <Copy size={10} /> Salin
+              </button>
             </div>
           ) : (
             "Arsip"

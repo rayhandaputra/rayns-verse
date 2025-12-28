@@ -309,7 +309,7 @@ export const OrderAPI = {
         ? JSON.stringify(created_by)
         : null,
       // created_on: moment().subtract(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
-      created_on: moment().format("YYYY-MM-DD HH:mm:ss"),
+      created_on: moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
       modified_on: null,
     };
 

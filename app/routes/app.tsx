@@ -313,7 +313,13 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
           </div>
         </div> */}
         <div className="flex items-center gap-3">
-          <div>
+          <button
+            onClick={() => sidebar.setMobileMenuOpen(true)}
+            className="lg:hidden p-2 -ml-2 text-gray-500"
+          >
+            <Menu size={24} />
+          </button>
+          <div className="hidden md:block">
             <h2 className="text-xl font-bold text-gray-800 leading-tight flex items-center gap-2">
               {getGreeting()}, {currentUser?.name}
               <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
