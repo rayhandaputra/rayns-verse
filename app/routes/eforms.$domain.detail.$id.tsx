@@ -227,7 +227,7 @@ const EFormDomainPage: React.FC = () => {
               file_type: type as any,
               // file_type: "front",
               file_url: response.url,
-              file_name: file.name,
+              file_name: response.original_name,
             },
           ],
         };

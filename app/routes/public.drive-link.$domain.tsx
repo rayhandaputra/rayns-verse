@@ -370,7 +370,7 @@ export default function PublicDriveLinkPage() {
         const newFilePayload = {
           file_type: mime,
           file_url: uploadRes.url,
-          file_name: uploadRes.filename,
+          file_name: uploadRes.original_name,
           folder_id: currentFolderId || orderData?.drive_folder_id || null,
           level: currentFolderId ? 2 : 1,
           order_number: orderData?.order_number, // Associate with order_number
@@ -540,6 +540,7 @@ export default function PublicDriveLinkPage() {
             ref={fileInputRef}
             className="hidden"
             onChange={handleFileChange}
+            accept="*/*"
           />
 
           {/* Toolbar */}

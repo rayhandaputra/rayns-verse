@@ -420,7 +420,7 @@ export default function DriveInternalPage() {
         const newFilePayload = {
           file_type: mime,
           file_url: uploadRes.url,
-          file_name: file.name,
+          file_name: uploadRes.original_name,
           folder_id: currentFolderId || null,
           level: currentFolderId ? 2 : 1,
           order_number: null,

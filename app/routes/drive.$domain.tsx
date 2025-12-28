@@ -198,7 +198,7 @@ export default function DrivePage() {
       const newFile = {
         file_type: file.type || "application/octet-stream", // Use actual file type or a default
         file_url: response.url,
-        file_name: file.name,
+        file_name: response.original_name,
         folder_id: folderId,
         order_number: order?.order_number, // Assuming order_number is needed for file association
         product_id: detail?.product_id, // Assuming product_id is needed

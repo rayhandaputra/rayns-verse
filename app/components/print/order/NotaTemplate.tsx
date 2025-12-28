@@ -67,7 +67,7 @@ export const PrintNotaTemplate = React.forwardRef<
             )}
           </div>
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-start mb-2">
               <div>
                 <h3 className="text-[10px] font-bold text-gray-400 uppercase mb-1">
                   Deadline
@@ -76,11 +76,25 @@ export const PrintNotaTemplate = React.forwardRef<
                   {formatFullDate(order?.deadline)}
                 </p>
               </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase mb-1">
+                  Status Pembayaran
+                </h3>
+                <span
+                  className={`text-xs font-bold px-2 py-1 ${order?.status === "paid" ? "bg-green-500" : order?.status === "down_payment" ? "bg-yellow-500" : "bg-red-500"} text-white rounded uppercase`}
+                >
+                  {getPaymentStatusLabel(order?.payment_status ?? "none")}
+                </span>
+              </div>
               <div className="text-right">
                 <h3 className="text-[10px] font-bold text-gray-400 uppercase mb-1">
                   Status
                 </h3>
-                <span className="text-xs font-bold px-2 py-1 bg-gray-200 rounded uppercase">
+                <span
+                  className={`text-xs font-bold px-2 py-1 ${order?.status === "done" ? "bg-green-500 text-white" : order?.status === "pending" ? "bg-yellow-500 text-white" : order?.status === "confirmed" ? "bg-blue-500 text-white" : order?.status === "none" ? "bg-red-500 text-white" : "bg-gray-200 text-gray-600"} rounded uppercase`}
+                >
                   {getOrderStatusLabel(order?.status ?? "none")}
                 </span>
               </div>

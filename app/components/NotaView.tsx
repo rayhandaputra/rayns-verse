@@ -70,9 +70,10 @@ const NotaView: React.FC<NotaViewProps> = ({
       .build(),
   });
 
-  const headerBackground = (safeParseArray(
-    cmsContentData?.data?.items?.[0]?.image_gallery
-  )?.[0] as string) || "";
+  const headerBackground =
+    (safeParseArray(
+      cmsContentData?.data?.items?.[0]?.image_gallery
+    )?.[0] as string) || "";
 
   useEffect(() => {
     setClient(true);
@@ -188,8 +189,12 @@ const NotaView: React.FC<NotaViewProps> = ({
                 <span className="block text-gray-400 text-xs mb-1">
                   Status Produksi
                 </span>
-                <span className="font-bold text-sm capitalize bg-gray-200 px-2 py-1 rounded print:bg-transparent print:p-0 print:border print:border-gray-300">
-                  {getOrderStatusLabel(order.status || order.statusPengerjaan || "")}
+                <span
+                  className={`font-bold text-sm capitalize ${order?.status === "confirmed" ? "bg-blue-500 text-white" : order?.status === "pending" ? "bg-yellow-500 text-white" : order?.status === "done" ? "bg-green-500 text-white" : "bg-gray-200 text-gray-600"} px-2 py-1 rounded print:bg-transparent print:p-0 print:border print:border-gray-300`}
+                >
+                  {getOrderStatusLabel(
+                    order.status || order.statusPengerjaan || ""
+                  )}
                 </span>
               </div>
               <div>
@@ -201,7 +206,7 @@ const NotaView: React.FC<NotaViewProps> = ({
                     className={`font-bold text-sm px-2 py-1 rounded print:bg-transparent print:p-0 print:text-black print:border print:border-gray-300 ${
                       order.payment_status === "paid"
                         ? "bg-green-100 text-green-700"
-                        : order.payment_status === "partial"
+                        : order.payment_status === "down_payment"
                           ? "bg-yellow-100 text-yellow-700"
                           : "bg-red-100 text-red-600"
                     }`}
@@ -227,60 +232,63 @@ const NotaView: React.FC<NotaViewProps> = ({
           </div>
         </div>
 
-      {/* Items Table */}
-      <div className="mb-6">
-        <table className="w-full text-sm">
-          <thead className="border-b border-gray-200">
-            <tr>
-              <th className="text-left py-2 font-semibold text-gray-600">
-                Produk
-              </th>
-              <th className="text-right py-2 font-semibold text-gray-600">
-                Qty
-              </th>
-              <th className="text-right py-2 font-semibold text-gray-600">
-                Harga
-              </th>
-              <th className="text-right py-2 font-semibold text-gray-600">
-                Total
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {safeParseArray(order?.order_items)?.map((item: any) => (
+        {/* Items Table */}
+        <div className="mb-6">
+          <table className="w-full text-sm">
+            <thead className="border-b border-gray-200">
               <tr>
-                <td className="py-3">
-                  <div className="font-medium flex flex-col">
-                    <span>{item.product_name}</span>
+                <th className="text-left py-2 font-semibold text-gray-600">
+                  Produk
+                </th>
+                <th className="text-right py-2 font-semibold text-gray-600">
+                  Qty
+                </th>
+                <th className="text-right py-2 font-semibold text-gray-600">
+                  Harga
+                </th>
+                <th className="text-right py-2 font-semibold text-gray-600">
+                  Total
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {safeParseArray(order?.order_items)?.map((item: any) => (
+                <tr>
+                  <td className="py-3">
+                    <div className="font-medium flex flex-col">
+                      <span>{item.product_name}</span>
 
-                    {item.variant_name && (
-                      <span className="text-gray-500 font-normal text-xs">
-                        ({item.variant_name})
-                      </span>
-                    )}
+                      {item.variant_name && (
+                        <span className="text-gray-500 font-normal text-xs">
+                          ({item.variant_name})
+                        </span>
+                      )}
 
-                    {/* {item.variant_price && item.variant_price > 0 && (
+                      {/* {item.variant_price && item.variant_price > 0 && (
                       <span className="text-xs text-emerald-600 font-medium">
                         + {formatCurrency(item.variant_price)} / pcs
                       </span>
                     )} */}
-                  </div>
-                </td>
+                    </div>
+                  </td>
 
-                <td className="py-3 text-right">{item.qty}</td>
-                <td className="py-3 text-right">
-                  {/* {formatCurrency(item.unit_price)} */}
-                  {formatCurrency(item?.price_rule_value ?? 0)}
-                </td>
-                <td className="py-3 text-right font-medium">
-                  {/* {formatCurrency(item.subtotal)} */}
-                  {formatCurrency(item?.variant_final_price ?? 0)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  <td className="py-3 text-right">{item.qty}</td>
+                  <td className="py-3 text-right">
+                    {/* {formatCurrency(item.unit_price)} */}
+                    {formatCurrency(
+                      +(item?.price_rule_value ?? 0) +
+                        +(item?.variant_price ?? 0)
+                    )}
+                  </td>
+                  <td className="py-3 text-right font-medium">
+                    {/* {formatCurrency(item.subtotal)} */}
+                    {formatCurrency(item?.variant_final_price ?? 0)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         {/* Totals */}
         <div className="flex justify-end mb-8">
@@ -330,7 +338,10 @@ const NotaView: React.FC<NotaViewProps> = ({
                       i < rating ? "text-yellow-400" : "text-gray-300"
                     } cursor-pointer hover:scale-110`}
                   >
-                    <Star size={24} fill={i < rating ? "currentColor" : "none"} />
+                    <Star
+                      size={24}
+                      fill={i < rating ? "currentColor" : "none"}
+                    />
                   </button>
                 ))}
               </div>
@@ -395,7 +406,7 @@ const NotaView: React.FC<NotaViewProps> = ({
 
         {/* Print & View Proof Row */}
         <div className="grid grid-cols-2 gap-3 mb-4 no-print">
-          {(order?.dp_payment_proof || order?.payment_proof) ? (
+          {order?.dp_payment_proof || order?.payment_proof ? (
             <button
               type="button"
               onClick={() => setProofModalOpen(true)}
