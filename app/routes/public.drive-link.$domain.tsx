@@ -611,7 +611,8 @@ export default function PublicDriveLinkPage() {
             ref={fileInputRef}
             className="hidden"
             onChange={handleFileChange}
-            accept="*/*"
+            // accept="*/*"
+            accept="*/*,application/pdf,application/msword"
             multiple
           />
 
