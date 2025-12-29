@@ -527,13 +527,13 @@ export default function OrderList() {
       {
         key: "jenisPesanan",
         header: "Nama Item",
-        cellClassName: "max-w-[150px]",
+        cellClassName: "max-w-[200px]",
         cell: (order) => (
-          <ul className="list-disc list-inside text-xs text-gray-600">
+          <ul className="list-disc list-inside text-xs text-gray-600 break-words whitespace-normal">
             {safeParseArray(order.order_items)?.length > 0
-              ? safeParseArray(order.order_items)?.map(
+              ? safeParseArray(order.order_items).map(
                   (item: any, idx: number) => (
-                    <li key={idx} className="truncate">
+                    <li key={idx}>
                       {item.product_name} ({item.qty})
                     </li>
                   )
@@ -545,17 +545,19 @@ export default function OrderList() {
       {
         key: "jumlah",
         header: "Jumlah",
-        cellClassName:
-          "whitespace-nowrap text-center text-sm font-medium text-gray-900",
+        cellClassName: "text-center text-sm font-medium text-gray-900",
         cell: (order) => (
-          <span>
-            {
-              safeParseArray(order.order_items)?.reduce(
-                (acc: number, item: any) => acc + +item?.qty,
-                0
-              ) as any
-            }
-          </span>
+          <div className="space-y-1">
+            {safeParseArray(order.order_items)?.length > 0
+              ? safeParseArray(order.order_items).map(
+                  (item: any, idx: number) => (
+                    <div key={idx}>
+                      Item {idx + 1} = {item?.qty ?? 0}
+                    </div>
+                  )
+                )
+              : "-"}
+          </div>
         ),
       },
       {

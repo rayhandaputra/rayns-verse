@@ -408,7 +408,7 @@ export const OverviewAPI = {
             `(SELECT SUM(total_amount) FROM orders WHERE deleted_on IS NULL) AS total_order_amount`,
             `(SELECT SUM(total_amount) FROM orders WHERE payment_status = 'paid' AND deleted_on IS NULL) AS total_paid`,
             `(SELECT SUM(dp_amount) FROM orders WHERE payment_status = 'down_payment' AND deleted_on IS NULL) AS total_dp`,
-            `(SELECT SUM(total_amount - dp_amount) FROM orders WHERE payment_status = 'down_payment' AND deleted_on IS NULL) AS total_piutang`,
+            `(SELECT SUM(total_amount - dp_amount) FROM orders WHERE payment_status IN ('down_payment', 'none') AND deleted_on IS NULL) AS total_piutang`,
             `(SELECT COUNT(id) FROM orders WHERE status = 'pending' AND deleted_on IS NULL) AS total_pending`,
             `(SELECT COUNT(id) FROM orders WHERE status = 'confirmed' AND deleted_on IS NULL) AS total_confirmed`,
             `(SELECT COUNT(id) FROM orders WHERE status = 'done' AND deleted_on IS NULL) AS total_done`,
@@ -458,7 +458,7 @@ export const OverviewAPI = {
                   -- Logika penambahan teks periode
                   CASE 
                     WHEN kkn_period IS NOT NULL AND kkn_period != '' AND kkn_period != '0'
-                    THEN CONCAT(institution_name, ' Periode ', kkn_period)
+                    THEN CONCAT(institution_name, ' Periode ', kkn_period, ' Tahun ', kkn_year)
                     ELSE institution_name 
                   END AS display_name,
                   COUNT(id) AS freq,

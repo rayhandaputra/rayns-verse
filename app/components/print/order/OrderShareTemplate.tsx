@@ -127,7 +127,7 @@ const OrderShareCard = forwardRef<HTMLDivElement, OrderShareCardProps>(
                 textOverflow: "ellipsis",
               }}
             >
-              {order?.institution_name || "Pelanggan Kinau"}
+              {order?.pic_name || "Pelanggan Kinau"}
             </h1>
           </div>
 
