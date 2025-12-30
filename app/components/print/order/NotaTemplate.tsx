@@ -62,7 +62,9 @@ export const PrintNotaTemplate = React.forwardRef<
             </p>
             {order?.pic_name && (
               <p className="text-sm text-gray-600">
-                PJ: {order?.pic_name} ({order?.pic_phone})
+                {+order?.is_personal !== 1
+                  ? `PJ: ${order?.pic_name} (${order?.pic_phone})`
+                  : order?.pic_phone}
               </p>
             )}
           </div>
@@ -143,7 +145,9 @@ export const PrintNotaTemplate = React.forwardRef<
                 </td>
                 <td className="py-4 text-right text-sm">{item.qty}</td>
                 <td className="py-4 text-right text-sm">
-                  {formatCurrency(item.price_rule_value)}
+                  {formatCurrency(
+                    +(item?.price_rule_value ?? 0) + +(item?.variant_price ?? 0)
+                  )}
                 </td>
                 <td className="py-4 text-right font-bold text-sm">
                   {formatCurrency(item.variant_final_price)}
