@@ -131,7 +131,7 @@ export const action: ActionFunction = async ({ request }) => {
           id: user?.id,
           fullname: user?.fullname,
         },
-        is_pesonal: payload?.instansiMode === "perorangan" ? 1 : 0,
+        is_personal: payload?.instansiMode === "perorangan" ? 1 : 0,
         kkn_period: payload?.kknDetails?.periode ?? 1,
         kkn_year: payload?.kknDetails?.tahun ?? moment().year(),
       };
