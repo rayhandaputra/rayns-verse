@@ -457,7 +457,7 @@ export const OverviewAPI = {
                   institution_id, 
                   -- Logika penambahan teks periode
                   CASE 
-                    WHEN kkn_period IS NOT NULL AND kkn_period != '' AND kkn_period != '0'
+                    WHEN is_kkn = 1 AND kkn_period IS NOT NULL AND kkn_period != '' AND kkn_period != '0'
                     THEN CONCAT(institution_name, ' ', kkn_year, ' - PERIODE ', kkn_period)
                     ELSE institution_name 
                   END AS display_name,

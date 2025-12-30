@@ -872,21 +872,22 @@ export default function OrderList() {
         cellClassName: "text-center",
         cell: (order) => (
           <div className="flex justify-center gap-2 relative">
-            <button
-              title="Nota"
-              disabled={+order?.is_archive === 1}
-              onClick={() =>
-                setModal({
-                  ...modal,
-                  open: true,
-                  type: "view_nota",
-                  data: order,
-                })
-              }
-              className="p-1.5 text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition"
-            >
-              <FileText size={16} />
-            </button>
+            {+order?.is_archive !== 1 ? (
+              <button
+                title="Nota"
+                onClick={() =>
+                  setModal({
+                    ...modal,
+                    open: true,
+                    type: "view_nota",
+                    data: order,
+                  })
+                }
+                className="p-1.5 text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition"
+              >
+                <FileText size={16} />
+              </button>
+            ) : ("")}
             {/* <button
               title="Selesai"
               onClick={() => onMarkDone(order.id)}

@@ -897,14 +897,14 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
         <div className="bg-white p-0 rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
           <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
             <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <BarChart2 size={20} /> Ranking Instansi
+              <BarChart2 size={20} /> Ranking Pemesan
             </h3>
           </div>
           <div className="overflow-y-auto max-h-64">
             <table className="w-full text-sm text-left">
               <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0">
                 <tr>
-                  <th className="px-6 py-3">Nama Instansi / Grup</th>
+                  <th className="px-6 py-3">Nama Instansi / Pemesan</th>
                   <th className="px-6 py-3 text-center">Freq</th>
                   <th className="px-6 py-3 text-right">Total Omzet</th>
                 </tr>
