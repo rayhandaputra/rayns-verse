@@ -1046,8 +1046,8 @@ const Header = ({ orderData, domain }: { orderData: any; domain: string }) => {
                   {+orderData?.is_kkn === 1
                     ? `${`${orderData?.kkn_type?.toLowerCase() === "ppm" ? "Kelompok" : "Desa"} ${safeParseObject(orderData?.kkn_detail)?.value}`} - ${orderData?.kkn_source?.split("_")?.join(" ")?.toUpperCase()} ${safeParseObject(orderData?.kkn_detail)?.year ?? ""} - PERIODE ${orderData?.kkn_period}`
                     : +orderData?.is_personal === 1
-                      ? `${orderData?.pic_name} - ${orderData?.order_no}`
-                      : `${orderData?.institution_name || "Shared Drive"} - ${orderData?.order_no}`}
+                      ? `${orderData?.pic_name} (Perorangan)`
+                      : `${orderData?.institution_name || "Shared Drive"} - ${orderData?.order_number}`}
                 </p>
               </div>
             </div>
