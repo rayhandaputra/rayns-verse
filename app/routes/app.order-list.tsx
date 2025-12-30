@@ -460,23 +460,23 @@ export default function OrderList() {
   // Column definitions for DataTable
   const columns: ColumnDef<Order>[] = useMemo(
     () => [
-      {
-        key: "createdAt",
-        header: "No Order",
-        cellClassName: "whitespace-nowrap text-xs text-gray-600 font-medium",
-        cell: (order) => (
-          <div className="flex flex-col">
-            <p className="font-semibold">
-              {+order?.is_archive === 1 ? "Arsip" : order.order_number}
-            </p>
-            {/* <p>
-              {order?.order_date
-                ? moment(order.order_date).format("DD MMM YYYY HH:mm")
-                : "-"}
-            </p> */}
-          </div>
-        ),
-      },
+      // {
+      //   key: "createdAt",
+      //   header: "No Order",
+      //   cellClassName: "whitespace-nowrap text-xs text-gray-600 font-medium",
+      //   cell: (order) => (
+      //     <div className="flex flex-col">
+      //       <p className="font-semibold">
+      //         {+order?.is_archive === 1 ? "Arsip" : order.order_number}
+      //       </p>
+      //       {/* <p>
+      //         {order?.order_date
+      //           ? moment(order.order_date).format("DD MMM YYYY HH:mm")
+      //           : "-"}
+      //       </p> */}
+      //     </div>
+      //   ),
+      // },
       {
         key: "instansi",
         header: "Instansi/Pemesan",
@@ -494,7 +494,7 @@ export default function OrderList() {
                 </span>
               )}
             </div> */}
-            <div className="font-bold text-gray-900 flex items-center gap-2">
+            <div className="font-bold text-gray-900 w-[180px] flex items-center gap-2">
               {+(order?.is_kkn ?? 0) === 1
                 ? `${order?.kkn_type?.toLowerCase() === "ppm" ? "Kelompok" : "Desa"} ${safeParseObject(order?.kkn_detail)?.value}`
                 : order.institution_name}
@@ -529,12 +529,29 @@ export default function OrderList() {
         header: "Nama Item",
         cellClassName: "max-w-[250px]",
         cell: (order) => (
-          <ul className="list-disc list-inside text-xs text-gray-600 break-words whitespace-normal">
+          <ul className="list-disc list-inside w-[180px] text-xs text-gray-600 break-words whitespace-normal">
             {safeParseArray(order.order_items)?.length > 0
               ? safeParseArray(order.order_items).map(
                   (item: any, idx: number) => (
                     <li key={idx}>
-                      {item.product_name} ({item.qty})
+                      {item.product_name}
+                    </li>
+                  )
+                )
+              : "-"}
+          </ul>
+        ),
+      },
+      {
+        key: "item_variant",
+        header: "Varian Item",
+        cell: (order) => (
+          <ul className="list-disc list-inside w-[130px] text-xs text-gray-600 break-words whitespace-normal">
+            {safeParseArray(order.order_items)?.length > 0
+              ? safeParseArray(order.order_items).map(
+                  (item: any, idx: number) => (
+                    <li key={idx}>
+                      {item.variant_name}
                     </li>
                   )
                 )

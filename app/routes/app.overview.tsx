@@ -897,7 +897,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
         <div className="bg-white p-0 rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
           <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
             <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <BarChart2 size={20} /> Ranking Pemesan
+              <BarChart2 size={20} /> Ranking Customer
             </h3>
           </div>
           <div className="overflow-y-auto max-h-64">
