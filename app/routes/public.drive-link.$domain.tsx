@@ -1043,11 +1043,13 @@ const Header = ({ orderData, domain }: { orderData: any; domain: string }) => {
                   Drive File Cetak
                 </h1>
                 <p className="text-sm text-gray-500">
-                  {orderData?.is_kkn
+                  {+orderData?.is_kkn === 1
                     ? `${`${orderData?.kkn_type?.toLowerCase() === "ppm" ? "Kelompok" : "Desa"} ${safeParseObject(orderData?.kkn_detail)?.value}`} - ${orderData?.kkn_source?.split("_")?.join(" ")?.toUpperCase()} ${safeParseObject(orderData?.kkn_detail)?.year ?? ""} - PERIODE ${orderData?.kkn_period}`
-                    : (orderData?.institution_name || "Shared Drive") +
-                      " - " +
-                      domain}
+                    : +orderData?.is_personal === 1
+                      ? orderData?.pic_name
+                      : (orderData?.institution_name || "Shared Drive") +
+                        " - " +
+                        domain}
                 </p>
               </div>
             </div>
