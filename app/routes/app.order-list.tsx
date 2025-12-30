@@ -527,7 +527,7 @@ export default function OrderList() {
       {
         key: "jenisPesanan",
         header: "Nama Item",
-        cellClassName: "max-w-[200px]",
+        cellClassName: "max-w-[250px]",
         cell: (order) => (
           <ul className="list-disc list-inside text-xs text-gray-600 break-words whitespace-normal">
             {safeParseArray(order.order_items)?.length > 0
@@ -551,9 +551,7 @@ export default function OrderList() {
             {safeParseArray(order.order_items)?.length > 0
               ? safeParseArray(order.order_items).map(
                   (item: any, idx: number) => (
-                    <div key={idx}>
-                      Item {idx + 1} = {item?.qty ?? 0}
-                    </div>
+                    <div key={idx}>{item?.qty ?? 0}</div>
                   )
                 )
               : "-"}

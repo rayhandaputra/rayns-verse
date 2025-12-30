@@ -458,7 +458,7 @@ export const OverviewAPI = {
                   -- Logika penambahan teks periode
                   CASE 
                     WHEN kkn_period IS NOT NULL AND kkn_period != '' AND kkn_period != '0'
-                    THEN CONCAT(institution_name, ' Periode ', kkn_period, ' Tahun ', kkn_year)
+                    THEN CONCAT(institution_name, ' ', kkn_year, ' - Periode ', kkn_period)
                     ELSE institution_name 
                   END AS display_name,
                   COUNT(id) AS freq,
