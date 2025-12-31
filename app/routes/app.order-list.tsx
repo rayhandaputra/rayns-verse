@@ -21,6 +21,7 @@ import {
   ExternalLink,
   Share2Icon,
   QrCode,
+  Pencil,
 } from "lucide-react";
 import NotaView from "../components/NotaView";
 import {
@@ -30,6 +31,7 @@ import {
 } from "../components/ui/data-table";
 import {
   useNavigate,
+  useLocation,
   type LoaderFunction,
   type ActionFunction,
 } from "react-router";
@@ -154,6 +156,15 @@ export const action: ActionFunction = async ({ request }) => {
 
 export default function OrderList() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.message) {
+      toast.success(location.state.message);
+      // Clear state to prevent toast from reappearing on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const [viewMode, setViewMode] = useState<"reguler" | "kkn">("reguler");
   const [filterYear, setFilterYear] = useState("");
@@ -533,9 +544,7 @@ export default function OrderList() {
             {safeParseArray(order.order_items)?.length > 0
               ? safeParseArray(order.order_items).map(
                   (item: any, idx: number) => (
-                    <li key={idx}>
-                      {item.product_name}
-                    </li>
+                    <li key={idx}>{item.product_name}</li>
                   )
                 )
               : "-"}
@@ -550,9 +559,7 @@ export default function OrderList() {
             {safeParseArray(order.order_items)?.length > 0
               ? safeParseArray(order.order_items).map(
                   (item: any, idx: number) => (
-                    <li key={idx}>
-                      {item.variant_name}
-                    </li>
+                    <li key={idx}>{item.variant_name}</li>
                   )
                 )
               : "-"}
@@ -904,14 +911,20 @@ export default function OrderList() {
               >
                 <FileText size={16} />
               </button>
-            ) : ("")}
-            {/* <button
-              title="Selesai"
-              onClick={() => onMarkDone(order.id)}
-              className="p-1.5 text-green-600 bg-green-50 rounded hover:bg-green-100 transition"
-            >
-              <Check size={16} />
-            </button> */}
+            ) : (
+              ""
+            )}
+            {order?.status === "pending" ? (
+              <button
+                title="Edit"
+                onClick={() => navigate(`/app/order-edit/${order.id}`)}
+                className="p-1.5 text-orange-500 bg-orange-50 rounded hover:bg-orange-100 transition"
+              >
+                <Pencil size={16} />
+              </button>
+            ) : (
+              ""
+            )}
             <button
               title="Hapus"
               onClick={() => onDelete(order)}

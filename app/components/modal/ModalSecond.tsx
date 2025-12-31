@@ -6,7 +6,7 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   icon?: React.ReactNode;
-  size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "7xl";
   children: React.ReactNode;
   footer?: React.ReactNode;
 }
@@ -29,6 +29,7 @@ const ModalSecond: React.FC<ModalProps> = ({
     lg: "max-w-lg",
     xl: "max-w-xl",
     "2xl": "max-w-2xl",
+    "7xl": "max-w-7xl",
   };
 
   return (

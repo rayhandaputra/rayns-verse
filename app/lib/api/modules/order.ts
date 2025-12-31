@@ -602,7 +602,7 @@ export const OrderAPI = {
   // ✅ UPDATE ORDER
   // ================================
   update: async ({ req }: any) => {
-    let { id, order, ...fields } = req.body || {};
+    let { id, order, order_number, items, ...fields } = req.body || {};
 
     const existOrder = order ? safeParseObject(order) : null;
     if (!id) {
@@ -668,6 +668,56 @@ export const OrderAPI = {
           where: { id },
         },
       });
+
+      // ✅ Insert order_items (bulk)
+      if (items?.length > 0) {
+        const itemRows = items.map((item: any) => {
+          const qty = item?.qty || item?.quantity || 1;
+          const unit_price = item?.unit_price || item?.price || 0;
+          const subtotal = qty * unit_price;
+          const discount_total =
+            item?.discount_type === "percent"
+              ? (subtotal * (item?.discount_value || 0)) / 100
+              : item?.discount_value || 0;
+          const tax_value =
+            ((subtotal - discount_total) * (item?.tax_percent || 0)) / 100;
+
+          return {
+            order_number: order_number || existOrder?.order_number,
+            product_id: item?.product_id || item?.productId || null,
+            product_name: item?.product_name || item?.productName || null,
+            product_type: item?.product_type || "single",
+            qty,
+            unit_price,
+            discount_type: item?.discount_type || null,
+            discount_value: item?.discount_value || 0,
+            tax_percent: item?.tax_percent || 0,
+            subtotal,
+            discount_total,
+            tax_value,
+            total_after_tax: subtotal - discount_total + tax_value,
+            notes: item?.notes || null,
+            variant_id: item?.variant_id || null,
+            variant_name: item?.variant_name || null,
+            variant_price: item?.variant_price || null,
+            variant_final_price: item?.variant_final_price || null,
+            price_rule_id: item?.price_rule_id || null,
+            price_rule_min_qty: item?.price_rule_min_qty || null,
+            price_rule_value: item?.price_rule_value || null,
+          };
+        });
+
+        await APIProvider({
+          endpoint: "bulk-insert",
+          method: "POST",
+          table: "order_items",
+          action: "bulk-insert",
+          body: {
+            rows: itemRows,
+            updateOnDuplicate: true,
+          },
+        });
+      }
 
       let accBank = null;
       if (safeParseObject(updatedOrder?.payment_detail)?.account_id) {
