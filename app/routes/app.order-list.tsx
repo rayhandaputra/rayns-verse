@@ -342,9 +342,21 @@ export default function OrderList() {
   const handleCopyImageQrCode = async (order: any) => {
     if (isProcessingShare !== null) return;
 
+    // Toast loading to give immediate feedback
+    const loadingToast = toast.loading("Sedang membuat QR Code...");
+
     try {
       setIsProcessingShare(order.id);
       setSelectedOrder(order);
+
+      // Prevent user from switching tabs/leaving by alerting if they try
+      // (Browser safety: we can't truly "lock" tabs, but we can detect visibility changes)
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          console.warn("User switched tabs during QR generation");
+        }
+      };
+      document.addEventListener("visibilitychange", handleVisibilityChange);
 
       const qrContent = `https://kinau.id/public/drive-link/${order.order_number}`;
       const qrUrl = await QRCode.toDataURL(qrContent, {
@@ -353,13 +365,15 @@ export default function OrderList() {
       });
       setTempQr(qrUrl);
 
-      // Tunggu render template
-      await new Promise((r) => setTimeout(r, 500));
+      // Tunggu render template - ensure visibility
+      await new Promise((r) => setTimeout(r, 600));
 
-      if (!cardRef.current) throw new Error("Template ref is not ready");
+      if (!cardRef.current) {
+        throw new Error("Template tidak siap. Pastikan tab browser tetap aktif.");
+      }
 
       const captureOptions = {
-        pixelRatio: 2, // Untuk clipboard, ratio 2 sudah cukup agar tidak terlalu berat
+        pixelRatio: 2,
         skipFonts: true,
         cacheBust: true,
       };
@@ -372,13 +386,17 @@ export default function OrderList() {
       if (navigator.clipboard && window.ClipboardItem) {
         const data = [new ClipboardItem({ [blob.type]: blob })];
         await navigator.clipboard.write(data);
+        toast.dismiss(loadingToast);
         toast.success("Gambar berhasil disalin ke clipboard!");
       } else {
-        throw new Error("Browser tidak mendukung copy gambar");
+        throw new Error("Browser tidak mendukung penyalinan gambar");
       }
+
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     } catch (error: any) {
       console.error(error);
-      toast.error("Gagal menyalin gambar: " + (error.message || ""));
+      toast.dismiss(loadingToast);
+      toast.error("Gagal menyalin: " + (error.message || "Pastikan tab tetap aktif saat proses"));
     } finally {
       setIsProcessingShare(null);
       setTempQr("");
