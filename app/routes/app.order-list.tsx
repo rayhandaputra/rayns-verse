@@ -203,7 +203,7 @@ export default function OrderList() {
       .action("get")
       .params({
         page: page ? page - 1 : 0,
-        size: 10,
+        size: 100,
         pagination: "true",
         ...(viewMode === "kkn"
           ? {
@@ -369,7 +369,9 @@ export default function OrderList() {
       await new Promise((r) => setTimeout(r, 600));
 
       if (!cardRef.current) {
-        throw new Error("Template tidak siap. Pastikan tab browser tetap aktif.");
+        throw new Error(
+          "Template tidak siap. Pastikan tab browser tetap aktif."
+        );
       }
 
       const captureOptions = {
@@ -396,7 +398,10 @@ export default function OrderList() {
     } catch (error: any) {
       console.error(error);
       toast.dismiss(loadingToast);
-      toast.error("Gagal menyalin: " + (error.message || "Pastikan tab tetap aktif saat proses"));
+      toast.error(
+        "Gagal menyalin: " +
+          (error.message || "Pastikan tab tetap aktif saat proses")
+      );
     } finally {
       setIsProcessingShare(null);
       setTempQr("");
@@ -506,6 +511,16 @@ export default function OrderList() {
       //     </div>
       //   ),
       // },
+      {
+        key: "no",
+        header: "No",
+        cellClassName: "whitespace-nowrap text-xs text-gray-600 font-medium",
+        cell: (order, index) => {
+          const page = orders?.data?.current_page ?? 0;
+          const size = 100;
+          return page * size + index + 1;
+        },
+      },
       {
         key: "instansi",
         header: "Instansi/Pemesan",
@@ -894,7 +909,7 @@ export default function OrderList() {
         headerClassName: "text-center",
         cellClassName: "text-center",
         cell: (order) => (
-          <div className="flex flex-col">
+          <div className="flex flex-col w-[120px]">
             <p className="text-xs">
               {safeParseObject(order.created_by)?.fullname ?? "-"}
             </p>
