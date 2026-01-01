@@ -145,6 +145,7 @@ export const action: ActionFunction = async ({ request }) => {
       ...(+id > 0 ? { id } : {}),
     };
 
+    console.log(+id > 0, id);
     // Use create for both create and update (it handles both)
     let response;
     if (+id > 0) {
@@ -468,10 +469,12 @@ export default function ProductListPage() {
               <div className="font-bold text-gray-900 text-base">
                 {row.name}
               </div>
-              {row.description && (
+              {row?.description !== "undefined" && !!row?.description ? (
                 <div className="text-xs text-gray-500 mt-1 max-w-xs">
-                  {row.description}
+                  {row?.description || ""}
                 </div>
+              ) : (
+                ""
               )}
             </div>
           </div>

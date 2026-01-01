@@ -947,7 +947,7 @@ export default function OrderList() {
             ) : (
               ""
             )}
-            {order?.status === "pending" ? (
+            {order?.status !== "pending" ? (
               <button
                 title="Edit"
                 onClick={() => navigate(`/app/order-edit/${order.id}`)}

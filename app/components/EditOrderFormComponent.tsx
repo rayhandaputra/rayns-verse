@@ -796,18 +796,30 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                         }}
                       >
                         <option value="">Pilih Varian</option>
-                        {order ? (
+                        {/* {order ? (
                           <option key={item.variant_id} value={item.variant_id}>
                             {item.variant_name} ({item.variant_price})
                           </option>
                         ) : (
                           ""
-                        )}
-                        {safeParseArray(item.product_variants).map((v) => (
-                          <option key={v.id} value={v.id}>
-                            {v.variant_name} ({v.base_price})
-                          </option>
-                        ))}
+                        )} */}
+                        {!safeParseArray(item?.product_variants)?.length
+                          ? safeParseArray(
+                              products?.find(
+                                (x) => +x?.id === +item?.product_id
+                              )?.product_variants
+                            )?.map((v: any) => (
+                              <option key={v.id} value={v.id}>
+                                {v.variant_name} ({v.base_price})
+                              </option>
+                            ))
+                          : safeParseArray(item?.product_variants).map(
+                              (v: any) => (
+                                <option key={v.id} value={v.id}>
+                                  {v.variant_name} ({v.base_price})
+                                </option>
+                              )
+                            )}
                       </select>
                     </div>
                     <div className="flex gap-2 w-full md:w-auto">

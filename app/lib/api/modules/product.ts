@@ -266,11 +266,14 @@ export const ProductAPI = {
           where: { id },
         },
       });
+      console.log("REs => ", result);
+      console.log("REQ PRICE => ", price_rules);
+      console.log("REQ VARIANT => ", variants);
 
       // ✅ UPDATE PRICE RULES (if provided)
       if (Array.isArray(price_rules)) {
         // First, soft delete existing price rules for this product
-        await APIProvider({
+        const delPrice = await APIProvider({
           endpoint: "update",
           method: "POST",
           table: "product_price_rules",
@@ -280,18 +283,26 @@ export const ProductAPI = {
             where: { product_id: id, deleted_on: "null" },
           },
         });
+        console.log("DEL PRICE => ", delPrice);
 
         // Then insert new price rules (if any)
         if (price_rules.length > 0) {
           const priceRuleRows = price_rules.map((rule: any) => ({
             uid: crypto.randomUUID(),
             product_id: id,
-            min_qty: Number(rule.min_qty || rule.minQty),
-            price: Number(rule.price),
+            min_qty:
+              +(rule.min_qty || rule.minQty) > 0
+                ? Number(rule.min_qty || rule.minQty)
+                : 0,
+            price:
+              +(rule.price || rule.Price) > 0
+                ? Number(rule.price || rule.Price)
+                : 0,
             created_on: new Date().toISOString(),
           }));
+          console.log("PRICE PAYS => ", priceRuleRows);
 
-          await APIProvider({
+          const resPriceRule = await APIProvider({
             endpoint: "bulk-insert",
             method: "POST",
             table: "product_price_rules",
@@ -301,6 +312,7 @@ export const ProductAPI = {
               rows: priceRuleRows,
             },
           });
+          console.log("PRICE => ", resPriceRule);
         }
       }
 
@@ -328,7 +340,7 @@ export const ProductAPI = {
             created_on: new Date().toISOString(),
           }));
 
-          await APIProvider({
+          const resVariant = await APIProvider({
             endpoint: "bulk-insert",
             method: "POST",
             table: "product_variants",
@@ -338,6 +350,7 @@ export const ProductAPI = {
               rows: variantRows,
             },
           });
+          console.log("VARIANT => ", resVariant);
         }
       }
 

@@ -114,9 +114,16 @@ export default function OrderEdit() {
       .module("PRODUCT")
       .action("get")
       .params({
-        id: safeParseArray(detail?.order_items)
-          ?.map((item: any) => item.product_id)
-          .join(","),
+        // id: safeParseArray(detail?.order_items)
+        //   ?.map((item: any) => item.product_id)
+        //   .join(","),
+        id: [
+          ...new Set(
+            safeParseArray(detail?.order_items)?.map(
+              (item: any) => item.product_id
+            )
+          ),
+        ].join(","),
         size: 100,
         pagination: "true",
       })
