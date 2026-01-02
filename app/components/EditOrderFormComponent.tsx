@@ -72,7 +72,7 @@ import { safeParseArray, safeParseObject } from "~/lib/utils";
 // ============================================
 
 interface OrderFormProps {
-  order?: Order;
+  order?: any;
   products?: any[];
   onSubmit: (payload: any) => void;
 }
@@ -187,11 +187,12 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
       institution_name: order?.institution_name || "",
       pic_name: order?.pic_name || "",
       pic_phone: order?.pic_phone || "",
-      institution_mode: +order?.is_personal === 1
-        ? "personal"
-        : order?.institution_id
-          ? "existing"
-          : "new",
+      institution_mode:
+        +order?.is_personal === 1
+          ? "personal"
+          : order?.institution_id
+            ? "existing"
+            : "new",
 
       deadline: order?.deadline || "",
       order_date:
@@ -224,7 +225,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
 
       images: safeParseArray(order?.images || []),
       access_code: order?.order_number || generateAccessCode(6),
-    };
+    } as any;
   }, [order]);
 
   const [form, setForm] = useState<FormState>(getInitialState());
@@ -322,13 +323,9 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
     // Calculate item pricing logic
     const qty = Number(item.qty) || 0;
     const priceRules = safeParseArray(
-      item.product_price_rules || 
-      products?.find(
-        (x) => +x?.id === +item?.product_id
-      )?.product_price_rules
-    ).sort(
-      (a, b) => b.min_qty - a.min_qty
-    );
+      item.product_price_rules ||
+        products?.find((x) => +x?.id === +item?.product_id)?.product_price_rules
+    ).sort((a, b) => b.min_qty - a.min_qty);
     const rule = priceRules.find((r) => qty >= Number(r.min_qty));
 
     const basePrice = Number(rule?.price || 0);
@@ -417,12 +414,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
       pic_name: form.pic_name,
       pic_phone: form.pic_phone,
       deadline: form.deadline,
-      payment_status:
-        form.payment_status === "none"
-          ? "none"
-          : form.payment_status === "down_payment"
-            ? "DP"
-            : "Lunas",
+      payment_status: form.payment_status,
       dp_amount: form.dp_amount,
       total_amount: financials.grandTotal,
       is_sponsor: +form.is_sponsor ? 1 : 0,

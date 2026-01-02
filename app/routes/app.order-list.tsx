@@ -618,7 +618,8 @@ export default function OrderList() {
       {
         key: "deadline",
         header: "Deadline",
-        cellClassName: "whitespace-nowrap text-xs text-gray-600 w-[90px] font-medium",
+        cellClassName:
+          "whitespace-nowrap text-xs text-gray-600 w-[90px] font-medium",
         cell: (order) => formatFullDate(order.deadline),
       },
       {
@@ -857,50 +858,50 @@ export default function OrderList() {
 
           return (
             <div className="max-w-[120px]">
-            <div className="flex flex-col gap-1.5">
-              {/* DP */}
-              <button
-                disabled={!canUploadDp}
-                onClick={() => openUploadModal("down_payment")}
-                className={`${buttonBase} ${
-                  hasDpProof
-                    ? successBtn
-                    : canUploadDp
-                      ? activeBtn
-                      : disabledBtn
-                }`}
-              >
-                {hasDpProof ? <Check size={10} /> : <Upload size={10} />}
-                DP
-              </button>
-
-              {/* LUNAS */}
-              <button
-                disabled={!canUploadPaid}
-                onClick={() => openUploadModal("paid")}
-                className={`${buttonBase} ${
-                  hasPaidProof
-                    ? successBtn
-                    : canUploadPaid
-                      ? activeBtn
-                      : disabledBtn
-                }`}
-              >
-                {hasPaidProof ? <Check size={10} /> : <Upload size={10} />}
-                LUNAS
-              </button>
-
-              {/* VIEW PROOF */}
-              {(hasDpProof || hasPaidProof) && (
+              <div className="flex flex-col gap-1.5">
+                {/* DP */}
                 <button
-                  onClick={openViewModal}
-                  className="mt-1 text-[10px] text-blue-600 hover:underline flex items-center justify-center gap-1"
+                  // disabled={!canUploadDp}
+                  onClick={() => openUploadModal("down_payment")}
+                  className={`${buttonBase} ${
+                    hasDpProof
+                      ? successBtn
+                      : canUploadDp
+                        ? activeBtn
+                        : disabledBtn
+                  }`}
                 >
-                  <Image size={10} />
-                  Lihat Bukti
+                  {hasDpProof ? <Check size={10} /> : <Upload size={10} />}
+                  DP
                 </button>
-              )}
-            </div>
+
+                {/* LUNAS */}
+                <button
+                  // disabled={!canUploadPaid}
+                  onClick={() => openUploadModal("paid")}
+                  className={`${buttonBase} ${
+                    hasPaidProof
+                      ? successBtn
+                      : canUploadPaid
+                        ? activeBtn
+                        : disabledBtn
+                  }`}
+                >
+                  {hasPaidProof ? <Check size={10} /> : <Upload size={10} />}
+                  LUNAS
+                </button>
+
+                {/* VIEW PROOF */}
+                {(hasDpProof || hasPaidProof) && (
+                  <button
+                    onClick={openViewModal}
+                    className="mt-1 text-[10px] text-blue-600 hover:underline flex items-center justify-center gap-1"
+                  >
+                    <Image size={10} />
+                    Lihat Bukti
+                  </button>
+                )}
+              </div>
             </div>
           );
         },
@@ -912,17 +913,17 @@ export default function OrderList() {
         cellClassName: "text-center",
         cell: (order) => (
           <div className="flex justify-center items-center">
-          <div className="flex flex-col text-center w-[100px]">
-            <p className="text-xs">
-              {safeParseObject(order.created_by)?.fullname ?? "-"}
-            </p>
-            <p className="text-[0.675rem]">
-              {/* {moment(order.created_on)
+            <div className="flex flex-col text-center w-[100px]">
+              <p className="text-xs">
+                {safeParseObject(order.created_by)?.fullname ?? "-"}
+              </p>
+              <p className="text-[0.675rem]">
+                {/* {moment(order.created_on)
                 .locale("id")
                 .format("DD MMMM YYYY (HH:mm)")} */}
-              {dateFormat(order.created_on, "DD MMM YYYY (HH:mm)")}
-            </p>
-          </div>
+                {dateFormat(order.created_on, "DD MMM YYYY (HH:mm)")}
+              </p>
+            </div>
           </div>
         ),
       },
@@ -933,25 +934,25 @@ export default function OrderList() {
         cellClassName: "text-center",
         cell: (order) => (
           <div className="max-w-[150px]">
-          <div className="flex justify-center gap-2 relative">
-            {+order?.is_archive !== 1 ? (
-              <button
-                title="Nota"
-                onClick={() =>
-                  setModal({
-                    ...modal,
-                    open: true,
-                    type: "view_nota",
-                    data: order,
-                  })
-                }
-                className="p-1.5 text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition"
-              >
-                <FileText size={16} />
-              </button>
-            ) : (
-              ""
-            )}
+            <div className="flex justify-center gap-2 relative">
+              {+order?.is_archive !== 1 ? (
+                <button
+                  title="Nota"
+                  onClick={() =>
+                    setModal({
+                      ...modal,
+                      open: true,
+                      type: "view_nota",
+                      data: order,
+                    })
+                  }
+                  className="p-1.5 text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition"
+                >
+                  <FileText size={16} />
+                </button>
+              ) : (
+                ""
+              )}
               <button
                 title="Edit"
                 onClick={() => navigate(`/app/order-edit/${order.id}`)}
@@ -959,14 +960,14 @@ export default function OrderList() {
               >
                 <Pencil size={16} />
               </button>
-            <button
-              title="Hapus"
-              onClick={() => onDelete(order)}
-              className="p-1.5 text-red-600 bg-red-50 rounded hover:bg-red-100 transition"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
+              <button
+                title="Hapus"
+                onClick={() => onDelete(order)}
+                className="p-1.5 text-red-600 bg-red-50 rounded hover:bg-red-100 transition"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           </div>
         ),
       },

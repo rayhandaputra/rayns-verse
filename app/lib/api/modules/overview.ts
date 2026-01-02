@@ -465,7 +465,7 @@ export const OverviewAPI = {
                   SUM(total_amount) AS total_sales
                 FROM orders
                 WHERE deleted_on IS NULL
-                GROUP BY institution_id, kkn_period, kkn_year, institution_name
+                GROUP BY institution_id, kkn_period, kkn_year
                 ORDER BY total_sales DESC
                 LIMIT 10
               ) AS top_ten

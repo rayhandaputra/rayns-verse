@@ -112,26 +112,46 @@ export const action: ActionFunction = async ({ request }) => {
 
   try {
     if (intent === "delete_transaction") {
-      const { id } = Object.fromEntries(formData.entries());
+      const { id, journal_code } = Object.fromEntries(formData.entries());
 
       const payload = {
-        id,
         deleted_on: new Date().toISOString(),
       };
 
       // Only update if valid
-      const res = await API.TRANSACTION.update({
-        session: { user, token },
-        req: {
-          body: payload,
-        },
-      });
-      return Response.json({
-        success: res.success,
-        message: res.success
-          ? "Transaksi berhasil dihapus"
-          : "Gagal menghapus transaksi",
-      });
+      if (!journal_code) {
+        const res = await API.TRANSACTION.update({
+          session: { user, token },
+          req: {
+            body: { id, ...payload },
+          },
+        });
+        return Response.json({
+          success: res.success,
+          message: res.success
+            ? "Transaksi berhasil dihapus"
+            : "Gagal menghapus transaksi",
+        });
+      } else {
+        const res = await APIProvider({
+          endpoint: "update",
+          method: "POST",
+          table: "account_ledger_mutations",
+          action: "update",
+          body: {
+            data: payload,
+            where: { journal_code },
+          },
+        });
+
+        return Response.json({
+          success: res.affected_rows > 0,
+          message:
+            res.affected_rows > 0
+              ? "Transaksi berhasil dihapus"
+              : "Gagal menghapus transaksi",
+        });
+      }
     }
     if (intent === "update_hpp_product") {
       const { id, hpp_price } = Object.fromEntries(formData.entries());
@@ -293,25 +313,25 @@ export const action: ActionFunction = async ({ request }) => {
       });
     }
 
-    if (intent === "delete_transaction") {
-      const id = formData.get("id") as string;
-      if (!id) {
-        return Response.json({
-          success: false,
-          message: "Transaction ID required",
-        });
-      }
+    // if (intent === "delete_transaction") {
+    //   const id = formData.get("id") as string;
+    //   if (!id) {
+    //     return Response.json({
+    //       success: false,
+    //       message: "Transaction ID required",
+    //     });
+    //   }
 
-      //   await API.TRANSACTION.delete({
-      //     session: { user, token },
-      //     req: { query: { id } },
-      //   });
+    //   //   await API.TRANSACTION.delete({
+    //   //     session: { user, token },
+    //   //     req: { query: { id } },
+    //   //   });
 
-      return Response.json({
-        success: true,
-        message: "Transaction deleted successfully",
-      });
-    }
+    //   return Response.json({
+    //     success: true,
+    //     message: "Transaction deleted successfully",
+    //   });
+    // }
 
     if (intent === "create_bank") {
       const bank_name = formData.get("bank_name") as string;
@@ -527,7 +547,8 @@ const FinancePage: React.FC<FinancePageProps> = ({
         page: page ? page - 1 : 0,
         size: 10,
         pagination: "true",
-        account_code: "1-103,4-101,5-101",
+        // account_code: "1-103,4-101,5-101",
+        account_code: "4-101,5-101",
         ...(filterYear && {
           year: filterYear,
         }),
@@ -1175,6 +1196,7 @@ const FinancePage: React.FC<FinancePageProps> = ({
                                   submitAction({
                                     intent: "delete_transaction",
                                     id: t.id,
+                                    journal_code: t.journal_code,
                                   });
                                 }
                               });

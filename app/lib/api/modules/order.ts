@@ -476,6 +476,7 @@ export const OrderAPI = {
       }
 
       if (total_amount > 0 && +is_archive === 1) {
+        const jrnlCode = `JRNL${moment().add(7, "hours").format("YYYYMMDDHHmmss")}`;
         await APIProvider({
           endpoint: "bulk-insert",
           method: "POST",
@@ -492,6 +493,7 @@ export const OrderAPI = {
                     : total_amount,
                 debit: 0,
                 notes: order_number,
+                journal_code: jrnlCode,
                 trx_code: order_number,
                 trx_date:
                   order_date ??
@@ -509,6 +511,7 @@ export const OrderAPI = {
                     ? total_amount - dp_amount
                     : total_amount,
                 notes: order_number,
+                journal_code: jrnlCode,
                 trx_code: order_number,
                 trx_date:
                   order_date ??
@@ -617,7 +620,9 @@ export const OrderAPI = {
         payment_status: "paid",
         status: "done",
       }),
-      kkn_detail: fields?.kkn_detail ? JSON.stringify(fields?.kkn_detail) : null,
+      ...(fields?.kkn_detail && {
+        kkn_detail: JSON.stringify(fields?.kkn_detail),
+      }),
       modified_on: new Date().toISOString(),
       ...(fields.deleted === 1 ? { deleted_on: new Date().toISOString() } : {}),
     };
@@ -685,7 +690,7 @@ export const OrderAPI = {
             },
             where: { order_number },
           },
-      });
+        });
 
         const itemRows = items.map((item: any) => {
           const qty = item?.qty || item?.quantity || 1;
@@ -756,6 +761,7 @@ export const OrderAPI = {
 
       if (fields?.dp_payment_proof) {
         // safeParseObject(updatedOrder?.payment_detail)
+        const jrnlCode = `JRNL${moment().add(7, "hours").format("YYYYMMDDHHmmss")}`;
         await APIProvider({
           endpoint: "bulk-insert",
           method: "POST",
@@ -771,6 +777,7 @@ export const OrderAPI = {
                 notes: existOrder?.order_number,
                 receipt_url: fields?.dp_payment_proof,
                 category: "DP Pesanan",
+                journal_code: jrnlCode,
                 trx_code: existOrder?.order_number,
                 trx_date:
                   existOrder?.order_date ??
@@ -784,6 +791,7 @@ export const OrderAPI = {
                 notes: existOrder?.order_number,
                 receipt_url: fields?.dp_payment_proof,
                 category: "DP Pesanan",
+                journal_code: jrnlCode,
                 trx_code: existOrder?.order_number,
                 trx_date:
                   existOrder?.order_date ??
@@ -799,6 +807,7 @@ export const OrderAPI = {
           existOrder?.payment_status === "down_payment"
             ? existOrder?.total_amount - existOrder?.dp_amount
             : existOrder?.total_amount;
+        const jrnlCode = `JRNL${moment().add(7, "hours").format("YYYYMMDDHHmmss")}`;
         await APIProvider({
           endpoint: "bulk-insert",
           method: "POST",
@@ -813,6 +822,7 @@ export const OrderAPI = {
                 debit: 0,
                 notes: existOrder?.order_number,
                 receipt_url: fields?.payment_proof,
+                journal_code: jrnlCode,
                 trx_code: existOrder?.order_number,
                 trx_date:
                   existOrder?.order_date ??
@@ -825,6 +835,7 @@ export const OrderAPI = {
                 debit: amountMutation,
                 notes: existOrder?.order_number,
                 receipt_url: fields?.payment_proof,
+                journal_code: jrnlCode,
                 trx_code: existOrder?.order_number,
                 trx_date:
                   existOrder?.order_date ??

@@ -40,12 +40,12 @@ export const AccountAPI = {
                         COALESCE(SUM(credit), 0) - COALESCE(SUM(debit), 0)
                     END
                 FROM account_ledger_mutations
-                WHERE account_code = accounts.code
+                WHERE account_code = accounts.code AND deleted_on IS NULL AND YEAR(created_on) = '${year}'
            ) AS balance`,
         ],
         where: {
           deleted_on: "null",
-          ...(year ? { "year:created_on": parseInt(year) } : {}),
+          // ...(year ? { "year:created_on": parseInt(year) } : {}),
           ...(group_type ? { group_type } : {}),
           ...(is_bank ? { is_bank } : {}),
           ...(id ? { id } : {}),
