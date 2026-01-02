@@ -203,7 +203,7 @@ export default function AppLayout() {
 
       {/* Main Content */}
       <div className="flex-1 ml-0 lg:ml-64 pt-[88px]">
-        <div className="p-4 md:p-8 max-w-[1600px] mx-auto overflow-x-hidden">
+        <div className="p-4 md:p-8 overflow-x-hidden">
           <Outlet />
         </div>
       </div>

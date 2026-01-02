@@ -146,7 +146,9 @@ export const OrderAPI = {
               alias: "order_items",
               foreign_key: "order_number",
               reference_key: "order_number",
+              where: { deleted_on: "null" },
               columns: [
+                "id",
                 "product_id",
                 "product_name",
                 "qty",
@@ -615,6 +617,7 @@ export const OrderAPI = {
         payment_status: "paid",
         status: "done",
       }),
+      kkn_detail: fields?.kkn_detail ? JSON.stringify(fields?.kkn_detail) : null,
       modified_on: new Date().toISOString(),
       ...(fields.deleted === 1 ? { deleted_on: new Date().toISOString() } : {}),
     };
@@ -671,6 +674,19 @@ export const OrderAPI = {
 
       // ✅ Insert order_items (bulk)
       if (items?.length > 0) {
+        const res = await APIProvider({
+          endpoint: "update",
+          method: "POST",
+          table: "order_items",
+          action: "update",
+          body: {
+            data: {
+              deleted_on: new Date().toISOString(),
+            },
+            where: { order_number },
+          },
+      });
+
         const itemRows = items.map((item: any) => {
           const qty = item?.qty || item?.quantity || 1;
           const unit_price = item?.unit_price || item?.price || 0;
@@ -704,6 +720,7 @@ export const OrderAPI = {
             price_rule_id: item?.price_rule_id || null,
             price_rule_min_qty: item?.price_rule_min_qty || null,
             price_rule_value: item?.price_rule_value || null,
+            deleted_on: null,
           };
         });
 

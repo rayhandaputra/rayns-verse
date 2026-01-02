@@ -187,7 +187,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
       institution_name: order?.institution_name || "",
       pic_name: order?.pic_name || "",
       pic_phone: order?.pic_phone || "",
-      institution_mode: order?.is_personal
+      institution_mode: +order?.is_personal === 1
         ? "personal"
         : order?.institution_id
           ? "existing"
@@ -215,11 +215,12 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
         qty: Number(item.qty) || 0,
       })),
 
-      kkn_type: (kknDetails?.kkn_type as KKNType) || "PPM",
+      // kkn_type: (kknDetails?.kkn_type as KKNType) || "PPM",
+      kkn_type: (order?.kkn_type as KKNType) || "PPM",
       kkn_value: kknDetails?.value || "",
-      kkn_year: kknDetails?.year || currentKknPeriod.year,
-      kkn_period: kknDetails?.period || currentKknPeriod.period,
-      kkn_total_group: kknDetails?.total_group || 1,
+      kkn_year: order?.kkn_year || currentKknPeriod.year,
+      kkn_period: order?.kkn_period || currentKknPeriod.period,
+      // kkn_total_group: order?.kkn_total_group || 1,
 
       images: safeParseArray(order?.images || []),
       access_code: order?.order_number || generateAccessCode(6),
@@ -320,7 +321,12 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
 
     // Calculate item pricing logic
     const qty = Number(item.qty) || 0;
-    const priceRules = safeParseArray(item.product_price_rules).sort(
+    const priceRules = safeParseArray(
+      item.product_price_rules || 
+      products?.find(
+        (x) => +x?.id === +item?.product_id
+      )?.product_price_rules
+    ).sort(
       (a, b) => b.min_qty - a.min_qty
     );
     const rule = priceRules.find((r) => qty >= Number(r.min_qty));

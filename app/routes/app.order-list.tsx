@@ -571,9 +571,9 @@ export default function OrderList() {
       {
         key: "jenisPesanan",
         header: "Nama Item",
-        cellClassName: "max-w-[250px]",
+        cellClassName: "max-w-[140px]",
         cell: (order) => (
-          <ul className="list-disc list-inside w-[180px] text-xs text-gray-600 break-words whitespace-normal">
+          <ul className="list-disc list-inside w-[140px] text-xs text-gray-600 break-words whitespace-normal">
             {safeParseArray(order.order_items)?.length > 0
               ? safeParseArray(order.order_items).map(
                   (item: any, idx: number) => (
@@ -588,7 +588,7 @@ export default function OrderList() {
         key: "item_variant",
         header: "Varian Item",
         cell: (order) => (
-          <ul className="list-disc list-inside w-[130px] text-xs text-gray-600 break-words whitespace-normal">
+          <ul className="list-disc list-inside w-[100px] text-xs text-gray-600 break-words whitespace-normal">
             {safeParseArray(order.order_items)?.length > 0
               ? safeParseArray(order.order_items).map(
                   (item: any, idx: number) => (
@@ -602,7 +602,7 @@ export default function OrderList() {
       {
         key: "jumlah",
         header: "Jumlah",
-        cellClassName: "text-center text-sm font-medium text-gray-900",
+        cellClassName: "text-center text-sm font-medium text-gray-900 w-[80px]",
         cell: (order) => (
           <div className="space-y-1">
             {safeParseArray(order.order_items)?.length > 0
@@ -618,7 +618,7 @@ export default function OrderList() {
       {
         key: "deadline",
         header: "Deadline",
-        cellClassName: "whitespace-nowrap text-xs text-gray-600 font-medium",
+        cellClassName: "whitespace-nowrap text-xs text-gray-600 w-[90px] font-medium",
         cell: (order) => formatFullDate(order.deadline),
       },
       {
@@ -856,6 +856,7 @@ export default function OrderList() {
           const successBtn = "bg-green-100 text-green-700 border-green-200";
 
           return (
+            <div className="max-w-[120px]">
             <div className="flex flex-col gap-1.5">
               {/* DP */}
               <button
@@ -900,6 +901,7 @@ export default function OrderList() {
                 </button>
               )}
             </div>
+            </div>
           );
         },
       },
@@ -909,7 +911,8 @@ export default function OrderList() {
         headerClassName: "text-center",
         cellClassName: "text-center",
         cell: (order) => (
-          <div className="flex flex-col w-[120px]">
+          <div className="flex justify-center items-center">
+          <div className="flex flex-col text-center w-[100px]">
             <p className="text-xs">
               {safeParseObject(order.created_by)?.fullname ?? "-"}
             </p>
@@ -920,6 +923,7 @@ export default function OrderList() {
               {dateFormat(order.created_on, "DD MMM YYYY (HH:mm)")}
             </p>
           </div>
+          </div>
         ),
       },
       {
@@ -928,6 +932,7 @@ export default function OrderList() {
         headerClassName: "text-center",
         cellClassName: "text-center",
         cell: (order) => (
+          <div className="max-w-[150px]">
           <div className="flex justify-center gap-2 relative">
             {+order?.is_archive !== 1 ? (
               <button
@@ -947,7 +952,6 @@ export default function OrderList() {
             ) : (
               ""
             )}
-            {order?.status !== "pending" ? (
               <button
                 title="Edit"
                 onClick={() => navigate(`/app/order-edit/${order.id}`)}
@@ -955,9 +959,6 @@ export default function OrderList() {
               >
                 <Pencil size={16} />
               </button>
-            ) : (
-              ""
-            )}
             <button
               title="Hapus"
               onClick={() => onDelete(order)}
@@ -965,6 +966,7 @@ export default function OrderList() {
             >
               <Trash2 size={16} />
             </button>
+          </div>
           </div>
         ),
       },

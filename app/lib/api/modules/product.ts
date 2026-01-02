@@ -88,12 +88,14 @@ export const ProductAPI = {
             alias: "product_price_rules",
             foreign_key: "product_id",
             reference_key: "id",
+            where: { deleted_on: "null" },
             columns: ["id", "min_qty", "price"],
           },
           {
             table: "product_variants",
             alias: "product_variants",
             foreign_key: "product_id",
+            where: { deleted_on: "null" },
             reference_key: "id",
             columns: ["id", "variant_name", "base_price"],
           },
@@ -266,9 +268,6 @@ export const ProductAPI = {
           where: { id },
         },
       });
-      console.log("REs => ", result);
-      console.log("REQ PRICE => ", price_rules);
-      console.log("REQ VARIANT => ", variants);
 
       // ✅ UPDATE PRICE RULES (if provided)
       if (Array.isArray(price_rules)) {
@@ -283,7 +282,6 @@ export const ProductAPI = {
             where: { product_id: id, deleted_on: "null" },
           },
         });
-        console.log("DEL PRICE => ", delPrice);
 
         // Then insert new price rules (if any)
         if (price_rules.length > 0) {
@@ -299,8 +297,8 @@ export const ProductAPI = {
                 ? Number(rule.price || rule.Price)
                 : 0,
             created_on: new Date().toISOString(),
+            deleted_on: null,
           }));
-          console.log("PRICE PAYS => ", priceRuleRows);
 
           const resPriceRule = await APIProvider({
             endpoint: "bulk-insert",
@@ -312,7 +310,6 @@ export const ProductAPI = {
               rows: priceRuleRows,
             },
           });
-          console.log("PRICE => ", resPriceRule);
         }
       }
 
@@ -338,6 +335,7 @@ export const ProductAPI = {
             variant_name: rule.variant_name,
             base_price: Number(rule.base_price),
             created_on: new Date().toISOString(),
+            deleted_on: null,
           }));
 
           const resVariant = await APIProvider({
@@ -350,7 +348,6 @@ export const ProductAPI = {
               rows: variantRows,
             },
           });
-          console.log("VARIANT => ", resVariant);
         }
       }
 
