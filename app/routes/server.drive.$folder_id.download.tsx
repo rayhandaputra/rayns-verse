@@ -385,73 +385,135 @@
 
 // export default () => null;
 
-import archiver from "archiver";
-import type { ActionFunction } from "react-router";
-import { PassThrough, Readable } from "stream";
+// =================================================================================== ACTION REAL SIDE
 
+// import archiver from "archiver";
+// import type { ActionFunction } from "react-router";
+// import { PassThrough, Readable } from "stream";
+
+// import { API } from "~/lib/api";
+// import { getOptionalUser } from "~/lib/session.server";
+
+// export const action: ActionFunction = async ({ params, request }) => {
+//   const folderId = params.folder_id;
+//   if (!folderId) return new Response("Folder ID is required", { status: 400 });
+
+//   try {
+//     const authData = await getOptionalUser(request);
+//     const filesRes = await API.ORDER_UPLOAD.get_file({
+//       session: authData ? { user: authData.user, token: authData.token } : {},
+//       req: { query: { folder_id: folderId, size: 1000 } },
+//     });
+
+//     const files = filesRes?.items ?? [];
+//     console.log("FILES => ", files)
+//     console.log("FILES => ", files?.length)
+//     if (files.length === 0) return new Response("No files", { status: 404 });
+
+//     const archive = archiver("zip", { zlib: { level: 5 } }); // Level 5 lebih cepat dari 9
+//   const { readable, writable } = new TransformStream();
+//   const writer = writable.getWriter();
+
+//   // Pipe data langsung ke writer
+//   archive.on("data", (chunk) => writer.write(chunk));
+//   archive.on("end", () => writer.close());
+//   archive.on("error", (err) => writer.abort(err));
+
+//   // Jalankan proses secara parallel tapi terbatas (misal 5 file sekaligus)
+//   const downloadAndAppend = async () => {
+//     const pLimit = (await import("p-limit")).default(5); // npm install p-limit
+    
+//     const tasks = files.map((file) => 
+//       pLimit(async () => {
+//         try {
+//           const res = await fetch(file.file_url);
+//           if (res.ok && res.body) {
+//             const nodeStream = Readable.fromWeb(res.body as any);
+//             archive.append(nodeStream, { name: file.file_name });
+//           }
+//         } catch (e) {
+//           console.error(`Gagal ambil file: ${file.file_name}`, e);
+//         }
+//       })
+//     );
+
+//     await Promise.all(tasks);
+//     await archive.finalize();
+//   };
+
+//   downloadAndAppend(); // Tetap jalankan async
+
+//   return new Response(readable, {
+//     headers: {
+//       "Content-Type": "application/zip",
+//       "Content-Disposition": `attachment; filename="download.zip"`,
+//       "X-Content-Type-Options": "nosniff",
+//     },
+//   });
+//   } catch (err) {
+//     return new Response("Internal Server Error", { status: 500 });
+//   }
+// };
+
+import { type LoaderFunctionArgs } from "react-router";
+import archiver from "archiver";
+import { PassThrough, Readable } from "node:stream";
 import { API } from "~/lib/api";
 import { getOptionalUser } from "~/lib/session.server";
 
-export const action: ActionFunction = async ({ params, request }) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const folderId = params.folder_id;
-  if (!folderId) return new Response("Folder ID is required", { status: 400 });
+  if (!folderId) throw new Response("Folder ID Required", { status: 400 });
 
-  try {
-    const authData = await getOptionalUser(request);
-    const filesRes = await API.ORDER_UPLOAD.get_file({
-      session: authData ? { user: authData.user, token: authData.token } : {},
-      req: { query: { folder_id: folderId, size: 1000 } },
-    });
+  const authData = await getOptionalUser(request);
 
-    const files = filesRes?.items ?? [];
-    if (files.length === 0) return new Response("No files", { status: 404 });
+  // 1. Ambil list file
+  const filesRes = await API.ORDER_UPLOAD.get_file({
+    session: authData ? { user: authData.user, token: authData.token } : {},
+    req: { query: { folder_id: folderId, size: 1000 } },
+  });
 
-    // 1. Inisialisasi Archiver
-    const archive = archiver("zip", { zlib: { level: 9 } });
+  const files = filesRes?.items ?? [];
+  if (files.length === 0) throw new Response("Folder kosong", { status: 404 });
 
-    // 2. Gunakan Readable.fromWeb untuk mengubah Web Stream ke Node Stream jika perlu,
-    // tapi untuk Response, kita butuh sebaliknya.
-    const { readable, writable } = new TransformStream();
-    const writer = writable.getWriter();
+  // 2. Setup Archiver & Bridge Stream
+  const archive = archiver("zip", { zlib: { level: 5 } }); // Level 5: Balance antara speed & kompresi
+  const passThrough = new PassThrough();
 
-    // Pipe archiver ke WritableStream
-    // Kita gunakan perantara agar bisa menulis ke body Response
-    const chunks: any[] = [];
-    archive.on("data", (chunk) => writer.write(chunk));
-    archive.on("end", () => writer.close());
-    archive.on("error", (err) => writer.abort(err));
+  // Konversi Node Stream ke Web ReadableStream
+  const stream = Readable.toWeb(passThrough);
 
-    // 3. Proses File secara Sequential atau Parallel
-    // Gunakan Promise.all untuk memastikan semua file masuk sebelum finalize
-    const processFiles = async () => {
+  // 3. Proses penarikan file (Async)
+  // Kita tidak menggunakan 'await' pada fungsi ini agar Response bisa segera dikirim ke browser
+  (async () => {
+    try {
       for (const file of files) {
-        try {
-          const res = await fetch(file.file_url);
-          if (res.ok && res.body) {
-            // Konversi Web Stream ke Node Stream agar Archiver paham
-            const nodeStream = Readable.fromWeb(res.body as any);
-            archive.append(nodeStream, { name: file.file_name });
-          }
-        } catch (e) {
-          console.error("Error appending file", e);
+        const res = await fetch(file.file_url);
+        if (res.ok && res.body) {
+          // Konversi body fetch (Web Stream) ke Node Stream untuk archiver
+          const nodeStream = Readable.fromWeb(res.body as any);
+          archive.append(nodeStream, { name: file.file_name });
         }
       }
       await archive.finalize();
-    };
+    } catch (err) {
+      console.error("Zip Error:", err);
+      archive.destroy();
+    }
+  })();
 
-    // Jalankan proses append tanpa memblokir pembuatan Response
-    processFiles();
+  // Pipe archiver ke passThrough
+  archive.pipe(passThrough);
 
-    // 4. Kembalikan Response dengan Header yang Benar
-    return new Response(readable, {
-      headers: {
-        "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="${filesRes?.items?.[0]?.folder_name}.zip"`,
-        "X-Content-Type-Options": "nosniff",
-        "Cache-Control": "no-cache",
-      },
-    });
-  } catch (err) {
-    return new Response("Internal Server Error", { status: 500 });
-  }
+  const folderName = files[0]?.folder_name || `folder-${folderId}`;
+
+  // 4. Return Response Stream
+  return new Response(stream as any, {
+    headers: {
+      "Content-Type": "application/zip",
+      "Content-Disposition": `attachment; filename="${folderName}.zip"`,
+      "Cache-Control": "no-cache",
+      "Transfer-Encoding": "chunked",
+    },
+  });
 };

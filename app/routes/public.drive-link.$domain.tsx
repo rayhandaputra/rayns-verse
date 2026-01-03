@@ -500,85 +500,100 @@ export default function PublicDriveLinkPage() {
 
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const handleDownloadAll = async (e: React.MouseEvent) => {
-    e.preventDefault();
+  // const handleDownloadAll = async (e: React.MouseEvent) => {
+  //   e.preventDefault();
 
-    const targetFolderId = query.folder_id || orderData?.drive_folder_id;
+  //   const targetFolderId = query.folder_id || orderData?.drive_folder_id;
 
-    // 1. Validasi Awal
-    if (!targetFolderId) {
-      toast.error("Tidak ada folder yang dipilih");
-      return;
-    }
+  //   // 1. Validasi Awal
+  //   if (!targetFolderId) {
+  //     toast.error("Tidak ada folder yang dipilih");
+  //     return;
+  //   }
 
-    if (files.length === 0) {
-      toast.error("Tidak ada file untuk diunduh");
-      return;
-    }
+  //   if (files.length === 0) {
+  //     toast.error("Tidak ada file untuk diunduh");
+  //     return;
+  //   }
 
-    setIsDownloading(true);
-    const loadingToast = toast.loading("Menyiapkan dan mengompres file...");
+  //   setIsDownloading(true);
+  //   const loadingToast = toast.loading("Menyiapkan dan mengompres file...");
 
-    try {
-      // 2. Eksekusi Request ke Server Action
-      const res = await fetch(`/server/drive/${targetFolderId}/download`, {
-        method: "POST",
-      });
+  //   try {
+  //     // 2. Eksekusi Request ke Server Action
+  //     const res = await fetch(`/server/drive/${targetFolderId}/download`, {
+  //       method: "POST",
+  //     });
 
-      // 3. Penanganan Error dari Server
-      if (!res.ok) {
-        // Mencoba membaca pesan error dari body response (JSON)
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(
-          errData.message || errData.error || "Gagal mengunduh file dari server"
-        );
-      }
+  //     // 3. Penanganan Error dari Server
+  //     if (!res.ok) {
+  //       // Mencoba membaca pesan error dari body response (JSON)
+  //       const errData = await res.json().catch(() => ({}));
+  //       throw new Error(
+  //         errData.message || errData.error || "Gagal mengunduh file dari server"
+  //       );
+  //     }
 
-      // 4. Konversi Stream ke Blob
-      const blob = await res.blob();
-      if (blob.size === 0) throw new Error("File ZIP kosong");
+  //     // 4. Konversi Stream ke Blob
+  //     const blob = await res.blob();
+  //     if (blob.size === 0) throw new Error("File ZIP kosong");
 
-      // 5. Ekstraksi Nama File dari Content-Disposition Header
-      const contentDisposition = res.headers.get("Content-Disposition");
-      let filename = `folder-${targetFolderId}.zip`; // Nama default
+  //     // 5. Ekstraksi Nama File dari Content-Disposition Header
+  //     const contentDisposition = res.headers.get("Content-Disposition");
+  //     let filename = `folder-${targetFolderId}.zip`; // Nama default
 
-      if (contentDisposition) {
-        // Regex untuk mengambil nama file di dalam tanda kutip atau setelah 'filename='
-        const filenameMatch = contentDisposition.match(
-          /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
-        );
-        if (filenameMatch && filenameMatch[1]) {
-          filename = filenameMatch[1].replace(/['"]/g, "");
-        }
-      }
+  //     if (contentDisposition) {
+  //       // Regex untuk mengambil nama file di dalam tanda kutip atau setelah 'filename='
+  //       const filenameMatch = contentDisposition.match(
+  //         /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
+  //       );
+  //       if (filenameMatch && filenameMatch[1]) {
+  //         filename = filenameMatch[1].replace(/['"]/g, "");
+  //       }
+  //     }
 
-      // 6. Proses Trigger Download di Browser
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
+  //     // 6. Proses Trigger Download di Browser
+  //     const url = window.URL.createObjectURL(blob);
+  //     const a = document.createElement("a");
+  //     a.href = url;
+  //     a.download = filename;
 
-      // Append ke body (penting untuk kompabilitas Firefox)
-      document.body.appendChild(a);
-      a.click();
+  //     // Append ke body (penting untuk kompabilitas Firefox)
+  //     document.body.appendChild(a);
+  //     a.click();
 
-      // 7. Cleanup & Notifikasi Sukses
-      toast.success("Download berhasil dimulai", { id: loadingToast });
+  //     // 7. Cleanup & Notifikasi Sukses
+  //     toast.success("Download berhasil dimulai", { id: loadingToast });
 
-      // Beri jeda sedikit sebelum menghapus URL untuk memastikan browser menangkap kliknya
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }, 150);
-    } catch (err: any) {
-      console.error("Download error:", err);
-      toast.error(err.message || "Terjadi kesalahan saat mengunduh", {
-        id: loadingToast,
-      });
-    } finally {
-      setIsDownloading(false);
-    }
-  };
+  //     // Beri jeda sedikit sebelum menghapus URL untuk memastikan browser menangkap kliknya
+  //     setTimeout(() => {
+  //       window.URL.revokeObjectURL(url);
+  //       document.body.removeChild(a);
+  //     }, 150);
+  //   } catch (err: any) {
+  //     console.error("Download error:", err);
+  //     toast.error(err.message || "Terjadi kesalahan saat mengunduh", {
+  //       id: loadingToast,
+  //     });
+  //   } finally {
+  //     setIsDownloading(false);
+  //   }
+  // };
+  const handleDownloadAll = (e: React.MouseEvent) => {
+      e.preventDefault();
+      const targetFolderId = query.folder_id || orderData?.drive_folder_id;
+      if (!targetFolderId) return toast.error("Folder ID tidak ditemukan");
+  
+      // Cara paling simpel & efektif:
+      // Browser akan menganggap ini sebagai instruksi download file
+      const downloadUrl = `/server/drive/${targetFolderId}/download`;
+      
+      // Membuka di tab baru sebentar lalu otomatis ter-close setelah download trigger
+      // Atau langsung ubah location (aman karena ini attachment)
+      window.location.href = downloadUrl;
+  
+      toast.success("Download dimulai... Periksa bar progres browser Anda.");
+    };
 
   const isNotFound = useMemo(() => {
     return !orderData?.order_number && !current_folder ? true : false;
