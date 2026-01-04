@@ -44,6 +44,7 @@ import { Button } from "~/components/ui/button";
 import { DriveBreadcrumb } from "~/components/breadcrumb/DriveBreadcrumb";
 import Swal from "sweetalert2";
 import { safeParseObject } from "~/lib/utils";
+import { sendTelegramLog } from "~/lib/telegram-log";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const domain = params?.domain;
@@ -81,20 +82,42 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       req: { query: { id: folder_id || "null", size: 1 } },
     });
 
-    return Response.json({
-      session: authData?.user || null,
-      domain,
-      orderData: orderRes?.items?.[0] ?? null,
-      current_folder: detailFolder?.items?.[0] ?? null,
-    });
+    return Response.json(
+      {
+        session: authData?.user || null,
+        domain,
+        orderData: orderRes?.items?.[0] ?? null,
+        current_folder: detailFolder?.items?.[0] ?? null,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control":
+            "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
   } catch (error: any) {
     console.error("Loader error:", error);
     // Return empty state on error
-    return Response.json({
-      session: authData?.user || null,
-      domain,
-      orderData: null,
-    });
+    return Response.json(
+      {
+        session: authData?.user || null,
+        domain,
+        orderData: null,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control":
+            "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
   }
 };
 
@@ -251,6 +274,25 @@ export default function PublicDriveLinkPage() {
 
   // Use query.folder_id as source of truth for currentFolderId
   const currentFolderId = query.folder_id || orderData?.drive_folder_id || null;
+
+  // routes/public.layout.tsx atau di page terkait
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const CURRENT_VERSION = "v0.0.1";
+      const savedVersion = localStorage.getItem("app_public_version");
+
+      if (savedVersion !== CURRENT_VERSION) {
+        localStorage.setItem("app_public_version", CURRENT_VERSION);
+        // Membersihkan cache storage jika Anda menggunakan Service Worker
+        if ("caches" in window) {
+          caches.keys().then((names) => {
+            for (const name of names) caches.delete(name);
+          });
+        }
+        window.location.reload();
+      }
+    }
+  }, []);
 
   // Fetch real-time data using nexus
   const {
@@ -580,24 +622,35 @@ export default function PublicDriveLinkPage() {
   //   }
   // };
   const handleDownloadAll = (e: React.MouseEvent) => {
-      e.preventDefault();
-      const targetFolderId = query.folder_id || orderData?.drive_folder_id;
-      if (!targetFolderId) return toast.error("Folder ID tidak ditemukan");
-  
-      // Cara paling simpel & efektif:
-      // Browser akan menganggap ini sebagai instruksi download file
-      const downloadUrl = `/server/drive/${targetFolderId}/download`;
-      
-      // Membuka di tab baru sebentar lalu otomatis ter-close setelah download trigger
-      // Atau langsung ubah location (aman karena ini attachment)
-      window.location.href = downloadUrl;
-  
-      toast.success("Download dimulai... Periksa bar progres browser Anda.");
-    };
+    e.preventDefault();
+    const targetFolderId = query.folder_id || orderData?.drive_folder_id;
+    if (!targetFolderId) return toast.error("Folder ID tidak ditemukan");
+
+    // Cara paling simpel & efektif:
+    // Browser akan menganggap ini sebagai instruksi download file
+    const downloadUrl = `/server/drive/${targetFolderId}/download`;
+
+    // Membuka di tab baru sebentar lalu otomatis ter-close setelah download trigger
+    // Atau langsung ubah location (aman karena ini attachment)
+    window.location.href = downloadUrl;
+
+    toast.success("Download dimulai... Periksa bar progres browser Anda.");
+  };
 
   const isNotFound = useMemo(() => {
     return !orderData?.order_number && !current_folder ? true : false;
   }, [orderData, current_folder]);
+
+  useEffect(() => {
+    if (isNotFound) {
+      sendTelegramLog("PUBLIC_DRIVE_LINK_NOT_FOUND", {
+        domain,
+        orderData,
+        current_folder,
+        query,
+      });
+    }
+  }, [isNotFound]);
 
   useEffect(() => {
     if (actionDataFetcher?.success) {
