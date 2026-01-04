@@ -26,6 +26,8 @@ import {
   X,
   EyeIcon,
   MessageSquare,
+  Copy,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
@@ -47,6 +49,7 @@ const NotaView: React.FC<NotaViewProps> = ({
   const [rating, setRating] = React.useState(order.rating || 0);
   const [review, setReview] = React.useState(order.review || "");
   const [proofModalOpen, setProofModalOpen] = React.useState(false);
+  const [copiedToClipboard, setCopiedToClipboard] = React.useState(false);
   // const [modal, setModal] = useModal();
 
   const [paymentProof, setPaymentProof] = React.useState(
@@ -123,6 +126,17 @@ const NotaView: React.FC<NotaViewProps> = ({
     const url = await uploadFile(file);
     onPaymentProofChange?.(url);
     setPaymentProof(url);
+  };
+
+  const handleCopyAccountNumber = async () => {
+    try {
+      await navigator.clipboard.writeText("90360019583");
+      setCopiedToClipboard(true);
+      toast.success("Nomor rekening berhasil disalin!");
+      setTimeout(() => setCopiedToClipboard(false), 2000);
+    } catch (err) {
+      toast.error("Gagal menyalin nomor rekening");
+    }
   };
 
   return (
@@ -319,6 +333,40 @@ const NotaView: React.FC<NotaViewProps> = ({
                 <CheckCircle size={12} /> Lunas
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Payment Information */}
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="text-xs font-bold text-blue-700 uppercase mb-3 flex items-center gap-2">
+            <span className="w-1 h-4 bg-blue-600 rounded"></span>
+            Informasi Pembayaran
+          </h3>
+          <div className="bg-white p-3 rounded border border-blue-100">
+            <p className="text-sm font-semibold text-gray-800 mb-2">
+              Jenius (Bank SMBC Indonesia)
+            </p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-lg font-mono font-bold text-gray-900">
+                90360019583
+              </p>
+              <button
+                type="button"
+                onClick={handleCopyAccountNumber}
+                className="flex items-center gap-1 px-2 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors no-print"
+              >
+                {copiedToClipboard ? (
+                  <>
+                    <Check size={14} /> Disalin
+                  </>
+                ) : (
+                  <>
+                    <Copy size={14} /> Salin
+                  </>
+                )}
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mt-2">a.n Rizki Naufal</p>
           </div>
         </div>
 

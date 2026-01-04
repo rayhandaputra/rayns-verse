@@ -158,7 +158,7 @@ export const PrintNotaTemplate = React.forwardRef<
         </table>
 
         {/* Ringkasan Biaya */}
-        <div className="flex justify-end">
+        <div className="flex justify-end mb-6">
           <div className="w-64 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Total Tagihan</span>
@@ -188,6 +188,25 @@ export const PrintNotaTemplate = React.forwardRef<
                 PESANAN LUNAS
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Payment Information */}
+        <div className="mb-8 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <h3 className="text-xs font-bold text-gray-700 uppercase mb-3 flex items-center gap-2">
+            <span className="w-1 h-4 bg-gray-800 rounded"></span>
+            Informasi Pembayaran
+          </h3>
+          <div className="bg-white p-3 rounded border border-gray-200">
+            <p className="text-sm font-semibold text-gray-800 mb-2">
+              Jenius (Bank SMBC Indonesia)
+            </p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-lg font-mono font-bold text-gray-900">
+                90360019583
+              </p>
+            </div>
+            <p className="text-sm text-gray-600 mt-2">a.n Rizki Naufal</p>
           </div>
         </div>
 
