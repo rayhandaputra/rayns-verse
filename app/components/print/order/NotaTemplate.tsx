@@ -74,7 +74,7 @@ export const PrintNotaTemplate = React.forwardRef<
                 <h3 className="text-[10px] font-bold text-gray-400 uppercase mb-1">
                   Deadline
                 </h3>
-                <p className="font-bold text-sm text-red-600">
+                <p className="font-bold text-sm text-gray-900">
                   {formatFullDate(order?.deadline)}
                 </p>
               </div>
@@ -85,7 +85,7 @@ export const PrintNotaTemplate = React.forwardRef<
                   Status Pembayaran
                 </h3>
                 <span
-                  className={`text-xs font-bold px-2 py-1 ${order?.status === "paid" ? "bg-green-500" : order?.status === "down_payment" ? "bg-yellow-500" : "bg-red-500"} text-white rounded uppercase`}
+                  className={`text-xs font-bold px-2 py-1 ${order?.payment_status === "paid" ? "bg-green-500" : order?.payment_status === "down_payment" ? "bg-yellow-500" : "bg-red-500"} text-white rounded uppercase`}
                 >
                   {getPaymentStatusLabel(order?.payment_status ?? "none")}
                 </span>
@@ -157,8 +157,28 @@ export const PrintNotaTemplate = React.forwardRef<
           </tbody>
         </table>
 
-        {/* Ringkasan Biaya */}
-        <div className="flex justify-end mb-6">
+        {/* Ringkasan Biaya & Payment Information */}
+        <div className="flex justify-between gap-6 mb-3">
+          {/* Payment Information */}
+          <div className="flex-1 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <h3 className="text-xs font-bold text-gray-700 uppercase mb-3 flex items-center gap-2">
+              <span className="w-1 h-4 bg-gray-800 rounded"></span>
+              Informasi Pembayaran
+            </h3>
+            <div className="bg-white p-3 rounded border border-gray-200">
+              <p className="text-sm font-semibold text-gray-800 mb-2">
+                Jenius (Bank SMBC Indonesia)
+              </p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-lg font-mono font-bold text-gray-900">
+                  90360019583
+                </p>
+              </div>
+              <p className="text-sm text-gray-600 mt-2">a.n Rizki Naufal</p>
+            </div>
+          </div>
+
+          {/* Ringkasan Biaya */}
           <div className="w-64 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Total Tagihan</span>
@@ -191,27 +211,8 @@ export const PrintNotaTemplate = React.forwardRef<
           </div>
         </div>
 
-        {/* Payment Information */}
-        <div className="mb-8 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-          <h3 className="text-xs font-bold text-gray-700 uppercase mb-3 flex items-center gap-2">
-            <span className="w-1 h-4 bg-gray-800 rounded"></span>
-            Informasi Pembayaran
-          </h3>
-          <div className="bg-white p-3 rounded border border-gray-200">
-            <p className="text-sm font-semibold text-gray-800 mb-2">
-              Jenius (Bank SMBC Indonesia)
-            </p>
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-lg font-mono font-bold text-gray-900">
-                90360019583
-              </p>
-            </div>
-            <p className="text-sm text-gray-600 mt-2">a.n Rizki Naufal</p>
-          </div>
-        </div>
-
         {/* Footer Cetak */}
-        <div className="mt-16 pt-8 border-t border-dashed border-gray-200 flex justify-between items-end">
+        <div className="mt-4 pt-4 border-t border-dashed border-gray-200 flex justify-between items-end">
           <div>
             <p className="text-xs">
               Link akses bukti pesanan:{" "}

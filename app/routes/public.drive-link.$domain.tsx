@@ -501,6 +501,13 @@ export default function PublicDriveLinkPage() {
       if (failed === 0) {
         toast.success(`${successful} File berhasil diunggah`);
       } else {
+        sendTelegramLog("PUBLIC_DRIVE_LINK_UPLOAD_FAILED", {
+          domain,
+          orderData,
+          current_folder,
+          query,
+          results,
+        });
         toast.warning(`${successful} Berhasil, ${failed} Gagal diunggah`);
       }
 
