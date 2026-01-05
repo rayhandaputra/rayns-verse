@@ -25,8 +25,11 @@ export function PrintButton({
     pageStyle: `
       @media print {
         @page {
-            size: 170mm 150mm;
-            margin: 0mm;
+            /* Mengubah ukuran menjadi A4 */
+            size: A4; 
+            /* Margin standar untuk A4 biasanya 10mm - 20mm, 
+               tapi jika butuh full page, gunakan 0mm */
+            margin: 10mm; 
         }
         .page {
             page-break-after: always;

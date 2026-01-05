@@ -592,7 +592,7 @@ export default function OrderList() {
             {safeParseArray(order.order_items)?.length > 0
               ? safeParseArray(order.order_items).map(
                   (item: any, idx: number) => (
-                    <li key={idx}>{item.variant_name}</li>
+                    <li key={idx}>{item.variant_name || "Caseless 1 Sisi"}</li>
                   )
                 )
               : "-"}
