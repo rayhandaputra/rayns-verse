@@ -101,6 +101,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     );
   } catch (error: any) {
     console.error("Loader error:", error);
+    sendTelegramLog("PUBLIC_DRIVE_LINK_LOADER_ERROR", {
+      domain,
+      error: error,
+    });
     // Return empty state on error
     return Response.json(
       {
@@ -254,6 +258,10 @@ export const action: ActionFunction = async ({ request, params }) => {
     });
   } catch (e: any) {
     console.error("Error deleting items:", e);
+    sendTelegramLog("PUBLIC_DRIVE_LINK_ACTION_ERROR", {
+      domain,
+      error: e,
+    });
     return Response.json({
       success: false,
       message: e.message || "Terjadi kesalahan saat menghapus",
@@ -487,6 +495,13 @@ export default function PublicDriveLinkPage() {
 
           return { success: true, fileName: file.name };
         } catch (err) {
+          sendTelegramLog("PUBLIC_DRIVE_LINK_UPLOAD_ERROR_USER", {
+            domain,
+            orderData,
+            current_folder,
+            query,
+            error: err,
+          });
           return { success: false, fileName: file.name, error: err };
         }
       });
@@ -517,6 +532,13 @@ export default function PublicDriveLinkPage() {
     } catch (err: any) {
       toast.error("Terjadi kesalahan sistem saat upload");
       console.error(err);
+      sendTelegramLog("PUBLIC_DRIVE_LINK_UPLOAD_ERROR_USER", {
+        domain,
+        orderData,
+        current_folder,
+        query,
+        error: err,
+      });
     } finally {
       setLoadingUpload(false);
       e.target.value = ""; // Reset input agar bisa pilih file yang sama lagi
@@ -1119,7 +1141,7 @@ const Header = ({ orderData, domain }: { orderData: any; domain: string }) => {
                 </h1>
                 <p className="text-sm text-gray-500">
                   {+orderData?.is_kkn === 1
-                    ? `${`${orderData?.kkn_type?.toLowerCase() === "ppm" ? "Kelompok" : "Desa"} ${safeParseObject(orderData?.kkn_detail)?.value}`} - ${orderData?.kkn_source?.split("_")?.join(" ")?.toUpperCase()} ${safeParseObject(orderData?.kkn_detail)?.year ?? ""} - PERIODE ${orderData?.kkn_period}`
+                    ? `${`${orderData?.kkn_type?.toLowerCase() === "ppm" ? "Kelompok" : "Desa"} ${(safeParseObject(orderData?.kkn_detail) as any)?.value}`} - ${orderData?.kkn_source?.split("_")?.join(" ")?.toUpperCase()} ${(safeParseObject(orderData?.kkn_detail) as any)?.year ?? ""} - PERIODE ${orderData?.kkn_period}`
                     : +orderData?.is_personal === 1
                       ? `${orderData?.pic_name} (Perorangan)`
                       : `${orderData?.institution_name || "Shared Drive"} - ${orderData?.order_number}`}
