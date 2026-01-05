@@ -55,7 +55,7 @@ export const PrintNotaTemplate = React.forwardRef<
         <div className="grid grid-cols-2 gap-6 mb-8">
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
             <h3 className="text-[10px] font-bold text-gray-400 uppercase mb-1">
-              Penerima
+              Pemesan
             </h3>
             <p className="font-bold text-lg text-gray-900 leading-tight">
               {order?.institution_name}
