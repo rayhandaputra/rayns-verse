@@ -456,19 +456,19 @@ const FinancePage: React.FC<FinancePageProps> = ({
   const actionFetcher = useFetcher();
 
   // Fetch transactions with filters
-  const {
-    data: transactionsData,
-    loading: transactionsLoading,
-    reload: reloadTransactions,
-  } = useFetcherData<any>({
-    endpoint: NexusHelpers.transactions.list({
-      year: filterYear,
-      sort_by: sortOption.includes("amount") ? "amount" : "date",
-      sort_order: sortOption.includes("desc") ? "desc" : "asc",
-      pagination: "true",
-      size: "100",
-    }),
-  });
+  // const {
+  //   data: transactionsData,
+  //   loading: transactionsLoading,
+  //   reload: reloadTransactions,
+  // } = useFetcherData<any>({
+  //   endpoint: NexusHelpers.transactions.list({
+  //     year: filterYear,
+  //     sort_by: sortOption.includes("amount") ? "amount" : "date",
+  //     sort_order: sortOption.includes("desc") ? "desc" : "asc",
+  //     pagination: "true",
+  //     size: "100",
+  //   }),
+  // });
 
   const {
     data: productCost,
@@ -645,7 +645,7 @@ const FinancePage: React.FC<FinancePageProps> = ({
   });
 
   // Extract data
-  const transactions: Transaction[] = transactionsData?.data?.data || [];
+  // const transactions: Transaction[] = transactionsData?.data?.data || [];
   const banks: BankAccount[] = banksData?.data?.data || [];
   const bankBalances = balancesData?.data?.balances || {};
 
@@ -1143,7 +1143,7 @@ const FinancePage: React.FC<FinancePageProps> = ({
                         </td>
                         <td className="px-6 py-3 text-gray-500 text-xs">
                           {/* {t.bank_id || "-"} */}
-                          {t.receipt_url ? (
+                          {t.receipt_url && t.receipt_url !== "undefined" ? (
                             <Button
                               className="text-blue-600"
                               onClick={() =>

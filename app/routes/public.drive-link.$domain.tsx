@@ -21,6 +21,7 @@ import {
   AlertCircle,
   Link2OffIcon,
   Share2,
+  MapPin,
 } from "lucide-react";
 import {
   useLoaderData,
@@ -45,6 +46,7 @@ import { DriveBreadcrumb } from "~/components/breadcrumb/DriveBreadcrumb";
 import Swal from "sweetalert2";
 import { safeParseObject } from "~/lib/utils";
 import { sendTelegramLog } from "~/lib/telegram-log";
+import { getGoogleMapsLink } from "~/constants";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const domain = params?.domain;
@@ -765,6 +767,14 @@ export default function PublicDriveLinkPage() {
                   </span>
                 </button>
               )}
+              <a
+                href={getGoogleMapsLink()}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center gap-2 py-2 px-3 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                <MapPin size={14} className="text-red-500" /> Lokasi Pengambilan
+              </a>
             </div>
             <div className="flex items-center gap-2">
               <button

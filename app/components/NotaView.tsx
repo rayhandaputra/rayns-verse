@@ -370,68 +370,6 @@ const NotaView: React.FC<NotaViewProps> = ({
           </div>
         </div>
 
-        {/* Review Section (Editable if isEditable) */}
-        {isEditable ? (
-          <div className="mb-6 p-6 bg-white border border-gray-200 rounded-xl shadow-sm no-print">
-            <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2 mb-3">
-              <MessageSquare size={16} /> Berikan Ulasan
-            </h3>
-            <div className="mb-4">
-              <label className="text-xs font-semibold text-gray-600 block mb-2">
-                Rating:
-              </label>
-              <div className="flex gap-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setRating(i + 1)}
-                    className={`transition ${
-                      i < rating ? "text-yellow-400" : "text-gray-300"
-                    } cursor-pointer hover:scale-110`}
-                  >
-                    <Star
-                      size={24}
-                      fill={i < rating ? "currentColor" : "none"}
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-            <textarea
-              value={review}
-              onChange={(e) => setReview(e.target.value)}
-              placeholder="Bagaimana hasil produksi kami? Tulis ulasan Anda disini..."
-              className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none mb-3"
-              rows={3}
-              maxLength={500}
-            />
-            <div className="flex justify-between items-center gap-2">
-              <div className="text-xs text-gray-500">
-                {review.length}/500 karakter
-              </div>
-              <Button
-                onClick={() => onReviewChange?.(rating, review)}
-                size="sm"
-                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                Kirim Ulasan
-              </Button>
-            </div>
-          </div>
-        ) : review ? (
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-100 rounded-lg print:bg-white print:border-gray-200">
-            <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">
-              Ulasan Pelanggan
-            </h3>
-            <div className="flex text-yellow-400 mb-1 print:text-black">
-              {Array.from({ length: rating || 5 }).map((_, i) => (
-                <Star key={i} size={14} fill="currentColor" />
-              ))}
-            </div>
-            <p className="text-sm italic text-gray-700">"{review}"</p>
-          </div>
-        ) : null}
-
         {/* Action Buttons (Hidden on Print) */}
         <div className="grid grid-cols-2 gap-3 mb-4 no-print">
           <a
@@ -510,6 +448,68 @@ const NotaView: React.FC<NotaViewProps> = ({
             onChange={handleFileChange}
           />
         </div>
+
+        {/* Review Section (Editable if isEditable) */}
+        {isEditable ? (
+          <div className="mb-6 p-6 bg-white border border-gray-200 rounded-xl shadow-sm no-print">
+            <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2 mb-3">
+              <MessageSquare size={16} /> Berikan Ulasan
+            </h3>
+            <div className="mb-4">
+              <label className="text-xs font-semibold text-gray-600 block mb-2">
+                Rating:
+              </label>
+              <div className="flex gap-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setRating(i + 1)}
+                    className={`transition ${
+                      i < rating ? "text-yellow-400" : "text-gray-300"
+                    } cursor-pointer hover:scale-110`}
+                  >
+                    <Star
+                      size={24}
+                      fill={i < rating ? "currentColor" : "none"}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <textarea
+              value={review}
+              onChange={(e) => setReview(e.target.value)}
+              placeholder="Bagaimana hasil produksi kami? Tulis ulasan Anda disini..."
+              className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none mb-3"
+              rows={3}
+              maxLength={500}
+            />
+            <div className="flex justify-between items-center gap-2">
+              <div className="text-xs text-gray-500">
+                {review.length}/500 karakter
+              </div>
+              <Button
+                onClick={() => onReviewChange?.(rating, review)}
+                size="sm"
+                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                Kirim Ulasan
+              </Button>
+            </div>
+          </div>
+        ) : review ? (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-100 rounded-lg print:bg-white print:border-gray-200">
+            <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">
+              Ulasan Pelanggan
+            </h3>
+            <div className="flex text-yellow-400 mb-1 print:text-black">
+              {Array.from({ length: rating || 5 }).map((_, i) => (
+                <Star key={i} size={14} fill="currentColor" />
+              ))}
+            </div>
+            <p className="text-sm italic text-gray-700">"{review}"</p>
+          </div>
+        ) : null}
 
         {/* Footer */}
         <div className="text-center text-[10px] text-gray-400 mt-6 pt-4 border-t border-gray-100">

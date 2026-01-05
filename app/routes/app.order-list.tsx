@@ -861,7 +861,7 @@ export default function OrderList() {
               <div className="flex flex-col gap-1.5">
                 {/* DP */}
                 <button
-                  // disabled={!canUploadDp}
+                  disabled={!canUploadDp}
                   onClick={() => openUploadModal("down_payment")}
                   className={`${buttonBase} ${
                     hasDpProof
@@ -877,7 +877,7 @@ export default function OrderList() {
 
                 {/* LUNAS */}
                 <button
-                  // disabled={!canUploadPaid}
+                  disabled={!canUploadPaid}
                   onClick={() => openUploadModal("paid")}
                   className={`${buttonBase} ${
                     hasPaidProof
@@ -1253,6 +1253,15 @@ export default function OrderList() {
                         src={modal.data.dp_payment_proof}
                         alt="Bukti DP"
                         className="w-full max-h-[320px] object-contain bg-white"
+                        onClick={() => {
+                          setModal({
+                            open: true,
+                            type: "zoom_payment_proof",
+                            data: {
+                              payment_proof: modal.data?.dp_payment_proof,
+                            },
+                          });
+                        }}
                       />
                     ) : (
                       <div className="flex items-center justify-center h-full">
@@ -1276,6 +1285,15 @@ export default function OrderList() {
                       src={modal.data.payment_proof}
                       alt="Bukti Pelunasan"
                       className="w-full max-h-[320px] object-contain bg-white"
+                      onClick={() => {
+                        setModal({
+                          open: true,
+                          type: "zoom_payment_proof",
+                          data: {
+                            payment_proof: modal.data?.payment_proof,
+                          },
+                        });
+                      }}
                     />
                   </div>
                 </div>
@@ -1326,6 +1344,24 @@ export default function OrderList() {
               )} */}
             </div>
           </div>
+        </div>
+      )}
+      {modal?.type === "zoom_payment_proof" && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setModal({ ...modal, open: false, type: "" })}
+        >
+          <button
+            onClick={() => setModal({ ...modal, open: false, type: "" })}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 z-50 p-2 bg-black/50 rounded-full"
+          >
+            <X size={32} />
+          </button>
+          <img
+            src={modal?.data?.payment_proof}
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
+          />
         </div>
       )}
       {modal?.type === "view_nota" && (
