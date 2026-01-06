@@ -1243,6 +1243,45 @@ export default function OrderList() {
                     <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-700">
                       Bukti DP
                     </span>
+                    <button
+                      onClick={() => {
+                        Swal.fire({
+                          title: "Hapus Bukti DP?",
+                          text: "Yakin ingin menghapus bukti pembayaran DP?",
+                          icon: "warning",
+                          showCancelButton: true,
+                          confirmButtonText: "Ya, Hapus",
+                          cancelButtonText: "Batal",
+                          customClass: {
+                            confirmButton: "bg-red-600 text-white",
+                            cancelButton: "bg-gray-200 text-gray-800",
+                          },
+                        }).then((result) => {
+                          if (result.isConfirmed) {
+                            submitAction({
+                              action: "update_payment_proof",
+                              id: modal?.data?.id,
+                              order: JSON.stringify(modal?.data),
+                              dp_payment_proof: "",
+                            });
+                          }
+                        });
+                      }}
+                      className="p-1 text-red-600 hover:bg-red-50 rounded transition"
+                      title="Hapus Bukti DP"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+
+                  <div className="text-[10px] text-gray-500 mb-2">
+                    Diupload:{" "}
+                    {modal.data.dp_payment_proof_uploaded_on
+                      ? dateFormat(
+                          modal.data.dp_payment_proof_uploaded_on,
+                          "DD MMM YYYY (HH:mm)"
+                        )
+                      : "-"}
                   </div>
 
                   <div className="rounded-lg overflow-hidden border border-gray-200">
@@ -1252,7 +1291,7 @@ export default function OrderList() {
                       <img
                         src={modal.data.dp_payment_proof}
                         alt="Bukti DP"
-                        className="w-full max-h-[320px] object-contain bg-white"
+                        className="w-full max-h-[320px] object-contain bg-white cursor-pointer"
                         onClick={() => {
                           setModal({
                             open: true,
@@ -1278,13 +1317,52 @@ export default function OrderList() {
                     <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-700">
                       Bukti Pelunasan
                     </span>
+                    <button
+                      onClick={() => {
+                        Swal.fire({
+                          title: "Hapus Bukti Pelunasan?",
+                          text: "Yakin ingin menghapus bukti pembayaran pelunasan?",
+                          icon: "warning",
+                          showCancelButton: true,
+                          confirmButtonText: "Ya, Hapus",
+                          cancelButtonText: "Batal",
+                          customClass: {
+                            confirmButton: "bg-red-600 text-white",
+                            cancelButton: "bg-gray-200 text-gray-800",
+                          },
+                        }).then((result) => {
+                          if (result.isConfirmed) {
+                            submitAction({
+                              action: "update_payment_proof",
+                              id: modal?.data?.id,
+                              order: JSON.stringify(modal?.data),
+                              payment_proof: "",
+                            });
+                          }
+                        });
+                      }}
+                      className="p-1 text-red-600 hover:bg-red-50 rounded transition"
+                      title="Hapus Bukti Pelunasan"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+
+                  <div className="text-[10px] text-gray-500 mb-2">
+                    Diupload:{" "}
+                    {modal.data.payment_proof_uploaded_on
+                      ? dateFormat(
+                          modal.data.payment_proof_uploaded_on,
+                          "DD MMM YYYY (HH:mm)"
+                        )
+                      : "-"}
                   </div>
 
                   <div className="rounded-lg overflow-hidden border border-gray-200">
                     <img
                       src={modal.data.payment_proof}
                       alt="Bukti Pelunasan"
-                      className="w-full max-h-[320px] object-contain bg-white"
+                      className="w-full max-h-[320px] object-contain bg-white cursor-pointer"
                       onClick={() => {
                         setModal({
                           open: true,

@@ -101,9 +101,11 @@ export const OrderAPI = {
             "payment_status",
             "payment_method",
             "payment_proof",
+            "payment_proof_uploaded_on",
             "payment_detail",
             "dp_payment_method",
             "dp_payment_proof",
+            "dp_payment_proof_uploaded_on",
             "dp_payment_detail",
             "discount_value",
             "tax_value",
@@ -616,8 +618,16 @@ export const OrderAPI = {
 
     const updatedOrder = {
       ...fields,
+      ...(fields?.dp_payment_proof && {
+        dp_payment_proof_uploaded_on: moment()
+          .add(7, "hours")
+          .format("YYYY-MM-DD HH:mm:ss"),
+      }),
       ...(fields?.payment_proof && {
         payment_status: "paid",
+        payment_proof_uploaded_on: moment()
+          .add(7, "hours")
+          .format("YYYY-MM-DD HH:mm:ss"),
         status: "done",
       }),
       ...(fields?.kkn_detail && {
