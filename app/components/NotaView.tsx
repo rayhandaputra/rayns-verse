@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
+import { Form, useNavigation } from "react-router";
 
 interface NotaViewProps {
   order: Order;
@@ -49,6 +50,19 @@ const NotaView: React.FC<NotaViewProps> = ({
   const [review, setReview] = React.useState(order.review || "");
   const [proofModalOpen, setProofModalOpen] = React.useState(false);
   const [copiedToClipboard, setCopiedToClipboard] = React.useState(false);
+
+  const navigation = useNavigation();
+  const isDownloading =
+    navigation.state !== "idle" &&
+    navigation.formAction === `/app/orders/${order.id}/download`;
+
+  // Memberikan feedback Sonner saat download dimulai
+  useEffect(() => {
+    if (isDownloading) {
+      toast.info("Sedang menyiapkan PDF...");
+    }
+  }, [isDownloading]);
+
   // const [modal, setModal] = useModal();
 
   const [paymentProof, setPaymentProof] = React.useState(
@@ -479,15 +493,29 @@ const NotaView: React.FC<NotaViewProps> = ({
           </a> */}
           {isMobile ? (
             /* TAMPILAN UNTUK MOBILE (Direct Download) */
-            <a
-              href={`/app/orders/${order.id}/download`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center justify-center gap-2 py-2 px-3 bg-gray-900 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 transition-colors"
+            // <a
+            //   href={`/app/orders/${order.id}/download`}
+            //   target="_blank"
+            //   rel="noreferrer"
+            //   className="flex items-center justify-center gap-2 py-2 px-3 bg-gray-900 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 transition-colors"
+            // >
+            //   <Printer size={14} />
+            //   <span>Cetak Nota</span>
+            // </a>
+            <Form
+              action={`/app/orders/${order.id}/download`}
+              method="get" // Gunakan GET untuk resource route download
+              reloadDocument // PENTING: Agar browser menangani response sebagai file, bukan navigasi SPA
             >
-              <Printer size={14} />
-              <span>Cetak Nota</span>
-            </a>
+              <button
+                type="submit"
+                disabled={isDownloading}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-gray-900 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 disabled:bg-gray-500"
+              >
+                <Printer size={14} />
+                <span>{isDownloading ? "Memproses..." : "Cetak Nota"}</span>
+              </button>
+            </Form>
           ) : /* TAMPILAN UNTUK DESKTOP (Print Preview Browser) */
           PrintButton ? (
             <PrintButton>

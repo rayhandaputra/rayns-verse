@@ -16,7 +16,6 @@ export async function loader({ params }: LoaderFunctionArgs) {
       },
     },
   });
-  console.log(getOrder);
   const order = getOrder?.items?.[0];
 
   if (!order) throw new Response("Not Found", { status: 404 });
