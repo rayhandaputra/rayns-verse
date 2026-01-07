@@ -517,7 +517,7 @@ const NotaView: React.FC<NotaViewProps> = ({
           <p>Terima kasih atas kepercayaan Anda.</p>
         </div>
 
-        <style>{`
+        {/* <style>{`
         @media print {
             @page {
                 size: A5 portrait;
@@ -538,7 +538,7 @@ const NotaView: React.FC<NotaViewProps> = ({
             .no-print { display: none !important; }
             .bg-gray-50 { background-color: #f9fafb !important; -webkit-print-color-adjust: exact; }
         }
-      `}</style>
+      `}</style> */}
       </div>
 
       {proofModalOpen && (

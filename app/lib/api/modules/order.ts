@@ -2,6 +2,40 @@ import { safeParseArray, safeParseObject } from "~/lib/utils";
 import { APIProvider } from "../client";
 import moment from "moment";
 
+const generateJournalCode = () =>
+  `JRNL${moment().add(7, "hours").format("YYYYMMDDHHmmss")}`;
+const createMutation = async (mutations: any[], journal_code?: string) => {
+  if (journal_code) {
+    await APIProvider({
+      endpoint: "update",
+      method: "POST",
+      table: "account_ledger_mutations",
+      action: "update",
+      body: {
+        data: {
+          deleted_on: moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
+        },
+        where: {
+          journal_code,
+        },
+      },
+    });
+  }
+  await APIProvider({
+    endpoint: "bulk-insert",
+    method: "POST",
+    table: "account_ledger_mutations",
+    action: "bulk-insert",
+    body: {
+      rows: mutations?.map((mutation: any) => ({
+        ...mutation,
+        journal_code,
+      })),
+      updateOnDuplicate: true,
+    },
+  });
+};
+
 export const OrderAPI = {
   // ================================
   // ✅ GET / LIST ORDERS
@@ -103,10 +137,12 @@ export const OrderAPI = {
             "payment_proof",
             "payment_proof_uploaded_on",
             "payment_detail",
+            "payment_journal_code",
             "dp_payment_method",
             "dp_payment_proof",
             "dp_payment_proof_uploaded_on",
             "dp_payment_detail",
+            "dp_payment_journal_code",
             "discount_value",
             "tax_value",
             "order_date",
@@ -305,7 +341,8 @@ export const OrderAPI = {
     // const total_amount = subtotal - discountTotal + totalTax;
     // const grand_total = total_amount + (shipping_fee || 0) + (other_fee || 0);
 
-    let newOrder = {
+    const jrnlCode = generateJournalCode();
+    let newOrder: any = {
       order_number,
       institution_id,
       institution_name,
@@ -351,6 +388,16 @@ export const OrderAPI = {
       // created_on: moment().subtract(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
       created_on: moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
       modified_on: null,
+      ...(total_amount > 0 &&
+        +is_archive === 1 && {
+          ...(payment_status === "down_payment"
+            ? {
+                dp_payment_journal_code: jrnlCode,
+              }
+            : {
+                payment_journal_code: jrnlCode,
+              }),
+        }),
     };
 
     try {
@@ -478,51 +525,42 @@ export const OrderAPI = {
       }
 
       if (total_amount > 0 && +is_archive === 1) {
-        const jrnlCode = `JRNL${moment().add(7, "hours").format("YYYYMMDDHHmmss")}`;
-        await APIProvider({
-          endpoint: "bulk-insert",
-          method: "POST",
-          table: "account_ledger_mutations",
-          action: "bulk-insert",
-          body: {
-            rows: [
-              {
-                account_code: "4-101",
-                account_name: "Pendapatan Usaha",
-                credit:
-                  payment_status === "down_payment"
-                    ? total_amount - dp_amount
-                    : total_amount,
-                debit: 0,
-                notes: order_number,
-                journal_code: jrnlCode,
-                trx_code: order_number,
-                trx_date:
-                  order_date ??
-                  moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
-              },
-              {
-                account_code: +is_archive !== 1 ? "1-102" : "1-101",
-                account_name:
-                  +is_archive !== 1
-                    ? "Piutang Usaha"
-                    : "Kas Utama (Cash on Hand)",
-                credit: 0,
-                debit:
-                  payment_status === "down_payment"
-                    ? total_amount - dp_amount
-                    : total_amount,
-                notes: order_number,
-                journal_code: jrnlCode,
-                trx_code: order_number,
-                trx_date:
-                  order_date ??
-                  moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
-              },
-            ],
-            updateOnDuplicate: true,
-          },
-        });
+        createMutation(
+          [
+            {
+              account_code: "4-101",
+              account_name: "Pendapatan Usaha",
+              credit:
+                payment_status === "down_payment"
+                  ? total_amount - dp_amount
+                  : total_amount,
+              debit: 0,
+              notes: order_number,
+              trx_code: order_number,
+              trx_date:
+                order_date ??
+                moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
+            },
+            {
+              account_code: +is_archive !== 1 ? "1-102" : "1-101",
+              account_name:
+                +is_archive !== 1
+                  ? "Piutang Usaha"
+                  : "Kas Utama (Cash on Hand)",
+              credit: 0,
+              debit:
+                payment_status === "down_payment"
+                  ? total_amount - dp_amount
+                  : total_amount,
+              notes: order_number,
+              trx_code: order_number,
+              trx_date:
+                order_date ??
+                moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
+            },
+          ],
+          jrnlCode
+        );
       }
       // account_code: accBank?.code || "1-101",
       //           account_name: accBank?.name || "Kas Utama (Cash on Hand)",
@@ -611,25 +649,13 @@ export const OrderAPI = {
   update: async ({ req }: any) => {
     let { id, order, order_number, items, ...fields } = req.body || {};
 
-    const existOrder = order ? safeParseObject(order) : null;
+    const existOrder: any = order ? safeParseObject(order) : null;
     if (!id) {
       return { success: false, message: "ID order wajib diisi untuk update" };
     }
 
     const updatedOrder = {
       ...fields,
-      ...(fields?.dp_payment_proof && {
-        dp_payment_proof_uploaded_on: moment()
-          .add(7, "hours")
-          .format("YYYY-MM-DD HH:mm:ss"),
-      }),
-      ...(fields?.payment_proof && {
-        payment_status: "paid",
-        payment_proof_uploaded_on: moment()
-          .add(7, "hours")
-          .format("YYYY-MM-DD HH:mm:ss"),
-        status: "done",
-      }),
       ...(fields?.kkn_detail && {
         kkn_detail: JSON.stringify(fields?.kkn_detail),
       }),
@@ -660,6 +686,10 @@ export const OrderAPI = {
     //   });
     // }
 
+    const jrnlCode = existOrder?.payment_journal_code || generateJournalCode();
+    const jrnlCodeDP =
+      existOrder?.dp_payment_journal_code || generateJournalCode();
+
     try {
       const result = await APIProvider({
         endpoint: "update",
@@ -682,6 +712,20 @@ export const OrderAPI = {
                   ),
                 }
               : {}),
+            ...(fields?.dp_payment_proof && {
+              dp_payment_journal_code: jrnlCodeDP,
+              dp_payment_proof_uploaded_on: moment()
+                .add(7, "hours")
+                .format("YYYY-MM-DD HH:mm:ss"),
+            }),
+            ...(fields?.payment_proof && {
+              payment_journal_code: jrnlCode,
+              payment_status: "paid",
+              payment_proof_uploaded_on: moment()
+                .add(7, "hours")
+                .format("YYYY-MM-DD HH:mm:ss"),
+              status: "done",
+            }),
           },
           where: { id },
         },
@@ -752,7 +796,7 @@ export const OrderAPI = {
       }
 
       let accBank = null;
-      if (safeParseObject(updatedOrder?.payment_detail)?.account_id) {
+      if ((safeParseObject(updatedOrder?.payment_detail) as any)?.account_id) {
         const resBank = await APIProvider({
           endpoint: "select",
           method: "POST",
@@ -761,7 +805,8 @@ export const OrderAPI = {
           body: {
             columns: ["id", "code", "name"],
             where: {
-              id: safeParseObject(updatedOrder?.payment_detail)?.account_id,
+              id: (safeParseObject(updatedOrder?.payment_detail) as any)
+                ?.account_id,
             },
             size: Number(1),
           },
@@ -771,90 +816,72 @@ export const OrderAPI = {
 
       if (fields?.dp_payment_proof) {
         // safeParseObject(updatedOrder?.payment_detail)
-        const jrnlCode = `JRNL${moment().add(7, "hours").format("YYYYMMDDHHmmss")}`;
-        await APIProvider({
-          endpoint: "bulk-insert",
-          method: "POST",
-          table: "account_ledger_mutations",
-          action: "bulk-insert",
-          body: {
-            rows: [
-              {
-                account_code: "4-101",
-                account_name: "Pendapatan Usaha",
-                credit: existOrder?.dp_amount,
-                debit: 0,
-                notes: existOrder?.order_number,
-                receipt_url: fields?.dp_payment_proof,
-                category: "DP Pesanan",
-                journal_code: jrnlCode,
-                trx_code: existOrder?.order_number,
-                trx_date:
-                  existOrder?.order_date ??
-                  moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
-              },
-              {
-                account_code: accBank?.code || "1-101",
-                account_name: accBank?.name || "Kas Utama (Cash on Hand)",
-                credit: 0,
-                debit: existOrder?.dp_amount,
-                notes: existOrder?.order_number,
-                receipt_url: fields?.dp_payment_proof,
-                category: "DP Pesanan",
-                journal_code: jrnlCode,
-                trx_code: existOrder?.order_number,
-                trx_date:
-                  existOrder?.order_date ??
-                  moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
-              },
-            ],
-            updateOnDuplicate: true,
-          },
-        });
+        createMutation(
+          [
+            {
+              account_code: "4-101",
+              account_name: "Pendapatan Usaha",
+              credit: existOrder?.dp_amount,
+              debit: 0,
+              notes: existOrder?.order_number,
+              receipt_url: fields?.dp_payment_proof,
+              category: "DP Pesanan",
+              trx_code: existOrder?.order_number,
+              trx_date:
+                existOrder?.order_date ??
+                moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
+            },
+            {
+              account_code: accBank?.code || "1-101",
+              account_name: accBank?.name || "Kas Utama (Cash on Hand)",
+              credit: 0,
+              debit: existOrder?.dp_amount,
+              notes: existOrder?.order_number,
+              receipt_url: fields?.dp_payment_proof,
+              category: "DP Pesanan",
+              trx_code: existOrder?.order_number,
+              trx_date:
+                existOrder?.order_date ??
+                moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
+            },
+          ],
+          jrnlCodeDP
+        );
       }
       if (fields?.payment_proof) {
         const amountMutation =
           existOrder?.payment_status === "down_payment"
             ? existOrder?.total_amount - existOrder?.dp_amount
             : existOrder?.total_amount;
-        const jrnlCode = `JRNL${moment().add(7, "hours").format("YYYYMMDDHHmmss")}`;
-        await APIProvider({
-          endpoint: "bulk-insert",
-          method: "POST",
-          table: "account_ledger_mutations",
-          action: "bulk-insert",
-          body: {
-            rows: [
-              {
-                account_code: "4-101",
-                account_name: "Pendapatan Usaha",
-                credit: amountMutation,
-                debit: 0,
-                notes: existOrder?.order_number,
-                receipt_url: fields?.payment_proof,
-                journal_code: jrnlCode,
-                trx_code: existOrder?.order_number,
-                trx_date:
-                  existOrder?.order_date ??
-                  moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
-              },
-              {
-                account_code: accBank?.code || "1-101",
-                account_name: accBank?.name || "Kas Utama (Cash on Hand)",
-                credit: 0,
-                debit: amountMutation,
-                notes: existOrder?.order_number,
-                receipt_url: fields?.payment_proof,
-                journal_code: jrnlCode,
-                trx_code: existOrder?.order_number,
-                trx_date:
-                  existOrder?.order_date ??
-                  moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
-              },
-            ],
-            updateOnDuplicate: true,
-          },
-        });
+        createMutation(
+          [
+            {
+              account_code: "4-101",
+              account_name: "Pendapatan Usaha",
+              credit: amountMutation,
+              debit: 0,
+              notes: existOrder?.order_number,
+              receipt_url: fields?.payment_proof,
+              trx_code: existOrder?.order_number,
+              trx_date:
+                existOrder?.order_date ??
+                moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
+            },
+            {
+              account_code: accBank?.code || "1-101",
+              account_name: accBank?.name || "Kas Utama (Cash on Hand)",
+              credit: 0,
+              debit: amountMutation,
+              notes: existOrder?.order_number,
+              receipt_url: fields?.payment_proof,
+              trx_code: existOrder?.order_number,
+              trx_date:
+                existOrder?.order_date ??
+                moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
+            },
+          ],
+          jrnlCode
+        );
       }
 
       return {

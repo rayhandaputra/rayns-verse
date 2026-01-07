@@ -2,7 +2,11 @@ import React from "react";
 // import { formatCurrency, formatFullDate } from "../constants"; // Pastikan path benar
 import { CheckCircle } from "lucide-react";
 import { ADMIN_WA, formatCurrency, formatFullDate } from "~/constants";
-import { getOrderStatusLabel, getPaymentStatusLabel } from "~/lib/utils";
+import {
+  getOrderStatusLabel,
+  getPaymentStatusLabel,
+  safeParseObject,
+} from "~/lib/utils";
 
 interface PrintNotaTemplateProps {
   order: any;
@@ -58,7 +62,11 @@ export const PrintNotaTemplate = React.forwardRef<
               Pemesan
             </h3>
             <p className="font-bold text-lg text-gray-900 leading-tight">
-              {order?.institution_name}
+              {+order?.is_kkn === 1
+                ? order?.kkn_type?.toLowerCase() === "ppm"
+                  ? `Kelompok ${safeParseObject(order?.kkn_detail)?.value}`
+                  : `Desa ${safeParseObject(order?.kkn_detail)?.value}`
+                : order?.institution_name}
             </p>
             {order?.pic_name && (
               <p className="text-sm text-gray-600">
