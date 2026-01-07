@@ -25,7 +25,7 @@ export const PrintNotaTemplate = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="print-content p-8 bg-white text-gray-800 font-sans w-full max-w-[210mm] mx-auto min-h-[297mm] flex flex-col break-inside-avoid"
+      className="p-8 bg-white text-gray-800 font-sans w-full max-w-[210mm] mx-auto min-h-[297mm] flex flex-col"
     >
       {/* Content Wrapper */}
       <div className="flex-1">
@@ -64,8 +64,8 @@ export const PrintNotaTemplate = React.forwardRef<
             <p className="font-bold text-lg text-gray-900 leading-tight">
               {+order?.is_kkn === 1
                 ? order?.kkn_type?.toLowerCase() === "ppm"
-                  ? `Kelompok ${(safeParseObject(order?.kkn_detail) as any)?.value || ""}`
-                  : `Desa ${(safeParseObject(order?.kkn_detail) as any)?.value || ""}`
+                  ? `Kelompok ${safeParseObject(order?.kkn_detail)?.value}`
+                  : `Desa ${safeParseObject(order?.kkn_detail)?.value}`
                 : order?.institution_name}
             </p>
             {order?.pic_name && (
@@ -254,7 +254,7 @@ export const PrintNotaTemplate = React.forwardRef<
       </div>
 
       {/* Footer Informasi Kontak - Fixed Bottom */}
-      <div className="mt-auto pt-3 border-t-2 border-gray-800">
+      <div className="mt-auto pt-6 border-t-2 border-gray-800">
         <div className="text-center">
           <p className="text-xs font-bold text-gray-700 mb-3">HUBUNGI KAMI</p>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 text-[10px] text-gray-600">
@@ -287,75 +287,10 @@ export const PrintNotaTemplate = React.forwardRef<
         dangerouslySetInnerHTML={{
           __html: `
           @media print {
-            * {
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            @page {
-              margin: -15mm;
-              size: A4;
-            }
-            @page :first {
-              margin-top: 10mm;
-            }
-            body {
-              margin: 0;
-              padding: 0;
-            }
-            /* Background colors for print */
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            @page { margin: 0; size: auto; }
             .bg-gray-50 { background-color: #f9fafb !important; }
             .bg-gray-200 { background-color: #e5e7eb !important; }
-            .bg-green-500 { background-color: #22c55e !important; }
-            .bg-yellow-500 { background-color: #eab308 !important; }
-            .bg-red-500 { background-color: #ef4444 !important; }
-            .bg-blue-500 { background-color: #3b82f6 !important; }
-            .bg-blue-600 { background-color: #2563eb !important; }
-            .bg-white { background-color: #ffffff !important; }
-            /* Text colors for print */
-            .text-green-600 { color: #16a34a !important; }
-            .text-red-600 { color: #dc2626 !important; }
-            .text-green-700 { color: #15803d !important; }
-            .text-yellow-700 { color: #a16207 !important; }
-            .text-red-700 { color: #b91c1c !important; }
-            .text-gray-900 { color: #111827 !important; }
-            .text-gray-800 { color: #1f2937 !important; }
-            .text-gray-700 { color: #374151 !important; }
-            .text-gray-600 { color: #4b5563 !important; }
-            .text-gray-500 { color: #6b7280 !important; }
-            .text-gray-400 { color: #9ca3af !important; }
-            .text-white { color: #ffffff !important; }
-            /* Borders for print */
-            .border-gray-200 { border-color: #e5e7eb !important; }
-            .border-gray-800 { border-color: #1f2937 !important; }
-            .border-dashed { border-style: dashed !important; }
-            /* Hide print-specific elements */
-            .no-print, .hidden-print {
-              display: none !important;
-            }
-            /* Prevent page breaks inside important elements */
-            .break-inside-avoid {
-              break-inside: avoid;
-            }
-            tr, td, th {
-              break-inside: avoid;
-            }
-            /* Ensure text wraps properly */
-            table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-          }
-          /* Screen styles for mobile print preview */
-          @media screen and (max-width: 768px) {
-            body {
-              font-size: 14px;
-            }
-            .print-container {
-              padding: 10px;
-              max-width: 100%;
-            }
           }
         `,
         }}
