@@ -8,6 +8,9 @@ export default defineConfig({
   optimizeDeps: {
     include: ["react-to-print"],
   },
+  ssr: {
+    noExternal: ["@react-pdf/renderer"],
+  },
   // optimizeDeps: {
   //   include: ["react-to-print"], // pastikan di-scan untuk prebundle
   // },

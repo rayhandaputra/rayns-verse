@@ -31,7 +31,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
-import { useModal } from "~/provider/modal-provider";
 
 interface NotaViewProps {
   order: Order;
@@ -138,6 +137,25 @@ const NotaView: React.FC<NotaViewProps> = ({
       toast.error("Gagal menyalin nomor rekening");
     }
   };
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Cek lebar layar atau user agent
+    const checkMobile = () => {
+      const userAgent =
+        typeof window.navigator === "undefined" ? "" : navigator.userAgent;
+      const mobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          userAgent
+        );
+      setIsMobile(mobile || window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   return (
     <>
@@ -409,7 +427,7 @@ const NotaView: React.FC<NotaViewProps> = ({
             </div>
           )}
 
-          {PrintButton ? (
+          {/* {PrintButton ? (
             <PrintButton>
               {({ handlePrint }: any) => (
                 <button
@@ -436,6 +454,71 @@ const NotaView: React.FC<NotaViewProps> = ({
               className="flex items-center justify-center gap-2 py-2 px-3 bg-gray-300 text-gray-600 rounded-lg text-xs font-semibold cursor-not-allowed"
             >
               <Printer size={14} /> Loading Print...
+            </button>
+          )}
+          <a
+            href={`/app/orders/${order.id}/download`}
+            target="_blank" // Membuka di tab baru (opsional)
+            rel="noreferrer"
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-black font-bold rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+            Download Nota (PDF)
+          </a> */}
+          {isMobile ? (
+            /* TAMPILAN UNTUK MOBILE (Direct Download) */
+            <a
+              href={`/app/orders/${order.id}/download`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-2 py-2 px-3 bg-gray-900 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 transition-colors"
+            >
+              <Printer size={14} />
+              <span>Cetak Nota</span>
+            </a>
+          ) : /* TAMPILAN UNTUK DESKTOP (Print Preview Browser) */
+          PrintButton ? (
+            <PrintButton>
+              {({ handlePrint }: any) => (
+                <button
+                  onClick={async () => {
+                    try {
+                      handlePrint({
+                        order: order,
+                        items: safeParseArray(order.order_items),
+                      });
+                    } catch (err) {
+                      console.error("Gagal print nota:", err);
+                      toast.error("Gagal memuat data nota.");
+                    }
+                  }}
+                  className="flex items-center justify-center gap-2 py-2 px-3 bg-gray-900 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 transition-colors"
+                >
+                  <Printer size={14} />
+                  <span>Cetak Nota</span>
+                </button>
+              )}
+            </PrintButton>
+          ) : (
+            /* LOADING STATE */
+            <button
+              disabled
+              className="flex items-center justify-center gap-2 py-2 px-3 bg-gray-300 text-gray-600 rounded-lg text-xs font-semibold cursor-not-allowed"
+            >
+              <Printer size={14} />
+              <span>Loading Print...</span>
             </button>
           )}
 
