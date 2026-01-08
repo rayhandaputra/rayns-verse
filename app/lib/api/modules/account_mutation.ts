@@ -62,6 +62,9 @@ export const AccountMutationAPI = {
               "pic_name",
               "total_amount",
               "is_archive",
+              "is_kkn",
+              "kkn_type",
+              "kkn_detail",
             ],
           },
           {

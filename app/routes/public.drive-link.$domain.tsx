@@ -281,9 +281,15 @@ export default function PublicDriveLinkPage() {
   const navigate = useNavigate();
   const query = useQueryParams();
   const [modal, setModal] = useModal();
+  const [isClient, setIsClient] = useState(false);
 
   // Use query.folder_id as source of truth for currentFolderId
   const currentFolderId = query.folder_id || orderData?.drive_folder_id || null;
+
+  // Set isClient to true after component mounts
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // routes/public.layout.tsx atau di page terkait
   useEffect(() => {
@@ -672,6 +678,8 @@ export default function PublicDriveLinkPage() {
     return !orderData?.order_number && !current_folder ? true : false;
   }, [orderData, current_folder]);
 
+  const isLoading = !isClient || (orderData && (isLoadingFolders || isLoadingFiles));
+
   useEffect(() => {
     if (isNotFound) {
       sendTelegramLog("PUBLIC_DRIVE_LINK_NOT_FOUND", {
@@ -695,8 +703,12 @@ export default function PublicDriveLinkPage() {
   }, [actionDataFetcher]);
 
   // Render normal drive interface if order found
-  return isNotFound ? (
+  return !isClient ? (
+    <DriveSkeleton />
+  ) : isNotFound ? (
     <NotFoundPage domain={domain} session={session} />
+  ) : isLoadingFolders && isLoadingFiles ? (
+    <DriveSkeleton orderData={orderData} />
   ) : (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Header orderData={orderData} domain={domain} />
@@ -1129,11 +1141,94 @@ export default function PublicDriveLinkPage() {
   );
 }
 
+// Skeleton Loading Component
+const DriveSkeleton = ({ orderData }: { orderData?: any } = {}) => {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Header Skeleton */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gray-200 rounded animate-pulse" />
+              <div>
+                <div className="h-6 w-48 bg-gray-200 rounded animate-pulse mb-2" />
+                <div className="h-4 w-96 bg-gray-100 rounded animate-pulse" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-gray-200 rounded animate-pulse" />
+              <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Skeleton */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-lg flex flex-col h-[calc(100vh-200px)]">
+          {/* Toolbar Skeleton */}
+          <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gradient-to-r from-gray-50 to-blue-50">
+            <div className="flex gap-2 flex-wrap">
+              <div className="h-10 w-32 bg-gray-200 rounded-lg animate-pulse" />
+              <div className="h-10 w-28 bg-blue-200/50 rounded-lg animate-pulse" />
+              <div className="h-10 w-32 bg-green-200/50 rounded-lg animate-pulse" />
+              <div className="h-9 w-36 bg-gray-200 rounded-lg animate-pulse" />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-10 w-24 bg-gray-200 rounded-lg animate-pulse" />
+              <div className="h-7 w-16 bg-blue-200/50 rounded-lg animate-pulse" />
+            </div>
+          </div>
+
+          {/* Breadcrumb Skeleton */}
+          <div className="px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <div className="h-5 w-8 bg-gray-200 rounded animate-pulse" />
+              <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
+            </div>
+          </div>
+
+          {/* Content Area Skeleton - Grid of folders and files */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {/* Folder Skeletons */}
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={`folder-${i}`}
+                  className="p-4 rounded-xl border border-gray-100 flex flex-col items-center gap-3"
+                >
+                  <div className="w-12 h-12 bg-yellow-200/50 rounded-lg animate-pulse" />
+                  <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
+                </div>
+              ))}
+
+              {/* File Skeletons */}
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={`file-${i}`}
+                  className="p-4 rounded-xl border border-gray-100 flex flex-col items-center gap-3"
+                >
+                  <div className="w-10 h-10 bg-blue-200/50 rounded-lg animate-pulse" />
+                  <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Footer Skeleton */}
+          <div className="p-3 border-t border-gray-100 text-center bg-gradient-to-r from-gray-50 to-blue-50">
+            <div className="h-4 w-48 mx-auto bg-gray-200 rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Header = ({ orderData, domain }: { orderData: any; domain: string }) => {
   return (
-    <>
-      {/* Public Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
+    <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1165,7 +1260,6 @@ const Header = ({ orderData, domain }: { orderData: any; domain: string }) => {
           </div>
         </div>
       </div>
-    </>
   );
 };
 const NotFoundPage = ({

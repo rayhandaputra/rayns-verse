@@ -42,7 +42,7 @@ import { useFetcherData } from "~/hooks/use-fetcher-data";
 import { nexus, NexusHelpers } from "~/lib/nexus-client";
 import { toast } from "sonner";
 import { APIProvider } from "~/lib/api/client";
-import { safeParseArray, uploadFile } from "~/lib/utils";
+import { safeParseArray, safeParseObject, uploadFile } from "~/lib/utils";
 import { useModal } from "~/hooks";
 import { Button } from "~/components/ui/button";
 import { TablePagination } from "~/components/ui/data-table";
@@ -1087,7 +1087,9 @@ const FinancePage: React.FC<FinancePageProps> = ({
                       </td>
                     </tr>
                   ) : (
-                    transactionBalance?.data?.items?.map((t) => (
+                    transactionBalance?.data?.items?.map((t) => {
+                      const order: any = safeParseArray(t.orders)?.[0] || {}
+                      return (
                       <tr key={t.id} className="hover:bg-gray-50">
                         <td className="px-6 py-3 text-gray-500 whitespace-nowrap text-xs">
                           {formatFullDateTime(t.created_on)}
@@ -1104,12 +1106,11 @@ const FinancePage: React.FC<FinancePageProps> = ({
                           {t.trx_code || "-"}
                         </td>
                         <td className="px-6 py-3 text-gray-700 max-w-xs truncate font-medium">
-                          <p className="text-xs">
-                            {safeParseArray(t.orders)?.[0]?.institution_name ||
-                              "-"}
+                          <p className="text-xs font-bold">
+                            {+order?.is_kkn === 1 ? order?.kkn_type?.toLowerCase() === "ppm" ? `Kelompok ${safeParseObject(order?.kkn_detail)?.value}` : `Desa ${safeParseObject(order?.kkn_detail)?.value}` : order?.institution_name || "-"}
                           </p>
                           <p className="text-[0.675rem] text-gray-700">
-                            {safeParseArray(t.orders)?.[0]?.pic_name || "-"}
+                            {order?.pic_name || "-"}
                           </p>
                         </td>
                         <td className="px-6 py-3 text-gray-700 max-w-xs truncate font-medium">
@@ -1206,7 +1207,7 @@ const FinancePage: React.FC<FinancePageProps> = ({
                           </Button>
                         </td>
                       </tr>
-                    ))
+                    )})
                   )}
                 </tbody>
               </table>
