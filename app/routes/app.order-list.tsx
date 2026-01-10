@@ -22,6 +22,7 @@ import {
   Share2Icon,
   QrCode,
   Pencil,
+  RefreshCw,
 } from "lucide-react";
 import NotaView from "../components/NotaView";
 import {
@@ -100,6 +101,21 @@ export const action: ActionFunction = async ({ request }) => {
     });
   }
 
+  if (actionType === "update_status_printed") {
+    const status = formData.get("status") as string;
+
+    // Only update if valid
+    const res = await API.ORDERS.update({
+      session: { user, token },
+      req: { body: { id, status_printed: status } },
+    });
+    return Response.json({
+      success: res.success,
+      message: res.success
+        ? "Status cetak ulang diperbarui"
+        : "Gagal memperbarui status cetak ulang",
+    });
+  }
   if (actionType === "update_review") {
     const rating = Number(formData.get("rating"));
     const review = formData.get("review") as string;
@@ -188,6 +204,13 @@ export default function OrderList() {
       action: "update_payment_proof",
       id,
       proof,
+    });
+  };
+  const onUpdateStatusPrinted = (id: string, status: string) => {
+    submitAction({
+      action: "update_status_printed",
+      id,
+      status,
     });
   };
 
@@ -905,6 +928,34 @@ export default function OrderList() {
             </div>
           );
         },
+      },
+      {
+        key: "status_printed",
+        header: "Status Cetak",
+        headerClassName: "text-center",
+        cellClassName: "text-center",
+        cell: (order: any) => (
+          <div className="px-6 py-4">
+            {order.status_printed === "done" ? (
+              <div className="flex flex-col gap-1.5">
+                <span className="inline-flex items-center justify-center gap-1 px-2 py-1 rounded text-[10px] font-bold bg-green-100 text-green-700 border border-green-200">
+                  <Check size={10} /> TER-CETAK
+                </span>
+                <button
+                  // onClick={() => onUpdateStatusCetak(order.id, "Belum")}
+                  onClick={() => onUpdateStatusPrinted(order.id, "waiting")}
+                  className="inline-flex items-center justify-center gap-1 px-2 py-1 rounded text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition"
+                >
+                  <RefreshCw size={10} /> Cetak Ulang
+                </button>
+              </div>
+            ) : (
+              <span className="inline-flex items-center justify-center gap-1 px-2 py-1 rounded text-[10px] font-bold bg-gray-100 text-gray-400 border border-gray-200">
+                Antrean
+              </span>
+            )}
+          </div>
+        ),
       },
       {
         key: "created_by",

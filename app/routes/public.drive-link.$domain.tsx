@@ -678,7 +678,8 @@ export default function PublicDriveLinkPage() {
     return !orderData?.order_number && !current_folder ? true : false;
   }, [orderData, current_folder]);
 
-  const isLoading = !isClient || (orderData && (isLoadingFolders || isLoadingFiles));
+  const isLoading =
+    !isClient || (orderData && (isLoadingFolders || isLoadingFiles));
 
   useEffect(() => {
     if (isNotFound) {
@@ -722,8 +723,8 @@ export default function PublicDriveLinkPage() {
             ref={fileInputRef}
             className="hidden"
             onChange={handleFileChange}
-            // accept="*/*"
-            accept="*/*,application/pdf,application/msword"
+            accept="*/*"
+            // accept="*/*,application/pdf,application/msword"
             multiple
           />
 
@@ -1229,37 +1230,37 @@ const DriveSkeleton = ({ orderData }: { orderData?: any } = {}) => {
 const Header = ({ orderData, domain }: { orderData: any; domain: string }) => {
   return (
     <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg">
-                {/* <HardDrive size={24} className="text-white" /> */}
-                <img
-                  src="/head-icon-kinau.png"
-                  alt="Kinau"
-                  className="w-8 opacity-80"
-                />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-800">
-                  Drive File Cetak
-                </h1>
-                <p className="text-sm text-gray-500">
-                  {+orderData?.is_kkn === 1
-                    ? `${`${orderData?.kkn_type?.toLowerCase() === "ppm" ? "Kelompok" : "Desa"} ${(safeParseObject(orderData?.kkn_detail) as any)?.value}`} - ${orderData?.kkn_source?.split("_")?.join(" ")?.toUpperCase()} ${(safeParseObject(orderData?.kkn_detail) as any)?.year ?? ""} - PERIODE ${orderData?.kkn_period}`
-                    : +orderData?.is_personal === 1
-                      ? `${orderData?.pic_name} (Perorangan)`
-                      : `${orderData?.institution_name || "Shared Drive"} - ${orderData?.order_number}`}
-                </p>
-              </div>
+      <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg">
+              {/* <HardDrive size={24} className="text-white" /> */}
+              <img
+                src="/head-icon-kinau.png"
+                alt="Kinau"
+                className="w-8 opacity-80"
+              />
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Lock size={16} />
-              <span>Public Access</span>
+            <div>
+              <h1 className="text-xl font-bold text-gray-800">
+                Drive File Cetak
+              </h1>
+              <p className="text-sm text-gray-500">
+                {+orderData?.is_kkn === 1
+                  ? `${`${orderData?.kkn_type?.toLowerCase() === "ppm" ? "Kelompok" : "Desa"} ${(safeParseObject(orderData?.kkn_detail) as any)?.value}`} - ${orderData?.kkn_source?.split("_")?.join(" ")?.toUpperCase()} ${(safeParseObject(orderData?.kkn_detail) as any)?.year ?? ""} - PERIODE ${orderData?.kkn_period}`
+                  : +orderData?.is_personal === 1
+                    ? `${orderData?.pic_name} (Perorangan)`
+                    : `${orderData?.institution_name || "Shared Drive"} - ${orderData?.order_number}`}
+              </p>
             </div>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Lock size={16} />
+            <span>Public Access</span>
           </div>
         </div>
       </div>
+    </div>
   );
 };
 const NotFoundPage = ({

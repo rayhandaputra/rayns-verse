@@ -54,12 +54,15 @@ export const OrderAPI = {
       payment_status,
       order_type,
       start_date,
+      status_printed,
       is_kkn = "",
       is_portfolio,
       end_date,
       year,
       sort = "",
       deleted_on,
+      with_folders = false,
+      filter_folder = "id_card_front,id_card_back",
     } = req.query || {};
 
     let where: any = {};
@@ -81,6 +84,8 @@ export const OrderAPI = {
       where.created_on = { gte: start_date };
     } else if (end_date) {
       where.created_on = { lte: end_date };
+    } else if (status_printed) {
+      where.status_printed = status_printed;
     }
 
     if (year) {
@@ -114,62 +119,65 @@ export const OrderAPI = {
     }
 
     try {
+      const columns = [
+        "id",
+        "uid",
+        "order_number",
+        "institution_id",
+        "institution_name",
+        "institution_abbr",
+        "institution_domain",
+        "order_type",
+        "images",
+        "review",
+        "rating",
+        "payment_status",
+        "payment_method",
+        "payment_proof",
+        "payment_proof_uploaded_on",
+        "payment_detail",
+        "payment_journal_code",
+        "dp_payment_method",
+        "dp_payment_proof",
+        "dp_payment_proof_uploaded_on",
+        "dp_payment_detail",
+        "dp_payment_journal_code",
+        "discount_value",
+        "tax_value",
+        "order_date",
+        "shipping_fee",
+        "subtotal",
+        "total_amount",
+        "dp_amount",
+        "grand_total",
+        "is_portfolio",
+        "is_sponsor",
+        "is_kkn",
+        "is_archive",
+        "kkn_source",
+        "kkn_type",
+        "kkn_detail",
+        "kkn_period",
+        "kkn_year",
+        "is_personal",
+        "pic_name",
+        "pic_phone",
+        "drive_folder_id",
+        "status",
+        "status_printed",
+        "deadline",
+        "created_on",
+        "created_by",
+        `(SELECT COUNT(id) FROM order_items) AS total_product`,
+      ];
+      // if (extraColumns) columns.push(extraColumns);
       const result = await APIProvider({
         endpoint: "select",
         method: "POST",
         table: "orders",
         action: "select",
         body: {
-          columns: [
-            "id",
-            "uid",
-            "order_number",
-            "institution_id",
-            "institution_name",
-            "institution_abbr",
-            "institution_domain",
-            "order_type",
-            "images",
-            "review",
-            "rating",
-            "payment_status",
-            "payment_method",
-            "payment_proof",
-            "payment_proof_uploaded_on",
-            "payment_detail",
-            "payment_journal_code",
-            "dp_payment_method",
-            "dp_payment_proof",
-            "dp_payment_proof_uploaded_on",
-            "dp_payment_detail",
-            "dp_payment_journal_code",
-            "discount_value",
-            "tax_value",
-            "order_date",
-            "shipping_fee",
-            "subtotal",
-            "total_amount",
-            "dp_amount",
-            "grand_total",
-            "is_portfolio",
-            "is_sponsor",
-            "is_kkn",
-            "is_archive",
-            "kkn_source",
-            "kkn_type",
-            "kkn_detail",
-            "kkn_period",
-            "kkn_year",
-            "is_personal",
-            "pic_name",
-            "pic_phone",
-            "drive_folder_id",
-            "status",
-            "deadline",
-            "created_on",
-            "created_by",
-            `(SELECT COUNT(id) FROM order_items) AS total_product`,
-          ],
+          columns,
           where,
           search: searchConfig,
           page: Number(page),
@@ -204,6 +212,21 @@ export const OrderAPI = {
                 // "total_amount",
               ],
             },
+            ...(with_folders
+              ? [
+                  {
+                    table: "order_upload_folders",
+                    alias: "order_upload_folders",
+                    foreign_key: "order_number",
+                    reference_key: "order_number",
+                    where: {
+                      deleted_on: "null",
+                      purpose: filter_folder,
+                    },
+                    columns: ["id", "folder_name", "purpose", "order_number"],
+                  },
+                ]
+              : []),
           ],
         },
       });
@@ -378,6 +401,7 @@ export const OrderAPI = {
       // grand_total,
       deadline,
       status,
+      status_printed: "waiting",
       notes,
       shipping_address,
       shipping_contact,
@@ -435,6 +459,37 @@ export const OrderAPI = {
           },
         });
         newOrder.drive_folder_id = createFolder?.insert_id;
+        if (createFolder?.insert_id) {
+          await APIProvider({
+            endpoint: "bulk-insert",
+            method: "POST",
+            table: "order_upload_folders",
+            action: "bulk-insert",
+            body: {
+              rows: [
+                {
+                  order_number,
+                  parent_id: createFolder?.insert_id,
+                  folder_name: "ID Card (Depan)",
+                  purpose: "id_card_front",
+                },
+                {
+                  order_number,
+                  parent_id: createFolder?.insert_id,
+                  folder_name: "ID Card (Belakang)",
+                  purpose: "id_card_back",
+                },
+                {
+                  order_number,
+                  parent_id: createFolder?.insert_id,
+                  folder_name: "Lanyard",
+                  purpose: "lanyard",
+                },
+              ],
+              updateOnDuplicate: true,
+            },
+          });
+        }
       }
 
       // ✅ Insert ke table orders

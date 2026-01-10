@@ -9,11 +9,20 @@ import { PrintNotaTemplate } from "./print/order/NotaTemplate";
 export function PrintButton({
   children,
   // contentRef,
+  externalRef,
+  label,
+  pageStyle,
 }: {
   children: (props: { handlePrint: (data: any) => void }) => React.ReactNode;
   // contentRef: React.RefObject<HTMLDivElement>;
+  externalRef?: React.RefObject<HTMLDivElement>;
+  label?: string;
+  pageStyle?: string;
 }) {
-  const contentRef = useRef<HTMLDivElement>(null);
+  // const contentRef = useRef<HTMLDivElement>(null);
+  const localRef = useRef<HTMLDivElement>(null);
+  const contentRef = externalRef || localRef;
+
   const [printData, setPrintData] = useState<any>(null);
 
   const handlePrint = useReactToPrint({
@@ -21,8 +30,10 @@ export function PrintButton({
     contentRef,
     // Kalau kamu pakai v2, ganti jadi:
     // content: () => contentRef.current,
-    documentTitle: "E-Nota Kinau",
-    pageStyle: `
+    documentTitle: label || "E-Nota Kinau",
+    pageStyle:
+      pageStyle ||
+      `
       @media print {
         @page {
             /* Mengubah ukuran menjadi A4 */
@@ -45,6 +56,8 @@ export function PrintButton({
     // delay sebentar agar state update sebelum print
     setTimeout(() => handlePrint(), 200);
   };
+
+  if (externalRef) return children({ handlePrint: prepareAndPrint });
 
   // Render prop pattern — kirim handlePrint ke parent
   return (

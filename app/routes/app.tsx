@@ -28,6 +28,7 @@ import {
   UserCog2Icon,
   MonitorCogIcon,
   RecycleIcon,
+  Printer,
 } from "lucide-react";
 import { Sheet, SheetContent } from "~/components/ui/sheet";
 import { requireAuth } from "~/lib/session.server";
@@ -356,10 +357,16 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
             <>
               <button
                 onClick={() => navigate("/app/drive/customer")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition transform hover:-translate-y-0.5 ${location.pathname === "/app/drive" ? "bg-gray-800 text-white shadow-lg" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition transform hover:-translate-y-0.5 ${location.pathname.includes("/app/drive") ? "bg-gray-800 text-white shadow-lg" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"}`}
               >
                 <HardDrive size={16} />{" "}
                 <span className="hidden sm:inline">Drive</span>
+              </button>
+              <button
+                onClick={() => navigate("/app/print-area")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition transform hover:-translate-y-0.5 ${location.pathname === "/app/print-area" ? "bg-gray-800 text-white shadow-lg" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"}`}
+              >
+                <Printer size={16} /> CETAK
               </button>
               <button
                 onClick={() => navigate("/app/email")}
