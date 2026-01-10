@@ -56,6 +56,7 @@
     "iron": "^5.0.6",
     "iron-session": "^8.0.4",
     "isbot": "^5.1.27",
+    "jszip": "^3.10.1",
     "keen-slider": "^6.8.6",
     "lucide-react": "^0.539.0",
     "moment": "^2.30.1",

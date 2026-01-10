@@ -22,6 +22,7 @@ import {
   Link2OffIcon,
   Share2,
   MapPin,
+  Info,
 } from "lucide-react";
 import {
   useLoaderData,
@@ -47,6 +48,7 @@ import Swal from "sweetalert2";
 import { safeParseObject } from "~/lib/utils";
 import { sendTelegramLog } from "~/lib/telegram-log";
 import { getGoogleMapsLink } from "~/constants";
+import JSZip from "jszip"; // Tambahkan ini di bagian imports
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const domain = params?.domain;
@@ -460,70 +462,241 @@ export default function PublicDriveLinkPage() {
   //     }
   //   }
   // };
+
+  // const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const fileList = e.target.files;
+  //   if (!fileList || fileList.length === 0) return;
+
+  //   const files = Array.from(fileList);
+  //   setLoadingUpload(true);
+
+  //   // Helper untuk menentukan tipe mime
+  //   const getMimeType = (fileName: string) => {
+  //     const ext = fileName.split(".").pop()?.toLowerCase() || "";
+  //     if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return "image";
+  //     if (["pdf", "doc", "docx", "xls", "xlsx", "zip", "rar"].includes(ext))
+  //       return "doc";
+  //     return "file";
+  //   };
+
+  //   try {
+  //     // Gunakan Promise.all untuk upload paralel
+  //     const uploadPromises = files.map(async (file) => {
+  //       try {
+  //         // 1. Upload ke Storage/Server
+  //         const uploadRes = await API.ASSET.upload(file);
+
+  //         // 2. Siapkan Payload untuk Database
+  //         const newFilePayload = {
+  //           file_type: getMimeType(file.name),
+  //           file_url: uploadRes.url,
+  //           file_name: uploadRes.original_name || file.name,
+  //           folder_id: currentFolderId || orderData?.drive_folder_id || null,
+  //           level: currentFolderId ? 2 : 1,
+  //           order_number: orderData?.order_number,
+  //         };
+
+  //         // 3. Simpan record ke Database
+  //         const result = await API.ORDER_UPLOAD.create_single_file({
+  //           session: {},
+  //           req: { body: newFilePayload },
+  //         });
+
+  //         if (!result.success) throw new Error(result.message);
+
+  //         return { success: true, fileName: file.name };
+  //       } catch (err) {
+  //         sendTelegramLog("PUBLIC_DRIVE_LINK_UPLOAD_ERROR_USER", {
+  //           domain,
+  //           orderData,
+  //           current_folder,
+  //           query,
+  //           error: err,
+  //         });
+  //         return { success: false, fileName: file.name, error: err };
+  //       }
+  //     });
+
+  //     const results = await Promise.all(uploadPromises);
+
+  //     // Hitung statistik hasil
+  //     const successful = results.filter((r) => r.success).length;
+  //     const failed = results.filter((r) => !r.success).length;
+
+  //     // Notifikasi hasil akhir
+  //     if (failed === 0) {
+  //       toast.success(`${successful} File berhasil diunggah`);
+  //     } else {
+  //       sendTelegramLog("PUBLIC_DRIVE_LINK_UPLOAD_FAILED", {
+  //         domain,
+  //         orderData,
+  //         current_folder,
+  //         query,
+  //         results,
+  //       });
+  //       toast.warning(`${successful} Berhasil, ${failed} Gagal diunggah`);
+  //     }
+
+  //     // Refresh data
+  //     reloadRealFolders();
+  //     reloadRealFiles();
+  //   } catch (err: any) {
+  //     toast.error("Terjadi kesalahan sistem saat upload");
+  //     console.error(err);
+  //     sendTelegramLog("PUBLIC_DRIVE_LINK_UPLOAD_ERROR_USER", {
+  //       domain,
+  //       orderData,
+  //       current_folder,
+  //       query,
+  //       error: err,
+  //     });
+  //   } finally {
+  //     setLoadingUpload(false);
+  //     e.target.value = ""; // Reset input agar bisa pilih file yang sama lagi
+  //   }
+  // };
+  // Helper: Menentukan tipe file berdasarkan ekstensi
+  const getMimeType = (fileName: string) => {
+    const ext = fileName.split(".").pop()?.toLowerCase() || "";
+    if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return "image";
+    if (
+      ["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt"].includes(ext)
+    )
+      return "doc";
+    return "file";
+  };
+
+  // Helper: Fungsi inti untuk upload satu file ke Server & Database
+  const processUploadFile = async (file: File) => {
+    try {
+      // 1. Upload ke Storage/Server (MinIO/S3/dll)
+      const uploadRes = await API.ASSET.upload(file);
+
+      // 2. Siapkan Payload untuk Database
+      const newFilePayload = {
+        file_type: getMimeType(file.name),
+        file_url: uploadRes.url,
+        file_name: uploadRes.original_name || file.name,
+        folder_id: currentFolderId || orderData?.drive_folder_id || null,
+        level: currentFolderId ? 2 : 1,
+        order_number: orderData?.order_number,
+      };
+
+      // 3. Simpan record ke Database
+      const result = await API.ORDER_UPLOAD.create_single_file({
+        session: {},
+        req: { body: newFilePayload },
+      });
+
+      if (!result.success) throw new Error(result.message);
+
+      return { success: true, fileName: file.name };
+    } catch (err) {
+      // Log error specific untuk file ini
+      console.error(`Gagal upload ${file.name}:`, err);
+      return { success: false, fileName: file.name, error: err };
+    }
+  };
+
+  // Main Handler: Handle File Input Change
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0) return;
 
-    const files = Array.from(fileList);
     setLoadingUpload(true);
-
-    // Helper untuk menentukan tipe mime
-    const getMimeType = (fileName: string) => {
-      const ext = fileName.split(".").pop()?.toLowerCase() || "";
-      if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return "image";
-      if (["pdf", "doc", "docx", "xls", "xlsx", "zip", "rar"].includes(ext))
-        return "doc";
-      return "file";
-    };
+    const toastId = toast.loading("Mempersiapkan file...");
 
     try {
-      // Gunakan Promise.all untuk upload paralel
-      const uploadPromises = files.map(async (file) => {
-        try {
-          // 1. Upload ke Storage/Server
-          const uploadRes = await API.ASSET.upload(file);
+      let filesToUpload: File[] = [];
+      const rawFiles = Array.from(fileList);
 
-          // 2. Siapkan Payload untuk Database
-          const newFilePayload = {
-            file_type: getMimeType(file.name),
-            file_url: uploadRes.url,
-            file_name: uploadRes.original_name || file.name,
-            folder_id: currentFolderId || orderData?.drive_folder_id || null,
-            level: currentFolderId ? 2 : 1,
-            order_number: orderData?.order_number,
-          };
+      // --- TAHAP 1: PRE-PROCESSING (Cek ZIP) ---
+      for (const file of rawFiles) {
+        const ext = file.name.split(".").pop()?.toLowerCase();
 
-          // 3. Simpan record ke Database
-          const result = await API.ORDER_UPLOAD.create_single_file({
-            session: {},
-            req: { body: newFilePayload },
-          });
+        // Cek apakah file adalah ZIP
+        if (
+          ext === "zip" ||
+          file.type === "application/zip" ||
+          file.type === "application/x-zip-compressed"
+        ) {
+          toast.loading(`Mengekstrak ${file.name}...`, { id: toastId });
 
-          if (!result.success) throw new Error(result.message);
+          try {
+            const zip = new JSZip();
+            const content = await zip.loadAsync(file);
 
-          return { success: true, fileName: file.name };
-        } catch (err) {
-          sendTelegramLog("PUBLIC_DRIVE_LINK_UPLOAD_ERROR_USER", {
-            domain,
-            orderData,
-            current_folder,
-            query,
-            error: err,
-          });
-          return { success: false, fileName: file.name, error: err };
+            // Loop isi zip
+            const entries = Object.keys(content.files);
+            for (const filename of entries) {
+              const item = content.files[filename];
+
+              // Skip jika item adalah folder atau file sistem Mac (__MACOSX)
+              if (
+                item.dir ||
+                filename.includes("__MACOSX") ||
+                filename.startsWith(".")
+              ) {
+                continue;
+              }
+
+              // Konversi item zip menjadi Blob/File
+              const blob = await item.async("blob");
+
+              // Bersihkan nama file (ambil nama file saja tanpa path folder zip)
+              // Jika Anda ingin mempertahankan struktur folder sebagai nama, hapus baris cleanName
+              const cleanName = filename.split("/").pop() || filename;
+
+              const extractedFile = new File([blob], cleanName, {
+                type:
+                  getMimeType(cleanName) === "image"
+                    ? `image/${cleanName.split(".").pop()}`
+                    : blob.type,
+              });
+
+              filesToUpload.push(extractedFile);
+            }
+          } catch (zipErr) {
+            console.error("Gagal ekstrak zip:", zipErr);
+            toast.error(
+              `Gagal mengekstrak ${file.name}, mencoba upload sebagai file biasa.`
+            );
+            // Jika gagal ekstrak, masukkan file zip aslinya saja
+            filesToUpload.push(file);
+          }
+        } else {
+          // Jika bukan zip, masukkan langsung
+          filesToUpload.push(file);
         }
+      }
+
+      // --- TAHAP 2: UPLOADING ---
+      if (filesToUpload.length === 0) {
+        toast.dismiss(toastId);
+        toast.warning("Tidak ada file valid yang ditemukan dalam Zip");
+        setLoadingUpload(false);
+        return;
+      }
+
+      toast.loading(`Mengunggah ${filesToUpload.length} file...`, {
+        id: toastId,
       });
 
+      // Gunakan Promise.all untuk parallel upload
+      // Note: Jika file sangat banyak (misal > 50), pertimbangkan menggunakan chunking/antrian
+      const uploadPromises = filesToUpload.map((file) =>
+        processUploadFile(file)
+      );
       const results = await Promise.all(uploadPromises);
 
-      // Hitung statistik hasil
+      // --- TAHAP 3: SUMMARY & LOGGING ---
       const successful = results.filter((r) => r.success).length;
       const failed = results.filter((r) => !r.success).length;
 
-      // Notifikasi hasil akhir
       if (failed === 0) {
-        toast.success(`${successful} File berhasil diunggah`);
+        toast.success(`${successful} File berhasil diunggah`, { id: toastId });
       } else {
+        // Kirim log error ke Telegram jika ada yang gagal
         sendTelegramLog("PUBLIC_DRIVE_LINK_UPLOAD_FAILED", {
           domain,
           orderData,
@@ -531,25 +704,26 @@ export default function PublicDriveLinkPage() {
           query,
           results,
         });
-        toast.warning(`${successful} Berhasil, ${failed} Gagal diunggah`);
+        toast.warning(`${successful} Berhasil, ${failed} Gagal`, {
+          id: toastId,
+        });
       }
 
-      // Refresh data
+      // Refresh data tampilan
       reloadRealFolders();
       reloadRealFiles();
     } catch (err: any) {
-      toast.error("Terjadi kesalahan sistem saat upload");
+      toast.error("Terjadi kesalahan sistem saat memproses file", {
+        id: toastId,
+      });
       console.error(err);
-      sendTelegramLog("PUBLIC_DRIVE_LINK_UPLOAD_ERROR_USER", {
+      sendTelegramLog("PUBLIC_DRIVE_LINK_UPLOAD_ERROR_CRITICAL", {
         domain,
-        orderData,
-        current_folder,
-        query,
         error: err,
       });
     } finally {
       setLoadingUpload(false);
-      e.target.value = ""; // Reset input agar bisa pilih file yang sama lagi
+      e.target.value = ""; // Reset input
     }
   };
 
@@ -834,6 +1008,38 @@ export default function PublicDriveLinkPage() {
             className="flex-1 overflow-y-auto p-4"
             onClick={() => setSelectedItem(null)}
           >
+            {/* --- MULAI BAGIAN BARU: INFO CARD --- */}
+            <div className="mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3 shadow-sm">
+              <div className="bg-blue-100 p-2 rounded-full flex-shrink-0">
+                <Info size={20} className="text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-blue-900 mb-1">
+                  Saran Pengunggahan File
+                </h3>
+                <p className="text-sm text-blue-800 leading-relaxed">
+                  Untuk hasil terbaik, disarankan mengunggah file dengan format:
+                </p>
+                <ul className="mt-2 space-y-1">
+                  <li className="text-sm text-blue-700 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+                    <span>
+                      <strong className="font-semibold">.JPG / .PNG</strong>{" "}
+                      untuk gambar atau foto dokumen.
+                    </span>
+                  </li>
+                  <li className="text-sm text-blue-700 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+                    <span>
+                      <strong className="font-semibold">.ZIP</strong> untuk
+                      mengunggah banyak file sekaligus (Otomatis diekstrak).
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            {/* --- AKHIR BAGIAN BARU --- */}
+
             {folders.length === 0 && files.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-gray-300">
                 <Folder size={64} className="mb-4 opacity-20" />
