@@ -795,7 +795,7 @@ export default function PrintPage() {
           {PrintButton ? (
             <PrintButton
               externalRef={printAreaRef}
-              label={`Cetak ${state.category.toUpperCase()} - ${moment().format("DDMMYYYYHHmmss")}`}
+              label={`Cetak ${state.category.toUpperCase()} - ${moment().format("MM-DD-YYYY (HH:mm)")}`}
               pageStyle={
                 state.category === "lanyard" ? lanyardPageStyle : A4PageStyle
               }
