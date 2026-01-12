@@ -567,10 +567,27 @@ export default function PublicDriveLinkPage() {
   };
 
   // Helper: Fungsi inti untuk upload satu file ke Server & Database
-  const processUploadFile = async (file: File) => {
+  // Helper untuk delay (untuk jeda antar retry)
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+  const processUploadFile = async (file: File, retries = 2) => {
     try {
-      // 1. Upload ke Storage/Server (MinIO/S3/dll)
-      const uploadRes = await API.ASSET.upload(file);
+      // 1. Upload ke Storage/Server
+      // Kita bungkus logic upload agar bisa di-retry jika gagal koneksi
+      let uploadRes;
+      let attempt = 0;
+
+      while (attempt <= retries) {
+        try {
+          uploadRes = await API.ASSET.upload(file);
+          break; // Jika berhasil, keluar dari loop while
+        } catch (err) {
+          attempt++;
+          if (attempt > retries) throw err; // Jika jatah retry habis, lempar error
+          console.warn(`Retry upload ke-${attempt} untuk: ${file.name}`);
+          await delay(1000); // Tunggu 1 detik sebelum coba lagi
+        }
+      }
 
       // 2. Siapkan Payload untuk Database
       const newFilePayload = {
@@ -592,10 +609,77 @@ export default function PublicDriveLinkPage() {
 
       return { success: true, fileName: file.name };
     } catch (err) {
-      // Log error specific untuk file ini
-      console.error(`Gagal upload ${file.name}:`, err);
+      console.error(`Gagal upload ${file.name} setelah retry:`, err);
       return { success: false, fileName: file.name, error: err };
     }
+  };
+  // const processUploadFile = async (file: File) => {
+  //   try {
+  //     // 1. Upload ke Storage/Server (MinIO/S3/dll)
+  //     const uploadRes = await API.ASSET.upload(file);
+
+  //     // 2. Siapkan Payload untuk Database
+  //     const newFilePayload = {
+  //       file_type: getMimeType(file.name),
+  //       file_url: uploadRes.url,
+  //       file_name: uploadRes.original_name || file.name,
+  //       folder_id: currentFolderId || orderData?.drive_folder_id || null,
+  //       level: currentFolderId ? 2 : 1,
+  //       order_number: orderData?.order_number,
+  //     };
+
+  //     // 3. Simpan record ke Database
+  //     const result = await API.ORDER_UPLOAD.create_single_file({
+  //       session: {},
+  //       req: { body: newFilePayload },
+  //     });
+
+  //     if (!result.success) throw new Error(result.message);
+
+  //     return { success: true, fileName: file.name };
+  //   } catch (err) {
+  //     // Log error specific untuk file ini
+  //     console.error(`Gagal upload ${file.name}:`, err);
+  //     return { success: false, fileName: file.name, error: err };
+  //   }
+  // };
+
+  const uploadWithLimit = async (
+    files: File[],
+    limit: number,
+    onProgress: (completed: number) => void,
+    processFn: (file: File) => Promise<any>
+  ) => {
+    const results: any[] = [];
+    const queue = [...files]; // Copy antrian file
+    let completed = 0;
+
+    // Fungsi pekerja yang mengambil file dari antrian
+    const worker = async () => {
+      while (queue.length > 0) {
+        const file = queue.shift(); // Ambil file pertama dari antrian
+        if (!file) continue;
+
+        try {
+          // Eksekusi upload
+          const res = await processFn(file);
+          results.push(res);
+        } catch (err) {
+          results.push({ success: false, fileName: file.name, error: err });
+        } finally {
+          completed++;
+          onProgress(completed);
+        }
+      }
+    };
+
+    // Jalankan sejumlah worker sesuai limit (misal 3 jalur paralel)
+    const workers = Array(Math.min(limit, files.length))
+      .fill(null)
+      .map(() => worker());
+
+    await Promise.all(workers);
+    return results;
   };
 
   // Main Handler: Handle File Input Change
@@ -684,10 +768,23 @@ export default function PublicDriveLinkPage() {
 
       // Gunakan Promise.all untuk parallel upload
       // Note: Jika file sangat banyak (misal > 50), pertimbangkan menggunakan chunking/antrian
-      const uploadPromises = filesToUpload.map((file) =>
-        processUploadFile(file)
+
+      // const uploadPromises = filesToUpload.map((file) =>
+      //   processUploadFile(file)
+      // );
+      // const results = await Promise.all(uploadPromises);
+
+      // Gunakan limit 3 agar tidak membentur limit koneksi browser/internet lemot
+      const results = await uploadWithLimit(
+        filesToUpload,
+        3,
+        (count) => {
+          toast.loading(`Mengunggah ${count}/${filesToUpload.length} file...`, {
+            id: toastId,
+          });
+        },
+        (file) => processUploadFile(file) // Memanggil fungsi upload asli Anda
       );
-      const results = await Promise.all(uploadPromises);
 
       // --- TAHAP 3: SUMMARY & LOGGING ---
       const successful = results.filter((r) => r.success).length;
