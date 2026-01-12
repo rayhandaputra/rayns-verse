@@ -1,5 +1,5 @@
-import React from "react";
-import { HardDrive } from "lucide-react";
+import React, { useEffect } from "react";
+import { ChevronLeft, HardDrive } from "lucide-react";
 import { useNavigate } from "react-router";
 
 type BreadcrumbItem = {
@@ -9,6 +9,7 @@ type BreadcrumbItem = {
 
 interface DriveBreadcrumbProps {
   domain: string;
+  folderIdentity?: any;
   currentFolderId?: string | null;
   rootFolderId?: string | null;
   breadcrumbs: BreadcrumbItem[];
@@ -20,16 +21,22 @@ export function DriveBreadcrumb({
   currentFolderId,
   rootFolderId,
   breadcrumbs,
+  folderIdentity,
   onOpenFolder,
 }: DriveBreadcrumbProps) {
   const navigate = useNavigate();
 
   const isRootActive = !currentFolderId || currentFolderId === rootFolderId;
+  useEffect(() => {
+    if (!folderIdentity?.parent_id) {
+      navigate(`/public/drive-link/${domain}`);
+    }
+  }, [folderIdentity])
 
   const getRootPath = () => {
     if (domain === "customer") return "/app/drive/customer";
     if (domain === "internal") return "/app/drive/internal";
-    return `/public/drive-link/${domain}`;
+    return `/public/drive-link/${domain}${folderIdentity?.parent_id ? `?folder_id=${folderIdentity.parent_id}` : ""}`;
   };
 
   const getRootLabel = () => {
@@ -41,9 +48,10 @@ export function DriveBreadcrumb({
   return (
     <nav
       aria-label="Breadcrumb"
-      className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 text-sm text-gray-600 overflow-x-auto bg-gray-50/50"
+      className="px-4 py-3 border-b border-gray-100 flex justify-between items-center gap-2 text-sm text-gray-600 overflow-x-auto bg-gray-50/50"
     >
       {/* Root */}
+      <div className="flex items-center gap-2">
       <button
         onClick={() => navigate(getRootPath())}
         className={`flex items-center px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
@@ -75,6 +83,17 @@ export function DriveBreadcrumb({
           </React.Fragment>
         );
       })}
+      </div>
+
+      {folderIdentity?.parent_id ? (
+      <button
+        onClick={() => navigate(getRootPath())}
+        className={`flex items-center px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap hover:bg-white hover:text-blue-600 cursor-pointer`}
+      >
+        <ChevronLeft size={14} className="mr-1.5" />
+        Kembali
+      </button>
+      ) : ("")}
     </nav>
   );
 }

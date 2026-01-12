@@ -28,6 +28,7 @@ import { safeParseArray } from "~/lib/utils";
 import { API } from "~/lib/api";
 import { requireAuth } from "~/lib/session.server";
 import { toast } from "sonner";
+import moment from "moment";
 
 // --- Types & Interfaces ---
 
@@ -794,7 +795,7 @@ export default function PrintPage() {
           {PrintButton ? (
             <PrintButton
               externalRef={printAreaRef}
-              label={`Cetak ${state.category.toUpperCase()}`}
+              label={`Cetak ${state.category.toUpperCase()} - ${moment().format("DDMMYYYYHHmmss")}`}
               pageStyle={
                 state.category === "lanyard" ? lanyardPageStyle : A4PageStyle
               }

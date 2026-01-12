@@ -990,6 +990,7 @@ export default function PublicDriveLinkPage() {
             domain={domain}
             currentFolderId={current_folder?.id || query?.folder_id}
             rootFolderId={orderData?.drive_folder_id}
+            folderIdentity={current_folder}
             breadcrumbs={[
               ...(current_folder?.id
                 ? [
@@ -1009,7 +1010,7 @@ export default function PublicDriveLinkPage() {
             onClick={() => setSelectedItem(null)}
           >
             {/* --- MULAI BAGIAN BARU: INFO CARD --- */}
-            <div className="mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3 shadow-sm">
+            {/* <div className="mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3 shadow-sm">
               <div className="bg-blue-100 p-2 rounded-full flex-shrink-0">
                 <Info size={20} className="text-blue-600" />
               </div>
@@ -1037,7 +1038,7 @@ export default function PublicDriveLinkPage() {
                   </li>
                 </ul>
               </div>
-            </div>
+            </div> */}
             {/* --- AKHIR BAGIAN BARU --- */}
 
             {folders.length === 0 && files.length === 0 ? (

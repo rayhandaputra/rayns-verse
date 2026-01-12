@@ -360,7 +360,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition transform hover:-translate-y-0.5 ${location.pathname.includes("/app/drive") ? "bg-gray-800 text-white shadow-lg" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"}`}
               >
                 <HardDrive size={16} />{" "}
-                <span className="hidden sm:inline">Drive</span>
+                <span className="hidden sm:inline">DRIVE</span>
               </button>
               <button
                 onClick={() => navigate("/app/print-area")}
@@ -373,7 +373,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition transform hover:-translate-y-0.5 ${location.pathname === "/app/email" ? "bg-gray-800 text-white shadow-lg" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"}`}
               >
                 <Mail size={16} />{" "}
-                <span className="hidden sm:inline">Email</span>
+                <span className="hidden sm:inline">EMAIL</span>
               </button>
             </>
           )}
