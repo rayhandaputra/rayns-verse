@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { ChevronLeft, HardDrive } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 type BreadcrumbItem = {
   id: string;
@@ -27,11 +27,16 @@ export function DriveBreadcrumb({
   const navigate = useNavigate();
 
   const isRootActive = !currentFolderId || currentFolderId === rootFolderId;
+
+  const location = useLocation();
   useEffect(() => {
-    if (!folderIdentity?.parent_id) {
+    if (
+      !folderIdentity?.parent_id &&
+      location.pathname.includes("public/drive-link")
+    ) {
       navigate(`/public/drive-link/${domain}`);
     }
-  }, [folderIdentity])
+  }, [folderIdentity]);
 
   const getRootPath = () => {
     if (domain === "customer") return "/app/drive/customer";
@@ -52,48 +57,50 @@ export function DriveBreadcrumb({
     >
       {/* Root */}
       <div className="flex items-center gap-2">
-      <button
-        onClick={() => navigate(getRootPath())}
-        className={`flex items-center px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
-          isRootActive
-            ? "font-semibold text-blue-600 bg-blue-50"
-            : "hover:bg-white hover:text-blue-600"
-        }`}
-      >
-        <HardDrive size={14} className="mr-1.5" />
-        {getRootLabel()}
-      </button>
+        <button
+          onClick={() => navigate(getRootPath())}
+          className={`flex items-center px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap ${
+            isRootActive
+              ? "font-semibold text-blue-600 bg-blue-50"
+              : "hover:bg-white hover:text-blue-600"
+          }`}
+        >
+          <HardDrive size={14} className="mr-1.5" />
+          {getRootLabel()}
+        </button>
 
-      {breadcrumbs.map((crumb, idx) => {
-        const isLast = idx === breadcrumbs.length - 1;
+        {breadcrumbs.map((crumb, idx) => {
+          const isLast = idx === breadcrumbs.length - 1;
 
-        return (
-          <React.Fragment key={crumb.id}>
-            <span className="text-gray-300">/</span>
-            <button
-              onClick={() => onOpenFolder(crumb.id)}
-              className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
-                isLast
-                  ? "font-semibold text-blue-600 bg-blue-50"
-                  : "hover:bg-white hover:text-blue-600"
-              }`}
-            >
-              {crumb.name}
-            </button>
-          </React.Fragment>
-        );
-      })}
+          return (
+            <React.Fragment key={crumb.id}>
+              <span className="text-gray-300">/</span>
+              <button
+                onClick={() => onOpenFolder(crumb.id)}
+                className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
+                  isLast
+                    ? "font-semibold text-blue-600 bg-blue-50"
+                    : "hover:bg-white hover:text-blue-600"
+                }`}
+              >
+                {crumb.name}
+              </button>
+            </React.Fragment>
+          );
+        })}
       </div>
 
       {folderIdentity?.parent_id ? (
-      <button
-        onClick={() => navigate(getRootPath())}
-        className={`flex items-center px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap hover:bg-white hover:text-blue-600 cursor-pointer`}
-      >
-        <ChevronLeft size={14} className="mr-1.5" />
-        Kembali
-      </button>
-      ) : ("")}
+        <button
+          onClick={() => navigate(getRootPath())}
+          className={`flex items-center px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap hover:bg-white hover:text-blue-600 cursor-pointer`}
+        >
+          <ChevronLeft size={14} className="mr-1.5" />
+          Kembali
+        </button>
+      ) : (
+        ""
+      )}
     </nav>
   );
 }

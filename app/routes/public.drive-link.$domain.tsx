@@ -954,14 +954,6 @@ export default function PublicDriveLinkPage() {
                   </span>
                 </button>
               )}
-              <a
-                href={getGoogleMapsLink()}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-2 py-2 px-3 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50"
-              >
-                <MapPin size={14} className="text-red-500" /> Lokasi Pengambilan
-              </a>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -978,6 +970,14 @@ export default function PublicDriveLinkPage() {
                 <FileText size={16} />
                 <span>Lihat Nota</span>
               </button>
+              <a
+                href={getGoogleMapsLink()}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center gap-2 py-2 px-3 bg-white border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                <MapPin size={14} className="text-red-500" /> Lokasi Pengambilan
+              </a>
               <div className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold">
                 {realFolders?.data?.total_items + realFiles?.data?.total_items}{" "}
                 Items
