@@ -735,7 +735,7 @@ export default function PrintPage() {
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div className="font-bold text-[11px] text-gray-900 truncate flex-1 pr-2">
-                        {order.institution_name} {order?.status_printed}
+                        {order.institution_name}
                       </div>
                       <button
                         onClick={() => {
