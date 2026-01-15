@@ -10,7 +10,16 @@ export const SupplierAPI = {
       table: "suppliers",
       action: "select",
       body: {
-        columns: ["id", "name", "phone", "address"],
+        columns: [
+          "id",
+          "name",
+          "phone",
+          "address",
+          "type",
+          "category",
+          "location",
+          "external_link",
+        ],
         where: { deleted_on: "null", ...(id ? { id } : {}) },
         search,
         page,
@@ -30,7 +39,8 @@ export const SupplierAPI = {
   },
 
   create: async ({ req }: any) => {
-    const { name, phone, address } = req.body || {};
+    const { name, phone, address, type, category, location, external_link } =
+      req.body || {};
 
     if (!name || !phone) {
       return { success: false, message: "Nama dan Telepon wajib diisi" };
@@ -40,6 +50,10 @@ export const SupplierAPI = {
       name,
       phone,
       address,
+      type,
+      category,
+      location,
+      external_link,
     };
 
     try {
@@ -63,7 +77,7 @@ export const SupplierAPI = {
   },
 
   update: async ({ req }: any) => {
-    const { id, ...fields } = req.body || {};
+    const { id, deleted, ...fields } = req.body || {};
 
     if (!id) {
       return { success: false, message: "ID wajib diisi" };
@@ -72,6 +86,9 @@ export const SupplierAPI = {
     const updatedData = {
       ...fields,
       modified_on: new Date().toISOString(),
+      ...(deleted === 1 && {
+        deleted_on: new Date().toISOString(),
+      }),
     };
 
     try {

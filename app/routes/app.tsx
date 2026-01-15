@@ -29,6 +29,7 @@ import {
   MonitorCogIcon,
   RecycleIcon,
   Printer,
+  ShoppingCart,
 } from "lucide-react";
 import { Sheet, SheetContent } from "~/components/ui/sheet";
 import { requireAuth } from "~/lib/session.server";
@@ -69,7 +70,13 @@ export const ADMIN_NAVIGATION: MenuItem[] = [
     href: "/app/product-list",
     icon: Tag,
   },
-  { id: "stock", label: "Stok Bahan", href: "/app/stock", icon: Package },
+  {
+    id: "procurement",
+    label: "Pengadaan",
+    href: "/app/procurement",
+    icon: ShoppingCart,
+  },
+  // { id: "stock", label: "Stok Bahan", href: "/app/stock", icon: Package },
   // { id: "drive", label: "Kinau Drive", href: "/app/drive", icon: HardDrive },
   // { id: "email", label: "Email", href: "/app/email", icon: Mail },
   {
