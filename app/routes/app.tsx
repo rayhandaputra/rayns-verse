@@ -73,7 +73,7 @@ export const ADMIN_NAVIGATION: MenuItem[] = [
   {
     id: "procurement",
     label: "Pengadaan",
-    href: "/app/procurement",
+    href: "/app/procurement/id_card_with_lanyard/shopping",
     icon: ShoppingCart,
   },
   // { id: "stock", label: "Stok Bahan", href: "/app/stock", icon: Package },

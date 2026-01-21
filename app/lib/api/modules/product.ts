@@ -175,7 +175,7 @@ export const ProductAPI = {
           endpoint: "bulk-insert",
           method: "POST",
           table: "product_components",
-          action: "bulk_insert",
+          action: "bulk-insert",
           body: {
             updateOnDuplicate: true,
             rows: items.map((item: any) => ({
@@ -201,7 +201,7 @@ export const ProductAPI = {
           endpoint: "bulk-insert",
           method: "POST",
           table: "product_price_rules",
-          action: "bulk_insert",
+          action: "bulk-insert",
           body: {
             updateOnDuplicate: true,
             rows: priceRuleRows,
@@ -223,7 +223,7 @@ export const ProductAPI = {
           endpoint: "bulk-insert",
           method: "POST",
           table: "product_variants",
-          action: "bulk_insert",
+          action: "bulk-insert",
           body: {
             updateOnDuplicate: true,
             rows: variantRows,
@@ -304,7 +304,7 @@ export const ProductAPI = {
             endpoint: "bulk-insert",
             method: "POST",
             table: "product_price_rules",
-            action: "bulk_insert",
+            action: "bulk-insert",
             body: {
               updateOnDuplicate: true,
               rows: priceRuleRows,
@@ -342,7 +342,7 @@ export const ProductAPI = {
             endpoint: "bulk-insert",
             method: "POST",
             table: "product_variants",
-            action: "bulk_insert",
+            action: "bulk-insert",
             body: {
               updateOnDuplicate: true,
               rows: variantRows,
@@ -427,7 +427,7 @@ export const ProductAPI = {
             endpoint: "bulk-insert",
             method: "POST",
             table: "product_components",
-            action: "bulk_insert",
+            action: "bulk-insert",
             body: {
               updateOnDuplicate: true,
               rows: items.map((item: any) => ({
@@ -453,7 +453,7 @@ export const ProductAPI = {
             endpoint: "bulk-insert",
             method: "POST",
             table: "product_price_rules",
-            action: "bulk_insert",
+            action: "bulk-insert",
             body: {
               updateOnDuplicate: true,
               rows: priceRuleRows,
