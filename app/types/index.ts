@@ -236,3 +236,45 @@ export interface Transaction {
   proofImage?: string; // Base64 image
   bankId?: string; // Bank ID or Name
 }
+
+
+export interface DesignRule {
+  id: string;
+  type: 'photo' | 'text' | 'logo' | 'dropdown';
+  label: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fontFamily?: string;
+  fontColor?: string;
+  options?: string[]; // Untuk tipe dropdown/jabatan
+}
+
+export interface DesignTemplate {
+  id: string;
+  name: string;
+  category: 'idcard' | 'lanyard';
+  baseImage: string;
+  rules: DesignRule[];
+  styleMode?: 'dynamic' | 'static'; // New property
+  createdAt: string;
+}
+
+export interface TwibbonValue {
+  ruleId: string;
+  value: string;
+}
+
+export interface TwibbonEntry {
+  id: string;
+  templateId: string;
+  values: TwibbonValue[];
+  createdAt: string;
+}
+
+export interface TwibbonAssignment {
+  id: string;
+  templateId: string;
+  type: 'idcard' | 'lanyard';
+}

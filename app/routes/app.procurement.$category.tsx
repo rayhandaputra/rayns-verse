@@ -69,7 +69,7 @@ export default function InventoryCategoryLayout() {
   const { category } = useParams();
   const location = useLocation();
 
-  const categories = ["id_card_with_lanyard", "cottom_combed_premium", "produk_3"];
+  const categories = ["id_card_with_lanyard", "cotton_combed_premium", "produk_3"];
 
   const tabs = [
     { id: "shopping", label: "Belanja & Stok", icon: ShoppingCart },
@@ -111,7 +111,7 @@ export default function InventoryCategoryLayout() {
       <div className="space-y-6">
         {/* Sub Navigation Tabs */}
         <div className="flex border-b border-gray-200 gap-8 overflow-x-auto no-scrollbar">
-          {[...(category === "cottom_combed_premium" ? tabsCatalog : tabs)].map((tab) => {
+          {[...(category === "cotton_combed_premium" ? tabsCatalog : tabs)].map((tab) => {
             const isActive = location.pathname.includes(`/${tab.id}`);
             return (
               <Link

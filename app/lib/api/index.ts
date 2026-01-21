@@ -30,6 +30,7 @@ import { ProductPackageItemsAPI } from "./modules/product_package_item";
 import { ProductPriceRulesAPI } from "./modules/product_price_rules";
 import { RestockAPI } from "./modules/restock";
 import { SettingsAPI } from "./modules/settings";
+import { ShirtColorAPI } from "./modules/shirt_color";
 import { StockLogAPI } from "./modules/stock_log";
 import { SupplierAPI } from "./modules/supplier";
 import { SupplierCommodityAPI } from "./modules/supplier_commodity";
@@ -72,4 +73,5 @@ export const API = {
   COMPONENTS: ComponentsAPI,
   COMMODITIES: CommoditiesAPI,
   STOCK_LOG: StockLogAPI,
+  SHIRT_COLOR: ShirtColorAPI,
 };

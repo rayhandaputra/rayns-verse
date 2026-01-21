@@ -30,6 +30,7 @@ import {
   RecycleIcon,
   Printer,
   ShoppingCart,
+  LayoutTemplate,
 } from "lucide-react";
 import { Sheet, SheetContent } from "~/components/ui/sheet";
 import { requireAuth } from "~/lib/session.server";
@@ -370,6 +371,12 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
                 <span className="hidden sm:inline">DRIVE</span>
               </button>
               <button
+                onClick={() => navigate("/app/setting/design")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold border transition ${location.pathname.includes("/app/setting/design") ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm'}`}
+              >
+                <LayoutTemplate size={16} /> DESAIN
+              </button>
+              <button
                 onClick={() => navigate("/app/print-area")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition transform hover:-translate-y-0.5 ${location.pathname === "/app/print-area" ? "bg-gray-800 text-white shadow-lg" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"}`}
               >
@@ -487,11 +494,10 @@ const Sidebar: React.FC<SidebarProps> = ({
               to={item.href}
               prefetch="intent"
               onClick={isMobile ? onCloseMobile : undefined}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                active
-                  ? "bg-gray-900 text-white shadow-md shadow-gray-200"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${active
+                ? "bg-gray-900 text-white shadow-md shadow-gray-200"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                }`}
             >
               <Icon
                 size={20}

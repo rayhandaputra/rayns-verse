@@ -385,6 +385,12 @@ export const formatCurrency = (n: number) => {
   );
 };
 
+export const formatNumberInput = (val: number | string) => {
+  const num = typeof val === "string" ? parseCurrency(val) : val;
+  if (!num) return "";
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
 export const parseCurrency = (str: string) => {
   if (!str) return 0;
   return Number(String(str).replace(/[^0-9]/g, "")) || 0;
@@ -401,7 +407,7 @@ export const slugifyBase = (s: string) => {
   s = (s || "").toLowerCase();
   try {
     s = s.normalize("NFD");
-  } catch {}
+  } catch { }
   s = s.replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "");
   return s.slice(0, 63);
 };

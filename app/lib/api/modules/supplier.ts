@@ -2,7 +2,7 @@ import { APIProvider } from "../client";
 
 export const SupplierAPI = {
   get: async ({ req }: any) => {
-    const { id = "", page = 0, size = 10, search } = req.query || {};
+    const { id = "", page = 0, size = 10, search, category = "" } = req.query || {};
 
     return APIProvider({
       endpoint: "select",
@@ -19,8 +19,16 @@ export const SupplierAPI = {
           "category",
           "location",
           "external_link",
+          "cotton_combed_category",
+          "price_s_xl",
+          "price_2xl",
+          "price_3xl",
+          "price_4xl",
+          "price_5xl",
+          "price_long_sleeve",
+          "price_per_meter",
         ],
-        where: { deleted_on: "null", ...(id ? { id } : {}) },
+        where: { deleted_on: "null", ...(id ? { id } : {}), ...(category ? { category } : {}) },
         search,
         page,
         size,
@@ -64,7 +72,7 @@ export const SupplierAPI = {
   },
 
   create: async ({ req }: any) => {
-    const { name, phone, address, type, category, location, external_link } =
+    const { name, phone, address, type, category, location, external_link, cotton_combed_category, price_s_xl, price_2xl, price_3xl, price_4xl, price_5xl, price_long_sleeve, price_per_meter } =
       req.body || {};
 
     if (!name || !phone) {
@@ -79,7 +87,16 @@ export const SupplierAPI = {
       category,
       location,
       external_link,
+      cotton_combed_category,
+      price_s_xl,
+      price_2xl,
+      price_3xl,
+      price_4xl,
+      price_5xl,
+      price_long_sleeve,
+      price_per_meter,
     };
+    console.log("REQ BODY => ", newSupplier)
 
     try {
       const result = await APIProvider({

@@ -158,7 +158,7 @@ export default function ShoppingPage() {
     // --- FETCHERS ---
     const { data: shopData } = useFetcherData({ endpoint: nexus().module("SUPPLIER").action("get").params({ size: 100 }).build() });
     const { data: matData } = useFetcherData({ endpoint: nexus().module("SUPPLIER_COMMODITY").action("get").params({ size: 100, level: 1 }).build() });
-    const { data: stockLogData, reload: reloadLogs } = useFetcherData({ endpoint: nexus().module("STOCK_LOG").action("get").params({ size: 20, sort_by: "created_on", order: "DESC" }).build() });
+    const { data: stockLogData, reload: reloadLogs } = useFetcherData({ endpoint: nexus().module("STOCK_LOG").action("get").params({ size: 20, category: 'id_card_with_lanyard', sort_by: "created_on", order: "DESC" }).build() });
     const { data: actionData, load: submitAction } = useFetcherData({ endpoint: "", method: "POST", autoLoad: false });
 
     // --- MEMOIZED DATA ---
