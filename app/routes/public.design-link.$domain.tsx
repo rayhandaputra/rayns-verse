@@ -14,7 +14,7 @@ import { sendTelegramLog } from "~/lib/telegram-log";
 import type { DesignTemplate } from './app.setting.design';
 import ClientUseEditorPage from '~/components/ClientUseEditorPage';
 import { DriveBreadcrumb } from '~/components/breadcrumb/DriveBreadcrumb';
-import { FooterHint } from './public.drive-link.$domain';
+// import { FooterHint } from './public.drive-link.$domain';
 import { useQueryParams } from '~/hooks/use-query-params';
 import TwibbonEditor from '~/components/TwibbonEditor';
 // import DesignPage from '~/components/design/DesignPage'; // Assuming you moved the Refactored DesignPage here

@@ -26,6 +26,36 @@ import { safeParseObject } from "~/lib/utils";
 import { sendTelegramLog } from "~/lib/telegram-log";
 import { getGoogleMapsLink } from "~/constants";
 import JSZip from "jszip";
+import { TwibbonTabContent } from "~/components/ClientUseEditorPage";
+import type { DesignTemplate } from "./app.setting.design";
+import type { Order } from "~/types";
+// Data Template Desain (Katalog)
+const dummyTemplates: any[] = [
+  { id: 'tpl-001', name: 'Desain ID Card Formal Biru', category: 'idcard' },
+  { id: 'tpl-002', name: 'Desain ID Card Event Fun', category: 'idcard' },
+  { id: 'tpl-003', name: 'Lanyard Polos Hitam Custom', category: 'lanyard' },
+  { id: 'tpl-004', name: 'Lanyard Batik Nusantara', category: 'lanyard' },
+];
+
+// Data Order yang Sedang Aktif
+const dummyOrder: any = {
+  id: 'ORD-2024-X12',
+  instansi: 'Universitas Indonesia',
+  // ... field lainnya
+  twibbonAssignments: [
+    {
+      id: 'asg-1',
+      type: 'idcard',
+      templateId: 'tpl-001'
+    },
+    {
+      id: 'asg-2',
+      type: 'lanyard',
+      templateId: 'tpl-003'
+    }
+  ]
+};
+
 
 // --- LOADER (LOGIC PRESERVED) ---
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -161,6 +191,7 @@ export default function PublicDriveLinkPage() {
   const [loadingUpload, setLoadingUpload] = useState<boolean>(false);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [order, setOrder] = useState(dummyOrder);
 
   // Source of truth for folder location
   const currentFolderId = query.folder_id || orderData?.drive_folder_id || null;
@@ -381,10 +412,29 @@ export default function PublicDriveLinkPage() {
   // Flexible Tab Rendering logic
   const activeTab = query.tab || 'drive'; // Default tab
 
+  // const [activeTab, setActiveTab] = useState<'twibbon-idcard' | 'twibbon-lanyard'>(firstActiveTab);
+
+  const handleUpdate = (orderId: string, updatedAssignments: any[]) => {
+    console.log("Updated Assignments:", updatedAssignments);
+    setOrder({ ...order, twibbonAssignments: updatedAssignments });
+  };
+
+  const handleAdd = () => {
+    const type = activeTab === 'twibbon-idcard' ? 'idcard' : 'lanyard';
+    const newAsg = {
+      id: `asg-${Math.random().toString(36).substr(2, 9)}`,
+      type: type,
+      templateId: ''
+    };
+    setOrder({
+      ...order,
+      twibbonAssignments: [...(order.twibbonAssignments || []), newAsg]
+    });
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'drive':
-      default:
         return (
           <div className="bg-white rounded-2xl border border-gray-200 shadow-lg flex flex-col h-[calc(100vh-200px)]">
             <DriveToolbar
@@ -424,6 +474,30 @@ export default function PublicDriveLinkPage() {
             <FooterHint />
           </div>
         );
+      case 'idcard':
+        return (
+          // <TwibbonTabContent
+          //   activeTab={activeTab as any}
+          //   currentOrder={{ ...orderData, twibbonAssignments: [{ id: "", name: "yes", image: "", type: "idcard" }] }}
+          //   designTemplates={[{ id: "", name: "yes", image: "" }]}
+          //   onUpdateAssignments={() => { }}
+          //   onShowEditor={() => { }}
+          //   onAddAssignment={() => { }}
+          // />
+          <TwibbonTabContent
+            activeTab={activeTab as any}
+            currentOrder={order}
+            designTemplates={dummyTemplates}
+            twibbonAssignments={order.twibbonAssignments} // Sesuai prop aslinya
+            onUpdateAssignments={handleUpdate}
+            onShowEditor={(tpl) => alert(`Membuka Editor untuk: ${tpl.name}`)}
+            onAddAssignment={handleAdd}
+          />
+        )
+      case 'lanyard':
+        return ""
+      default:
+        return ""
     }
   };
 
@@ -432,6 +506,26 @@ export default function PublicDriveLinkPage() {
       <Header orderData={orderData} domain={domain} />
 
       {/* Optional: Add a Tab Navigation component here using 'query.tab' */}
+      <div className="flex justify-center gap-4 mt-4">
+        <button
+          onClick={() => navigate(`?tab=drive`)}
+          className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'drive' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
+        >
+          FOLDER
+        </button>
+        <button
+          onClick={() => navigate(`?tab=idcard`)}
+          className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'idcard' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
+        >
+          TWIBBON ID CARD
+        </button>
+        <button
+          onClick={() => navigate(`?tab=lanyard`)}
+          className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'lanyard' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
+        >
+          TWIBBON LANYARD
+        </button>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="*/*" multiple />

@@ -36,6 +36,7 @@ import { SupplierAPI } from "./modules/supplier";
 import { SupplierCommodityAPI } from "./modules/supplier_commodity";
 import { TestimonialAPI } from "./modules/testimonial";
 import { TransactionAPI } from "./modules/transaction";
+import { TwibbonTemplateAPI } from "./modules/twibbon_template";
 import { UserAPI } from "./modules/user";
 
 // optional: unified API wrapper
@@ -74,4 +75,5 @@ export const API = {
   COMMODITIES: CommoditiesAPI,
   STOCK_LOG: StockLogAPI,
   SHIRT_COLOR: ShirtColorAPI,
+  TWIBBON_TEMPLATE: TwibbonTemplateAPI,
 };

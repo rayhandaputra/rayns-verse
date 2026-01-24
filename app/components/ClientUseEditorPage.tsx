@@ -9,6 +9,133 @@ import NotaView from './NotaView';
 import TwibbonEditor from './TwibbonEditor';
 // import TwibbonTabContent from './TwibbonTabContent'; // Imported new component
 
+
+interface TwibbonTabContentProps {
+    activeTab: 'twibbon-idcard' | 'twibbon-lanyard';
+    currentOrder: Order;
+    designTemplates: DesignTemplate[];
+    twibbonAssignments: any;
+    onUpdateAssignments: (orderId: string, assignments: TwibbonAssignment[]) => void;
+    onShowEditor: (template: DesignTemplate) => void;
+    onAddAssignment: () => void;
+}
+
+export const TwibbonTabContent: React.FC<TwibbonTabContentProps> = ({
+    activeTab,
+    currentOrder,
+    designTemplates,
+    onUpdateAssignments,
+    onShowEditor,
+    onAddAssignment
+}) => {
+    const type = activeTab === 'twibbon-idcard' ? 'idcard' : 'lanyard';
+    const typeLabel = activeTab.split('-')[1]?.toUpperCase();
+    const assignments = (currentOrder.twibbonAssignments || []).filter((a: any) => a.type === type);
+
+    const generatePublicLink = (asgId: string, index: number) => {
+        return `kinau.id/public/drive-link/${currentOrder?.id?.toUpperCase()}/${type === 'idcard' ? 'IdCard' : 'Lanyard'}${index + 1}`;
+    };
+
+    const handleTemplateChange = (asgId: string, newTemplateId: string) => {
+        const updated = (currentOrder.twibbonAssignments || []).map((a: any) =>
+            a.id === asgId ? { ...a, templateId: newTemplateId } : a
+        );
+        onUpdateAssignments(currentOrder.id, updated);
+    };
+
+    const handleDeleteAssignment = (asgId: string) => {
+        const updated = (currentOrder.twibbonAssignments || []).filter((a: any) => a.id !== asgId);
+        onUpdateAssignments(currentOrder.id, updated);
+    };
+
+    return (
+        <div className="max-w-6xl mx-auto space-y-10">
+            <div className="bg-white rounded-[40px] border border-gray-200 p-10 shadow-sm">
+                <div className="mb-10 pb-10 border-b border-gray-100">
+                    <h3 className="text-2xl font-black text-gray-900 uppercase flex items-center gap-3">
+                        {activeTab === 'twibbon-idcard' ?
+                            <ImageIcon className="text-indigo-600" size={32} /> :
+                            <LayoutGrid className="text-violet-600" size={32} />
+                        }
+                        ATUR EDITOR TEMPLATE DESAIN
+                    </h3>
+                    <p className="text-[11px] font-bold text-gray-400 mt-2 uppercase tracking-widest leading-relaxed">
+                        pilih desain {typeLabel} lalu buka editornya atau bagikan link nya untuk diakses anggota lain.
+                    </p>
+                </div>
+
+                <div className="space-y-6">
+                    {assignments.map((asg: any, idx: number) => {
+                        const assignedTpl = designTemplates?.find((t: any) => t.id === asg.templateId);
+                        const usedIds = (currentOrder.twibbonAssignments || [])
+                            .filter((a: any) => a.id !== asg.id)
+                            .map((a: any) => a.templateId);
+
+                        const available = designTemplates?.filter((t: any) =>
+                            t.category === type && !usedIds.includes(t.id)
+                        ) || [];
+
+                        const link = generatePublicLink(asg.id, idx);
+
+                        return (
+                            <div key={asg.id} className={`bg-gray-50 border-2 rounded-[32px] p-6 transition-all ${asg.templateId ? 'border-gray-100 bg-white shadow-sm' : 'border-dashed border-indigo-200 bg-indigo-50/20'}`}>
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                                    {/* Template Selection */}
+                                    <div className="lg:col-span-4">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 px-1">Desain Terpilih:</label>
+                                        <select
+                                            className="w-full bg-white border-2 border-gray-100 p-4 rounded-2xl text-sm font-black outline-none"
+                                            value={asg.templateId}
+                                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleTemplateChange(asg.id, e.target.value)}
+                                        >
+                                            <option value="">-- Pilih Desain --</option>
+                                            {available.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                        </select>
+                                    </div>
+
+                                    {/* Link Display */}
+                                    <div className="lg:col-span-5">
+                                        {asg.templateId ? (
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block px-1">Link Editor Publik:</label>
+                                                <div className="flex gap-2">
+                                                    <div className="flex-1 bg-gray-50 border border-gray-200 p-4 rounded-2xl text-[11px] font-mono font-bold text-gray-500 truncate">{link}</div>
+                                                    <button onClick={() => { navigator.clipboard.writeText(link); alert('Link disalin!'); }} className="bg-white border border-gray-200 p-4 rounded-2xl text-indigo-600 shadow-sm"><CopyIcon size={18} /></button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-3 text-gray-400 italic text-xs px-2">
+                                                <AlertCircle size={16} /> Tentukan desain untuk mengaktifkan editor
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="lg:col-span-3 flex justify-end gap-2">
+                                        {asg.templateId && assignedTpl && (
+                                            <button onClick={() => onShowEditor(assignedTpl)} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-900/10">
+                                                <Printer size={16} /> Editor
+                                            </button>
+                                        )}
+                                        <button onClick={() => handleDeleteAssignment(asg.id)} className="p-4 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white rounded-2xl transition border border-red-100">
+                                            <Trash2 size={20} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    <button onClick={onAddAssignment} className="w-full bg-white border-4 border-dashed border-gray-100 py-10 rounded-[32px] font-black text-gray-300 hover:text-indigo-400 hover:border-indigo-100 transition flex flex-col items-center gap-3">
+                        <PlusCircle size={40} />
+                        <span className="text-xs uppercase tracking-widest">TAMBAH DESAIN LAIN</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 interface DrivePageProps {
     items: DriveItem[];
     orders?: Order[];
@@ -168,8 +295,8 @@ const ClientUseEditorPage: React.FC<DrivePageProps> = ({
                         {/* TRACKER BANNER (Khusus ID Card Depan) */}
                         {trackerStats && (
                             <div className={`p-6 rounded-[32px] border-2 flex flex-col md:flex-row items-center justify-between gap-6 animate-fade-in ${trackerStats.status === 'exact' ? 'bg-emerald-50 border-emerald-100 text-emerald-900' :
-                                    trackerStats.status === 'less' ? 'bg-orange-50 border-orange-100 text-orange-900' :
-                                        'bg-red-50 border-red-100 text-red-900'
+                                trackerStats.status === 'less' ? 'bg-orange-50 border-orange-100 text-orange-900' :
+                                    'bg-red-50 border-red-100 text-red-900'
                                 }`}>
                                 <div className="flex items-center gap-4">
                                     <div className={`p-3 rounded-2xl ${trackerStats.status === 'exact' ? 'bg-emerald-500 text-white' : 'bg-white shadow-sm'}`}>
@@ -249,129 +376,3 @@ const ClientUseEditorPage: React.FC<DrivePageProps> = ({
 };
 
 export default ClientUseEditorPage;
-
-interface TwibbonTabContentProps {
-    activeTab: 'twibbon-idcard' | 'twibbon-lanyard';
-    currentOrder: Order;
-    designTemplates: DesignTemplate[];
-    twibbonAssignments: any;
-    onUpdateAssignments: (orderId: string, assignments: TwibbonAssignment[]) => void;
-    onShowEditor: (template: DesignTemplate) => void;
-    onAddAssignment: () => void;
-}
-
-const TwibbonTabContent: React.FC<TwibbonTabContentProps> = ({
-    activeTab,
-    currentOrder,
-    designTemplates,
-    onUpdateAssignments,
-    onShowEditor,
-    onAddAssignment
-}) => {
-    const type = activeTab === 'twibbon-idcard' ? 'idcard' : 'lanyard';
-    const typeLabel = activeTab.split('-')[1].toUpperCase();
-    const assignments = (currentOrder.twibbonAssignments || []).filter((a: any) => a.type === type);
-
-    const generatePublicLink = (asgId: string, index: number) => {
-        return `kinau.id/public/drive-link/${currentOrder.id.toUpperCase()}/${type === 'idcard' ? 'IdCard' : 'Lanyard'}${index + 1}`;
-    };
-
-    const handleTemplateChange = (asgId: string, newTemplateId: string) => {
-        const updated = (currentOrder.twibbonAssignments || []).map((a: any) =>
-            a.id === asgId ? { ...a, templateId: newTemplateId } : a
-        );
-        onUpdateAssignments(currentOrder.id, updated);
-    };
-
-    const handleDeleteAssignment = (asgId: string) => {
-        const updated = (currentOrder.twibbonAssignments || []).filter((a: any) => a.id !== asgId);
-        onUpdateAssignments(currentOrder.id, updated);
-    };
-
-    return (
-        <div className="max-w-6xl mx-auto space-y-10">
-            <div className="bg-white rounded-[40px] border border-gray-200 p-10 shadow-sm">
-                <div className="mb-10 pb-10 border-b border-gray-100">
-                    <h3 className="text-2xl font-black text-gray-900 uppercase flex items-center gap-3">
-                        {activeTab === 'twibbon-idcard' ?
-                            <ImageIcon className="text-indigo-600" size={32} /> :
-                            <LayoutGrid className="text-violet-600" size={32} />
-                        }
-                        ATUR EDITOR TEMPLATE DESAIN
-                    </h3>
-                    <p className="text-[11px] font-bold text-gray-400 mt-2 uppercase tracking-widest leading-relaxed">
-                        pilih desain {typeLabel} lalu buka editornya atau bagikan link nya untuk diakses anggota lain.
-                    </p>
-                </div>
-
-                <div className="space-y-6">
-                    {assignments.map((asg: any, idx: number) => {
-                        const assignedTpl = designTemplates?.find((t: any) => t.id === asg.templateId);
-                        const usedIds = (currentOrder.twibbonAssignments || [])
-                            .filter((a: any) => a.id !== asg.id)
-                            .map((a: any) => a.templateId);
-
-                        const available = designTemplates?.filter((t: any) =>
-                            t.category === type && !usedIds.includes(t.id)
-                        ) || [];
-
-                        const link = generatePublicLink(asg.id, idx);
-
-                        return (
-                            <div key={asg.id} className={`bg-gray-50 border-2 rounded-[32px] p-6 transition-all ${asg.templateId ? 'border-gray-100 bg-white shadow-sm' : 'border-dashed border-indigo-200 bg-indigo-50/20'}`}>
-                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                                    {/* Template Selection */}
-                                    <div className="lg:col-span-4">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 px-1">Desain Terpilih:</label>
-                                        <select
-                                            className="w-full bg-white border-2 border-gray-100 p-4 rounded-2xl text-sm font-black outline-none"
-                                            value={asg.templateId}
-                                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleTemplateChange(asg.id, e.target.value)}
-                                        >
-                                            <option value="">-- Pilih Desain --</option>
-                                            {available.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                                        </select>
-                                    </div>
-
-                                    {/* Link Display */}
-                                    <div className="lg:col-span-5">
-                                        {asg.templateId ? (
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block px-1">Link Editor Publik:</label>
-                                                <div className="flex gap-2">
-                                                    <div className="flex-1 bg-gray-50 border border-gray-200 p-4 rounded-2xl text-[11px] font-mono font-bold text-gray-500 truncate">{link}</div>
-                                                    <button onClick={() => { navigator.clipboard.writeText(link); alert('Link disalin!'); }} className="bg-white border border-gray-200 p-4 rounded-2xl text-indigo-600 shadow-sm"><CopyIcon size={18} /></button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-3 text-gray-400 italic text-xs px-2">
-                                                <AlertCircle size={16} /> Tentukan desain untuk mengaktifkan editor
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Actions */}
-                                    <div className="lg:col-span-3 flex justify-end gap-2">
-                                        {asg.templateId && assignedTpl && (
-                                            <button onClick={() => onShowEditor(assignedTpl)} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-900/10">
-                                                <Printer size={16} /> Editor
-                                            </button>
-                                        )}
-                                        <button onClick={() => handleDeleteAssignment(asg.id)} className="p-4 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white rounded-2xl transition border border-red-100">
-                                            <Trash2 size={20} />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-
-                    <button onClick={onAddAssignment} className="w-full bg-white border-4 border-dashed border-gray-100 py-10 rounded-[32px] font-black text-gray-300 hover:text-indigo-400 hover:border-indigo-100 transition flex flex-col items-center gap-3">
-                        <PlusCircle size={40} />
-                        <span className="text-xs uppercase tracking-widest">TAMBAH DESAIN LAIN</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
