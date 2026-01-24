@@ -74,6 +74,7 @@ export interface Order {
   unitPrice: number;
   totalAmount: number;
   createdAt: string;
+  twibbonAssignments: any;
 
   // KKN Specifics
   isKKN?: boolean;
@@ -132,6 +133,7 @@ export interface DriveItem {
   name: string;
   type: "folder" | "file";
   size?: string;
+  data?: any;
   mimeType?: string;
   createdAt: string;
 }
@@ -273,8 +275,38 @@ export interface TwibbonEntry {
   createdAt: string;
 }
 
+// export interface TwibbonAssignment {
+//   id: string;
+//   templateId: string;
+//   type: 'idcard' | 'lanyard';
+// }
+
+export interface DesignTemplate {
+  id: string;
+  name: string;
+  category: 'idcard' | 'lanyard';
+  baseImage: string;
+  rules: DesignRule[];
+  styleMode?: 'dynamic' | 'static'; // New property
+  createdAt: string;
+}
+
 export interface TwibbonAssignment {
   id: string;
   templateId: string;
   type: 'idcard' | 'lanyard';
+}
+
+export interface ShirtSizeItem {
+  size: string;
+  sleeve: 'Pendek' | 'Panjang';
+  color?: string; 
+  quantity: number;
+}
+
+export interface ShirtColor {
+  id: string;
+  name: string;
+  imageUrl: string;
+  createdAt: string;
 }

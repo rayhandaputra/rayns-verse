@@ -22,6 +22,7 @@ export const StockLogAPI = {
                 columns: [
                     "id",
                     "trx_code",
+                    "order_trx_code",
                     "supplier_id",
                     "supplier_name",
                     "total_amount",
@@ -65,6 +66,21 @@ export const StockLogAPI = {
                             "created_on",
                         ],
                     },
+                    {
+                        table: "orders",
+                        alias: "orders",
+                        foreign_key: "order_number",
+                        reference_key: "order_trx_code",
+                        // where: { deleted_on: "null" },
+                        columns: [
+                            "id",
+                            "order_number",
+                            "institution_id",
+                            "institution_name",
+                            "pic_name",
+                            "pic_phone",
+                        ],
+                    },
                 ],
             },
         });
@@ -74,6 +90,7 @@ export const StockLogAPI = {
         const {
             id,
             supplier_id,
+            order_trx_code,
             supplier_name,
             total_amount,
             shipping_cost,
@@ -93,6 +110,7 @@ export const StockLogAPI = {
             supplier_id,
             supplier_name,
             total_amount,
+            ...order_trx_code && { order_trx_code: order_trx_code },
             shipping_cost,
             admin_cost,
             discount,

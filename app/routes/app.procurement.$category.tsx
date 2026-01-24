@@ -58,6 +58,7 @@ export interface Product {
 import { Outlet, Link, useParams, useLocation, useLoaderData } from "react-router";
 import { Store, ShoppingCart, Layers, Calculator, Layout, Palette } from "lucide-react";
 import type { LoaderFunction } from "react-router";
+import { useMemo } from "react";
 // import { json, LoaderFunctionArgs } from "@remix-run/node"; // Sesuaikan runtime
 
 export const loader: LoaderFunction = async ({ params }) => {
@@ -69,7 +70,7 @@ export default function InventoryCategoryLayout() {
   const { category } = useParams();
   const location = useLocation();
 
-  const categories = ["id_card_with_lanyard", "cotton_combed_premium", "produk_3"];
+  const categories = useMemo(() => ["id_card_with_lanyard", "cotton_combed_premium", "produk_3"], [location?.pathname]);
 
   const tabs = [
     { id: "shopping", label: "Belanja & Stok", icon: ShoppingCart },
@@ -90,8 +91,12 @@ export default function InventoryCategoryLayout() {
         {categories.map((cat) => {
           // Pertahankan sub-path saat ganti kategori
           const currentPath = location.pathname.split('/').pop();
+
           // Default ke shopping jika root
-          const targetTab = tabs.find(t => t.id === currentPath) ? currentPath : 'shopping';
+          let targetTab = tabs.find(t => t.id === currentPath) ? currentPath : 'shopping';
+          if (cat === "cotton_combed_premium") {
+            targetTab = tabsCatalog.find(t => t.id === currentPath) ? currentPath : 'shopping-kaos';
+          }
 
           return (
             <Link
