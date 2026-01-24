@@ -14,10 +14,11 @@ interface TwibbonTabContentProps {
     activeTab: 'twibbon-idcard' | 'twibbon-lanyard';
     currentOrder: Order;
     designTemplates: DesignTemplate[];
-    twibbonAssignments: any;
+    twibbonAssignments?: any;
     onUpdateAssignments: (orderId: string, assignments: TwibbonAssignment[]) => void;
     onShowEditor: (template: DesignTemplate) => void;
     onAddAssignment: () => void;
+    handleDeleteAssignment?: (asgId: string) => void;
 }
 
 export const TwibbonTabContent: React.FC<TwibbonTabContentProps> = ({
@@ -26,14 +27,15 @@ export const TwibbonTabContent: React.FC<TwibbonTabContentProps> = ({
     designTemplates,
     onUpdateAssignments,
     onShowEditor,
-    onAddAssignment
+    onAddAssignment,
+    handleDeleteAssignment
 }) => {
     const type = activeTab === 'twibbon-idcard' ? 'idcard' : 'lanyard';
     const typeLabel = activeTab.split('-')[1]?.toUpperCase();
     const assignments = (currentOrder.twibbonAssignments || []).filter((a: any) => a.type === type);
 
     const generatePublicLink = (asgId: string, index: number) => {
-        return `kinau.id/public/drive-link/${currentOrder?.id?.toUpperCase()}/${type === 'idcard' ? 'IdCard' : 'Lanyard'}${index + 1}`;
+        return `kinau.id/public/design-link/${currentOrder?.id?.toUpperCase()}/${type === 'idcard' ? 'IdCard' : 'Lanyard'}${index + 1}`;
     };
 
     const handleTemplateChange = (asgId: string, newTemplateId: string) => {
@@ -43,10 +45,10 @@ export const TwibbonTabContent: React.FC<TwibbonTabContentProps> = ({
         onUpdateAssignments(currentOrder.id, updated);
     };
 
-    const handleDeleteAssignment = (asgId: string) => {
-        const updated = (currentOrder.twibbonAssignments || []).filter((a: any) => a.id !== asgId);
-        onUpdateAssignments(currentOrder.id, updated);
-    };
+    // const handleDeleteAssignment = (asgId: string) => {
+    //     const updated = (currentOrder.twibbonAssignments || []).filter((a: any) => a.id !== asgId);
+    //     onUpdateAssignments(currentOrder.id, updated);
+    // };
 
     return (
         <div className="max-w-6xl mx-auto space-y-10">
@@ -72,8 +74,11 @@ export const TwibbonTabContent: React.FC<TwibbonTabContentProps> = ({
                             .map((a: any) => a.templateId);
 
                         const available = designTemplates?.filter((t: any) =>
-                            t.category === type && !usedIds.includes(t.id)
+                            t.category === type
                         ) || [];
+                        // const available = designTemplates?.filter((t: any) =>
+                        //     t.category === type && !usedIds.includes(t.id)
+                        // ) || [];
 
                         const link = generatePublicLink(asg.id, idx);
 

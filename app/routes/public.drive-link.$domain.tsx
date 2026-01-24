@@ -27,35 +27,6 @@ import { sendTelegramLog } from "~/lib/telegram-log";
 import { getGoogleMapsLink } from "~/constants";
 import JSZip from "jszip";
 import { TwibbonTabContent } from "~/components/ClientUseEditorPage";
-import type { DesignTemplate } from "./app.setting.design";
-import type { Order } from "~/types";
-// Data Template Desain (Katalog)
-const dummyTemplates: any[] = [
-  { id: 'tpl-001', name: 'Desain ID Card Formal Biru', category: 'idcard' },
-  { id: 'tpl-002', name: 'Desain ID Card Event Fun', category: 'idcard' },
-  { id: 'tpl-003', name: 'Lanyard Polos Hitam Custom', category: 'lanyard' },
-  { id: 'tpl-004', name: 'Lanyard Batik Nusantara', category: 'lanyard' },
-];
-
-// Data Order yang Sedang Aktif
-const dummyOrder: any = {
-  id: 'ORD-2024-X12',
-  instansi: 'Universitas Indonesia',
-  // ... field lainnya
-  twibbonAssignments: [
-    {
-      id: 'asg-1',
-      type: 'idcard',
-      templateId: 'tpl-001'
-    },
-    {
-      id: 'asg-2',
-      type: 'lanyard',
-      templateId: 'tpl-003'
-    }
-  ]
-};
-
 
 // --- LOADER (LOGIC PRESERVED) ---
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -163,6 +134,39 @@ export const action: ActionFunction = async ({ request, params }) => {
       const res = await API.ORDERS.update({ session: {}, req: { body: { id, payment_proof: proof } } });
       if (!res.success) return Response.json({ success: false, message: res.message || "Gagal" });
       resMessage = "Berhasil memperbarui bukti pembayaran";
+      // --- HANDLER TWIBBON ASSIGNMENT ---
+    }
+    else if (intent === "upsert_assignment") {
+      const payload = {
+        id: formData.get("id") as string, // UUID atau null/undefined
+        order_trx_code: formData.get("order_trx_code"),
+        category: formData.get("category") === 'twibbon-idcard' ? 'idcard' : 'lanyard',
+        twibbon_template_id: formData.get("twibbon_template_id"),
+        twibbon_template_name: formData.get("twibbon_template_name"),
+        // public_url_link digenerate di backend API atau dikirim dari sini
+      };
+
+      // Panggil API Upsert yang sudah Anda buat sebelumnya
+      // Asumsi modul di nexus/api bernama ORDER_ASSIGNMENT
+      const res = await API.TWIBBON_ASSIGNMENT.upsert({
+        session: {},
+        req: { body: payload }
+      });
+
+      console.log(res, payload)
+
+      if (!res.success) return Response.json({ success: false, message: res.message || "Gagal menyimpan setting desain" });
+      resMessage = "Berhasil menyimpan setting desain";
+    }
+    else if (intent === "delete_assignment") {
+      const id = formData.get("id") as string;
+      const res = await API.TWIBBON_ASSIGNMENT.delete({
+        session: {},
+        req: { body: { id } }
+      });
+
+      if (!res.success) return Response.json({ success: false, message: res.message || "Gagal menghapus desain" });
+      resMessage = "Berhasil menghapus desain terpilih";
     }
 
     return Response.json({ success: true, message: resMessage });
@@ -191,7 +195,10 @@ export default function PublicDriveLinkPage() {
   const [loadingUpload, setLoadingUpload] = useState<boolean>(false);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [order, setOrder] = useState(dummyOrder);
+
+  // --- STATE INIT ---
+  // Inisialisasi order dari data loader (real), fallback jika kosong.
+  const [order, setOrder] = useState(orderData || { id: domain, instansi: 'Unknown', twibbonAssignments: [] });
 
   // Source of truth for folder location
   const currentFolderId = query.folder_id || orderData?.drive_folder_id || null;
@@ -211,7 +218,7 @@ export default function PublicDriveLinkPage() {
     }
   }, []);
 
-  // Data Fetching
+  // 1. Data Fetching Folders
   const { data: realFolders, loading: isLoadingFolders, reload: reloadRealFolders } = useFetcherData<any>({
     endpoint: nexus().module("ORDER_UPLOAD").action("get_folder").params({
       page: 0, size: 100, order_number: orderData?.order_number, ...(currentFolderId && { folder_id: currentFolderId }),
@@ -219,12 +226,89 @@ export default function PublicDriveLinkPage() {
     autoLoad: !!orderData?.order_number,
   });
 
+  // 2. Data Fetching Files
   const { data: realFiles, loading: isLoadingFiles, reload: reloadRealFiles } = useFetcherData<any>({
     endpoint: nexus().module("ORDER_UPLOAD").action("get_file").params({
       page: 0, size: 100, order_number: orderData?.order_number, ...(currentFolderId ? { folder_id: currentFolderId } : { folder_id: "null" }),
     }).build(),
     autoLoad: !!orderData?.order_number,
   });
+
+  // 3. Data Fetching Templates (INTEGRASI API TWIBBON)
+  const { data: templateRes, loading: loadingTemplates } = useFetcherData<any>({
+    endpoint: nexus()
+      .module("TWIBBON_TEMPLATE") // Modul API yang sudah disiapkan
+      .action("get")
+      .params({ page: 0, size: 100 }) // Ambil semua template yang tersedia
+      .build(),
+    autoLoad: true,
+  });
+
+  // 4. Fetch Real Order Assignments (DATA DARI DB BARU)
+  const {
+    data: assignmentRes,
+    loading: loadingAssignments,
+    reload: reloadAssignments
+  } = useFetcherData<any>({
+    endpoint: nexus()
+      .module("TWIBBON_ASSIGNMENT") // Pastikan modul ini terdaftar
+      .action("get") // atau "select" tergantung nama di API wrapper
+      .params({
+        order_trx_code: orderData?.order_number || orderData?.id, // Filter by Order
+        size: 50
+      })
+      .build(),
+    autoLoad: !!orderData, // Load otomatis jika data order ada
+  });
+
+  // Mapping Data DB (snake_case) ke UI State (camelCase)
+  // Ini menggabungkan data order dasar dengan list assignment dari DB
+  const currentOrderWithAssignments = useMemo(() => {
+    const dbAssignments = assignmentRes?.data?.items || [];
+
+    const mappedAssignments = dbAssignments.map((a: any) => ({
+      id: a.id,
+      type: a.category === 'twibbon-idcard' ? 'idcard' : (a.category === 'twibbon-lanyard' ? 'lanyard' : a.category),
+      templateId: a.twibbon_template_id,
+      // Field lain jika perlu untuk UI
+      publicLink: a.public_url_link
+    }));
+
+    return {
+      ...orderData,
+      // Timpa field twibbonAssignments dengan data real dari DB
+      twibbonAssignments: mappedAssignments
+    };
+  }, [orderData, assignmentRes]);
+
+  // Update state local order ketika data fetch selesai
+  useEffect(() => {
+    if (currentOrderWithAssignments) {
+      setOrder(currentOrderWithAssignments);
+    }
+  }, [currentOrderWithAssignments]);
+
+  // Reload data assignment jika Action berhasil (save/delete sukses)
+  useEffect(() => {
+    if (actionDataFetcher?.success) {
+      // ... logic reload folder/file ...
+      reloadAssignments(); // <--- Tambahkan ini
+    }
+  }, [actionDataFetcher]);
+
+  // Mapping Data Template dari API (snake_case -> camelCase + Category adjustment)
+  const templates = useMemo(() => {
+    const items = templateRes?.data?.items || [];
+    return items.map((t: any) => ({
+      id: t.id,
+      name: t.name,
+      // Mapping kategori dari DB ('twibbon-idcard') ke format UI ('idcard')
+      category: t.category === 'twibbon-idcard' ? 'idcard' : (t.category === 'twibbon-lanyard' ? 'lanyard' : t.category),
+      baseImage: t.base_image,
+      rules: typeof t.rules === 'string' ? JSON.parse(t.rules) : t.rules,
+      styleMode: t.style_mode
+    }));
+  }, [templateRes]);
 
   const folders = realFolders?.data?.items ?? [];
   const files = realFiles?.data?.items ?? [];
@@ -404,33 +488,84 @@ export default function PublicDriveLinkPage() {
     if (isNotFound) sendTelegramLog("PUBLIC_DRIVE_LINK_NOT_FOUND", { domain, orderData, current_folder, query });
   }, [isNotFound]);
 
-  // --- Render ---
+  // Helper untuk mencari nama template berdasarkan ID (untuk snapshot di DB)
+  const getTemplateName = (tplId: string) => {
+    return templates.find((t: any) => t.id === tplId)?.name || "Unknown Template";
+  };
+
+  // Handler: Update / Save Assignment ke Database
+  const handleUpdate = (orderId: string, updatedAssignments: any[]) => {
+    // Cari assignment mana yang berubah (atau kirim update satu per satu)
+    // Disini kita asumsikan UI mengirim array terbaru, kita perlu cari yang diedit
+    // TAPI: Agar lebih efisien & sesuai pattern TwibbonTabContent yang mengirim array:
+
+    // Kita ambil item terakhir yang diubah (biasanya UI mentrigger change per dropdown)
+    // Untuk simplifikasi integrasi dengan logic UI sebelumnya yang mengirim full array:
+
+    // Loop updatedAssignments untuk update state lokal (Optimistic UI)
+    setOrder({ ...order, twibbonAssignments: updatedAssignments });
+
+    // Cari item yang baru saja diedit (logika sederhana: cek mana yang beda dari data fetch terakhir)
+    // ATAU: Modifikasi `TwibbonTabContent` sedikit untuk mengirim single item change.
+    // Jika tidak ingin ubah UI component, kita bisa lakukan save per item di component ini:
+
+    updatedAssignments.forEach(asg => {
+      // Cek validasi sederhana sebelum kirim
+      if (!asg.templateId) return;
+
+      // Trigger Action Submit
+      submitAction({
+        intent: "upsert_assignment",
+        id: asg.id.startsWith('asg-') ? '' : asg.id, // Jika ID dummy (asg-...), kirim string kosong biar jadi insert
+        order_trx_code: orderData.order_number,
+        category: asg.type === 'idcard' ? 'twibbon-idcard' : 'twibbon-lanyard', // Mapping balik ke ENUM DB
+        twibbon_template_id: asg.templateId,
+        twibbon_template_name: getTemplateName(asg.templateId)
+      });
+    });
+  };
+
+  // Handler: Add New (Hanya state lokal dulu, simpan ke DB saat user pilih template)
+  const handleAdd = () => {
+    const type = query.tab === 'idcard' ? 'idcard' : 'lanyard';
+    const newAsg = {
+      id: `asg-${Date.now()}`, // ID Sementara
+      type: type,
+      templateId: ''
+    };
+
+    // Update state lokal agar baris baru muncul di UI
+    setOrder((prev: any) => ({
+      ...prev,
+      twibbonAssignments: [...(prev.twibbonAssignments || []), newAsg]
+    }));
+  };
+
+  // Tambahan Handler: Delete Assignment
+  // Anda perlu mempassing ini ke TwibbonTabContent nanti jika component itu support prop onDelete
+  const handleDeleteAssignment = (asgId: string) => {
+    if (asgId.startsWith('asg-')) {
+      // Hapus dari state lokal jika belum disimpan
+      setOrder((prev: any) => ({
+        ...prev,
+        twibbonAssignments: prev.twibbonAssignments.filter((a: any) => a.id !== asgId)
+      }));
+    } else {
+      // Hapus dari DB
+      submitAction({
+        intent: "delete_assignment",
+        id: asgId
+      });
+    }
+  };
+
+  // --- Conditional Rendering ---
   if (!isClient) return <DriveSkeleton />;
   if (isNotFound) return <NotFoundPage domain={domain} session={session} />;
   if (isLoadingFolders && isLoadingFiles) return <DriveSkeleton orderData={orderData} />;
 
   // Flexible Tab Rendering logic
-  const activeTab = query.tab || 'drive'; // Default tab
-
-  // const [activeTab, setActiveTab] = useState<'twibbon-idcard' | 'twibbon-lanyard'>(firstActiveTab);
-
-  const handleUpdate = (orderId: string, updatedAssignments: any[]) => {
-    console.log("Updated Assignments:", updatedAssignments);
-    setOrder({ ...order, twibbonAssignments: updatedAssignments });
-  };
-
-  const handleAdd = () => {
-    const type = activeTab === 'twibbon-idcard' ? 'idcard' : 'lanyard';
-    const newAsg = {
-      id: `asg-${Math.random().toString(36).substr(2, 9)}`,
-      type: type,
-      templateId: ''
-    };
-    setOrder({
-      ...order,
-      twibbonAssignments: [...(order.twibbonAssignments || []), newAsg]
-    });
-  };
+  const activeTab = query.tab || 'drive';
 
   const renderContent = () => {
     switch (activeTab) {
@@ -467,7 +602,7 @@ export default function PublicDriveLinkPage() {
                 onDelete={onDeleteItem}
                 onPreview={(file: any) => setModal({ ...modal, open: true, type: "zoom_image", data: file })}
                 onRenameSave={onRenameFolder}
-                modalData={modal} // pass modal state for rename input inline
+                modalData={modal}
                 setModalData={(val: any) => setModal({ ...modal, ...val })}
               />
             </div>
@@ -477,27 +612,48 @@ export default function PublicDriveLinkPage() {
       case 'idcard':
         return (
           // <TwibbonTabContent
-          //   activeTab={activeTab as any}
-          //   currentOrder={{ ...orderData, twibbonAssignments: [{ id: "", name: "yes", image: "", type: "idcard" }] }}
-          //   designTemplates={[{ id: "", name: "yes", image: "" }]}
-          //   onUpdateAssignments={() => { }}
-          //   onShowEditor={() => { }}
-          //   onAddAssignment={() => { }}
+          //   activeTab="twibbon-idcard" // Match type expected by component
+          //   currentOrder={order}
+          //   designTemplates={templates} // INTEGRATED: Using real templates from API
+          //   twibbonAssignments={order.twibbonAssignments}
+          //   onUpdateAssignments={handleUpdate}
+          //   onShowEditor={(tpl: any) => alert(`Membuka Editor untuk: ${tpl.name}`)}
+          //   onAddAssignment={handleAdd}
           // />
           <TwibbonTabContent
-            activeTab={activeTab as any}
-            currentOrder={order}
-            designTemplates={dummyTemplates}
-            twibbonAssignments={order.twibbonAssignments} // Sesuai prop aslinya
-            onUpdateAssignments={handleUpdate}
-            onShowEditor={(tpl) => alert(`Membuka Editor untuk: ${tpl.name}`)}
+            activeTab="twibbon-idcard"
+            currentOrder={order} // State order yang sudah terhubung DB
+            designTemplates={templates} // Data template real
+            // Props update ini akan memicu handleUpdate di atas
+            onUpdateAssignments={(oid, newAsgs) => handleUpdate(oid, newAsgs)}
+            onShowEditor={(tpl: any) => alert(`Membuka Editor: ${tpl.name}`)}
             onAddAssignment={handleAdd}
+            handleDeleteAssignment={handleDeleteAssignment}
           />
         )
       case 'lanyard':
-        return ""
+        return (
+          // <TwibbonTabContent
+          //   activeTab="twibbon-lanyard"
+          //   currentOrder={order}
+          //   designTemplates={templates} // INTEGRATED: Using real templates from API
+          //   onUpdateAssignments={handleUpdate}
+          //   onShowEditor={(tpl: any) => alert(`Membuka Editor untuk: ${tpl.name}`)}
+          //   onAddAssignment={handleAdd}
+          // />
+          <TwibbonTabContent
+            activeTab="twibbon-lanyard"
+            currentOrder={order} // State order yang sudah terhubung DB
+            designTemplates={templates} // Data template real
+            // Props update ini akan memicu handleUpdate di atas
+            onUpdateAssignments={(oid, newAsgs) => handleUpdate(oid, newAsgs)}
+            onShowEditor={(tpl: any) => alert(`Membuka Editor: ${tpl.name}`)}
+            onAddAssignment={handleAdd}
+            handleDeleteAssignment={handleDeleteAssignment}
+          />
+        )
       default:
-        return ""
+        return null;
     }
   };
 
@@ -505,7 +661,6 @@ export default function PublicDriveLinkPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Header orderData={orderData} domain={domain} />
 
-      {/* Optional: Add a Tab Navigation component here using 'query.tab' */}
       <div className="flex justify-center gap-4 mt-4">
         <button
           onClick={() => navigate(`?tab=drive`)}
