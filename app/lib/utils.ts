@@ -124,6 +124,24 @@ export const getMimeType = (fileName: string) => {
   return "file";
 };
 
+export const formatWA = (phone: string) => {
+  if (!phone) return "";
+  // Ambil hanya angka saja
+  let cleaned = phone.replace(/\D/g, "");
+
+  // Jika diawali '0', ganti menjadi '62'
+  if (cleaned.startsWith("0")) {
+    cleaned = "62" + cleaned.substring(1);
+  }
+
+  // Jika diawali '8' (tanpa 0/62), tambahkan '62'
+  if (cleaned.startsWith("8")) {
+    cleaned = "62" + cleaned;
+  }
+
+  return cleaned;
+};
+
 export const base64ToFile = (base64String: string, fileName: string): File => {
   const arr = base64String.split(',');
   const mime = arr[0].match(/:(.*?);/)?.[1];

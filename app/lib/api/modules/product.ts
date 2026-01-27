@@ -11,6 +11,7 @@ export const ProductAPI = {
       id = "",
       include_prices = false,
       show_in_dashboard = "",
+      searchUniqueName = "",
     } = req.query || {};
 
     return APIProvider({
@@ -71,8 +72,10 @@ export const ProductAPI = {
           ...(type ? { type } : {}),
           ...(id ? { id } : {}),
           ...(show_in_dashboard ? { show_in_dashboard } : {}),
+          ...(searchUniqueName ? { name: "like:" + searchUniqueName } : {}),
         },
         search,
+        ...search && { searchBy: "name" },
         page: Number(page),
         size: Number(size),
         // ...(include_prices && {

@@ -57,6 +57,7 @@ export const OrderAPI = {
       status_printed,
       is_kkn = "",
       is_portfolio,
+      kkn_period = "",
       end_date,
       year,
       sort = "",
@@ -76,6 +77,7 @@ export const OrderAPI = {
     if (order_type) where.order_type = order_type;
     if (is_kkn?.toString() !== "") where.is_kkn = is_kkn;
     if (is_portfolio) where.is_portfolio = is_portfolio;
+    if (kkn_period) where.kkn_period = kkn_period;
 
     // ✅ FILTER TANGGAL
     if (start_date && end_date) {
@@ -95,6 +97,8 @@ export const OrderAPI = {
       };
     }
     where.deleted_on = deleted_on || "null";
+
+    console.log(where)
 
     // ✅ SEARCH MULTI FIELD (format OR)
     const searchConfig = search
@@ -494,6 +498,18 @@ export const OrderAPI = {
                   parent_id: createFolder?.insert_id,
                   folder_name: "Lanyard",
                   purpose: "lanyard",
+                },
+                {
+                  order_number,
+                  parent_id: createFolder?.insert_id,
+                  folder_name: "Sablon Depan",
+                  purpose: "sablon_front",
+                },
+                {
+                  order_number,
+                  parent_id: createFolder?.insert_id,
+                  folder_name: "Sablon Belakang",
+                  purpose: "sablon_back",
                 },
               ],
               updateOnDuplicate: true,

@@ -202,12 +202,12 @@ export const action: ActionFunction = async ({ request }) => {
         ...(+id > 0
           ? { id }
           : {
-              code,
-              is_bank: 1,
-              group_code: 1,
-              group_type: "asset",
-              group_name: "Aset Lancar",
-            }),
+            code,
+            is_bank: 1,
+            group_code: 1,
+            group_type: "asset",
+            group_name: "Aset Lancar",
+          }),
         name,
         ref_account_number,
         ref_account_holder,
@@ -1090,124 +1090,126 @@ const FinancePage: React.FC<FinancePageProps> = ({
                     transactionBalance?.data?.items?.map((t) => {
                       const order: any = safeParseArray(t.orders)?.[0] || {}
                       return (
-                      <tr key={t.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-3 text-gray-500 whitespace-nowrap text-xs">
-                          {formatFullDateTime(t.created_on)}
-                        </td>
-                        <td className="px-6 py-3">
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-bold ${t.group_type === "income" || t.group_type === "asset" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
-                          >
-                            {t.account_name}
-                          </span>
-                        </td>
-                        <td className="px-6 py-3 text-gray-700 max-w-xs truncate font-medium">
-                          {/* {t.notes || "-"} */}
-                          {t.trx_code || "-"}
-                        </td>
-                        <td className="px-6 py-3 text-gray-700 max-w-xs truncate font-medium">
-                          <p className="text-xs font-bold">
-                            {+order?.is_kkn === 1 ? order?.kkn_type?.toLowerCase() === "ppm" ? `Kelompok ${safeParseObject(order?.kkn_detail)?.value}` : `Desa ${safeParseObject(order?.kkn_detail)?.value}` : order?.institution_name || "-"}
-                          </p>
-                          <p className="text-[0.675rem] text-gray-700">
-                            {order?.pic_name || "-"}
-                          </p>
-                        </td>
-                        <td className="px-6 py-3 text-gray-700 max-w-xs truncate font-medium">
-                          <ul className="list-disc space-y-0.5">
-                            {safeParseArray(t.order_items)?.map(
-                              (v: any, i: number) => (
-                                <li
-                                  key={i}
-                                  className="flex items-center gap-1 text-xs text-gray-600"
-                                >
-                                  <span className="truncate">
-                                    {v.product_name}
-                                  </span>
-                                  <span className="text-gray-400">:</span>
-                                  <span className="font-medium text-gray-800">
-                                    {v.qty}
-                                  </span>
-                                </li>
-                              )
-                            )}
-                          </ul>
-                        </td>
-                        <td className="px-6 py-3 text-gray-500 text-xs">
-                          {/* {t.bank_id || "-"} */}
-                          {/* {t.account_name || "-"} */}
-                          {safeParseArray(t.account_ledger_mutations)?.filter(
-                            (v: any) => v?.account_code !== t.account_code
-                          )?.[0]?.account_name ||
-                            t.account_name ||
-                            "-"}
-                        </td>
-                        <td className="px-6 py-3 text-gray-500 text-xs">
-                          {/* {t.bank_id || "-"} */}
-                          {t.receipt_url && t.receipt_url !== "undefined" ? (
-                            <Button
-                              className="text-blue-600"
-                              onClick={() =>
-                                setModal({
-                                  open: true,
-                                  type: "zoom_receipt_url",
-                                  data: {
-                                    receipt_url: t.receipt_url,
-                                  },
-                                })
-                              }
+                        <tr key={t.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-3 text-gray-500 whitespace-nowrap text-xs">
+                            {formatFullDateTime(t.created_on)}
+                          </td>
+                          <td className="px-6 py-3">
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-bold ${t.group_type === "income" || t.group_type === "asset" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
                             >
-                              Lihat
-                            </Button>
-                          ) : (
-                            "-"
-                          )}
-                        </td>
-                        <td
-                          className={`px-6 py-3 text-right font-bold whitespace-nowrap ${t.group_type === "income" || t.group_type === "asset" ? "text-green-600" : "text-red-600"}`}
-                        >
-                          {/* {t.type === "Income" ? "+" : "-"}{" "} */}
-                          {formatCurrency(
-                            ["income", "expense"].includes(t.group_type)
-                              ? t.credit - t.debit
-                              : t.debit - t.credit
-                          )}
-                        </td>
-                        {/* <td
+                              {/* {t.account_name} */}
+                              {order?.payment_status === "down_payment" ? "DP" : order?.payment_status === "paid" ? "PELUNASAN" : "-"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3 text-gray-700 max-w-xs truncate font-medium">
+                            {/* {t.notes || "-"} */}
+                            {t.trx_code || "-"}
+                          </td>
+                          <td className="px-6 py-3 text-gray-700 max-w-xs truncate font-medium">
+                            <p className="text-xs font-bold">
+                              {+order?.is_kkn === 1 ? order?.kkn_type?.toLowerCase() === "ppm" ? `Kelompok ${safeParseObject(order?.kkn_detail)?.value}` : `Desa ${safeParseObject(order?.kkn_detail)?.value}` : order?.institution_name || "-"}
+                            </p>
+                            <p className="text-[0.675rem] text-gray-700">
+                              {order?.pic_name || "-"}
+                            </p>
+                          </td>
+                          <td className="px-6 py-3 text-gray-700 max-w-xs truncate font-medium">
+                            <ul className="list-disc space-y-0.5">
+                              {safeParseArray(t.order_items)?.map(
+                                (v: any, i: number) => (
+                                  <li
+                                    key={i}
+                                    className="flex items-center gap-1 text-xs text-gray-600"
+                                  >
+                                    <span className="truncate">
+                                      {v.product_name}
+                                    </span>
+                                    <span className="text-gray-400">:</span>
+                                    <span className="font-medium text-gray-800">
+                                      {v.qty}
+                                    </span>
+                                  </li>
+                                )
+                              )}
+                            </ul>
+                          </td>
+                          <td className="px-6 py-3 text-gray-500 text-xs">
+                            {/* {t.bank_id || "-"} */}
+                            {/* {t.account_name || "-"} */}
+                            {safeParseArray(t.account_ledger_mutations)?.filter(
+                              (v: any) => v?.account_code !== t.account_code
+                            )?.[0]?.account_name ||
+                              t.account_name ||
+                              "-"}
+                          </td>
+                          <td className="px-6 py-3 text-gray-500 text-xs">
+                            {/* {t.bank_id || "-"} */}
+                            {t.receipt_url && t.receipt_url !== "undefined" ? (
+                              <Button
+                                className="text-blue-600"
+                                onClick={() =>
+                                  setModal({
+                                    open: true,
+                                    type: "zoom_receipt_url",
+                                    data: {
+                                      receipt_url: t.receipt_url,
+                                    },
+                                  })
+                                }
+                              >
+                                Lihat
+                              </Button>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
+                          <td
+                            className={`px-6 py-3 text-right font-bold whitespace-nowrap ${t.group_type === "income" || t.group_type === "asset" ? "text-green-600" : "text-red-600"}`}
+                          >
+                            {/* {t.type === "Income" ? "+" : "-"}{" "} */}
+                            {formatCurrency(
+                              ["income", "expense"].includes(t.group_type)
+                                ? t.credit - t.debit
+                                : t.debit - t.credit
+                            )}
+                          </td>
+                          {/* <td
                           className={`px-6 py-3 text-right font-bold whitespace-nowrap ${t.type === "Income" ? "text-green-600" : "text-red-600"}`}
                         >
                           {formatCurrency(t.debit)}
                         </td> */}
-                        <td className={`px-6 py-3`}>
-                          <Button
-                            onClick={() => {
-                              Swal.fire({
-                                title: "Hapus Transaksi?",
-                                text: `Yakin ingin menghapus Transaksi ${t.account_name}?`,
-                                icon: "warning",
-                                showCancelButton: true,
-                                confirmButtonText: "Ya, Hapus",
-                                cancelButtonText: "Batal",
-                                customClass: {
-                                  confirmButton: "bg-red-600 text-white",
-                                  cancelButton: "bg-gray-200 text-gray-800",
-                                },
-                              }).then((result) => {
-                                if (result.isConfirmed) {
-                                  submitAction({
-                                    intent: "delete_transaction",
-                                    id: t.id,
-                                    journal_code: t.journal_code,
-                                  });
-                                }
-                              });
-                            }}
-                          >
-                            <Trash2Icon className="w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    )})
+                          <td className={`px-6 py-3`}>
+                            <Button
+                              onClick={() => {
+                                Swal.fire({
+                                  title: "Hapus Transaksi?",
+                                  text: `Yakin ingin menghapus Transaksi ${t.account_name}?`,
+                                  icon: "warning",
+                                  showCancelButton: true,
+                                  confirmButtonText: "Ya, Hapus",
+                                  cancelButtonText: "Batal",
+                                  customClass: {
+                                    confirmButton: "bg-red-600 text-white",
+                                    cancelButton: "bg-gray-200 text-gray-800",
+                                  },
+                                }).then((result) => {
+                                  if (result.isConfirmed) {
+                                    submitAction({
+                                      intent: "delete_transaction",
+                                      id: t.id,
+                                      journal_code: t.journal_code,
+                                    });
+                                  }
+                                });
+                              }}
+                            >
+                              <Trash2Icon className="w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      )
+                    })
                   )}
                 </tbody>
               </table>

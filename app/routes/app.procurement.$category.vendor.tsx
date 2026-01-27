@@ -266,6 +266,7 @@ import { nexus } from "~/lib/nexus-client";
 import { useFetcherData } from "~/hooks";
 import Swal from "sweetalert2";
 import { toast } from "sonner";
+import { formatWA } from "~/lib/utils";
 
 // --- TYPES ---
 export interface Shop {
@@ -635,7 +636,7 @@ export default function KaosVendorsPage() {
                                             <LinkIcon size={18} /> BUKA MARKETPLACE
                                         </a>
                                     ) : s.phone ? (
-                                        <a href={`https://wa.me/${s.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="w-full flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-black text-sm transition shadow-lg shadow-green-100">
+                                        <a href={`https://wa.me/${formatWA(s.phone)}`} target="_blank" rel="noreferrer" className="w-full flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-black text-sm transition shadow-lg shadow-green-100">
                                             <MessageCircle size={20} /> HUBUNGI VENDOR
                                         </a>
                                     ) : (

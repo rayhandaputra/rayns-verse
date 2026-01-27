@@ -80,11 +80,10 @@ const SwitchToggle = ({
         key={opt.val}
         type="button"
         onClick={() => onChange(opt.val)}
-        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
-          value === opt.val
+        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${value === opt.val
             ? "bg-white shadow text-gray-900"
             : "text-gray-500 hover:text-gray-700"
-        }`}
+          }`}
       >
         {opt.label}
       </button>
@@ -467,25 +466,25 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
       isKKN,
       kknDetails: isKKN
         ? {
-            periode: isArchive ? archivePeriodVal : autoPeriod.period,
-            tahun: isArchive ? archiveYear : autoPeriod.year,
-            tipe: isArchive ? "PPM" : kknType,
-            nilai: isArchive
-              ? "Summary"
-              : kknType === "PPM"
-                ? String(kknGroupNo)
-                : kknVillage,
-            jumlahKelompok: isArchive ? Number(kknArchiveGroupsCount) : 1,
-          }
+          periode: isArchive ? archivePeriodVal : autoPeriod.period,
+          tahun: isArchive ? archiveYear : autoPeriod.year,
+          tipe: isArchive ? "PPM" : kknType,
+          nilai: isArchive
+            ? "Summary"
+            : kknType === "PPM"
+              ? String(kknGroupNo)
+              : kknVillage,
+          jumlahKelompok: isArchive ? Number(kknArchiveGroupsCount) : 1,
+        }
         : undefined,
       pemesanName: pemesanName,
       pemesanPhone: pemesanPhone,
       discount:
         !isKKN && !isArchive && parseCurrency(discountValStr) > 0
           ? {
-              type: discountType,
-              value: parseCurrency(discountValStr),
-            }
+            type: discountType,
+            value: parseCurrency(discountValStr),
+          }
           : undefined,
       isSponsor: isSponsor,
       createdAt: isArchive
@@ -619,13 +618,13 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                     value={
                       kknArchiveProductId
                         ? {
-                            value: kknArchiveProductId,
-                            label:
-                              kknArchiveProductData?.name ||
-                              products.find((p) => p.id === kknArchiveProductId)
-                                ?.name ||
-                              "Produk",
-                          }
+                          value: kknArchiveProductId,
+                          label:
+                            kknArchiveProductData?.name ||
+                            products.find((p) => p.id === kknArchiveProductId)
+                              ?.name ||
+                            "Produk",
+                        }
                         : null
                     }
                     loadOptions={loadOptionProduct}
@@ -791,9 +790,9 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                               value={
                                 instansi
                                   ? {
-                                      value: instansiId,
-                                      label: instansi,
-                                    }
+                                    value: instansiId,
+                                    label: instansi,
+                                  }
                                   : null
                               }
                               loadOptions={loadOptionInstitution}
@@ -892,15 +891,15 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                             value={
                               item.productId
                                 ? {
-                                    value: item.productId,
-                                    label:
-                                      selectedProductsData[item.productId]
-                                        ?.name ||
-                                      products.find(
-                                        (p) => p.id === item.productId
-                                      )?.name ||
-                                      "Produk",
-                                  }
+                                  value: item.productId,
+                                  label:
+                                    selectedProductsData[item.productId]
+                                      ?.name ||
+                                    products.find(
+                                      (p) => p.id === item.productId
+                                    )?.name ||
+                                    "Produk",
+                                }
                                 : null
                             }
                             loadOptions={loadOptionProduct}
@@ -1029,7 +1028,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                             <option value="">Pilih Varian</option>
                             {safeParseArray(item?.product_variants).map((v) => (
                               <option key={v.id} value={v.id}>
-                                {v.variant_name} ({v.base_price})
+                                {v.variant_name} ({formatCurrency(v.base_price)})
                               </option>
                             ))}
                           </select>

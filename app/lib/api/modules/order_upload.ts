@@ -68,7 +68,7 @@ export const OrderUploadAPI = {
           ],
           where,
           search,
-          searchBy: 'folder_name',
+          ...search && { searchBy: 'folder_name' },
           pagination: pagination === "true",
           page: Number(page),
           size: Number(size),

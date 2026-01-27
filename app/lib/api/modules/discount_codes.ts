@@ -28,7 +28,7 @@ export const DiscountAPI = {
         ],
         where: { deleted_on: "null" },
         search,
-        searchBy: "name",
+        ...search && { searchBy: "name" },
         page,
         size,
       },
