@@ -41,7 +41,7 @@ export const TwibbonTemplateAPI = {
         }
 
         const newTemplate = {
-            id: id || crypto.randomUUID(), // Generasi UUID jika ID tidak dikirim
+            // id: id || crypto.randomUUID(), // Generasi UUID jika ID tidak dikirim
             name,
             category,
             base_image,

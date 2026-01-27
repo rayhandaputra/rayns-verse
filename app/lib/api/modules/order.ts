@@ -99,15 +99,15 @@ export const OrderAPI = {
     // ✅ SEARCH MULTI FIELD (format OR)
     const searchConfig = search
       ? {
-          logic: "or",
-          fields: [
-            "order_number",
-            "institution_name",
-            "institution_abbr",
-            "institution_domain",
-          ],
-          keyword: search,
-        }
+        logic: "or",
+        fields: [
+          "order_number",
+          "institution_name",
+          "institution_abbr",
+          "institution_domain",
+        ],
+        keyword: search,
+      }
       : undefined;
 
     let sort_by = "created_on";
@@ -169,6 +169,16 @@ export const OrderAPI = {
         "created_on",
         "created_by",
         `(SELECT COUNT(id) FROM order_items) AS total_product`,
+        `
+        (
+          SELECT 1 
+          FROM order_items 
+          WHERE order_number = orders.order_number 
+            AND deleted_on IS NULL 
+            AND (product_name LIKE '%card%' OR product_name LIKE '%lanyard%')
+          LIMIT 1
+        ) AS is_idcard_lanyard
+        `
       ];
       // if (extraColumns) columns.push(extraColumns);
       const result = await APIProvider({
@@ -214,18 +224,18 @@ export const OrderAPI = {
             },
             ...(with_folders
               ? [
-                  {
-                    table: "order_upload_folders",
-                    alias: "order_upload_folders",
-                    foreign_key: "order_number",
-                    reference_key: "order_number",
-                    where: {
-                      deleted_on: "null",
-                      purpose: filter_folder,
-                    },
-                    columns: ["id", "folder_name", "purpose", "order_number"],
+                {
+                  table: "order_upload_folders",
+                  alias: "order_upload_folders",
+                  foreign_key: "order_number",
+                  reference_key: "order_number",
+                  where: {
+                    deleted_on: "null",
+                    purpose: filter_folder,
                   },
-                ]
+                  columns: ["id", "folder_name", "purpose", "order_number"],
+                },
+              ]
               : []),
           ],
         },
@@ -414,14 +424,14 @@ export const OrderAPI = {
       modified_on: null,
       ...(total_amount > 0 &&
         +is_archive === 1 && {
-          ...(payment_status === "down_payment"
-            ? {
-                dp_payment_journal_code: jrnlCode,
-              }
-            : {
-                payment_journal_code: jrnlCode,
-              }),
-        }),
+        ...(payment_status === "down_payment"
+          ? {
+            dp_payment_journal_code: jrnlCode,
+          }
+          : {
+            payment_journal_code: jrnlCode,
+          }),
+      }),
     };
 
     try {
@@ -762,10 +772,10 @@ export const OrderAPI = {
               : {}),
             ...(safeParseObject(updatedOrder?.dp_payment_detail)
               ? {
-                  dp_payment_detail: JSON.stringify(
-                    updatedOrder?.dp_payment_detail
-                  ),
-                }
+                dp_payment_detail: JSON.stringify(
+                  updatedOrder?.dp_payment_detail
+                ),
+              }
               : {}),
             ...(fields?.dp_payment_proof && {
               dp_payment_journal_code: jrnlCodeDP,

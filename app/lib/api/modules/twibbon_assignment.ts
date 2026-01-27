@@ -1,3 +1,4 @@
+import { generateAccessCode } from "~/constants";
 import { APIProvider } from "../client";
 
 export const OrderAssignmentAPI = {
@@ -6,7 +7,7 @@ export const OrderAssignmentAPI = {
         const {
             pagination = "true",
             page = 0,
-            size = 10, order_trx_code
+            size = 10, order_trx_code, unique_code
         } = req.query || {};
 
         const result = await APIProvider({
@@ -16,12 +17,13 @@ export const OrderAssignmentAPI = {
             action: "select",
             body: {
                 columns: [
-                    "id", "order_trx_code", "category",
+                    "id", "order_trx_code", "unique_code", "category",
                     "twibbon_template_id", "twibbon_template_name",
                     "public_url_link"
                 ],
                 where: {
                     ...order_trx_code && { order_trx_code: order_trx_code },
+                    ...unique_code && { unique_code: unique_code },
                     deleted_on: "null"
                 }
             }
@@ -64,8 +66,9 @@ export const OrderAssignmentAPI = {
         const public_url_link = `kinau.id/public/drive-link/${order_trx_code}/${category === 'idcard' ? 'IdCard' : 'Lanyard'}`;
 
         const payload = {
-            id: id || crypto.randomUUID(), // Generate ID baru jika tidak ada
+            // id: id || crypto.randomUUID(), // Generate ID baru jika tidak ada
             order_trx_code,
+            ...!id && { unique_code: generateAccessCode() },
             category,
             twibbon_template_id,
             twibbon_template_name,

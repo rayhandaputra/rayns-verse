@@ -117,6 +117,27 @@ export const uploadFile = async (file: File) => {
   return response.url;
 };
 
+export const getMimeType = (fileName: string) => {
+  const ext = fileName.split(".").pop()?.toLowerCase() || "";
+  if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return "image";
+  if (["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt"].includes(ext)) return "doc";
+  return "file";
+};
+
+export const base64ToFile = (base64String: string, fileName: string): File => {
+  const arr = base64String.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+
+  return new File([u8arr], fileName, { type: mime });
+};
+
 export const safeParseArray = <T = unknown>(str: unknown): T[] => {
   try {
     const parsed = typeof str === "string" ? JSON.parse(str) : str;

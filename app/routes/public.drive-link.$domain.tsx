@@ -22,7 +22,7 @@ import ModalSecond from "~/components/modal/ModalSecond";
 import { Button } from "~/components/ui/button";
 import { DriveBreadcrumb } from "~/components/breadcrumb/DriveBreadcrumb";
 import Swal from "sweetalert2";
-import { safeParseObject } from "~/lib/utils";
+import { getMimeType, safeParseObject } from "~/lib/utils";
 import { sendTelegramLog } from "~/lib/telegram-log";
 import { getGoogleMapsLink } from "~/constants";
 import JSZip from "jszip";
@@ -268,6 +268,7 @@ export default function PublicDriveLinkPage() {
 
     const mappedAssignments = dbAssignments.map((a: any) => ({
       id: a.id,
+      unique_code: a.unique_code,
       type: a.category === 'twibbon-idcard' ? 'idcard' : (a.category === 'twibbon-lanyard' ? 'lanyard' : a.category),
       templateId: a.twibbon_template_id,
       // Field lain jika perlu untuk UI
@@ -302,6 +303,7 @@ export default function PublicDriveLinkPage() {
     return items.map((t: any) => ({
       id: t.id,
       name: t.name,
+      unique_code: t.unique_code,
       // Mapping kategori dari DB ('twibbon-idcard') ke format UI ('idcard')
       category: t.category === 'twibbon-idcard' ? 'idcard' : (t.category === 'twibbon-lanyard' ? 'lanyard' : t.category),
       baseImage: t.base_image,
@@ -347,14 +349,6 @@ export default function PublicDriveLinkPage() {
   const onRenameFolder = (e: React.FormEvent) => {
     if (e) e.preventDefault();
     submitAction({ intent: "create_folder", id: modal?.data?.id, folder_name: modal?.data?.folder_name });
-  };
-
-  // --- File Upload Logic (Preserved) ---
-  const getMimeType = (fileName: string) => {
-    const ext = fileName.split(".").pop()?.toLowerCase() || "";
-    if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return "image";
-    if (["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt"].includes(ext)) return "doc";
-    return "file";
   };
 
   const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
@@ -661,26 +655,28 @@ export default function PublicDriveLinkPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Header orderData={orderData} domain={domain} />
 
-      <div className="flex justify-center gap-4 mt-4">
-        <button
-          onClick={() => navigate(`?tab=drive`)}
-          className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'drive' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
-        >
-          FOLDER
-        </button>
-        <button
-          onClick={() => navigate(`?tab=idcard`)}
-          className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'idcard' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
-        >
-          TWIBBON ID CARD
-        </button>
-        <button
-          onClick={() => navigate(`?tab=lanyard`)}
-          className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'lanyard' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
-        >
-          TWIBBON LANYARD
-        </button>
-      </div>
+      {+orderData?.is_idcard_lanyard === 1 ? (
+        <div className="flex justify-center gap-4 mt-4">
+          <button
+            onClick={() => navigate(`?tab=drive`)}
+            className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'drive' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            FOLDER
+          </button>
+          <button
+            onClick={() => navigate(`?tab=idcard`)}
+            className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'idcard' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            TWIBBON ID CARD
+          </button>
+          <button
+            onClick={() => navigate(`?tab=lanyard`)}
+            className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'lanyard' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            TWIBBON LANYARD
+          </button>
+        </div>
+      ) : ("")}
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="*/*" multiple />

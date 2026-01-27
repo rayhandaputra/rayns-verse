@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import NotaView from './NotaView';
 import TwibbonEditor from './TwibbonEditor';
+import { useNavigate } from 'react-router';
 // import TwibbonTabContent from './TwibbonTabContent'; // Imported new component
 
 
@@ -30,12 +31,16 @@ export const TwibbonTabContent: React.FC<TwibbonTabContentProps> = ({
     onAddAssignment,
     handleDeleteAssignment
 }) => {
+
+    const navigate = useNavigate();
+
     const type = activeTab === 'twibbon-idcard' ? 'idcard' : 'lanyard';
     const typeLabel = activeTab.split('-')[1]?.toUpperCase();
     const assignments = (currentOrder.twibbonAssignments || []).filter((a: any) => a.type === type);
 
     const generatePublicLink = (asgId: string, index: number) => {
-        return `kinau.id/public/design-link/${currentOrder?.id?.toUpperCase()}/${type === 'idcard' ? 'IdCard' : 'Lanyard'}${index + 1}`;
+        // return `kinau.id/public/design-link/${currentOrder?.id?.toUpperCase()}/${type === 'idcard' ? 'IdCard' : 'Lanyard'}${index + 1}`;
+        return `kinau.id/public/design-link/${currentOrder?.id}`;
     };
 
     const handleTemplateChange = (asgId: string, newTemplateId: string) => {
@@ -104,8 +109,9 @@ export const TwibbonTabContent: React.FC<TwibbonTabContentProps> = ({
                                             <div className="space-y-2">
                                                 <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block px-1">Link Editor Publik:</label>
                                                 <div className="flex gap-2">
-                                                    <div className="flex-1 bg-gray-50 border border-gray-200 p-4 rounded-2xl text-[11px] font-mono font-bold text-gray-500 truncate">{link}</div>
-                                                    <button onClick={() => { navigator.clipboard.writeText(link); alert('Link disalin!'); }} className="bg-white border border-gray-200 p-4 rounded-2xl text-indigo-600 shadow-sm"><CopyIcon size={18} /></button>
+                                                    {/* <div className="flex-1 bg-gray-50 border border-gray-200 p-4 rounded-2xl text-[11px] font-mono font-bold text-gray-500 truncate">{link}</div> */}
+                                                    <div className="flex-1 bg-gray-50 border border-gray-200 p-4 rounded-2xl text-[11px] font-mono font-bold text-gray-500 truncate">{`kinau.id/public/design-link/${asg?.unique_code}`}</div>
+                                                    <button onClick={() => { navigator.clipboard.writeText(`kinau.id/public/design-link/${asg?.unique_code}`); alert('Link disalin!'); }} className="bg-white border border-gray-200 p-4 rounded-2xl text-indigo-600 shadow-sm"><CopyIcon size={18} /></button>
                                                 </div>
                                             </div>
                                         ) : (
@@ -117,12 +123,23 @@ export const TwibbonTabContent: React.FC<TwibbonTabContentProps> = ({
 
                                     {/* Actions */}
                                     <div className="lg:col-span-3 flex justify-end gap-2">
-                                        {asg.templateId && assignedTpl && (
+                                        {assignedTpl && (
+                                            <a
+                                                href={`/public/design-link/${asg?.unique_code}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-900/10 no-underline"
+                                            >
+                                                <Printer size={16} /> Editor
+                                            </a>
+                                        )}
+                                        {/* {asg.templateId && assignedTpl && (
                                             <button onClick={() => onShowEditor(assignedTpl)} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-900/10">
                                                 <Printer size={16} /> Editor
                                             </button>
-                                        )}
-                                        <button onClick={() => handleDeleteAssignment(asg.id)} className="p-4 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white rounded-2xl transition border border-red-100">
+                                        )} */}
+                                        {/* <button onClick={() => handleDeleteAssignment(asg.id)} className="p-4 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white rounded-2xl transition border border-red-100"> */}
+                                        <button onClick={() => { }} className="p-4 bg-red-50 text-red-400 hover:bg-red-500 hover:text-white rounded-2xl transition border border-red-100">
                                             <Trash2 size={20} />
                                         </button>
                                     </div>

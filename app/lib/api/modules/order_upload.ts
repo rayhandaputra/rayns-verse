@@ -38,13 +38,13 @@ export const OrderUploadAPI = {
       sort_type = type;
     }
 
-    const searchConfig = search
-      ? {
-          logic: "or",
-          fields: ["folder_name", "order_number"],
-          keyword: search,
-        }
-      : undefined;
+    // const searchConfig = search
+    //   ? {
+    //       logic: "or",
+    //       fields: ["folder_name", "order_number"],
+    //       keyword: search,
+    //     }
+    //   : undefined;
 
     try {
       const result = await APIProvider({
@@ -67,7 +67,8 @@ export const OrderUploadAPI = {
             "modified_on",
           ],
           where,
-          search: searchConfig,
+          search,
+          searchBy: 'folder_name',
           pagination: pagination === "true",
           page: Number(page),
           size: Number(size),
@@ -129,10 +130,10 @@ export const OrderUploadAPI = {
 
     const searchConfig = search
       ? {
-          logic: "or",
-          fields: ["file_type", "file_url", "file_name", "order_number"],
-          keyword: search,
-        }
+        logic: "or",
+        fields: ["file_type", "file_url", "file_name", "order_number"],
+        keyword: search,
+      }
       : undefined;
 
     try {
