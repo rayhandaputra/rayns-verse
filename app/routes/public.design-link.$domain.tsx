@@ -17,7 +17,12 @@ import {
     MessageCircle,
     Instagram,
     Globe,
-    Zap
+    Zap,
+    ArrowRight,
+    Sparkles,
+    FileCheck,
+    PartyPopper,
+    CheckCircle
 } from 'lucide-react';
 import { getOptionalUser } from "~/lib/session.server";
 import { API } from "~/lib/api";
@@ -157,21 +162,35 @@ export default function PublicDesignLinkPage() {
         }));
     }, [templateRes]);
 
+    // State untuk Modal & Data Feedback
+    const [successModal, setSuccessModal] = useState({
+        open: false,
+        fileName: "",
+    });
+
     // --- Handlers ---
     const handleSaveResult = async (base64: string, fileName: string, firstValue: string) => {
         const file = base64ToFile(base64, fileName);
         const url = await uploadFile(file);
 
+        const totalFile = await API.ORDER_UPLOAD.get_total_file_twibbon({ session: {}, req: { query: { folder_id: bucketTwibbon?.id } } });
+
+        const newFileName = `[${Number(totalFile) + 1}] ${firstValue}`
         const newFilePayload = {
             file_type: getMimeType(fileName),
             file_url: url,
-            file_name: firstValue,
+            file_name: newFileName,
             folder_id: bucketTwibbon?.id || null,
             level: 2,
             order_number: orderData?.order_number,
         };
         const result = await API.ORDER_UPLOAD.create_single_file({ session: {}, req: { body: newFilePayload } });
-        toast.success(`Berhasil menyimpan twibbon ${firstValue}`)
+        toast.success(`Berhasil menyimpan twibbon ${newFileName}`)
+
+        setSuccessModal({
+            open: true,
+            fileName: newFileName
+        });
     };
 
     // Filter template based on active tab
@@ -309,6 +328,18 @@ export default function PublicDesignLinkPage() {
                     </div>
                 )}
             </div>
+
+            {/* --- 3. IMPLEMENTASI MODAL DI HALAMAN --- */}
+            <SuccessModal
+                isOpen={successModal.open}
+                fileName={successModal.fileName}
+                orderNumber={orderData?.order_number || "-"}
+                onClose={() => {
+                    setSuccessModal({ ...successModal, open: false });
+                    // Optional: Redirect atau refresh setelah tutup
+                    // window.location.reload(); 
+                }}
+            />
         </div>
     );
 }
@@ -372,3 +403,94 @@ function useIsClient() {
     useEffect(() => setIsClient(true), []);
     return isClient;
 }
+
+// --- 1. COMPONENT: SUCCESS MODAL (Full Animation) ---
+interface SuccessModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    fileName: string;
+    orderNumber: string;
+}
+
+const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, fileName, orderNumber }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            {/* Backdrop dengan Blur & Fade In */}
+            <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-500 animate-in fade-in"
+                onClick={onClose}
+            />
+
+            {/* Modal Card dengan Zoom In & Bounce Effect */}
+            <div className="relative bg-white rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-in zoom-in-95 duration-300">
+
+                {/* --- ANIMATED BACKGROUND DECORATION --- */}
+                {/* Blob Ungu Berdenyut */}
+                <div className="absolute -top-10 -left-10 w-40 h-40 bg-purple-300 rounded-full blur-[60px] opacity-40 animate-pulse"></div>
+                {/* Blob Biru Bergerak */}
+                <div className="absolute top-20 -right-10 w-32 h-32 bg-blue-400 rounded-full blur-[50px] opacity-30 animate-pulse delay-700"></div>
+                {/* Blob Hijau di Bawah */}
+                <div className="absolute -bottom-10 left-10 w-36 h-36 bg-green-300 rounded-full blur-[60px] opacity-30 animate-pulse delay-1000"></div>
+
+                {/* --- CONTENT --- */}
+                <div className="relative z-10 p-8 flex flex-col items-center text-center">
+
+                    {/* Icon Animasi Utama */}
+                    <div className="relative mb-6">
+                        {/* Lingkaran Luar Berputar Pelan */}
+                        <div className="absolute inset-0 bg-green-100 rounded-full animate-spin-slow opacity-50 blur-sm scale-150"></div>
+
+                        {/* Icon Container Bouncing */}
+                        <div className="relative w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-green-200 animate-bounce">
+                            <CheckCircle size={48} className="text-white drop-shadow-md" />
+                            {/* Confetti Icon Kecil di pojok */}
+                            <div className="absolute -top-2 -right-2 bg-yellow-400 p-2 rounded-full text-white shadow-sm animate-pulse">
+                                <PartyPopper size={16} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Headline */}
+                    <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">
+                        Desain Berhasil Disimpan!
+                    </h2>
+
+                    {/* Sub-headline / Pesan untuk User */}
+                    <p className="text-gray-500 text-sm leading-relaxed mb-6 px-2">
+                        Data desain Anda telah berhasil masuk ke dalam sistem kami. <br />
+                        <span className="font-semibold text-green-600">Panitia siap memproses data ini</span> untuk tahap selanjutnya.
+                    </p>
+
+                    {/* Detail File Card */}
+                    <div className="w-full bg-gray-50/80 border border-gray-100 rounded-2xl p-4 mb-6 flex items-center gap-3 text-left">
+                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-blue-500 shrink-0">
+                            <FileCheck size={20} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Nama File Tersimpan</p>
+                            <p className="text-sm font-bold text-gray-800 truncate" title={fileName}>
+                                {fileName}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Tombol Aksi */}
+                    <button
+                        onClick={onClose}
+                        className="group w-full py-3.5 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-bold shadow-lg shadow-gray-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                    >
+                        <Sparkles size={18} className="text-yellow-400 group-hover:rotate-12 transition-transform" />
+                        Oke, Selesai
+                        <ArrowRight size={18} className="opacity-50 group-hover:translate-x-1 transition-transform" />
+                    </button>
+
+                </div>
+
+                {/* Footer Decor */}
+                <div className="h-1.5 w-full bg-gradient-to-r from-green-400 via-blue-500 to-purple-500"></div>
+            </div>
+        </div>
+    );
+};

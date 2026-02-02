@@ -183,6 +183,40 @@ export const OrderUploadAPI = {
       };
     }
   },
+  // ============================================================
+  // ✅ GET TOTAL FILE
+  // ============================================================
+  get_total_file_twibbon: async ({ req }: any) => {
+    const {
+      order_number,
+      folder_id,
+    } = req.query || {};
+
+    const where: any = { deleted_on: "null", folder_id: folder_id, };
+
+    try {
+      const result = await APIProvider({
+        endpoint: "select",
+        method: "POST",
+        table: "order_upload_files",
+        action: "select",
+        body: {
+          columns: [
+            `(SELECT COUNT(id) FROM order_upload_files WHERE deleted_on IS NULL AND folder_id = ${folder_id} LIMIT 1) AS total_file`,
+          ],
+          where,
+          pagination: "true",
+          page: 0,
+          size: 1,
+        },
+      });
+
+      return result.items?.[0]?.total_file || 0;
+    } catch (err: any) {
+      console.error("❌ Error OrderUploadAPI.get_total_file_twibbon:", err);
+      return 0;
+    }
+  },
 
   // ============================================================
   // ✅ CREATE OR UPDATE FOLDERS + FILES
