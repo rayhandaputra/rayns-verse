@@ -75,8 +75,8 @@ export const SupplierAPI = {
     const { name, phone, address, type, category, location, external_link, cotton_combed_category, price_s_xl, price_2xl, price_3xl, price_4xl, price_5xl, price_long_sleeve, price_per_meter } =
       req.body || {};
 
-    if (!name || !phone) {
-      return { success: false, message: "Nama dan Telepon wajib diisi" };
+    if (!name) {
+      return { success: false, message: "Nama wajib diisi" };
     }
 
     const newSupplier = {
@@ -96,7 +96,6 @@ export const SupplierAPI = {
       price_long_sleeve,
       price_per_meter,
     };
-    console.log("REQ BODY => ", newSupplier)
 
     try {
       const result = await APIProvider({

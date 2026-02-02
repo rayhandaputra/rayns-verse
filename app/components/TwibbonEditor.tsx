@@ -578,8 +578,8 @@ const TwibbonEditor: React.FC<TwibbonEditorProps> = ({ template, onExport, onClo
                                 <h4 className="text-xl font-black text-gray-900 uppercase">Preview Hasil</h4>
                                 <p className="text-xs font-bold text-gray-400 mt-2">Cek desain & konten sebelum diproses</p>
                             </div>
-                            <button onClick={handleConfirmSubmit} className="w-full bg-indigo-600 text-white py-5 rounded-[24px] font-black flex items-center justify-center gap-3 shadow-xl hover:bg-indigo-700 transition"><Save size={20} /> SUBMIT KE DRIVE</button>
-                            <button onClick={() => { const link = document.createElement('a'); link.download = `Cetak_${template.name}.png`; link.href = previewData; link.click(); }} className="w-full bg-emerald-500 text-white py-5 rounded-[24px] font-black flex items-center justify-center gap-3 shadow-xl hover:bg-emerald-600 transition"><Download size={20} /> DOWNLOAD PNG</button>
+                            <button onClick={handleConfirmSubmit} className="w-full bg-indigo-600 text-white py-5 rounded-[24px] font-black flex items-center justify-center gap-3 shadow-xl hover:bg-indigo-700 transition"><Save size={20} /> PROSES {isLanyard ? "LANYARD" : "ID CARD"}</button>
+                            <button onClick={() => { const link = document.createElement('a'); link.download = `Cetak_${template.name}.png`; link.href = previewData; link.click(); }} className="w-full bg-emerald-500 text-white py-5 rounded-[24px] font-black flex items-center justify-center gap-3 shadow-xl hover:bg-emerald-600 transition"><Download size={20} /> DOWNLOAD {isLanyard ? "LANYARD" : "ID CARD"}</button>
                             <button onClick={() => setShowPreview(false)} className="w-full bg-white border-2 border-gray-100 text-gray-400 py-5 rounded-[24px] font-black flex items-center justify-center gap-3 hover:border-red-200 hover:text-red-500 transition"><Edit3 size={20} /> EDIT LAGI</button>
                         </div>
                     </div>

@@ -182,7 +182,17 @@ export const OrderAPI = {
             AND (product_name LIKE '%card%' OR product_name LIKE '%lanyard%')
           LIMIT 1
         ) AS is_idcard_lanyard
+        `,
         `
+        (
+          SELECT 1 
+          FROM order_items 
+          WHERE order_number = orders.order_number 
+            AND deleted_on IS NULL 
+            AND (product_name LIKE '%cotton%')
+          LIMIT 1
+        ) AS is_order_shirt
+        `,
       ];
       // if (extraColumns) columns.push(extraColumns);
       const result = await APIProvider({

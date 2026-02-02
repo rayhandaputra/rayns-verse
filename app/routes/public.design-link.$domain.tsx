@@ -12,7 +12,12 @@ import {
     Tag,
     Hash,
     User,
-    Info
+    Info,
+    ExternalLink,
+    MessageCircle,
+    Instagram,
+    Globe,
+    Zap
 } from 'lucide-react';
 import { getOptionalUser } from "~/lib/session.server";
 import { API } from "~/lib/api";
@@ -20,9 +25,10 @@ import { sendTelegramLog } from "~/lib/telegram-log";
 import { nexus } from "~/lib/nexus-client";
 import { useFetcherData } from "~/hooks";
 import { useQueryParams } from '~/hooks/use-query-params';
-import { base64ToFile, getMimeType, safeParseObject, uploadFile } from "~/lib/utils";
+import { base64ToFile, getMimeType, getWhatsAppLink, safeParseObject, uploadFile } from "~/lib/utils";
 import ClientTwibbonEditorPage from '~/components/ClientTwibbonEditor';
 import { toast } from 'sonner';
+import { ADMIN_WA } from '~/constants';
 
 // --- COMPONENTS ---
 // import ClientTwibbonEditorPage from '~/components/ClientTwibbonEditorPage';
@@ -186,11 +192,11 @@ export default function PublicDesignLinkPage() {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
             <Header orderData={orderData} />
 
-            {/* --- NEW SECTION: MODERN INFO CARD --- */}
+            {/* --- NEW SECTION: TEMPLATE HEADER & KINAU ADS --- */}
             <div className="px-6 py-5">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+                <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
 
-                    {/* Left: Main Identity */}
+                    {/* Left: Main Identity (Tetap Info Template User) */}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-1">
                             <h1 className="text-xl font-black text-gray-900 uppercase tracking-tight truncate">
@@ -201,68 +207,72 @@ export default function PublicDesignLinkPage() {
                             </span>
                         </div>
                         <p className="text-xs font-medium text-gray-400 flex items-center gap-1">
-                            <Info size={12} /> Pastikan data yang dimasukkan sesuai dengan instruksi panitia.
+                            <Info size={12} /> Template ini dikelola dan didukung oleh sistem Kinau.id
                         </p>
                     </div>
 
-                    {/* Right: Meta Grid (Information) */}
-                    <div className="bg-gray-50 border border-gray-100 rounded-2xl p-3 md:p-4 flex-shrink-0 w-full md:w-auto">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-4 md:gap-y-0">
+                    {/* Right: KINAU.ID ADS SPACE (Powered By) */}
+                    <div className="relative group w-full lg:w-auto">
+                        {/* Background Decoration (Glow Effect) */}
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl opacity-20 group-hover:opacity-40 transition duration-500 blur"></div>
 
-                            {/* Item 1: Instansi */}
-                            <div className="flex items-start gap-3">
-                                <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100 text-indigo-500">
-                                    <User size={14} />
+                        <div className="relative bg-white border border-gray-100 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-5 lg:min-w-[480px]">
+
+                            {/* Logo & Brand Kinau */}
+                            <div className="flex items-center gap-4 w-full sm:w-auto border-b sm:border-b-0 sm:border-r border-gray-100 pb-4 sm:pb-0 sm:pr-5">
+                                <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-sm">
+                                    {/* Ganti dengan <img src="/logo-kinau.png" /> jika ada */}
+                                    <Zap size={24} fill="currentColor" />
                                 </div>
                                 <div>
-                                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Pemilik/Instansi</div>
-                                    <div className="text-xs font-black text-gray-700 truncate max-w-[120px]" title={orderData?.institution_name || orderData?.pic_name}>
-                                        {orderData?.institution_name || orderData?.pic_name || 'Guest'}
-                                    </div>
+                                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Powered By</div>
+                                    {/* <h3 className="text-lg font-black text-gray-900 leading-none tracking-tight">Kinau.id</h3>
+                                    <p className="text-[10px] font-medium text-indigo-500 mt-1">Digital Invitation Platform</p> */}
+                                    <img
+                                        src="/kinau-logo.png"
+                                        onClick={() => (window.location.href = "/")}
+                                        alt="Kinau"
+                                        className="w-24 opacity-80 cursor-pointer"
+                                    />
                                 </div>
                             </div>
 
-                            {/* Item 2: Order Number */}
-                            <div className="flex items-start gap-3">
-                                <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100 text-blue-500">
-                                    <Hash size={14} />
-                                </div>
-                                <div>
-                                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Kode Pesanan</div>
-                                    <div className="text-xs font-black text-gray-700 font-mono">
-                                        {orderData?.order_number || '-'}
-                                    </div>
-                                </div>
-                            </div>
+                            {/* Social & Contact Links */}
+                            <div className="flex-1 w-full sm:w-auto flex justify-between sm:justify-start gap-4 items-center">
 
-                            {/* Item 3: Kategori */}
-                            <div className="flex items-start gap-3">
-                                <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100 text-emerald-500">
-                                    <Tag size={14} />
-                                </div>
-                                <div>
-                                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Kategori</div>
-                                    <div className="text-xs font-black text-gray-700 uppercase">
-                                        {currentTemplate?.category}
+                                {/* Website */}
+                                <a href="https://kinau.id" target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1 group/item">
+                                    <div className="p-2 rounded-full bg-gray-50 text-gray-500 group-hover/item:bg-blue-50 group-hover/item:text-blue-600 transition-all">
+                                        <Globe size={18} />
                                     </div>
-                                </div>
-                            </div>
+                                    <span className="text-[10px] font-bold text-gray-500 group-hover/item:text-blue-600">Website</span>
+                                </a>
 
-                            {/* Item 4: Rules Count */}
-                            <div className="flex items-start gap-3">
-                                <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100 text-rose-500">
-                                    <Layers size={14} />
-                                </div>
-                                <div>
-                                    <div className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Elemen Input</div>
-                                    <div className="text-xs font-black text-gray-700">
-                                        {currentTemplate?.rules?.length || 0} Kolom
+                                {/* Instagram */}
+                                <a href="https://instagram.com/kinau.id" target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1 group/item">
+                                    <div className="p-2 rounded-full bg-gray-50 text-gray-500 group-hover/item:bg-pink-50 group-hover/item:text-pink-600 transition-all">
+                                        <Instagram size={18} />
                                     </div>
-                                </div>
-                            </div>
+                                    <span className="text-[10px] font-bold text-gray-500 group-hover/item:text-pink-600">Instagram</span>
+                                </a>
 
+                                {/* WhatsApp */}
+                                <a href={`${getWhatsAppLink(ADMIN_WA)}`} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1 group/item">
+                                    <div className="p-2 rounded-full bg-gray-50 text-gray-500 group-hover/item:bg-green-50 group-hover/item:text-green-600 transition-all">
+                                        <MessageCircle size={18} />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-gray-500 group-hover/item:text-green-600">WhatsApp</span>
+                                </a>
+
+                                {/* CTA Button (Opsional) */}
+                                <a href={`${getWhatsAppLink(ADMIN_WA)}`} target="_blank" rel="noreferrer" className="hidden sm:flex ml-auto bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-xs font-bold items-center gap-2 transition-all shadow-lg shadow-gray-200">
+                                    Order <ExternalLink size={12} />
+                                </a>
+
+                            </div>
                         </div>
                     </div>
+
                 </div>
             </div>
 

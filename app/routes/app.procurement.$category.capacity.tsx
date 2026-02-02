@@ -274,7 +274,7 @@ export default function CapacityPage() {
                     </div>
                 </div>
 
-                <div className="p-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div className="p-10 grid grid-cols-1 gap-10">
                     <div className="space-y-6">
                         {products.map((prod: Product) => (
                             <div
@@ -368,7 +368,7 @@ export default function CapacityPage() {
                         )}
                     </div>
 
-                    <div className="space-y-6">
+                    {/* <div className="space-y-6">
                         <div className="bg-gray-900 rounded-[40px] p-8 text-white shadow-2xl sticky top-24">
                             <h4 className="font-black text-emerald-400 text-lg mb-6 flex items-center gap-3">
                                 <Info size={20} /> CATATAN PENGHITUNGAN
@@ -431,7 +431,7 @@ export default function CapacityPage() {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>
