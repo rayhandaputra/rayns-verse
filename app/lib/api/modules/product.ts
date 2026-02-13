@@ -100,7 +100,7 @@ export const ProductAPI = {
             foreign_key: "product_id",
             where: { deleted_on: "null" },
             reference_key: "id",
-            columns: ["id", "variant_name", "base_price"],
+            columns: ["id", "variant_name", "base_price", "is_default"],
           },
         ],
       },
@@ -220,6 +220,7 @@ export const ProductAPI = {
           variant_name: variant.variant_name,
           base_price: Number(variant.base_price),
           created_on: new Date().toISOString(),
+          is_default: variant.is_default ? 1 : 0,
         }));
 
         await APIProvider({
@@ -337,6 +338,7 @@ export const ProductAPI = {
             product_id: id,
             variant_name: rule.variant_name,
             base_price: Number(rule.base_price),
+            is_default: rule.is_default ? 1 : 0,
             created_on: new Date().toISOString(),
             deleted_on: null,
           }));

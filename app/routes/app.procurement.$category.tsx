@@ -92,6 +92,9 @@ export default function InventoryCategoryLayout() {
           // Pertahankan sub-path saat ganti kategori
           const currentPath = location.pathname.split('/').pop();
 
+          // Cek apakah kategori ini harus didisable
+          const isDisabled = cat === "produk_3";
+
           // Default ke shopping jika root
           let targetTab = tabs.find(t => t.id === currentPath) ? currentPath : 'shopping';
           if (cat === "cotton_combed_premium") {
@@ -101,10 +104,15 @@ export default function InventoryCategoryLayout() {
           return (
             <Link
               key={cat}
-              to={`/app/procurement/${cat}/${targetTab}`}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-black transition whitespace-nowrap ${category === cat
-                ? "bg-gray-900 text-white shadow-lg"
-                : "text-gray-500 hover:bg-gray-50"
+              // Jika disabled, jangan arahkan ke mana-mana (atau gunakan javascript:void(0))
+              to={isDisabled ? "#" : `/app/procurement/${cat}/${targetTab}`}
+              // Mencegah klik secara fungsional
+              onClick={(e) => isDisabled && e.preventDefault()}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-black transition whitespace-nowrap ${isDisabled
+                ? "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400" // Style saat disabled
+                : category === cat
+                  ? "bg-gray-900 text-white shadow-lg"
+                  : "text-gray-500 hover:bg-gray-50"
                 }`}
             >
               <Layout size={18} /> {cat.replace(/_/g, " ").toUpperCase()}

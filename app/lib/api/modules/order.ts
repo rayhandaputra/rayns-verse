@@ -58,6 +58,8 @@ export const OrderAPI = {
       is_kkn = "",
       is_portfolio,
       kkn_period = "",
+      exclude_order_stock = "",
+      check_product_item = "",
       end_date,
       year,
       sort = "",
@@ -79,6 +81,22 @@ export const OrderAPI = {
     if (is_portfolio) where.is_portfolio = is_portfolio;
     if (kkn_period) where.kkn_period = kkn_period;
 
+    if (exclude_order_stock) {
+      where["not_exists:stock_logs"] = {
+        "foreign_key": "order_trx_code",
+        "reference_key": "order_number"
+      }
+    }
+    if (check_product_item) {
+      where["exists:order_items"] = {
+        "foreign_key": "order_number",
+        "reference_key": "order_number",
+        "where": {
+          "product_name": "like:" + check_product_item
+        }
+      }
+    }
+
     // ✅ FILTER TANGGAL
     if (start_date && end_date) {
       where.created_on = { between: [start_date, end_date] };
@@ -91,14 +109,9 @@ export const OrderAPI = {
     }
 
     if (year) {
-      where = {
-        ...where,
-        "year:order_date": parseInt(year),
-      };
+      where["year:order_date"] = parseInt(year);
     }
     where.deleted_on = deleted_on || "null";
-
-    console.log(where)
 
     // ✅ SEARCH MULTI FIELD (format OR)
     const searchConfig = search
@@ -567,7 +580,7 @@ export const OrderAPI = {
         //     notes: item.notes || null,
         //   };
         // });
-        const itemRows = items.map((item: any) => {
+        const itemRows = items.map(async (item: any) => {
           const qty = item?.qty || item?.quantity || 1;
           const unit_price = item?.unit_price || item?.price || 0;
           const subtotal = qty * unit_price;
@@ -578,8 +591,28 @@ export const OrderAPI = {
           const tax_value =
             ((subtotal - discount_total) * (item?.tax_percent || 0)) / 100;
 
+          let defVariant = null;
+          if (item?.variant_id) {
+            defVariant = await APIProvider({
+              endpoint: "select",
+              method: "POST",
+              table: "product_variants",
+              action: "select",
+              body: {
+                columns: ["id", "variant_name", "is_default"],
+                where: {
+                  product_id: item?.product_id || item?.productId || null,
+                  is_default: 1,
+                },
+              },
+            });
+          }
+
           return {
             order_number,
+            variant_id: defVariant?.id || item?.variant_id || null,
+            variant_name: defVariant?.variant_name || item?.variant_name || null,
+            variant_price: defVariant?.base_price || item?.variant_price || null,
             product_id: item?.product_id || item?.productId || null,
             product_name: item?.product_name || item?.productName || null,
             product_type: item?.product_type || "single",
@@ -593,9 +626,6 @@ export const OrderAPI = {
             tax_value,
             total_after_tax: subtotal - discount_total + tax_value,
             notes: item?.notes || null,
-            variant_id: item?.variant_id || null,
-            variant_name: item?.variant_name || null,
-            variant_price: item?.variant_price || null,
             variant_final_price: item?.variant_final_price || null,
             price_rule_id: item?.price_rule_id || null,
             price_rule_min_qty: item?.price_rule_min_qty || null,
@@ -824,7 +854,7 @@ export const OrderAPI = {
 
       // ✅ Insert order_items (bulk)
       if (items?.length > 0) {
-        const res = await APIProvider({
+        await APIProvider({
           endpoint: "update",
           method: "POST",
           table: "order_items",
@@ -837,7 +867,7 @@ export const OrderAPI = {
           },
         });
 
-        const itemRows = items.map((item: any) => {
+        const itemRows = items.map(async (item: any) => {
           const qty = item?.qty || item?.quantity || 1;
           const unit_price = item?.unit_price || item?.price || 0;
           const subtotal = qty * unit_price;
@@ -847,6 +877,23 @@ export const OrderAPI = {
               : item?.discount_value || 0;
           const tax_value =
             ((subtotal - discount_total) * (item?.tax_percent || 0)) / 100;
+
+          let defVariant = null
+          if (!item?.variant_id) {
+            defVariant = await APIProvider({
+              endpoint: "select",
+              method: "POST",
+              table: "product_variants",
+              action: "select",
+              body: {
+                columns: ["id", "variant_name", "is_default"],
+                where: {
+                  product_id: item?.product_id || item?.productId || null,
+                  is_default: 1,
+                },
+              },
+            });
+          }
 
           return {
             order_number: order_number || existOrder?.order_number,
@@ -863,9 +910,9 @@ export const OrderAPI = {
             tax_value,
             total_after_tax: subtotal - discount_total + tax_value,
             notes: item?.notes || null,
-            variant_id: item?.variant_id || null,
-            variant_name: item?.variant_name || null,
-            variant_price: item?.variant_price || null,
+            variant_id: defVariant?.id || item?.variant_id || null,
+            variant_name: defVariant?.variant_name || item?.variant_name || null,
+            variant_price: defVariant?.base_price || item?.variant_price || null,
             variant_final_price: item?.variant_final_price || null,
             price_rule_id: item?.price_rule_id || null,
             price_rule_min_qty: item?.price_rule_min_qty || null,

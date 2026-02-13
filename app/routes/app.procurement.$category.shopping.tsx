@@ -41,8 +41,9 @@ export const action: ActionFunction = async ({ request }) => {
                 total_amount: Number(rawData.total_amount),
                 shipping_cost: Number(rawData.shipping_cost),
                 admin_cost: Number(rawData.admin_cost),
-                discount: Number(rawData.discount),
+                discount_value: Number(rawData.discount),
                 grand_total: Number(rawData.grand_total),
+                kaos_payment_proof_paid: Number(rawData.proof),
                 is_auto: rawData.is_auto === "true",
             };
 
@@ -335,7 +336,7 @@ export default function ShoppingPage() {
             <div className="lg:col-span-2 space-y-6">
 
                 {/* 1. SHOPPING CART FORM */}
-                <div className="bg-white rounded-[32px] border border-gray-200 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-[32px] border border-gray-200 shadow-sm ">
                     <div className="p-8 border-b border-gray-100 bg-blue-50/30">
                         <h3 className="font-black text-gray-800 flex items-center gap-3 text-lg">
                             <ShoppingCart size={24} className="text-blue-600" /> FORM BELANJA BAHAN

@@ -336,7 +336,7 @@ const TwibbonEditor: React.FC<TwibbonEditorProps> = ({ template, onExport, onClo
     };
 
     const renderControls = () => (
-        <div className={`p-8 ${isLanyard ? 'flex gap-8 overflow-x-auto no-scrollbar items-start' : 'space-y-8 overflow-y-auto custom-scrollbar flex-1'}`}>
+        <div className={`p-8 ${isLanyard ? 'flex gap-8 overflow-x-auto items-start' : 'space-y-8 overflow-y-auto custom-scrollbar flex-1'}`}>
             <div className={`flex-shrink-0 ${isLanyard ? 'w-96' : 'w-full'} space-y-4`}>
                 <div className="flex items-center gap-2 mb-2"><ImageIcon size={14} className="text-blue-600" /><span className="text-[10px] font-black uppercase text-gray-400">UPLOAD LOGO (OPSIONAL)</span></div>
                 {elements.filter(el => el.type === 'logo').map(el => {

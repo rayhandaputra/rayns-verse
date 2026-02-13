@@ -658,7 +658,7 @@ import { nexus } from "~/lib/nexus-client";
 import { useFetcherData } from "~/hooks";
 import { safeParseArray } from "~/lib/utils";
 import Swal from "sweetalert2";
-import { formatCurrency } from "~/constants"; // Pastikan path ini benar
+import { formatCurrency, formatCurrencyUnprefix } from "~/constants"; // Pastikan path ini benar
 import { toast } from "sonner";
 
 // --- TYPES MOCK (Sesuaikan dengan project Anda) ---
@@ -1086,6 +1086,8 @@ export default function ComponentsPage() {
                             <th className="px-8 py-5">Nama Induk & Paket</th>
                             <th className="px-8 py-5">Supplier</th>
                             <th className="px-8 py-5">Harga Beli</th>
+                            <th className="px-8 py-5">Stok Saat Ini</th>
+                            <th className="px-8 py-5">Kapasitas Produksi</th>
                             <th className="px-8 py-5">Dipengaruhi Sisi Cetak</th>
                             <th className="px-8 py-5 text-center">Aksi</th>
                         </tr>
@@ -1095,7 +1097,7 @@ export default function ComponentsPage() {
                             <tr key={m.id} className="hover:bg-gray-50/80 transition">
                                 <td className="px-8 py-6">
                                     <div className="font-black text-gray-800 text-base">{m.commodity_name}</div>
-                                    {+m.is_package === 1 && (
+                                    {+(m?.is_package ?? 0) === 1 && (
                                         <div className="flex flex-wrap gap-2 mt-2">
                                             {Array.isArray(m.sub_components) && m.sub_components.map((s: SubComponent) => (
                                                 <span key={s.id} className="text-[9px] font-black bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100 shadow-sm">
@@ -1113,7 +1115,13 @@ export default function ComponentsPage() {
                                     <span className="text-[10px] text-gray-400 uppercase mt-0.5 font-bold tracking-widest">/ {m.unit}</span>
                                 </td>
                                 <td className="px-8 py-6 font-black text-gray-400 uppercase text-[10px] tracking-widest">
-                                    {+m.is_affected_side === 1 ? "Ya" : "Tidak"}
+                                    {+m.current_stock}
+                                </td>
+                                <td className="px-8 py-6 font-black text-gray-400 uppercase text-[10px] tracking-widest">
+                                    {formatCurrencyUnprefix(+(m?.capacity_per_unit ?? 0))}
+                                </td>
+                                <td className="px-8 py-6 font-black text-gray-400 uppercase text-[10px] tracking-widest">
+                                    {+(m?.is_affected_side ?? 0) === 1 ? "Ya" : "Tidak"}
                                 </td>
                                 <td className="px-8 py-6 text-center">
                                     <div className="flex justify-center gap-2">

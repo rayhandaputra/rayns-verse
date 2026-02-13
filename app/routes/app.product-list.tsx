@@ -21,6 +21,7 @@ import {
   Copy,
   Camera,
   Layers,
+  Star,
 } from "lucide-react";
 import { API } from "~/lib/api";
 import { requireAuth } from "~/lib/session.server";
@@ -62,7 +63,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 // ============================================
 
 export const action: ActionFunction = async ({ request }) => {
-  const { user, token } = await requireAuth(request);
+  const { user, token }: any = await requireAuth(request);
   const formData = await request.formData();
   const intent = formData.get("intent") as string;
 
@@ -141,7 +142,10 @@ export const action: ActionFunction = async ({ request }) => {
       image,
       show_in_dashboard,
       price_rules,
-      variants,
+      variants: variants?.map((v: any) => ({
+        ...v,
+        is_default: +v.is_default === 1 ? 1 : 0,
+      })),
       ...(+id > 0 ? { id } : {}),
     };
 
@@ -411,18 +415,28 @@ export default function ProductListPage() {
         ...modal?.data,
         product_variants: [
           ...modal?.data?.product_variants,
-          { variant_name: "", base_price: 0 },
+          { variant_name: "", base_price: 0, is_default: false },
         ],
       },
     });
   const updateVariation = (
     idx: number,
-    field: "variant_name" | "base_price",
-    val: string | number
+    field: "variant_name" | "base_price" | "is_default",
+    val: string | number | boolean
   ) => {
     const copy = [...modal?.data?.product_variants];
-    // @ts-ignore
-    copy[idx] = { ...copy[idx], [field]: val };
+
+    if (field === "is_default") {
+      // If setting as default, uncheck others
+      copy.forEach((v, i) => {
+        // @ts-ignore
+        v.is_default = i === idx ? val : false;
+      });
+    } else {
+      // @ts-ignore
+      copy[idx] = { ...copy[idx], [field]: val };
+    }
+
     setModal({
       ...modal,
       data: {
@@ -489,7 +503,7 @@ export default function ProductListPage() {
             <div className="flex flex-col gap-2">
               {/* Tiers */}
               {row.product_price_rules &&
-              row.product_price_rules?.length > 0 ? (
+                row.product_price_rules?.length > 0 ? (
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] font-bold text-gray-400 uppercase">
                     Grosir
@@ -521,10 +535,27 @@ export default function ProductListPage() {
                   {row.product_variants.map((v: any, idx: number) => (
                     <div
                       key={idx}
-                      className="flex justify-between items-center text-xs bg-blue-50 px-2 py-1 rounded w-48 border border-blue-100"
+                      className={`flex justify-between items-center text-xs px-2 py-1 rounded w-48 border ${+v?.is_default === 1
+                        ? "bg-yellow-50 border-yellow-200"
+                        : "bg-blue-50 border-blue-100"
+                        }`}
                     >
-                      <span className="text-blue-700">{v.variant_name}</span>
-                      <span className="font-bold text-blue-800">
+                      <div className="flex items-center gap-1">
+                        {+v?.is_default === 1 && (
+                          <Star size={10} className="text-yellow-500 fill-yellow-500" />
+                        )}
+                        <span
+                          className={
+                            +v?.is_default === 1 ? "text-yellow-700 font-medium" : "text-blue-700"
+                          }
+                        >
+                          {v.variant_name}
+                        </span>
+                      </div>
+                      <span
+                        className={`font-bold ${+v?.is_default === 1 ? "text-yellow-800" : "text-blue-800"
+                          }`}
+                      >
                         +{formatCurrency(v.base_price)}
                       </span>
                     </div>
@@ -796,8 +827,31 @@ export default function ProductListPage() {
                   {modal?.data?.product_variants.map((v: any, idx: number) => (
                     <div
                       key={idx}
-                      className="flex gap-2 mb-2 items-center bg-white p-2 rounded border border-blue-100 shadow-sm"
+                      className={`flex gap-2 mb-2 items-center bg-white p-2 rounded border shadow-sm ${+v?.is_default === 1
+                        ? "border-yellow-300 bg-yellow-50"
+                        : "border-blue-100"
+                        }`}
                     >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateVariation(idx, "is_default", +!v.is_default)
+                        }
+                        className={`p-1 rounded ${+v?.is_default === 1
+                          ? "text-yellow-500 hover:text-yellow-600"
+                          : "text-gray-300 hover:text-yellow-500"
+                          }`}
+                        title={
+                          +v?.is_default === 1
+                            ? "Variasi Default"
+                            : "Jadikan Default"
+                        }
+                      >
+                        <Star
+                          size={16}
+                          fill={+v?.is_default === 1 ? "currentColor" : "none"}
+                        />
+                      </button>
                       <input
                         type="text"
                         className="flex-1 border-blue-200 rounded p-1 text-sm"
