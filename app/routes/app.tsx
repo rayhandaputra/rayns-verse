@@ -136,6 +136,7 @@ export default function AppLayout() {
   const { user } = useLoaderData() as { user: any };
   const [flash, setFlash] = useState<any>(null);
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isDesktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
 
   useEffect(() => {
     if (location.state?.flash) {
@@ -180,11 +181,19 @@ export default function AppLayout() {
   return (
     <div>
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block">
-        <Sidebar
-          navigation={ADMIN_NAVIGATION}
-          currentPath={location.pathname}
-        />
+      <div
+        className={`hidden lg:block transition-all duration-300 ease-in-out ${isDesktopSidebarOpen ? "w-64" : "w-0"
+          }`}
+      >
+        <div
+          className={`transition-all duration-300 ease-in-out overflow-hidden ${isDesktopSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+        >
+          <Sidebar
+            navigation={ADMIN_NAVIGATION}
+            currentPath={location.pathname}
+          />
+        </div>
       </div>
 
       {/* Mobile Sidebar (Sheet) */}
@@ -200,18 +209,26 @@ export default function AppLayout() {
       </Sheet>
 
       {/* Topbar / Navbar */}
-      <div className="fixed top-0 left-0 lg:left-64 right-0 z-10 w-auto">
+      <div
+        className={`fixed top-0 right-0 z-10 transition-all duration-300 ease-in-out ${isDesktopSidebarOpen ? "left-0 lg:left-64" : "left-0"
+          }`}
+      >
         <Navbar
           currentUser={user}
           sidebar={{
             mobileMenuOpen: isMobileSidebarOpen,
             setMobileMenuOpen: setMobileSidebarOpen,
+            desktopSidebarOpen: isDesktopSidebarOpen,
+            setDesktopSidebarOpen: setDesktopSidebarOpen,
           }}
         />
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 ml-0 lg:ml-64 pt-[88px]">
+      <div
+        className={`flex-1 pt-[88px] transition-all duration-300 ease-in-out ${isDesktopSidebarOpen ? "ml-0 lg:ml-64" : "ml-0"
+          }`}
+      >
         <div className="p-4 md:p-8 overflow-x-hidden">
           <Outlet />
         </div>
@@ -225,6 +242,8 @@ interface NavbarProps {
   sidebar: {
     mobileMenuOpen: boolean;
     setMobileMenuOpen: (open: boolean) => void;
+    desktopSidebarOpen: boolean;
+    setDesktopSidebarOpen: (open: boolean) => void;
   };
 }
 
@@ -322,9 +341,18 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
           </div>
         </div> */}
         <div className="flex items-center gap-3">
+          {/* Mobile menu toggle */}
           <button
             onClick={() => sidebar.setMobileMenuOpen(true)}
-            className="lg:hidden p-2 -ml-2 text-gray-500"
+            className="lg:hidden p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-lg transition"
+          >
+            <Menu size={24} />
+          </button>
+          {/* Desktop sidebar toggle */}
+          <button
+            onClick={() => sidebar.setDesktopSidebarOpen(!sidebar.desktopSidebarOpen)}
+            className="hidden lg:flex p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-lg transition items-center justify-center"
+            title={sidebar.desktopSidebarOpen ? "Sembunyikan sidebar" : "Tampilkan sidebar"}
           >
             <Menu size={24} />
           </button>
