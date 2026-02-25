@@ -495,6 +495,7 @@ export const OrderAPI = {
             },
           },
         });
+
         newOrder.drive_folder_id = createFolder?.insert_id;
         if (createFolder?.insert_id) {
           await APIProvider({
@@ -580,58 +581,63 @@ export const OrderAPI = {
         //     notes: item.notes || null,
         //   };
         // });
-        const itemRows = items.map(async (item: any) => {
-          const qty = item?.qty || item?.quantity || 1;
-          const unit_price = item?.unit_price || item?.price || 0;
-          const subtotal = qty * unit_price;
-          const discount_total =
-            item?.discount_type === "percent"
-              ? (subtotal * (item?.discount_value || 0)) / 100
-              : item?.discount_value || 0;
-          const tax_value =
-            ((subtotal - discount_total) * (item?.tax_percent || 0)) / 100;
+        // Tambahkan await Promise.all di sini
+        const itemRows = await Promise.all(
+          items.map(async (item: any) => {
+            const qty = item?.qty || item?.quantity || 1;
+            const unit_price = item?.unit_price || item?.price || 0;
+            const subtotal = qty * unit_price;
+            const discount_total =
+              item?.discount_type === "percent"
+                ? (subtotal * (item?.discount_value || 0)) / 100
+                : item?.discount_value || 0;
+            const tax_value =
+              ((subtotal - discount_total) * (item?.tax_percent || 0)) / 100;
 
-          let defVariant = null;
-          if (item?.variant_id) {
-            defVariant = await APIProvider({
-              endpoint: "select",
-              method: "POST",
-              table: "product_variants",
-              action: "select",
-              body: {
-                columns: ["id", "variant_name", "is_default"],
-                where: {
-                  product_id: item?.product_id || item?.productId || null,
-                  is_default: 1,
+            let defVariant = null;
+            if (item?.variant_id) {
+
+              defVariant = await APIProvider({
+                endpoint: "select",
+                method: "POST",
+                table: "product_variants",
+                action: "select",
+                body: {
+                  columns: ["id", "variant_name", "is_default"],
+                  where: {
+                    product_id: item?.product_id || item?.productId || null,
+                    is_default: 1,
+                  },
                 },
-              },
-            });
-          }
+              });
+            }
 
-          return {
-            order_number,
-            variant_id: defVariant?.id || item?.variant_id || null,
-            variant_name: defVariant?.variant_name || item?.variant_name || null,
-            variant_price: defVariant?.base_price || item?.variant_price || null,
-            product_id: item?.product_id || item?.productId || null,
-            product_name: item?.product_name || item?.productName || null,
-            product_type: item?.product_type || "single",
-            qty,
-            unit_price,
-            discount_type: item?.discount_type || null,
-            discount_value: item?.discount_value || 0,
-            tax_percent: item?.tax_percent || 0,
-            subtotal,
-            discount_total,
-            tax_value,
-            total_after_tax: subtotal - discount_total + tax_value,
-            notes: item?.notes || null,
-            variant_final_price: item?.variant_final_price || null,
-            price_rule_id: item?.price_rule_id || null,
-            price_rule_min_qty: item?.price_rule_min_qty || null,
-            price_rule_value: item?.price_rule_value || null,
-          };
-        });
+            // Return objek data murni
+            return {
+              order_number,
+              variant_id: defVariant?.id || item?.variant_id || null,
+              variant_name: defVariant?.variant_name || item?.variant_name || null,
+              variant_price: defVariant?.base_price || item?.variant_price || null,
+              product_id: item?.product_id || item?.productId || null,
+              product_name: item?.product_name || item?.productName || null,
+              product_type: item?.product_type || "single",
+              qty,
+              unit_price,
+              discount_type: item?.discount_type || null,
+              discount_value: item?.discount_value || 0,
+              tax_percent: item?.tax_percent || 0,
+              subtotal,
+              discount_total,
+              tax_value,
+              total_after_tax: subtotal - discount_total + tax_value,
+              notes: item?.notes || null,
+              variant_final_price: item?.variant_final_price || null,
+              price_rule_id: item?.price_rule_id || null,
+              price_rule_min_qty: item?.price_rule_min_qty || null,
+              price_rule_value: item?.price_rule_value || null,
+            };
+          })
+        );
 
         await APIProvider({
           endpoint: "bulk-insert",
@@ -643,6 +649,8 @@ export const OrderAPI = {
             updateOnDuplicate: true,
           },
         });
+
+        console.log("INSERT ORDER ITEMS")
       }
 
       if (total_amount > 0 && +is_archive === 1) {
@@ -682,6 +690,8 @@ export const OrderAPI = {
           ],
           jrnlCode
         );
+
+        console.log("INSERT JOURNAL")
       }
       // account_code: accBank?.code || "1-101",
       //           account_name: accBank?.name || "Kas Utama (Cash on Hand)",
