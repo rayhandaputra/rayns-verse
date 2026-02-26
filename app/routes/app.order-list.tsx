@@ -186,6 +186,7 @@ export default function OrderList() {
   const [viewMode, setViewMode] = useState<"reguler" | "kkn">("reguler");
   const [filterYear, setFilterYear] = useState("");
   const [filterPeriod, setFilterPeriod] = useState("");
+  const [filterInstitution, setFilterInstitution] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [page, setPage] = useState(1);
 
@@ -218,6 +219,14 @@ export default function OrderList() {
 
   // ... existing code ...
 
+  const { data: institutionList } = useFetcherData({
+    endpoint: nexus()
+      .module("INSTITUTION")
+      .action("get")
+      .params({ size: 200, pagination: "true" })
+      .build(),
+  });
+
   const {
     data: orders,
     loading,
@@ -242,6 +251,9 @@ export default function OrderList() {
         }),
         ...(filterPeriod && {
           kkn_period: filterPeriod,
+        }),
+        ...(viewMode === "kkn" && filterInstitution && {
+          institution_id: filterInstitution,
         }),
         ...(sortBy && {
           sort: sortBy,
@@ -1072,18 +1084,33 @@ export default function OrderList() {
       <div className="p-4 border-b border-gray-200 flex flex-wrap gap-4 justify-between items-center bg-gray-50">
         <div className="flex gap-4">
           {viewMode === "kkn" ? (
-            <select
-              className="text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
-              value={filterPeriod}
-              onChange={(e) => {
-                setFilterPeriod(e.target.value);
-              }}
-            >
-              <option value="">Semua Periode</option>
-              <option value="1">Periode 1</option>
-              <option value="2">Periode 2</option>
-            </select>
-
+            <>
+              <select
+                className="text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
+                value={filterPeriod}
+                onChange={(e) => {
+                  setFilterPeriod(e.target.value);
+                }}
+              >
+                <option value="">Semua Periode</option>
+                <option value="1">Periode 1</option>
+                <option value="2">Periode 2</option>
+              </select>
+              <select
+                className="text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
+                value={filterInstitution}
+                onChange={(e) => {
+                  setFilterInstitution(e.target.value);
+                }}
+              >
+                <option value="">Semua Institusi</option>
+                {(institutionList?.data?.items ?? []).map((inst: any) => (
+                  <option key={inst.id} value={inst.id}>
+                    {inst.name}
+                  </option>
+                ))}
+              </select>
+            </>
           ) : (
             <select
               className="text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
