@@ -252,16 +252,23 @@ export default function ProductListPage() {
     key?: "create" | "update";
     data?: any;
   }>({ open: false });
-  const [driveFolders, setDriveFolders] = useState<string[]>([]);
+  type DriveFolder = { name: string; is_card_front: boolean; is_card_back: boolean; is_lanyard: boolean; is_sablon_depan: boolean; is_sablon_belakang: boolean; };
+  const [driveFolders, setDriveFolders] = useState<DriveFolder[]>([]);
   const [newFolderInput, setNewFolderInput] = useState("");
 
   // Sync driveFolders saat catModal dibuka
   useEffect(() => {
     if (catModal?.open) {
       const raw = catModal?.data?.default_drive_folders;
-      let folders: string[] = [];
-      if (Array.isArray(raw)) folders = raw;
-      else if (raw) { try { folders = JSON.parse(raw); } catch { folders = []; } }
+      let parsed: any[] = [];
+      if (Array.isArray(raw)) parsed = raw;
+      else if (raw) { try { parsed = JSON.parse(raw); } catch { parsed = []; } }
+      // Support legacy string[] as well
+      const folders: DriveFolder[] = parsed.map((item) =>
+        typeof item === "string"
+          ? { name: item, is_card_front: false, is_card_back: false, is_lanyard: false, is_sablon_depan: false, is_sablon_belakang: false }
+          : item
+      );
       setDriveFolders(folders);
       setNewFolderInput("");
     }
@@ -269,8 +276,8 @@ export default function ProductListPage() {
 
   const addCatFolder = () => {
     const t = newFolderInput.trim();
-    if (!t || driveFolders.includes(t)) return;
-    setDriveFolders(prev => [...prev, t]);
+    if (!t || driveFolders.some(f => f.name === t)) return;
+    setDriveFolders(prev => [...prev, { name: t, is_card_front: false, is_card_back: false, is_lanyard: false, is_sablon_depan: false, is_sablon_belakang: false }]);
     setNewFolderInput("");
   };
 
@@ -838,19 +845,17 @@ export default function ProductListPage() {
                   />
                   {/* Folder drive preview dari kategori terpilih */}
                   {(() => {
-                    const folders: string[] = (() => {
-                      const raw = modal?.data?._categoryData?.default_drive_folders;
-                      if (!raw) return [];
-                      if (Array.isArray(raw)) return raw;
-                      try { return JSON.parse(raw); } catch { return []; }
-                    })();
+                    const raw = modal?.data?._categoryData?.default_drive_folders;
+                    let folders: any[] = [];
+                    if (Array.isArray(raw)) folders = raw;
+                    else if (raw) { try { folders = JSON.parse(raw); } catch { folders = []; } }
                     if (folders.length === 0) return null;
                     return (
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         <span className="text-[10px] text-gray-400 w-full">Folder drive otomatis:</span>
-                        {folders.map((f: string, i: number) => (
+                        {folders.map((f: any, i: number) => (
                           <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-100 text-amber-600 text-[10px] rounded-full">
-                            <Folder size={9} /> {f}
+                            <Folder size={9} /> {typeof f === "string" ? f : f.name}
                           </span>
                         ))}
                       </div>
@@ -1107,12 +1112,10 @@ export default function ProductListPage() {
                   </tr>
                 )}
                 {(categoryRes?.data?.items || []).map((cat: any, idx: number) => {
-                  const folders: string[] = (() => {
-                    const raw = cat?.default_drive_folders;
-                    if (!raw) return [];
-                    if (Array.isArray(raw)) return raw;
-                    try { return JSON.parse(raw); } catch { return []; }
-                  })();
+                  let folders: any[] = [];
+                  const raw = cat?.default_drive_folders;
+                  if (Array.isArray(raw)) folders = raw;
+                  else if (raw) { try { folders = JSON.parse(raw); } catch { folders = []; } }
                   return (
                     <tr key={cat.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                       <td className="px-4 py-3 text-gray-400 text-xs">{idx + 1}</td>
@@ -1123,9 +1126,9 @@ export default function ProductListPage() {
                           <span className="text-xs text-gray-300 italic">-</span>
                         ) : (
                           <div className="flex flex-wrap gap-1">
-                            {folders.map((f: string, i: number) => (
+                            {folders.map((f: any, i: number) => (
                               <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-medium rounded-full">
-                                <Folder size={9} /> {f}
+                                <Folder size={9} /> {typeof f === "string" ? f : f.name}
                               </span>
                             ))}
                           </div>
@@ -1208,16 +1211,44 @@ export default function ProductListPage() {
                       <Folder size={12} /> Folder Drive Default
                     </label>
                     <p className="text-[10px] text-gray-400 mb-2">Otomatis dibuat di Drive saat pesanan dengan kategori ini diterima.</p>
+                    {/* Folder list with checkboxes */}
                     {driveFolders.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 p-2 bg-amber-50 border border-amber-100 rounded-lg mb-2">
+                      <div className="space-y-2 mb-2">
                         {driveFolders.map((f, idx) => (
-                          <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-amber-200 text-amber-800 text-xs font-medium rounded-full shadow-sm">
-                            <Folder size={10} className="text-amber-400" />
-                            {f}
-                            <button type="button" onClick={() => setDriveFolders(prev => prev.filter((_, i) => i !== idx))} className="ml-0.5 text-amber-300 hover:text-red-500">
-                              <X size={10} />
-                            </button>
-                          </span>
+                          <div key={idx} className="border border-amber-200 bg-amber-50 rounded-lg p-2">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Folder size={12} className="text-amber-400 flex-shrink-0" />
+                              <span className="text-xs font-medium text-amber-800 flex-1">{f.name}</span>
+                              <button type="button" onClick={() => setDriveFolders(prev => prev.filter((_, i) => i !== idx))} className="text-amber-300 hover:text-red-500">
+                                <X size={12} />
+                              </button>
+                            </div>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 pl-4">
+                              {([
+                                { key: "is_card_front", label: "ID Card Depan" },
+                                { key: "is_card_back", label: "ID Card Belakang" },
+                                { key: "is_lanyard", label: "Lanyard" },
+                                { key: "is_sablon_depan", label: "Sablon Depan" },
+                                { key: "is_sablon_belakang", label: "Sablon Belakang" },
+                              ] as const).map(({ key, label }) => (
+                                <label key={key} className="flex items-center gap-1 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    className="rounded text-amber-500"
+                                    checked={!!(f as any)[key]}
+                                    onChange={(e) => {
+                                      setDriveFolders(prev => prev.map((item, i) => {
+                                        if (i !== idx) return item;
+                                        const reset = { is_card_front: false, is_card_back: false, is_lanyard: false, is_sablon_depan: false, is_sablon_belakang: false };
+                                        return { ...item, ...reset, [key]: e.target.checked };
+                                      }));
+                                    }}
+                                  />
+                                  <span className="text-[10px] text-gray-600">{label}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     )}

@@ -525,6 +525,15 @@ export const OrderAPI = {
             },
           });
 
+          const checkPurpose = (folder: any) => {
+            if (folder?.is_card_front) return "id_card_front";
+            if (folder?.is_card_back) return "id_card_back";
+            if (folder?.is_lanyard) return "lanyard";
+            if (folder?.is_sablon_depan) return "sablon_depan";
+            if (folder?.is_sablon_belakang) return "sablon_belakang";
+            return "other";
+          }
+
           const folderRows = categories?.items?.flatMap((v: any) => {
             // Pastikan folders adalah array. 
             // Jika di database disimpan sebagai string JSON, gunakan JSON.parse(v.default_drive_folders)
@@ -536,7 +545,7 @@ export const OrderAPI = {
               order_number,
               parent_id: createFolder?.insert_id,
               folder_name: typeof folderName === 'string' ? folderName : folderName?.name, // sesuaikan jika folder adalah object atau string
-              purpose: v?.name, // tetap mengambil nama kategori sebagai purpose
+              purpose: checkPurpose(folderName), // tetap mengambil nama kategori sebagai purpose
             }));
           });
           await APIProvider({
