@@ -16,7 +16,7 @@ export const ProductCategoryAPI = {
         table: "product_categories",
         action: "select",
         body: {
-          columns: ["id", "name", "description"],
+          columns: ["id", "name", "description", "default_drive_folders"],
           where: { deleted_on: "null" },
           search: search || null,
           page: Number(page),
@@ -31,7 +31,7 @@ export const ProductCategoryAPI = {
 
   // === CREATE ===
   create: async ({ req }: any) => {
-    const { name, description } = req.body || {};
+    const { name, description, default_drive_folders } = req.body || {};
 
     if (!name) {
       return { success: false, message: "Nama kategori wajib diisi" };
@@ -39,7 +39,8 @@ export const ProductCategoryAPI = {
 
     const newCategory = {
       name,
-      description: description || null
+      description: description || null,
+      default_drive_folders: default_drive_folders ? JSON.stringify(default_drive_folders) : null
     };
 
     try {
@@ -72,6 +73,7 @@ export const ProductCategoryAPI = {
 
     const updatedData = {
       ...fields,
+      ...fields?.default_drive_folders && { default_drive_folders: JSON.stringify(fields?.default_drive_folders) },
       modified_on: new Date().toISOString()
     };
 

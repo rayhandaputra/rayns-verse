@@ -1,6 +1,6 @@
-import { PencilLineIcon, PlusCircleIcon, Trash2Icon } from "lucide-react";
+import { Folder, PencilLineIcon, Plus, PlusCircleIcon, Trash2, Trash2Icon, X } from "lucide-react";
 import moment from "moment";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Form,
   useActionData,
@@ -22,8 +22,6 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { useModal } from "~/hooks/use-modal";
 import { API } from "../lib/api";
-// import { API } from "~/lib/api";
-// import { API } from "~/lib/api";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const url = new URL(request.url);
@@ -32,22 +30,19 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   );
   try {
     const supplier = await API.PRODUCT_CATEGORY.get({
-      // session,
       session: {},
       req: {
         pagination: "true",
         page: 0,
-        size: 10,
+        size: 50,
       } as any,
     });
 
     return {
-      // search,
-      // APP_CONFIG: CONFIG,
       table: {
         ...supplier,
         page: 0,
-        size: 10,
+        size: 50,
       },
     };
   } catch (err) {
@@ -59,7 +54,15 @@ export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const data = Object.fromEntries(formData.entries()) as Record<string, any>;
 
-  const { id, ...payload } = data;
+  const { id, default_drive_folders: rawFolders, ...payload } = data;
+
+  // Parse default_drive_folders dari JSON string
+  let default_drive_folders: string[] = [];
+  try {
+    default_drive_folders = JSON.parse(rawFolders || "[]");
+  } catch {
+    default_drive_folders = [];
+  }
 
   try {
     let res: any = {};
@@ -75,22 +78,16 @@ export const action: ActionFunction = async ({ request }) => {
       });
     }
     if (request.method === "POST") {
+      const body = { ...payload, default_drive_folders };
       if (id) {
         res = await API.PRODUCT_CATEGORY.update({
           session: {},
-          req: {
-            body: {
-              id,
-              ...payload,
-            } as any,
-          },
+          req: { body: { id, ...body } as any },
         });
       } else {
         res = await API.PRODUCT_CATEGORY.create({
           session: {},
-          req: {
-            body: payload as any,
-          },
+          req: { body: body as any },
         });
       }
     }
@@ -112,12 +109,39 @@ export const action: ActionFunction = async ({ request }) => {
   }
 };
 
-export default function AccountPage() {
+export default function ProductCategoryPage() {
   const { table } = useLoaderData();
   const actionData = useActionData();
   const [modal, setModal] = useModal();
-
   const fetcher = useFetcher();
+
+  // State lokal untuk edit default_drive_folders (tidak bisa pakai Form native untuk array)
+  const [driveFolders, setDriveFolders] = useState<string[]>([]);
+  const [newFolderInput, setNewFolderInput] = useState("");
+
+  // Sync saat modal dibuka
+  useEffect(() => {
+    if (modal?.open) {
+      const folders: string[] = (() => {
+        const raw = modal?.data?.default_drive_folders;
+        if (!raw) return [];
+        if (Array.isArray(raw)) return raw;
+        try { return JSON.parse(raw); } catch { return []; }
+      })();
+      setDriveFolders(folders);
+      setNewFolderInput("");
+    }
+  }, [modal?.open, modal?.data?.id]);
+
+  const addFolder = () => {
+    const trimmed = newFolderInput.trim();
+    if (!trimmed || driveFolders.includes(trimmed)) return;
+    setDriveFolders(prev => [...prev, trimmed]);
+    setNewFolderInput("");
+  };
+
+  const removeFolder = (idx: number) =>
+    setDriveFolders(prev => prev.filter((_, i) => i !== idx));
 
   const handleDelete = async (data: any) => {
     const result = await Swal.fire({
@@ -148,10 +172,7 @@ export default function AccountPage() {
           action: "/app/product/category",
         }
       );
-
-      // console.log("HASIL FETCHER => ", fetcher);
       toast.success("Berhasil", {
-        // description: fetcher.data.message,
         description: "Berhasil menghapus Kategori Produk",
       });
     }
@@ -182,11 +203,38 @@ export default function AccountPage() {
     },
     {
       name: "Nama",
-      cell: (row: any) => row?.name || "-",
+      cell: (row: any) => (
+        <span className="font-semibold text-gray-800">{row?.name || "-"}</span>
+      ),
     },
     {
       name: "Deskripsi",
       cell: (row: any) => row?.description || "-",
+    },
+    {
+      name: "Folder Drive Default",
+      cell: (row: any) => {
+        const folders: string[] = (() => {
+          const raw = row?.default_drive_folders;
+          if (!raw) return [];
+          if (Array.isArray(raw)) return raw;
+          try { return JSON.parse(raw); } catch { return []; }
+        })();
+        if (folders.length === 0)
+          return <span className="text-xs text-gray-300 italic">-</span>;
+        return (
+          <div className="flex flex-wrap gap-1 py-1">
+            {folders.map((f: string, i: number) => (
+              <span
+                key={i}
+                className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-semibold rounded-full"
+              >
+                <Folder size={9} /> {f}
+              </span>
+            ))}
+          </div>
+        );
+      },
     },
     {
       name: "Aksi",
@@ -224,7 +272,7 @@ export default function AccountPage() {
     <div className="space-y-3">
       <TitleHeader
         title="Daftar Kategori Produk"
-        description="Kelola data Kategori Produk."
+        description="Kelola kategori produk dan folder drive default yang otomatis dibuat saat pesanan masuk."
         breadcrumb={
           <AppBreadcrumb
             pages={[
@@ -257,10 +305,17 @@ export default function AccountPage() {
         <Modal
           open={modal?.open}
           onClose={() => setModal({ ...modal, open: false })}
-          title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Toko`}
+          title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Kategori Produk`}
         >
-          <Form method="post" className="space-y-3">
+          <Form method="post" className="space-y-4">
             <input type="hidden" name="id" value={modal?.data?.id} />
+            {/* Hidden field untuk driveFolders — dikontrol manual */}
+            <input
+              type="hidden"
+              name="default_drive_folders"
+              value={JSON.stringify(driveFolders)}
+            />
+
             <div className="space-y-1">
               <Label>Nama Kategori</Label>
               <Input
@@ -271,17 +326,81 @@ export default function AccountPage() {
                 defaultValue={modal?.data?.name}
               />
             </div>
+
             <div className="space-y-1">
               <Label>Deskripsi</Label>
               <Input
-                required
                 type="text"
                 name="description"
-                placeholder="Masukkan Deskripsi"
+                placeholder="Masukkan Deskripsi (opsional)"
                 defaultValue={modal?.data?.description}
               />
             </div>
-            <div className="flex justify-end gap-2">
+
+            {/* ── Default Drive Folders ─────────────────── */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Folder size={14} className="text-amber-500" />
+                Folder Drive Default
+              </Label>
+              <p className="text-[11px] text-gray-400">
+                Folder-folder ini akan otomatis dibuat di Drive pelanggan saat pesanan dengan kategori ini masuk.
+              </p>
+
+              {/* Tags list */}
+              {driveFolders.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 p-2 bg-amber-50 border border-amber-100 rounded-lg">
+                  {driveFolders.map((f, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-amber-200 text-amber-800 text-xs font-medium rounded-full shadow-sm"
+                    >
+                      <Folder size={11} className="text-amber-400" />
+                      {f}
+                      <button
+                        type="button"
+                        onClick={() => removeFolder(idx)}
+                        className="ml-0.5 text-amber-400 hover:text-red-500 transition-colors"
+                      >
+                        <X size={11} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Add new folder input */}
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="Nama folder baru... (tekan Enter atau klik +)"
+                  value={newFolderInput}
+                  onChange={e => setNewFolderInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addFolder();
+                    }
+                  }}
+                  className="text-sm"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={addFolder}
+                  className="shrink-0 text-amber-600 border-amber-200 hover:bg-amber-50"
+                >
+                  <Plus size={16} />
+                </Button>
+              </div>
+
+              {driveFolders.length === 0 && (
+                <p className="text-xs text-gray-300 italic">Belum ada folder default.</p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
               <Button
                 size="sm"
                 type="button"

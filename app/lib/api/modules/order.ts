@@ -481,7 +481,21 @@ export const OrderAPI = {
         newOrder.institution_id = result?.insert_id;
       }
 
+      const products = await APIProvider({
+        endpoint: "select",
+        method: "POST",
+        table: "products",
+        action: "select",
+        body: {
+          columns: ["id", "name", "category_id"],
+          where: {
+            id: items?.map((v: any) => +v?.productId)?.join(","),
+          },
+        },
+      });
+
       if (+is_archive === 0) {
+
         // CREATE 1 FOLDER DRIVE
         const createFolder = await APIProvider({
           endpoint: "insert",
@@ -498,44 +512,40 @@ export const OrderAPI = {
 
         newOrder.drive_folder_id = createFolder?.insert_id;
         if (createFolder?.insert_id) {
+          const categories = await APIProvider({
+            endpoint: "select",
+            method: "POST",
+            table: "product_categories",
+            action: "select",
+            body: {
+              columns: ["id", "name", "default_drive_folders"],
+              where: {
+                id: products?.items?.map((v: any) => +v?.category_id)?.join(","),
+              },
+            },
+          });
+
+          const folderRows = categories?.items?.flatMap((v: any) => {
+            // Pastikan folders adalah array. 
+            // Jika di database disimpan sebagai string JSON, gunakan JSON.parse(v.default_drive_folders)
+            const folders = v.default_drive_folders
+              ? safeParseArray(v.default_drive_folders)
+              : [];
+
+            return folders.map((folderName: any) => ({
+              order_number,
+              parent_id: createFolder?.insert_id,
+              folder_name: typeof folderName === 'string' ? folderName : folderName?.name, // sesuaikan jika folder adalah object atau string
+              purpose: v?.name, // tetap mengambil nama kategori sebagai purpose
+            }));
+          });
           await APIProvider({
             endpoint: "bulk-insert",
             method: "POST",
             table: "order_upload_folders",
             action: "bulk-insert",
             body: {
-              rows: [
-                {
-                  order_number,
-                  parent_id: createFolder?.insert_id,
-                  folder_name: "ID Card (Depan)",
-                  purpose: "id_card_front",
-                },
-                {
-                  order_number,
-                  parent_id: createFolder?.insert_id,
-                  folder_name: "ID Card (Belakang)",
-                  purpose: "id_card_back",
-                },
-                {
-                  order_number,
-                  parent_id: createFolder?.insert_id,
-                  folder_name: "Lanyard",
-                  purpose: "lanyard",
-                },
-                {
-                  order_number,
-                  parent_id: createFolder?.insert_id,
-                  folder_name: "Sablon Depan",
-                  purpose: "sablon_front",
-                },
-                {
-                  order_number,
-                  parent_id: createFolder?.insert_id,
-                  folder_name: "Sablon Belakang",
-                  purpose: "sablon_back",
-                },
-              ],
+              rows: folderRows,
               updateOnDuplicate: true,
             },
           });
@@ -649,8 +659,6 @@ export const OrderAPI = {
             updateOnDuplicate: true,
           },
         });
-
-        console.log("INSERT ORDER ITEMS")
       }
 
       if (total_amount > 0 && +is_archive === 1) {

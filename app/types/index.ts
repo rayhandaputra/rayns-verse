@@ -42,7 +42,8 @@ export interface Product {
   name: string;
   price: number; // Base price (qty 1)
   product_price_rules?: ProductTier[]; // Tiered pricing
-  product_variants?: ProductVariation[]; // NEW: Product Variations
+  product_variants?: ProductVariation[]; // Product Variations
+  default_drive_folders?: string[]; // Folder drive yang otomatis dibuat saat pesanan masuk
   category: "Id Card" | "Lanyard" | "Paket" | "Lainnya";
   description?: string;
   image?: any; // Base64 string for product image
@@ -300,7 +301,7 @@ export interface TwibbonAssignment {
 export interface ShirtSizeItem {
   size: string;
   sleeve: 'Pendek' | 'Panjang';
-  color?: string; 
+  color?: string;
   quantity: number;
 }
 

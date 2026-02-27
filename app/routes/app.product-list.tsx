@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   useActionData,
+  useFetcher,
   Form,
   type LoaderFunction,
   type ActionFunction,
@@ -22,6 +23,10 @@ import {
   Camera,
   Layers,
   Star,
+  Folder,
+  LayoutList,
+  FolderCog,
+  PencilLine,
 } from "lucide-react";
 import { API } from "~/lib/api";
 import { requireAuth } from "~/lib/session.server";
@@ -34,6 +39,7 @@ import { Button } from "~/components/ui/button";
 import TableHeader from "~/components/table/TableHeader";
 import { useModal } from "~/hooks";
 import ModalSecond from "~/components/modal/ModalSecond";
+import ReactSelect from "react-select";
 
 // ============================================
 // TYPES & INTERFACES
@@ -118,16 +124,13 @@ export const action: ActionFunction = async ({ request }) => {
     let variants: ProductVariation[] = [];
     try {
       price_rules = JSON.parse(product_price_rules || "[]");
-    } catch (e) {
-      /* ignore */
-    }
+    } catch (e) { /* ignore */ }
     try {
       variants = JSON.parse(product_variants || "[]");
-    } catch (e) {
-      /* ignore */
-    }
+    } catch (e) { /* ignore */ }
 
-    // Map category to API type
+    // Map category to API type - sekarang memakai category_id dari master
+    // type di-set dari nama category yang dipilih (backward compat)
     let type = "other";
     if (category === "Paket") type = "package";
     else if (category === "Id Card") type = "id_card";
@@ -138,6 +141,7 @@ export const action: ActionFunction = async ({ request }) => {
       name,
       total_price: price_rules?.length > 0 ? price_rules?.[0].price : 0,
       type,
+      category_id: data.category_id || null,
       description,
       image,
       show_in_dashboard,
@@ -222,6 +226,54 @@ export default function ProductListPage() {
     autoLoad: false,
   });
 
+  // Fetch product categories dari master
+  const { data: categoryRes } = useFetcherData<any>({
+    endpoint: nexus().module("PRODUCT_CATEGORY").action("get").params({ page: 0, size: 50 }).build(),
+    autoLoad: true,
+  });
+
+  const categoryOptions = useMemo(() => {
+    const items = categoryRes?.data?.items || [];
+    return items.map((c: any) => ({
+      value: c.id,
+      label: c.name,
+      data: c,
+    }));
+  }, [categoryRes]);
+
+  const categoryFetcher = useFetcher();
+
+  // ── Tab state ──
+  const [activeTab, setActiveTab] = useState<"products" | "categories">("products");
+
+  // ── Category modal state ──
+  const [catModal, setCatModal] = useState<{
+    open: boolean;
+    key?: "create" | "update";
+    data?: any;
+  }>({ open: false });
+  const [driveFolders, setDriveFolders] = useState<string[]>([]);
+  const [newFolderInput, setNewFolderInput] = useState("");
+
+  // Sync driveFolders saat catModal dibuka
+  useEffect(() => {
+    if (catModal?.open) {
+      const raw = catModal?.data?.default_drive_folders;
+      let folders: string[] = [];
+      if (Array.isArray(raw)) folders = raw;
+      else if (raw) { try { folders = JSON.parse(raw); } catch { folders = []; } }
+      setDriveFolders(folders);
+      setNewFolderInput("");
+    }
+  }, [catModal?.open, catModal?.data?.id]);
+
+  const addCatFolder = () => {
+    const t = newFolderInput.trim();
+    if (!t || driveFolders.includes(t)) return;
+    setDriveFolders(prev => [...prev, t]);
+    setNewFolderInput("");
+  };
+
   // ========== STATE ==========
   const [modal, setModal] = useModal<any>();
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -243,19 +295,16 @@ export default function ProductListPage() {
         name: p.name || "",
         price: p.total_price || 0,
         category: category,
+        category_id: p.category_id || null,
         description: p.description || "",
         image: p.image || "",
         show_in_dashboard: p.show_in_dashboard ?? 0,
-
-        product_price_rules: p.product_price_rules
-          ? JSON.parse(p.product_price_rules)
-          : [],
-        product_variants: p.product_variants
-          ? JSON.parse(p.product_variants)
-          : [],
+        product_price_rules: p.product_price_rules ? JSON.parse(p.product_price_rules) : [],
+        product_variants: p.product_variants ? JSON.parse(p.product_variants) : [],
       };
     });
   }, [productsData]);
+
 
   // ========== EFFECTS ==========
   const handleSuccess = (msg: string) => {
@@ -306,12 +355,11 @@ export default function ProductListPage() {
       id: modal.data?.id || 0,
       name: modal.data?.name,
       category: modal.data?.category || "Paket",
+      category_id: modal.data?.category_id || "",
       description: modal.data?.description,
       image: modal.data?.image,
       show_in_dashboard: +(modal?.data?.show_in_dashboard ?? 1) ? 1 : 0,
-      product_price_rules: JSON.stringify(
-        modal?.data?.product_price_rules || []
-      ),
+      product_price_rules: JSON.stringify(modal?.data?.product_price_rules || []),
       product_variants: JSON.stringify(modal?.data?.product_variants || []),
     });
     setModal({
@@ -345,6 +393,7 @@ export default function ProductListPage() {
       intent: "create",
       name: product.name + " (Copy)",
       category: product.category,
+      category_id: (product as any).category_id || "",
       description: product.description || "",
       image: product.image || "",
       show_in_dashboard: +(product?.show_in_dashboard ?? 1) ? 1 : 0,
@@ -615,34 +664,64 @@ export default function ProductListPage() {
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <TableHeader
-        title="Daftar Produk"
-        description="Atur jenis barang dan aturan harga."
-        buttonText="Tambah Produk"
-        onClick={() => {
-          setModal({
-            open: true,
-            type: "create",
-            data: {
-              product_price_rules: [],
-              product_variants: [],
-            },
-          });
-        }}
-        buttonIcon={Plus}
-      />
 
-      {/* DataTable */}
-      <DataTable
-        columns={columns}
-        data={products}
-        getRowKey={(product, _index) => product.id}
-        rowClassName={(product) =>
-          +(product.show_in_dashboard || 0) > 0 ? "bg-green-50/30" : ""
-        }
-        emptyMessage="Belum ada produk."
-        minHeight="400px"
-      />
+      {/* ── TABS HEADER ── */}
+      <div className="flex border-b border-gray-200 px-4 pt-3 gap-1">
+        <button
+          onClick={() => setActiveTab("products")}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-all ${activeTab === "products"
+            ? "border-blue-600 text-blue-600 bg-blue-50"
+            : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+            }`}
+        >
+          <LayoutList size={15} />
+          Daftar Produk
+        </button>
+        <button
+          onClick={() => setActiveTab("categories")}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-all ${activeTab === "categories"
+            ? "border-blue-600 text-blue-600 bg-blue-50"
+            : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+            }`}
+        >
+          <FolderCog size={15} />
+          Kategori Produk
+        </button>
+      </div>
+
+      {/* ═══════════════════════════════════════ */}
+      {/* TAB: DAFTAR PRODUK */}
+      {/* ═══════════════════════════════════════ */}
+      {activeTab === "products" && (
+        <>
+          <TableHeader
+            title="Daftar Produk"
+            description="Atur jenis barang dan aturan harga."
+            buttonText="Tambah Produk"
+            onClick={() => {
+              setModal({
+                open: true,
+                type: "create",
+                data: {
+                  product_price_rules: [],
+                  product_variants: [],
+                },
+              });
+            }}
+            buttonIcon={Plus}
+          />
+          <DataTable
+            columns={columns}
+            data={products}
+            getRowKey={(product, _index) => product.id}
+            rowClassName={(product) =>
+              +(product.show_in_dashboard || 0) > 0 ? "bg-green-50/30" : ""
+            }
+            emptyMessage="Belum ada produk."
+            minHeight="400px"
+          />
+        </>
+      )}
 
       {modal?.type === "create" || modal?.type === "update" ? (
         <ModalSecond
@@ -730,6 +809,55 @@ export default function ProductListPage() {
                   </div>
                 </div>
 
+                {/* KATEGORI PRODUK - dropdown dari master */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Kategori Produk
+                  </label>
+                  <ReactSelect
+                    options={categoryOptions}
+                    value={categoryOptions.find(
+                      (o: any) => o.value === modal?.data?.category_id
+                    ) || null}
+                    onChange={(opt: any) => {
+                      setModal({
+                        ...modal,
+                        data: {
+                          ...modal?.data,
+                          category_id: opt?.value || null,
+                          // derive folder info hint from category
+                          _categoryData: opt?.data || null,
+                        },
+                      });
+                    }}
+                    placeholder="Pilih kategori produk..."
+                    isClearable
+                    className="text-sm"
+                    classNamePrefix="rselect"
+                    noOptionsMessage={() => "Tidak ada kategori"}
+                  />
+                  {/* Folder drive preview dari kategori terpilih */}
+                  {(() => {
+                    const folders: string[] = (() => {
+                      const raw = modal?.data?._categoryData?.default_drive_folders;
+                      if (!raw) return [];
+                      if (Array.isArray(raw)) return raw;
+                      try { return JSON.parse(raw); } catch { return []; }
+                    })();
+                    if (folders.length === 0) return null;
+                    return (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        <span className="text-[10px] text-gray-400 w-full">Folder drive otomatis:</span>
+                        {folders.map((f: string, i: number) => (
+                          <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-100 text-amber-600 text-[10px] rounded-full">
+                            <Folder size={9} /> {f}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+                {/* DESKRIPSI */}
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
                     Deskripsi
@@ -892,7 +1020,7 @@ export default function ProductListPage() {
                   ))}
                 </div>
 
-                {/* SHOW IN DASHBOARD */}
+
                 <div className="flex gap-4 items-center">
                   <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
                     <input
@@ -938,6 +1066,209 @@ export default function ProductListPage() {
         </ModalSecond>
       ) : (
         ""
+      )}
+      {/* ═══════════════════════════════════════ */}
+      {/* TAB: KATEGORI PRODUK */}
+      {/* ═══════════════════════════════════════ */}
+      {activeTab === "categories" && (
+        <>
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div>
+              <h3 className="text-base font-semibold text-gray-800">Kategori Produk</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Atur kategori dan folder drive default per kategori.</p>
+            </div>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white text-sm flex items-center gap-1.5"
+              onClick={() => setCatModal({ open: true, key: "create", data: null })}
+            >
+              <Plus size={15} /> Kategori Baru
+            </Button>
+          </div>
+
+          {/* Category Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100 text-left">
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 w-10">#</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500">Nama</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500">Deskripsi</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500">Folder Drive Default</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(categoryRes?.data?.items || []).length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center text-gray-300 text-xs py-12 italic">
+                      Belum ada kategori produk.
+                    </td>
+                  </tr>
+                )}
+                {(categoryRes?.data?.items || []).map((cat: any, idx: number) => {
+                  const folders: string[] = (() => {
+                    const raw = cat?.default_drive_folders;
+                    if (!raw) return [];
+                    if (Array.isArray(raw)) return raw;
+                    try { return JSON.parse(raw); } catch { return []; }
+                  })();
+                  return (
+                    <tr key={cat.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-3 text-gray-400 text-xs">{idx + 1}</td>
+                      <td className="px-4 py-3 font-semibold text-gray-800">{cat.name}</td>
+                      <td className="px-4 py-3 text-gray-500 text-xs">{cat.description || "-"}</td>
+                      <td className="px-4 py-3">
+                        {folders.length === 0 ? (
+                          <span className="text-xs text-gray-300 italic">-</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {folders.map((f: string, i: number) => (
+                              <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-medium rounded-full">
+                                <Folder size={9} /> {f}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg"
+                            onClick={() => setCatModal({ open: true, key: "update", data: cat })}
+                          >
+                            <PencilLine size={14} />
+                          </Button>
+                          <Button
+                            className="p-1.5 bg-red-50 text-red-500 hover:bg-red-100 rounded-lg"
+                            onClick={async () => {
+                              const result = await Swal.fire({
+                                title: "Hapus Kategori?",
+                                text: `Yakin hapus "${cat.name}"?`,
+                                icon: "warning",
+                                showCancelButton: true,
+                                confirmButtonText: "Hapus",
+                                cancelButtonText: "Batal",
+                                customClass: { confirmButton: "bg-red-600 text-white", cancelButton: "bg-gray-200 text-gray-800" },
+                              });
+                              if (result.isConfirmed) {
+                                categoryFetcher.submit(
+                                  { id: cat.id, deleted_on: new Date().toISOString() },
+                                  { method: "delete", action: "/app/product/category" }
+                                );
+                                toast.success(`Kategori "${cat.name}" dihapus`);
+                              }
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Category Modal */}
+          {catModal.open && (
+            <ModalSecond
+              open={catModal.open}
+              onClose={() => setCatModal({ open: false })}
+              title={catModal.key === "create" ? "Tambah Kategori Produk" : "Edit Kategori Produk"}
+              size="md"
+            >
+              <div className="flex flex-col h-full">
+                <div className="p-6 overflow-y-auto flex-1 space-y-4">
+                  {/* Hidden field for drive folders — controlled by state */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Nama Kategori</label>
+                    <input
+                      className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      value={catModal.data?.name || ""}
+                      onChange={(e) => setCatModal(prev => ({ ...prev, data: { ...prev.data, name: e.target.value } }))}
+                      placeholder="Contoh: Paket Wisuda"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Deskripsi</label>
+                    <input
+                      className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      value={catModal.data?.description || ""}
+                      onChange={(e) => setCatModal(prev => ({ ...prev, data: { ...prev.data, description: e.target.value } }))}
+                      placeholder="Deskripsi singkat (opsional)"
+                    />
+                  </div>
+
+                  {/* Folder Drive Default */}
+                  <div>
+                    <label className="block text-xs font-bold text-amber-700 mb-1 flex items-center gap-1">
+                      <Folder size={12} /> Folder Drive Default
+                    </label>
+                    <p className="text-[10px] text-gray-400 mb-2">Otomatis dibuat di Drive saat pesanan dengan kategori ini diterima.</p>
+                    {driveFolders.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 p-2 bg-amber-50 border border-amber-100 rounded-lg mb-2">
+                        {driveFolders.map((f, idx) => (
+                          <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-amber-200 text-amber-800 text-xs font-medium rounded-full shadow-sm">
+                            <Folder size={10} className="text-amber-400" />
+                            {f}
+                            <button type="button" onClick={() => setDriveFolders(prev => prev.filter((_, i) => i !== idx))} className="ml-0.5 text-amber-300 hover:text-red-500">
+                              <X size={10} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        className="flex-1 border border-gray-300 rounded-lg p-2 text-sm focus:ring-1 focus:ring-amber-400 outline-none"
+                        placeholder="Nama folder baru... (tekan Enter)"
+                        value={newFolderInput}
+                        onChange={e => setNewFolderInput(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCatFolder(); } }}
+                      />
+                      <Button type="button" className="px-3 border border-amber-200 text-amber-600 rounded-lg hover:bg-amber-50" onClick={addCatFolder}>
+                        <Plus size={14} />
+                      </Button>
+                    </div>
+                    {driveFolders.length === 0 && <p className="text-xs text-gray-300 italic mt-1">Belum ada folder default.</p>}
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => setCatModal({ open: false })}
+                    className="bg-white border border-gray-300 text-gray-600 py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-50"
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    type="button"
+                    className="bg-blue-600 text-white py-2 px-6 rounded-lg text-sm font-medium hover:bg-blue-700"
+                    onClick={() => {
+                      if (!catModal.data?.name?.trim()) { toast.error("Nama kategori wajib diisi"); return; }
+                      const body: any = {
+                        name: catModal.data?.name,
+                        description: catModal.data?.description || "",
+                        default_drive_folders: JSON.stringify(driveFolders),
+                      };
+                      if (catModal.key === "update") body.id = catModal.data?.id;
+                      categoryFetcher.submit(body, { method: "post", action: "/app/product/category" });
+                      setCatModal({ open: false });
+                      toast.success(catModal.key === "create" ? "Kategori berhasil ditambahkan" : "Kategori berhasil diperbarui");
+                    }}
+                  >
+                    Simpan
+                  </Button>
+                </div>
+              </div>
+            </ModalSecond>
+          )}
+        </>
       )}
     </div>
   );

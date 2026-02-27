@@ -192,6 +192,7 @@ export default function PublicDriveLinkPage() {
   const [activeCategory, setActiveCategory] = useState<'idcard_lanyard' | 'shirt' | null>(null);
   const [showCategorySelection, setShowCategorySelection] = useState(false);
   const [animationPlayed, setAnimationPlayed] = useState(false);
+  const [fabOpen, setFabOpen] = useState(false); // FAB state — must be here, before any early returns
 
   // --- STATE INIT ---
   const [order, setOrder] = useState(orderData || { id: domain, instansi: 'Unknown', twibbonAssignments: [] });
@@ -424,95 +425,26 @@ export default function PublicDriveLinkPage() {
   // Define tabs based on Active Category
   const activeTab = query.tab || 'drive';
 
-  // Sub-tabs logic
-  const renderSubTabs = () => {
-    // If multiple categories, allow switching back to selection or other category
-    const showBackButton = +orderData?.is_idcard_lanyard === 1 && +orderData?.is_order_shirt === 1;
-
-    return (
-      <div className="flex flex-wrap items-center gap-2 mt-4 px-4 sm:px-0">
-        {showBackButton && (
-          <button
-            onClick={() => setActiveCategory(null)}
-            className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all mr-2"
-          >
-            <ArrowLeft size={14} /> Ganti Kategori
-          </button>
-        )}
-
-        <button
-          onClick={() => navigate(`?tab=drive`)}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all border ${activeTab === 'drive'
-            ? 'bg-white border-blue-200 text-blue-600 shadow-md ring-2 ring-blue-50'
-            : 'bg-white/50 border-transparent text-gray-500 hover:bg-white hover:text-gray-700'
-            }`}
-        >
-          <Folder size={16} className={activeTab === 'drive' ? 'fill-blue-100' : ''} />
-          DRIVE FOLDER
-        </button>
-
-        {activeCategory === 'idcard_lanyard' && (
-          <>
-            <button
-              onClick={() => navigate(`?tab=idcard`)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all border ${activeTab === 'idcard'
-                ? 'bg-white border-purple-200 text-purple-600 shadow-md ring-2 ring-purple-50'
-                : 'bg-white/50 border-transparent text-gray-500 hover:bg-white hover:text-gray-700'
-                }`}
-            >
-              <IdCard size={16} className={activeTab === 'idcard' ? 'fill-purple-100' : ''} />
-              TWIBBON ID CARD
-            </button>
-            <button
-              onClick={() => navigate(`?tab=lanyard`)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all border ${activeTab === 'lanyard'
-                ? 'bg-white border-orange-200 text-orange-600 shadow-md ring-2 ring-orange-50'
-                : 'bg-white/50 border-transparent text-gray-500 hover:bg-white hover:text-gray-700'
-                }`}
-            >
-              <Layers size={16} className={activeTab === 'lanyard' ? 'fill-orange-100' : ''} />
-              TWIBBON LANYARD
-            </button>
-          </>
-        )}
-
-        {/* {activeCategory === 'shirt' && (
-          <button
-            onClick={() => navigate(`?tab=shirt_specs`)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all border ${activeTab === 'shirt_specs'
-              ? 'bg-white border-teal-200 text-teal-600 shadow-md ring-2 ring-teal-50'
-              : 'bg-white/50 border-transparent text-gray-500 hover:bg-white hover:text-gray-700'
-              }`}
-          >
-            <Shirt size={16} className={activeTab === 'shirt_specs' ? 'fill-teal-100' : ''} />
-            DATA UKURAN
-          </button>
-        )} */}
-      </div>
-    );
-  };
+  const showBackButton = +orderData?.is_idcard_lanyard === 1 && +orderData?.is_order_shirt === 1;
 
   const renderContent = () => {
     if (activeTab === 'drive') {
       return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-xl flex flex-col h-[calc(100vh-220px)] animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="bg-gradient-to-r from-gray-50/80 to-white p-4 border-b border-gray-100 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {/* <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase border ${activeCategory === 'shirt' ? 'bg-teal-50 text-teal-700 border-teal-100' : 'bg-purple-50 text-purple-700 border-purple-100'}`}>
-                {activeCategory === 'shirt' ? 'Kategori Apparel' : 'Kategori Merchandise'}
-              </span> */}
-              <h2 className="text-sm font-semibold text-gray-700">File Manager</h2>
-            </div>
-          </div>
-          <DriveToolbar
-            loadingAction={loadingActionFetcher} loadingUpload={loadingUpload} fileCount={files.length} totalItems={(realFolders?.data?.total_items || 0) + (realFiles?.data?.total_items || 0)} isDownloading={isDownloading}
-            onNewFolder={() => setModal({ ...modal, open: true, type: "create_folder" })} onUpload={() => fileInputRef.current?.click()} onDownloadAll={handleDownloadAll} onViewNota={() => setModal({ ...modal, open: true, type: "view_nota", data: orderData })}
-          />
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
           <DriveBreadcrumb
             domain={domain} currentFolderId={current_folder?.id || query?.folder_id} rootFolderId={orderData?.drive_folder_id} folderIdentity={current_folder}
             breadcrumbs={current_folder?.id ? [{ id: current_folder?.id, name: current_folder?.folder_name }] : []} onOpenFolder={handleOpenFolder}
           />
-          <div className="flex-1 overflow-y-auto p-4" onClick={() => setSelectedItem(null)}>
+          {/* Download hint bar */}
+          {files.length > 0 && (
+            <div className="px-4 py-2 border-b border-gray-50 flex items-center justify-between">
+              <span className="text-xs text-gray-400">{(realFolders?.data?.total_items || 0) + (realFiles?.data?.total_items || 0)} item</span>
+              <button onClick={handleDownloadAll} disabled={isDownloading} className="flex items-center gap-1.5 text-xs text-blue-500 font-semibold hover:text-blue-700 transition-colors">
+                <Download size={14} className={isDownloading ? 'animate-bounce' : ''} /> Unduh Semua
+              </button>
+            </div>
+          )}
+          <div className="p-3 pb-6" onClick={() => setSelectedItem(null)}>
             <DriveGrid
               folders={folders} files={files} selectedItem={selectedItem} setSelectedItem={setSelectedItem} onOpenFolder={handleOpenFolder}
               onRename={(folder: any) => setModal({ ...modal, open: true, type: "rename_folder", data: folder })} onDelete={onDeleteItem} onPreview={(file: any) => setModal({ ...modal, open: true, type: "zoom_image", data: file })}
@@ -524,7 +456,6 @@ export default function PublicDriveLinkPage() {
       );
     }
 
-    // Logic for ID Card / Lanyard Editor tabs
     if (activeCategory === 'idcard_lanyard' && (activeTab === 'idcard' || activeTab === 'lanyard')) {
       return (
         <div className="animate-in fade-in slide-in-from-right-4 duration-500">
@@ -552,21 +483,43 @@ export default function PublicDriveLinkPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 relative overflow-x-hidden">
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-100/50 to-transparent pointer-events-none" />
+    <div className="min-h-screen bg-gray-50" style={{ paddingBottom: '100px' }}>
+      <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="*/*" multiple />
 
+      {/* ── Sticky Header ── */}
       <Header orderData={orderData} domain={domain} activeCategory={activeCategory} />
 
-      <div className="max-w-7xl mx-auto px-4 py-2 relative z-10">
-        {/* Render Tabs Logic based on Active Category */}
-        {renderSubTabs()}
+      {/* ── Info Card: Nota + Alamat ── */}
+      <DriveInfoBar
+        orderData={orderData}
+        onViewNota={() => setModal({ ...modal, open: true, type: "view_nota", data: orderData })}
+      />
 
-        <div className="mt-4">
-          <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="*/*" multiple />
-          {renderContent()}
-        </div>
+      {/* ── Tabs ── */}
+      <DriveTabs
+        activeTab={activeTab}
+        activeCategory={activeCategory}
+        showBackButton={showBackButton}
+        onBack={() => setActiveCategory(null)}
+        onNavigate={(tab: string) => navigate(`?tab=${tab}`)}
+      />
+
+      {/* ── Content ── */}
+      <div className="px-3 pt-3">
+        {renderContent()}
       </div>
+
+      {/* ── FAB (Floating Action Button) ── */}
+      {activeTab === 'drive' && (
+        <DriveFAB
+          fabOpen={fabOpen}
+          setFabOpen={setFabOpen}
+          loadingAction={loadingActionFetcher}
+          loadingUpload={loadingUpload}
+          onNewFolder={() => { setFabOpen(false); setModal({ ...modal, open: true, type: "create_folder" }); }}
+          onUpload={() => { setFabOpen(false); fileInputRef.current?.click(); }}
+        />
+      )}
 
       <GlobalModals
         modal={modal} setModal={setModal} loadingAction={loadingActionFetcher} orderData={orderData}
@@ -651,139 +604,278 @@ const CategoryOnboarding = ({ animationPlayed, onSelect }: { animationPlayed: bo
 };
 
 // ============================================
-// SUB-COMPONENTS (Modified for Style)
+// SUB-COMPONENTS — Mobile-First Redesign
 // ============================================
 
+// ── Header ──────────────────────────────────
 const Header = ({ orderData, domain, activeCategory }: { orderData: any; domain: string; activeCategory: string | null }) => {
+  const displayName = +orderData?.is_kkn === 1
+    ? `KKN ${orderData?.kkn_period}`
+    : (orderData?.institution_name || orderData?.pic_name || "Guest");
+
   return (
-    <div className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
-              <img src="/head-icon-kinau.png" alt="K" className="w-6 invert brightness-0" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900 leading-tight">Drive File Cetak</h1>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <span className="max-w-[200px] truncate" title={orderData?.institution_name || orderData?.pic_name}>
-                  {+orderData?.is_kkn === 1 ? `KKN ${orderData?.kkn_period}` : (orderData?.institution_name || orderData?.pic_name || "Guest")}
-                </span>
-                {activeCategory && (
-                  <>
-                    <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                    <span className={`font-semibold ${activeCategory === 'shirt' ? 'text-teal-600' : 'text-purple-600'}`}>
-                      {activeCategory === 'shirt' ? 'KAOS' : 'ID CARD & LANYARD'}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
+    <div className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
+      <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+        {/* Logo */}
+        <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-md shadow-blue-200 shrink-0">
+          <img src="/head-icon-kinau.png" alt="Kinau" className="w-5 invert brightness-0" />
+        </div>
+        {/* Title */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm font-bold text-gray-900 leading-tight">Drive File Cetak</h1>
+            {activeCategory && (
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${activeCategory === 'shirt'
+                ? 'bg-teal-50 text-teal-700'
+                : 'bg-purple-50 text-purple-700'
+                }`}>
+                {activeCategory === 'shirt' ? 'KAOS' : 'ID CARD'}
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-gray-100 rounded-full text-xs font-medium text-gray-600">
-              <Lock size={12} /> Public Access
-            </div>
-          </div>
+          <p className="text-xs text-gray-400 truncate" title={displayName}>{displayName}</p>
+        </div>
+        {/* Public badge */}
+        <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 border border-gray-100 rounded-full text-[10px] font-medium text-gray-400 shrink-0">
+          <Lock size={10} /> Publik
         </div>
       </div>
     </div>
   );
 };
 
-const DriveToolbar = ({ loadingAction, loadingUpload, fileCount, totalItems, isDownloading, onNewFolder, onUpload, onDownloadAll, onViewNota }: any) => {
+// ── Info Bar: Nota + Alamat highlight ───────
+const DriveInfoBar = ({ orderData, onViewNota }: { orderData: any; onViewNota: () => void }) => {
+  if (!orderData) return null;
   return (
-    <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white">
-      <div className="flex gap-2 flex-wrap">
-        <button onClick={onNewFolder} disabled={loadingAction} className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold hover:bg-gray-100 text-gray-700 transition-all active:scale-95">
-          <FolderPlus size={18} className="text-gray-500" /><span>Folder Baru</span>
+    <div className="max-w-2xl mx-auto px-3 pt-3 pb-1">
+      <div className="grid grid-cols-2 gap-2">
+        {/* Nota Card */}
+        <button
+          onClick={onViewNota}
+          className="relative overflow-hidden flex flex-col items-start gap-1 p-3 rounded-2xl bg-amber-400 text-white active:scale-95 transition-transform shadow-md shadow-amber-200"
+        >
+          <div className="absolute -top-3 -right-3 opacity-20">
+            <FileText size={60} />
+          </div>
+          <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center mb-1">
+            <FileText size={18} className="text-white" />
+          </div>
+          <span className="text-xs font-bold leading-tight">Lihat Nota</span>
+          <span className="text-[10px] text-amber-100">Detail pesanan</span>
         </button>
-        <button onClick={onUpload} disabled={loadingUpload} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95">
-          <Upload size={18} /><span>{loadingUpload ? "Mengunggah..." : "Upload File"}</span>
-        </button>
-      </div>
-      <div className="flex items-center gap-2">
-        {fileCount > 0 && (
-          <button onClick={onDownloadAll} disabled={isDownloading} className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-blue-600 text-sm font-medium transition-colors">
-            <Download size={18} className={isDownloading ? "animate-bounce" : ""} />
-          </button>
-        )}
-        <div className="w-px h-6 bg-gray-200 mx-1" />
-        <button onClick={onViewNota} className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-blue-600 text-sm font-medium transition-colors">
-          <FileText size={18} /> <span className="hidden sm:inline">Nota</span>
-        </button>
-        <a href={getGoogleMapsLink()} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors">
-          <MapPin size={18} /> <span className="hidden sm:inline">Lokasi</span>
+
+        {/* Alamat / Maps Card */}
+        <a
+          href={getGoogleMapsLink()}
+          target="_blank"
+          rel="noreferrer"
+          className="relative overflow-hidden flex flex-col items-start gap-1 p-3 rounded-2xl bg-red-500 text-white active:scale-95 transition-transform shadow-md shadow-red-200"
+        >
+          <div className="absolute -top-3 -right-3 opacity-20">
+            <MapPin size={60} />
+          </div>
+          <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center mb-1">
+            <MapPin size={18} className="text-white" />
+          </div>
+          <span className="text-xs font-bold leading-tight">Lihat Lokasi</span>
+          <span className="text-[10px] text-red-200">Buka Google Maps</span>
         </a>
       </div>
     </div>
   );
 };
 
+// ── Tabs ─────────────────────────────────────
+const DriveTabs = ({ activeTab, activeCategory, showBackButton, onBack, onNavigate }: any) => {
+  const tabs = [
+    { id: 'drive', label: 'Drive', icon: <Folder size={15} />, show: true },
+    { id: 'idcard', label: 'ID Card', icon: <IdCard size={15} />, show: activeCategory === 'idcard_lanyard' },
+    { id: 'lanyard', label: 'Lanyard', icon: <Layers size={15} />, show: activeCategory === 'idcard_lanyard' },
+    // { id: 'shirt_specs', label: 'Ukuran', icon: <Shirt size={15} />, show: activeCategory === 'shirt' },
+  ].filter(t => t.show);
+
+  const colorMap: Record<string, string> = {
+    drive: 'bg-blue-600 text-white shadow-blue-200',
+    idcard: 'bg-purple-600 text-white shadow-purple-200',
+    lanyard: 'bg-orange-500 text-white shadow-orange-200',
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto px-3 py-2">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+        {showBackButton && (
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-gray-500 bg-white border border-gray-200 rounded-full whitespace-nowrap shrink-0 active:scale-95 transition-transform"
+          >
+            <ArrowLeft size={13} /> Ganti
+          </button>
+        )}
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => onNavigate(tab.id)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all active:scale-95 shadow-sm ${activeTab === tab.id
+              ? `${colorMap[tab.id] || 'bg-blue-600 text-white'} shadow`
+              : 'bg-white text-gray-500 border border-gray-200'
+              }`}
+          >
+            {tab.icon} {tab.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ── FAB (Floating Action Button) ─────────────
+const DriveFAB = ({ fabOpen, setFabOpen, loadingAction, loadingUpload, onNewFolder, onUpload }: any) => (
+  <div className="fixed bottom-6 right-4 z-30 flex flex-col items-end gap-3">
+    {/* Sub-buttons */}
+    <div className={`flex flex-col items-end gap-2 transition-all duration-300 ${fabOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'
+      }`}>
+      {/* Folder Baru */}
+      <button
+        onClick={onNewFolder}
+        disabled={loadingAction}
+        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 shadow-lg active:scale-95 transition-transform"
+      >
+        <FolderPlus size={18} className="text-amber-500" /> Folder Baru
+      </button>
+      {/* Upload */}
+      <button
+        onClick={onUpload}
+        disabled={loadingUpload}
+        className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-300 active:scale-95 transition-transform"
+      >
+        <Upload size={18} /> {loadingUpload ? 'Mengunggah...' : 'Upload File'}
+      </button>
+    </div>
+
+    {/* Backdrop untuk tutup FAB */}
+    {fabOpen && (
+      <div className="fixed inset-0 z-[-1]" onClick={() => setFabOpen(false)} />
+    )}
+
+    {/* Main FAB Button */}
+    <button
+      onClick={() => setFabOpen((prev: boolean) => !prev)}
+      className={`w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xl shadow-blue-300 active:scale-95 transition-all duration-300 ${fabOpen ? 'rotate-45' : 'rotate-0'
+        }`}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+    </button>
+  </div>
+);
+
 const DriveGrid = ({ folders, files, selectedItem, setSelectedItem, onOpenFolder, onRename, onDelete, onPreview, onRenameSave, modalData, setModalData }: any) => {
   if (folders.length === 0 && files.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-gray-300 py-20">
-        <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-          <Folder size={48} className="text-gray-200" />
+      <div className="flex flex-col items-center justify-center text-gray-300 py-20">
+        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+          <Folder size={40} className="text-gray-200" />
         </div>
-        <p className="font-medium">Belum ada file atau folder</p>
-        <p className="text-sm">Klik tombol Upload untuk memulai</p>
+        <p className="text-sm font-semibold text-gray-400">Folder masih kosong</p>
+        <p className="text-xs text-gray-300 mt-1">Ketuk tombol + untuk menambah file</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
       {folders.map((folder: any) => (
         <div
           key={folder.id}
-          onClick={(e) => { e.stopPropagation(); setSelectedItem(folder.id); }}
-          onDoubleClick={() => onOpenFolder(folder?.id)}
-          className={`group relative p-4 rounded-2xl border flex flex-col items-center gap-3 cursor-pointer transition-all duration-200 ${selectedItem === folder.id ? "bg-blue-50/50 border-blue-200 ring-2 ring-blue-100 shadow-sm" : "bg-white border-gray-100 hover:border-gray-300 hover:shadow-md hover:-translate-y-1"}`}
+          onClick={() => onOpenFolder(folder?.id)}
+          className="group relative p-3 rounded-2xl border border-gray-100 bg-white flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-all duration-150 hover:shadow-md hover:border-gray-200"
         >
-          <div className="w-full aspect-square flex items-center justify-center bg-amber-50 rounded-xl mb-1">
-            <Folder size={48} className="text-amber-400 fill-amber-400 drop-shadow-sm" />
+          {/* Action menu */}
+          {!folder.isSystem && (
+            <div className="absolute top-2 right-2 z-10" onClick={e => e.stopPropagation()}>
+              <button
+                onClick={(e) => { e.stopPropagation(); setSelectedItem(selectedItem === folder.id ? null : folder.id); }}
+                className="w-6 h-6 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
+              </button>
+              {selectedItem === folder.id && (
+                <div className="absolute top-7 right-0 w-32 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden z-20 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <button onClick={() => { onRename(folder); setSelectedItem(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                    <Edit2 size={13} className="text-gray-400" /> Ganti Nama
+                  </button>
+                  <div className="h-px bg-gray-50" />
+                  <button onClick={() => { onDelete(folder, 'folder'); setSelectedItem(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50">
+                    <Trash2 size={13} /> Hapus
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Icon */}
+          <div className="w-full aspect-square flex items-center justify-center bg-amber-50 rounded-xl">
+            <Folder size={44} className="text-amber-400 fill-amber-400" />
           </div>
+          {/* Name */}
           {modalData?.type === "rename_folder" && modalData?.data?.id === folder.id ? (
             <input
-              autoFocus className="w-full text-center text-xs border border-blue-300 rounded px-1 py-0.5"
+              autoFocus
+              className="w-full text-center text-xs border border-blue-300 rounded-lg px-1 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-200"
               value={modalData?.data?.folder_name}
               onChange={(e) => setModalData({ data: { ...modalData?.data, folder_name: e.target.value } })}
-              onBlur={(e) => onRenameSave(e)} onKeyDown={(e) => e.key === "Enter" && onRenameSave(e)} onClick={(e) => e.stopPropagation()}
+              onBlur={(e) => onRenameSave(e)}
+              onKeyDown={(e) => e.key === "Enter" && onRenameSave(e)}
+              onClick={(e) => e.stopPropagation()}
             />
           ) : (
-            <div className="text-center w-full"><div className="text-xs font-bold truncate w-full text-gray-700" title={folder.folder_name}>{folder.folder_name}</div></div>
-          )}
-          {!folder.isSystem && (
-            <div className={`absolute top-2 right-2 flex bg-white border border-gray-100 rounded-lg shadow-sm overflow-hidden transition-all ${selectedItem === folder.id ? "opacity-100 visible" : "opacity-0 invisible group-hover:visible group-hover:opacity-100"}`}>
-              <button onClick={(e) => { e.stopPropagation(); onRename(folder); }} className="p-1.5 hover:bg-gray-50 text-gray-500"><Edit2 size={12} /></button>
-              <div className="w-px bg-gray-100" />
-              <button onClick={(e) => { e.stopPropagation(); onDelete(folder, "folder"); }} className="p-1.5 hover:bg-red-50 text-red-500"><Trash2 size={12} /></button>
-            </div>
+            <p className="text-[11px] font-semibold text-gray-700 text-center w-full leading-tight line-clamp-2" title={folder.folder_name}>
+              {folder.folder_name}
+            </p>
           )}
         </div>
       ))}
+
       {files.map((file: any) => (
         <div
           key={file.id}
-          onClick={(e) => { e.stopPropagation(); setSelectedItem(file.id); }}
-          onDoubleClick={() => window.open(file.file_url, "_blank")}
-          className={`group relative p-4 rounded-2xl border flex flex-col items-center gap-3 cursor-pointer transition-all duration-200 ${selectedItem === file.id ? "bg-blue-50/50 border-blue-200 ring-2 ring-blue-100 shadow-sm" : "bg-white border-gray-100 hover:border-gray-300 hover:shadow-md hover:-translate-y-1"}`}
+          onClick={() => { window.open(file.file_url, '_blank'); }}
+          className="group relative p-3 rounded-2xl border border-gray-100 bg-white flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-all duration-150 hover:shadow-md hover:border-gray-200"
         >
-          <div className="w-full aspect-square flex items-center justify-center bg-gray-50 rounded-xl mb-1 relative overflow-hidden">
-            {getMimeType(file.file_name) === 'image' ? (
-              <img src={file.file_url} className="w-full h-full object-cover" />
-            ) : (
-              <FileText size={40} className="text-blue-500" />
+          {/* Action menu */}
+          <div className="absolute top-2 right-2 z-10" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={(e) => { e.stopPropagation(); setSelectedItem(selectedItem === file.id ? null : file.id); }}
+              className="w-6 h-6 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
+            </button>
+            {selectedItem === file.id && (
+              <div className="absolute top-7 right-0 w-32 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden z-20 animate-in fade-in slide-in-from-top-2 duration-150">
+                <button onClick={() => { onPreview(file); setSelectedItem(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                  <Eye size={13} className="text-gray-400" /> Preview
+                </button>
+                <div className="h-px bg-gray-50" />
+                <button onClick={() => { onDelete(file, 'file'); setSelectedItem(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50">
+                  <Trash2 size={13} /> Hapus
+                </button>
+              </div>
             )}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
-            <button onClick={(e) => { e.stopPropagation(); onPreview(file); }} className="absolute inset-0 m-auto w-10 h-10 bg-white/90 rounded-full shadow-lg text-gray-700 flex items-center justify-center opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all duration-200"><Eye size={20} /></button>
           </div>
-          <div className="text-center w-full"><div className="text-xs font-medium truncate w-full text-gray-600" title={file.file_name}>{file.file_name}</div></div>
-          <div className={`absolute top-2 right-2 flex bg-white border border-gray-100 rounded-lg shadow-sm overflow-hidden transition-all ${selectedItem === file.id ? "opacity-100 visible" : "opacity-0 invisible group-hover:visible group-hover:opacity-100"}`}>
-            <button onClick={(e) => { e.stopPropagation(); onDelete(file, "file"); }} className="p-1.5 hover:bg-red-50 text-red-500"><Trash2 size={12} /></button>
+          {/* Thumbnail */}
+          <div className="w-full aspect-square flex items-center justify-center bg-gray-50 rounded-xl overflow-hidden relative">
+            {getMimeType(file.file_name) === 'image' ? (
+              <img src={file.file_url} className="w-full h-full object-cover" alt={file.file_name} />
+            ) : (
+              <FileText size={36} className="text-blue-400" />
+            )}
           </div>
+          {/* Name */}
+          <p className="text-[11px] font-medium text-gray-600 text-center w-full leading-tight line-clamp-2" title={file.file_name}>
+            {file.file_name}
+          </p>
         </div>
       ))}
     </div>
@@ -837,20 +929,43 @@ const NotFoundPage = ({ domain, session }: { domain: string; session: any; }) =>
   );
 };
 
-const FooterHint = () => {
-  return (
-    <div className="p-3 border-t border-gray-100 text-[10px] text-gray-400 text-center bg-gray-50/50 rounded-b-2xl">
-      &copy; 2024 Kinau.id Drive System. All rights reserved.
-    </div>
-  );
-};
+const FooterHint = () => (
+  <div className="p-3 border-t border-gray-50 text-[10px] text-gray-300 text-center">
+    &copy; 2024 Kinau.id · All rights reserved
+  </div>
+);
 
 const DriveSkeleton = ({ orderData }: { orderData?: any } = {}) => (
-  <div className="min-h-screen bg-white p-6">
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="h-20 bg-gray-100 rounded-xl animate-pulse" />
-      <div className="grid grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map(i => <div key={i} className="h-40 bg-gray-50 rounded-2xl animate-pulse" />)}
+  <div className="min-h-screen bg-gray-50">
+    {/* Skeleton Header */}
+    <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
+      <div className="w-9 h-9 bg-gray-100 rounded-xl animate-pulse shrink-0" />
+      <div className="flex-1 space-y-1.5">
+        <div className="h-3 w-28 bg-gray-100 rounded animate-pulse" />
+        <div className="h-2.5 w-20 bg-gray-50 rounded animate-pulse" />
+      </div>
+    </div>
+    {/* Skeleton Info Bar */}
+    <div className="px-3 pt-3">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="h-20 bg-amber-100 rounded-2xl animate-pulse" />
+        <div className="h-20 bg-red-100 rounded-2xl animate-pulse" />
+      </div>
+    </div>
+    {/* Skeleton Tabs */}
+    <div className="px-3 py-2 flex gap-2">
+      <div className="h-8 w-20 bg-gray-100 rounded-full animate-pulse" />
+      <div className="h-8 w-20 bg-gray-100 rounded-full animate-pulse" />
+    </div>
+    {/* Skeleton Grid */}
+    <div className="px-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+        {[1, 2, 3, 4, 5, 6].map(i => (
+          <div key={i} className="bg-white rounded-2xl border border-gray-100 p-3">
+            <div className="aspect-square bg-gray-50 rounded-xl animate-pulse mb-2" />
+            <div className="h-2.5 w-3/4 mx-auto bg-gray-100 rounded animate-pulse" />
+          </div>
+        ))}
       </div>
     </div>
   </div>
