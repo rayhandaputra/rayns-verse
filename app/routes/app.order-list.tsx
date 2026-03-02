@@ -185,8 +185,7 @@ export default function OrderList() {
 
   const [viewMode, setViewMode] = useState<"reguler" | "kkn">("reguler");
   const [filterYear, setFilterYear] = useState("");
-  const [filterPeriod, setFilterPeriod] = useState("");
-  const [filterInstitution, setFilterInstitution] = useState("");
+  const [filterKknInstitution, setFilterKknInstitution] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [page, setPage] = useState(1);
 
@@ -219,13 +218,10 @@ export default function OrderList() {
 
   // ... existing code ...
 
-  const { data: institutionList } = useFetcherData({
-    endpoint: nexus()
-      .module("INSTITUTION")
-      .action("get")
-      .params({ size: 200, pagination: "true" })
-      .build(),
-  });
+  const { data: kknInstitutions, loading: loadingKknInstitutions } =
+    useFetcherData({
+      endpoint: nexus().module("OVERVIEW").action("getKknInstitutions").build(),
+    });
 
   const {
     data: orders,
@@ -249,11 +245,8 @@ export default function OrderList() {
         ...(filterYear && {
           year: filterYear,
         }),
-        ...(filterPeriod && {
-          kkn_period: filterPeriod,
-        }),
-        ...(viewMode === "kkn" && filterInstitution && {
-          institution_id: filterInstitution,
+        ...(viewMode === "kkn" && filterKknInstitution && {
+          institution_id: filterKknInstitution,
         }),
         ...(sortBy && {
           sort: sortBy,
@@ -611,7 +604,7 @@ export default function OrderList() {
               )}
             </div>
             <div className="text-xs text-gray-500">
-              {order.pic_name || "-"}{" "}
+              {+order?.is_kkn === 1 ? `${order?.institution_name} ${order?.kkn_year} -` : ""} {order.pic_name || "-"}{" "}
               <a
                 className="text-blue-600 hover:underline"
                 href={getWhatsAppLink(
@@ -1086,27 +1079,21 @@ export default function OrderList() {
           {viewMode === "kkn" ? (
             <>
               <select
-                className="text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
-                value={filterPeriod}
+                className="text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 min-w-[220px]"
+                value={filterKknInstitution}
                 onChange={(e) => {
-                  setFilterPeriod(e.target.value);
+                  setFilterKknInstitution(e.target.value);
+                  setPage(1);
                 }}
+                disabled={loadingKknInstitutions}
               >
-                <option value="">Semua Periode</option>
-                <option value="1">Periode 1</option>
-                <option value="2">Periode 2</option>
-              </select>
-              <select
-                className="text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
-                value={filterInstitution}
-                onChange={(e) => {
-                  setFilterInstitution(e.target.value);
-                }}
-              >
-                <option value="">Semua Institusi</option>
-                {(institutionList?.data?.items ?? []).map((inst: any) => (
-                  <option key={inst.id} value={inst.id}>
-                    {inst.name}
+                <option value="">Semua Institusi KKN</option>
+                {(Array.isArray(kknInstitutions?.data)
+                  ? kknInstitutions.data
+                  : []
+                ).map((inst: any, idx: number) => (
+                  <option key={idx} value={inst.institution_id}>
+                    {inst.institution_name}
                   </option>
                 ))}
               </select>

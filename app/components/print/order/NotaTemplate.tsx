@@ -245,10 +245,17 @@ export const PrintNotaTemplate = React.forwardRef<
               </p>
             </div>
           </div>
-          <div className="text-center border-t border-gray-800 w-40 pt-1">
+          <div className="text-center w-40 pt-1 relative">
             <p className="text-[10px] uppercase font-bold">Hormat Kami,</p>
-            <div className="h-12"></div>
-            <p className="text-xs font-bold">Admin Kinau.id</p>
+            <div className="relative h-16 flex items-center justify-center">
+              <img
+                src="/capkinau.png"
+                alt="Cap Kinau"
+                className="absolute w-24 opacity-80"
+                style={{ transform: "rotate(-20deg)" }}
+              />
+            </div>
+            <p className="text-xs border-t border-gray-800  font-bold">Admin Kinau.id</p>
           </div>
         </div>
       </div>

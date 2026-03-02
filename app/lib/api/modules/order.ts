@@ -548,16 +548,20 @@ export const OrderAPI = {
               purpose: checkPurpose(folderName), // tetap mengambil nama kategori sebagai purpose
             }));
           });
-          await APIProvider({
-            endpoint: "bulk-insert",
-            method: "POST",
-            table: "order_upload_folders",
-            action: "bulk-insert",
-            body: {
-              rows: folderRows,
-              updateOnDuplicate: true,
-            },
-          });
+
+          if (folderRows.length > 0) {
+            await APIProvider({
+              endpoint: "bulk-insert",
+              method: "POST",
+              table: "order_upload_folders",
+              action: "bulk-insert",
+              body: {
+                rows: folderRows,
+                updateOnDuplicate: true,
+              },
+            });
+          }
+
         }
       }
 
@@ -894,59 +898,62 @@ export const OrderAPI = {
           },
         });
 
-        const itemRows = items.map(async (item: any) => {
-          const qty = item?.qty || item?.quantity || 1;
-          const unit_price = item?.unit_price || item?.price || 0;
-          const subtotal = qty * unit_price;
-          const discount_total =
-            item?.discount_type === "percent"
-              ? (subtotal * (item?.discount_value || 0)) / 100
-              : item?.discount_value || 0;
-          const tax_value =
-            ((subtotal - discount_total) * (item?.tax_percent || 0)) / 100;
+        // Tambahkan await Promise.all di depan items.map
+        const itemRows = await Promise.all(
+          items.map(async (item: any) => {
+            const qty = item?.qty || item?.quantity || 1;
+            const unit_price = item?.unit_price || item?.price || 0;
+            const subtotal = qty * unit_price;
+            const discount_total =
+              item?.discount_type === "percent"
+                ? (subtotal * (item?.discount_value || 0)) / 100
+                : item?.discount_value || 0;
+            const tax_value =
+              ((subtotal - discount_total) * (item?.tax_percent || 0)) / 100;
 
-          let defVariant = null
-          if (!item?.variant_id) {
-            defVariant = await APIProvider({
-              endpoint: "select",
-              method: "POST",
-              table: "product_variants",
-              action: "select",
-              body: {
-                columns: ["id", "variant_name", "is_default"],
-                where: {
-                  product_id: item?.product_id || item?.productId || null,
-                  is_default: 1,
+            let defVariant = null;
+            if (!item?.variant_id) {
+              defVariant = await APIProvider({
+                endpoint: "select",
+                method: "POST",
+                table: "product_variants",
+                action: "select",
+                body: {
+                  columns: ["id", "variant_name", "is_default"],
+                  where: {
+                    product_id: item?.product_id || item?.productId || null,
+                    is_default: 1,
+                  },
                 },
-              },
-            });
-          }
+              });
+            }
 
-          return {
-            order_number: order_number || existOrder?.order_number,
-            product_id: item?.product_id || item?.productId || null,
-            product_name: item?.product_name || item?.productName || null,
-            product_type: item?.product_type || "single",
-            qty,
-            unit_price,
-            discount_type: item?.discount_type || null,
-            discount_value: item?.discount_value || 0,
-            tax_percent: item?.tax_percent || 0,
-            subtotal,
-            discount_total,
-            tax_value,
-            total_after_tax: subtotal - discount_total + tax_value,
-            notes: item?.notes || null,
-            variant_id: defVariant?.id || item?.variant_id || null,
-            variant_name: defVariant?.variant_name || item?.variant_name || null,
-            variant_price: defVariant?.base_price || item?.variant_price || null,
-            variant_final_price: item?.variant_final_price || null,
-            price_rule_id: item?.price_rule_id || null,
-            price_rule_min_qty: item?.price_rule_min_qty || null,
-            price_rule_value: item?.price_rule_value || null,
-            deleted_on: null,
-          };
-        });
+            return {
+              order_number: order_number || existOrder?.order_number,
+              product_id: item?.product_id || item?.productId || null,
+              product_name: item?.product_name || item?.productName || null,
+              product_type: item?.product_type || "single",
+              qty,
+              unit_price,
+              discount_type: item?.discount_type || null,
+              discount_value: item?.discount_value || 0,
+              tax_percent: item?.tax_percent || 0,
+              subtotal,
+              discount_total,
+              tax_value,
+              total_after_tax: subtotal - discount_total + tax_value,
+              notes: item?.notes || null,
+              variant_id: defVariant?.id || item?.variant_id || null,
+              variant_name: defVariant?.variant_name || item?.variant_name || null,
+              variant_price: defVariant?.base_price || item?.variant_price || null,
+              variant_final_price: item?.variant_final_price || null,
+              price_rule_id: item?.price_rule_id || null,
+              price_rule_min_qty: item?.price_rule_min_qty || null,
+              price_rule_value: item?.price_rule_value || null,
+              deleted_on: null,
+            };
+          })
+        );
 
         await APIProvider({
           endpoint: "bulk-insert",

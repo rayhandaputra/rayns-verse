@@ -71,6 +71,12 @@ export interface OverviewResponse {
   recent_orders: RecentOrder[];
 }
 
+export interface KknInstitutionItem {
+  institution_name: string;
+  freq: number;
+  total_sales: number;
+}
+
 // ============================================
 // API MODULE
 // ============================================
@@ -577,6 +583,66 @@ export const OverviewAPI = {
         total_unpaid: 0,
         avg_order_value: 0,
       };
+    }
+  },
+
+  // ============================================================
+  // ✅ GET KKN INSTITUTION LIST (grouped by periode & tahun)
+  // ============================================================
+  getKknInstitutions: async ({ req }: any): Promise<KknInstitutionItem[]> => {
+    try {
+      const result = await APIProvider({
+        endpoint: "select",
+        method: "POST",
+        table: "orders",
+        action: "select",
+        body: {
+          columns: [
+            `(
+              SELECT JSON_ARRAYAGG(
+                JSON_OBJECT(
+                  'institution_name', top_ten.display_name,
+                  'freq', top_ten.freq,
+                  'total_sales', top_ten.total_sales,
+                  'institution_id', top_ten.institution_id
+                )
+              )
+              FROM (
+                SELECT 
+                  institution_id, 
+                  CASE 
+                    WHEN is_kkn = 1 AND kkn_period IS NOT NULL AND kkn_period != '' AND kkn_period != '0'
+                    THEN CONCAT(institution_name, ' ', kkn_year, ' - PERIODE ', kkn_period)
+                    ELSE institution_name 
+                  END AS display_name,
+                  COUNT(id) AS freq,
+                  SUM(total_amount) AS total_sales
+                FROM orders
+                WHERE deleted_on IS NULL AND is_kkn = 1
+                GROUP BY institution_id, kkn_period, kkn_year
+                ORDER BY total_sales DESC
+                LIMIT 10
+              ) AS top_ten
+            ) AS institution_ranks`,
+          ],
+          where: { deleted_on: "null" },
+          size: 1,
+        },
+      });
+
+      const raw = result.items?.[0]?.institution_ranks;
+      const parsed: KknInstitutionItem[] =
+        typeof raw === "string" ? JSON.parse(raw) : raw ?? [];
+
+      return parsed.map((item: any) => ({
+        institution_id: item.institution_id,
+        institution_name: item.institution_name,
+        freq: Number(item.freq),
+        total_sales: Number(item.total_sales),
+      }));
+    } catch (err: any) {
+      console.error("❌ ERROR OverviewAPI.getKknInstitutions:", err);
+      return [];
     }
   },
 };
