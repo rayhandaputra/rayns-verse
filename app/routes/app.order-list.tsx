@@ -583,9 +583,11 @@ export default function OrderList() {
                       {safeParseObject(order?.kkn_detail)?.value}
                     </span>
                     {/* Badge Periode disisipkan di sini */}
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
-                      Periode {order.kkn_period}
-                    </span>
+                    {!filterKknInstitution && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                        Periode {order.kkn_period}
+                      </span>
+                    )}
                   </div>
                 )
                 : (
@@ -684,18 +686,18 @@ export default function OrderList() {
             <div className="text-xs font-bold text-gray-900">
               {new Intl.NumberFormat("id-ID").format(order.total_amount)}
             </div>
-            {+(order.is_sponsor ?? 0) === 0 && (
-              <span
-                className={`px-2 py-0.5 rounded text-[10px] font-medium mt-1 inline-block ${order.payment_status === "paid"
-                  ? "bg-green-100 text-green-700"
-                  : order.payment_status === "down_payment"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-red-100 text-red-600"
-                  }`}
-              >
-                {getPaymentStatusLabel(order.payment_status)}
-              </span>
-            )}
+            {/* {+(order.is_sponsor ?? 0) === 0 && ( */}
+            <span
+              className={`px-2 py-0.5 rounded text-[10px] font-medium mt-1 inline-block ${order.payment_status === "paid"
+                ? "bg-green-100 text-green-700"
+                : order.payment_status === "down_payment"
+                  ? "bg-yellow-100 text-yellow-700"
+                  : "bg-red-100 text-red-600"
+                }`}
+            >
+              {getPaymentStatusLabel(order.payment_status)}
+            </span>
+            {/* )} */}
           </div>
         ),
       },
