@@ -681,32 +681,35 @@ export default function OrderList() {
         header: "Total Bayar",
         cellClassName: "whitespace-nowrap text-sm font-bold text-gray-900",
         // cell: (order) => formatCurrency(order.total_amount ?? 0),
-        cell: (order) => (
-          <div className="px-6 py-4">
-            <div className="text-xs font-bold text-gray-900">
-              {new Intl.NumberFormat("id-ID").format(Number(order.total_amount) || 0)}
-            </div>
-            {Number(order.discount_value) > 0 && (
-              <div className="text-[10px] text-red-500 font-medium line-through">
-                {new Intl.NumberFormat("id-ID").format(
-                  (Number(order.total_amount) || 0) + (Number(order.discount_value) || 0)
-                )}
+        cell: (order) => {
+          const tAmount = Number(order.total_amount) || 0;
+          const dAmount = Number(order.discount_value) || 0;
+
+          return (
+            <div className="px-6 py-4">
+              <div className="text-xs font-bold text-gray-900">
+                {new Intl.NumberFormat("id-ID").format(tAmount)}
               </div>
-            )}
-            {/* {+(order.is_sponsor ?? 0) === 0 && ( */}
-            <span
-              className={`px-2 py-0.5 rounded text-[10px] font-medium mt-1 inline-block ${order.payment_status === "paid"
-                ? "bg-green-100 text-green-700"
-                : order.payment_status === "down_payment"
-                  ? "bg-yellow-100 text-yellow-700"
-                  : "bg-red-100 text-red-600"
-                }`}
-            >
-              {getPaymentStatusLabel(order.payment_status)}
-            </span>
-            {/* )} */}
-          </div>
-        ),
+              {dAmount > 0 && (
+                <div className="text-[10px] text-red-500 font-medium line-through">
+                  {new Intl.NumberFormat("id-ID").format(tAmount + dAmount)}
+                </div>
+              )}
+              {/* {+(order.is_sponsor ?? 0) === 0 && ( */}
+              <span
+                className={`px-2 py-0.5 rounded text-[10px] font-medium mt-1 inline-block ${order.payment_status === "paid"
+                  ? "bg-green-100 text-green-700"
+                  : order.payment_status === "down_payment"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-red-100 text-red-600"
+                  }`}
+              >
+                {getPaymentStatusLabel(order.payment_status)}
+              </span>
+              {/* )} */}
+            </div>
+          );
+        },
       },
       {
         key: "link",
