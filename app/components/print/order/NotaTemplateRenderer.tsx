@@ -108,6 +108,18 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     textTransform: "uppercase",
   },
+  partnerBadge: {
+    backgroundColor: "#f3e8ff",
+    color: "#7e22ce",
+    borderColor: "#e9d5ff",
+    borderWidth: 1,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 3,
+    fontSize: 6,
+    fontWeight: "bold",
+    textTransform: "uppercase",
+  },
 
   // Table
   table: { marginTop: 10, marginBottom: 20 },
@@ -204,15 +216,18 @@ export const NotaPdfTemplate = ({
   order,
   items,
   logoPath,
+  capPath,
 }: {
   order: any;
   items: any[];
   logoPath: string;
+  capPath?: string;
 }) => {
   const total = order?.total_amount || 0;
   const paid = order?.dp_amount || 0;
   const remain = Math.max(0, total - paid);
   const isPaidOff = remain === 0;
+  const discountAmount = Number(order?.discount_total) || Number(order?.discount_value) || 0;
 
   // Helper untuk warna status
   const getStatusColor = (status: string) => {
@@ -252,7 +267,12 @@ export const NotaPdfTemplate = ({
         {/* Info Pelanggan & Deadline */}
         <View style={styles.grid}>
           <View style={styles.infoBox}>
-            <Text style={styles.infoLabel}>PEMESAN</Text>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+              <Text style={[styles.infoLabel, { marginBottom: 0 }]}>PEMESAN</Text>
+              {+(order?.is_sponsor ?? 0) === 1 && (
+                <Text style={styles.partnerBadge}>Partner / Sponsor</Text>
+              )}
+            </View>
             <Text style={styles.infoValue}>
               {+order?.is_kkn === 1
                 ? order?.kkn_type?.toLowerCase() === "ppm"
@@ -371,6 +391,22 @@ export const NotaPdfTemplate = ({
           </View>
 
           <View style={styles.summarySection}>
+            {discountAmount > 0 && (
+              <>
+                <View style={styles.summaryItem}>
+                  <Text style={{ color: "#6b7280" }}>Subtotal</Text>
+                  <Text style={{ fontWeight: "bold" }}>
+                    {formatCurrency(total + discountAmount)}
+                  </Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={{ color: "#6b7280" }}>Diskon</Text>
+                  <Text style={{ fontWeight: "bold", color: "#ef4444" }}>
+                    -{formatCurrency(discountAmount)}
+                  </Text>
+                </View>
+              </>
+            )}
             <View style={styles.summaryItem}>
               <Text style={{ color: "#6b7280" }}>Total Tagihan</Text>
               <Text style={{ fontWeight: "bold" }}>
@@ -438,10 +474,23 @@ export const NotaPdfTemplate = ({
               <Text>4. Cap basah dapat diminta saat pengambilan barang.</Text>
             </View>
           </View>
-          <View style={{ alignItems: "center" }}>
+          <View style={{ alignItems: "center", position: "relative" }}>
             <Text style={{ fontSize: 8, fontWeight: "bold", marginBottom: 30 }}>
               Hormat Kami,
             </Text>
+            {isPaidOff && capPath && (
+              <Image
+                src={capPath}
+                style={{
+                  position: "absolute",
+                  width: 70,
+                  top: 0,
+                  left: 20,
+                  opacity: 0.8,
+                  // transform: "rotate(-20deg)" // disabled due to react-pdf image limits
+                }}
+              />
+            )}
             <View style={styles.signature}>
               <Text style={{ fontSize: 8, fontWeight: "bold" }}>
                 Admin Kinau.id
