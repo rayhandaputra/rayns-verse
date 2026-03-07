@@ -24,27 +24,27 @@ import { API } from "~/lib/api";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const url = new URL(request.url);
-  const { page = 0, size = 10 } = Object.fromEntries(
+  const { page = 0, size = 10, search = "" } = Object.fromEntries(
     url.searchParams.entries()
   );
   try {
     const supplier = await API.INSTITUTION.get({
-      // session,
       session: {},
       req: {
-        pagination: "true",
-        page: 0,
-        size: 10,
+        query: {
+          pagination: "true",
+          page,
+          size,
+          search
+        }
       } as any,
     });
 
     return {
-      // search,
-      // APP_CONFIG: CONFIG,
       table: {
         ...supplier,
-        page: 0,
-        size: 10,
+        page: Number(page),
+        size: Number(size),
       },
     };
   } catch (err) {
@@ -231,25 +231,38 @@ export default function AccountPage() {
           />
         }
         actions={
-          <Button
-            className="bg-blue-700 hover:bg-blue-600 text-white"
-            onClick={() =>
-              setModal({
-                ...modal,
-                open: true,
-                key: "create",
-                data: null,
-              })
-            }
-          >
-            <PlusCircleIcon className="w-4" />
-            Institusi Baru
-          </Button>
+          <div className="flex gap-2">
+            <Form method="get" className="flex items-center">
+              <Input
+                name="search"
+                placeholder="Cari Institusi..."
+                className="w-64 h-9"
+              />
+              <Button type="submit" variant="secondary" className="ml-2 h-9">
+                Cari
+              </Button>
+            </Form>
+            <Button
+              className="bg-blue-700 hover:bg-blue-600 text-white h-9"
+              onClick={() =>
+                setModal({
+                  ...modal,
+                  open: true,
+                  key: "create",
+                  data: null,
+                })
+              }
+            >
+              <PlusCircleIcon className="w-4" />
+              Institusi Baru
+            </Button>
+          </div>
         }
       />
-
-      <TableComponent columns={columns} data={table} />
-
+      <TableComponent
+        columns={columns}
+        data={table}
+      />
       {(modal?.key === "create" || modal?.key === "update") && (
         <Modal
           open={modal?.open}
@@ -266,6 +279,15 @@ export default function AccountPage() {
                 name="name"
                 placeholder="Masukkan Nama Institusi"
                 defaultValue={modal?.data?.name}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Singkatan / Domain Utama</Label>
+              <Input
+                type="text"
+                name="abbr"
+                placeholder="Contoh: UNISMA"
+                defaultValue={modal?.data?.abbr}
               />
             </div>
             <div className="flex justify-end gap-2">

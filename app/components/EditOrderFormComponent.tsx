@@ -79,7 +79,7 @@ interface OrderFormProps {
 
 type InstitutionMode = "new" | "existing" | "personal";
 type PaymentStatus = "none" | "down_payment" | "paid";
-type DiscountType = "fixed" | "percent" | null;
+type DiscountType = "fixed" | "percent" | "nominal" | null;
 type KKNType = "PPM" | "Tematik" | null;
 
 interface FormState {
@@ -152,11 +152,10 @@ const SwitchToggle = ({
         key={String(opt.val)}
         type="button"
         onClick={() => onChange(opt.val)}
-        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
-          value === opt.val
+        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${value === opt.val
             ? "bg-white shadow text-gray-900"
             : "text-gray-500 hover:text-gray-700"
-        }`}
+          }`}
       >
         {opt.label}
       </button>
@@ -301,7 +300,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
     let discountAmount = 0;
     if (form.discount_type === "percent") {
       discountAmount = subTotal * (form.discount_value / 100);
-    } else if (form.discount_type === "fixed") {
+    } else if (form.discount_type === "fixed" || form.discount_type === "nominal") {
       discountAmount = form.discount_value;
     }
 
@@ -324,7 +323,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
     const qty = Number(item.qty) || 0;
     const priceRules = safeParseArray(
       item.product_price_rules ||
-        products?.find((x) => +x?.id === +item?.product_id)?.product_price_rules
+      products?.find((x) => +x?.id === +item?.product_id)?.product_price_rules
     ).sort((a, b) => b.min_qty - a.min_qty);
     const rule = priceRules.find((r) => qty >= Number(r.min_qty));
 
@@ -542,9 +541,9 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                         value={
                           form.items[0]?.product_id
                             ? {
-                                value: form.items[0].product_id,
-                                label: form.items[0].product_name,
-                              }
+                              value: form.items[0].product_id,
+                              label: form.items[0].product_name,
+                            }
                             : null
                         }
                         loadOptions={loadOptions.product}
@@ -673,9 +672,9 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                           value={
                             form.institution_id
                               ? {
-                                  value: form.institution_id,
-                                  label: form.institution_name,
-                                }
+                                value: form.institution_id,
+                                label: form.institution_name,
+                              }
                               : null
                           }
                           onChange={(v: any) =>
@@ -754,9 +753,9 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                         value={
                           item.product_id
                             ? {
-                                value: item.product_id,
-                                label: item.product_name,
-                              }
+                              value: item.product_id,
+                              label: item.product_name,
+                            }
                             : null
                         }
                         loadOptions={loadOptions.product}
@@ -803,21 +802,21 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                         )} */}
                         {!safeParseArray(item?.product_variants)?.length
                           ? safeParseArray(
-                              products?.find(
-                                (x) => +x?.id === +item?.product_id
-                              )?.product_variants
-                            )?.map((v: any) => (
+                            products?.find(
+                              (x) => +x?.id === +item?.product_id
+                            )?.product_variants
+                          )?.map((v: any) => (
+                            <option key={v.id} value={v.id}>
+                              {v.variant_name} ({v.base_price})
+                            </option>
+                          ))
+                          : safeParseArray(item?.product_variants).map(
+                            (v: any) => (
                               <option key={v.id} value={v.id}>
                                 {v.variant_name} ({v.base_price})
                               </option>
-                            ))
-                          : safeParseArray(item?.product_variants).map(
-                              (v: any) => (
-                                <option key={v.id} value={v.id}>
-                                  {v.variant_name} ({v.base_price})
-                                </option>
-                              )
-                            )}
+                            )
+                          )}
                       </select>
                     </div>
                     <div className="flex gap-2 w-full md:w-auto">

@@ -17,10 +17,11 @@ export const PrintNotaTemplate = React.forwardRef<
   HTMLDivElement,
   PrintNotaTemplateProps
 >(({ order, items }, ref) => {
-  const total = order?.total_amount || 0;
-  const paid = order?.dp_amount || 0;
+  const total = Number(order?.total_amount) || 0;
+  const paid = Number(order?.dp_amount) || 0;
   const remain = Math.max(0, total - paid);
   const isPaidOff = order?.payment_status === "paid";
+  const discountAmount = Number(order?.discount_total) || Number(order?.discount_value) || 0;
 
   return (
     <div
@@ -58,9 +59,16 @@ export const PrintNotaTemplate = React.forwardRef<
         {/* Info Pelanggan & Deadline */}
         <div className="grid grid-cols-2 gap-6 mb-8">
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-            <h3 className="text-[10px] font-bold text-gray-400 uppercase mb-1">
-              Pemesan
-            </h3>
+            <div className="flex justify-between items-start mb-1">
+              <h3 className="text-[10px] font-bold text-gray-400 uppercase">
+                Pemesan
+              </h3>
+              {+(order?.is_sponsor ?? 0) === 1 && (
+                <span className="bg-purple-600/10 text-purple-700 border border-purple-200 px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider">
+                  Partner / Sponsor
+                </span>
+              )}
+            </div>
             <p className="font-bold text-lg text-gray-900 leading-tight">
               {+order?.is_kkn === 1
                 ? order?.kkn_type?.toLowerCase() === "ppm"
@@ -188,6 +196,20 @@ export const PrintNotaTemplate = React.forwardRef<
 
           {/* Ringkasan Biaya */}
           <div className="w-64 space-y-2">
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Subtotal</span>
+                <span className="font-bold">{formatCurrency(total + discountAmount)}</span>
+              </div>
+            )}
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Diskon</span>
+                <span className="font-medium text-red-500">
+                  -{formatCurrency(discountAmount)}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Total Tagihan</span>
               <span className="font-bold">{formatCurrency(total)}</span>

@@ -31,6 +31,7 @@ import {
   Printer,
   ShoppingCart,
   LayoutTemplate,
+  Building,
 } from "lucide-react";
 import { Sheet, SheetContent } from "~/components/ui/sheet";
 import { requireAuth } from "~/lib/session.server";
@@ -109,6 +110,12 @@ export const ADMIN_NAVIGATION: MenuItem[] = [
     label: "Manajemen Akun",
     href: "/app/user",
     icon: UserCog2Icon,
+  },
+  {
+    id: "institution",
+    label: "Manajemen Institusi",
+    href: "/app/master/institution",
+    icon: Building,
   },
   {
     id: "bin",

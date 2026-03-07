@@ -103,10 +103,11 @@ const NotaView: React.FC<NotaViewProps> = ({
     );
   }, [client]);
 
-  const total = order?.total_amount || 0;
-  const paid = order?.dp_amount || 0;
+  const total = Number(order?.total_amount) || 0;
+  const paid = Number(order?.dp_amount) || 0;
   const remain = Math.max(0, total - paid);
   const isPaidOff = remain === 0;
+  const discountAmount = Number((order as any)?.discount_total) || Number((order as any)?.discount_value) || 0;
 
   const handleRatingChange = (newRating: number) => {
     setRating(newRating);
@@ -219,9 +220,16 @@ const NotaView: React.FC<NotaViewProps> = ({
           )}
 
           <div className="relative z-10">
-            <h3 className="text-xs font-bold text-gray-400 uppercase mb-2">
-              Pemesan
-            </h3>
+            <div className="flex justify-between items-start mb-1">
+              <h3 className="text-xs font-bold text-gray-400 uppercase">
+                Pemesan
+              </h3>
+              {+(order?.is_sponsor ?? 0) === 1 && (
+                <span className="bg-purple-600/10 text-purple-700 border border-purple-200 px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider">
+                  Partner / Sponsor
+                </span>
+              )}
+            </div>
             <p className="font-bold text-lg leading-tight">
               {+order?.is_kkn !== 1
                 ? order.institution_name
@@ -252,13 +260,12 @@ const NotaView: React.FC<NotaViewProps> = ({
                 </span>
                 <div className="flex flex-col items-start">
                   <span
-                    className={`font-bold text-sm px-2 py-1 rounded print:bg-transparent print:p-0 print:text-black print:border print:border-gray-300 ${
-                      order.payment_status === "paid"
-                        ? "bg-green-100 text-green-700"
-                        : order.payment_status === "down_payment"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-600"
-                    }`}
+                    className={`font-bold text-sm px-2 py-1 rounded print:bg-transparent print:p-0 print:text-black print:border print:border-gray-300 ${order.payment_status === "paid"
+                      ? "bg-green-100 text-green-700"
+                      : order.payment_status === "down_payment"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-red-100 text-red-600"
+                      }`}
                   >
                     {getPaymentStatusLabel(order.payment_status || "")}
                   </span>
@@ -326,7 +333,7 @@ const NotaView: React.FC<NotaViewProps> = ({
                     {/* {formatCurrency(item.unit_price)} */}
                     {formatCurrency(
                       +(item?.price_rule_value ?? 0) +
-                        +(item?.variant_price ?? 0)
+                      +(item?.variant_price ?? 0)
                     )}
                   </td>
                   <td className="py-3 text-right font-medium">
@@ -342,9 +349,23 @@ const NotaView: React.FC<NotaViewProps> = ({
         {/* Totals */}
         <div className="flex justify-end mb-8">
           <div className="w-3/5 space-y-2">
-            <div className="flex justify-between text-sm pt-2 border-t border-gray-100">
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-sm pt-2 border-t border-gray-100">
+                <span className="text-gray-500">Subtotal</span>
+                <span className="font-bold">{formatCurrency(total + discountAmount)}</span>
+              </div>
+            )}
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Diskon</span>
+                <span className="font-medium text-red-500">
+                  -{formatCurrency(discountAmount)}
+                </span>
+              </div>
+            )}
+            <div className={`flex justify-between text-sm ${discountAmount > 0 ? '' : 'pt-2 border-t border-gray-100'}`}>
               <span className="text-gray-500">Total Tagihan</span>
-              <span className="font-bold">{formatCurrency(total || 0)}</span>
+              <span className="font-bold">{formatCurrency(total)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Sudah Bayar (DP)</span>
@@ -517,38 +538,38 @@ const NotaView: React.FC<NotaViewProps> = ({
               </button>
             </Form>
           ) : /* TAMPILAN UNTUK DESKTOP (Print Preview Browser) */
-          PrintButton ? (
-            <PrintButton>
-              {({ handlePrint }: any) => (
-                <button
-                  onClick={async () => {
-                    try {
-                      handlePrint({
-                        order: order,
-                        items: safeParseArray(order.order_items),
-                      });
-                    } catch (err) {
-                      console.error("Gagal print nota:", err);
-                      toast.error("Gagal memuat data nota.");
-                    }
-                  }}
-                  className="flex items-center justify-center gap-2 py-2 px-3 bg-gray-900 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 transition-colors"
-                >
-                  <Printer size={14} />
-                  <span>Cetak Nota</span>
-                </button>
-              )}
-            </PrintButton>
-          ) : (
-            /* LOADING STATE */
-            <button
-              disabled
-              className="flex items-center justify-center gap-2 py-2 px-3 bg-gray-300 text-gray-600 rounded-lg text-xs font-semibold cursor-not-allowed"
-            >
-              <Printer size={14} />
-              <span>Loading Print...</span>
-            </button>
-          )}
+            PrintButton ? (
+              <PrintButton>
+                {({ handlePrint }: any) => (
+                  <button
+                    onClick={async () => {
+                      try {
+                        handlePrint({
+                          order: order,
+                          items: safeParseArray(order.order_items),
+                        });
+                      } catch (err) {
+                        console.error("Gagal print nota:", err);
+                        toast.error("Gagal memuat data nota.");
+                      }
+                    }}
+                    className="flex items-center justify-center gap-2 py-2 px-3 bg-gray-900 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 transition-colors"
+                  >
+                    <Printer size={14} />
+                    <span>Cetak Nota</span>
+                  </button>
+                )}
+              </PrintButton>
+            ) : (
+              /* LOADING STATE */
+              <button
+                disabled
+                className="flex items-center justify-center gap-2 py-2 px-3 bg-gray-300 text-gray-600 rounded-lg text-xs font-semibold cursor-not-allowed"
+              >
+                <Printer size={14} />
+                <span>Loading Print...</span>
+              </button>
+            )}
 
           {/* Hidden file input */}
           <input
@@ -575,9 +596,8 @@ const NotaView: React.FC<NotaViewProps> = ({
                   <button
                     key={i}
                     onClick={() => setRating(i + 1)}
-                    className={`transition ${
-                      i < rating ? "text-yellow-400" : "text-gray-300"
-                    } cursor-pointer hover:scale-110`}
+                    className={`transition ${i < rating ? "text-yellow-400" : "text-gray-300"
+                      } cursor-pointer hover:scale-110`}
                   >
                     <Star
                       size={24}

@@ -684,8 +684,15 @@ export default function OrderList() {
         cell: (order) => (
           <div className="px-6 py-4">
             <div className="text-xs font-bold text-gray-900">
-              {new Intl.NumberFormat("id-ID").format(order.total_amount)}
+              {new Intl.NumberFormat("id-ID").format(Number(order.total_amount) || 0)}
             </div>
+            {Number(order.discount_value) > 0 && (
+              <div className="text-[10px] text-red-500 font-medium line-through">
+                {new Intl.NumberFormat("id-ID").format(
+                  (Number(order.total_amount) || 0) + (Number(order.discount_value) || 0)
+                )}
+              </div>
+            )}
             {/* {+(order.is_sponsor ?? 0) === 0 && ( */}
             <span
               className={`px-2 py-0.5 rounded text-[10px] font-medium mt-1 inline-block ${order.payment_status === "paid"
