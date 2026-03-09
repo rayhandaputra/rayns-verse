@@ -898,6 +898,111 @@ export const OrderAPI = {
           },
         });
 
+        // const products = await APIProvider({
+        //   endpoint: "select",
+        //   method: "POST",
+        //   table: "products",
+        //   action: "select",
+        //   body: {
+        //     columns: ["id", "name", "category_id"],
+        //     where: {
+        //       id: items?.map((v: any) => +(v?.product_id || v?.productId))?.join(","),
+        //     },
+        //   },
+        // });
+
+        // // CREATE DRIVE FOLDERS IF THEY DON'T EXIST
+        // if (+updatedOrder?.is_archive === 0) {
+        //   const checkFolderExists = await APIProvider({
+        //     endpoint: "select",
+        //     method: "POST",
+        //     table: "order_upload_folders",
+        //     action: "select",
+        //     body: {
+        //       columns: ["id"],
+        //       where: {
+        //         order_number,
+        //         level: 1, // Main folder
+        //         deleted_on: "null"
+        //       },
+        //       size: 1
+        //     }
+        //   });
+
+        //   // Only create if main folder exists
+        //   if (checkFolderExists?.items?.length > 0) {
+        //     const parentId = checkFolderExists.items[0].id;
+        //     const existingChildFolders = await APIProvider({
+        //       endpoint: "select",
+        //       method: "POST",
+        //       table: "order_upload_folders",
+        //       action: "select",
+        //       body: {
+        //         columns: ["purpose"],
+        //         where: {
+        //           parent_id: parentId,
+        //           deleted_on: "null"
+        //         }
+        //       }
+        //     });
+        //     const existingPurposes = existingChildFolders?.items?.map((f: any) => f.purpose) || [];
+
+        //     const categories = await APIProvider({
+        //       endpoint: "select",
+        //       method: "POST",
+        //       table: "product_categories",
+        //       action: "select",
+        //       body: {
+        //         columns: ["id", "name", "default_drive_folders"],
+        //         where: {
+        //           id: products?.items?.map((v: any) => +v?.category_id)?.join(","),
+        //         },
+        //       },
+        //     });
+
+        //     const checkPurpose = (folder: any) => {
+        //       if (folder?.is_card_front) return "id_card_front";
+        //       if (folder?.is_card_back) return "id_card_back";
+        //       if (folder?.is_lanyard) return "lanyard";
+        //       if (folder?.is_sablon_depan) return "sablon_depan";
+        //       if (folder?.is_sablon_belakang) return "sablon_belakang";
+        //       return "other";
+        //     };
+
+        //     const folderRows = categories?.items?.flatMap((v: any) => {
+        //       const folders = v.default_drive_folders
+        //         ? safeParseArray(v.default_drive_folders)
+        //         : [];
+
+        //       return folders.map((folderName: any) => {
+        //         const purpose = checkPurpose(folderName);
+        //         if (existingPurposes.includes(purpose) && purpose !== 'other') {
+        //           return null; // Skip if purpose already exists
+        //         }
+        //         return {
+        //           order_number,
+        //           parent_id: parentId,
+        //           folder_name: typeof folderName === 'string' ? folderName : folderName?.name,
+        //           purpose,
+        //         };
+        //       }).filter(Boolean); // Remove nulls
+        //     });
+
+        //     if (folderRows && folderRows.length > 0) {
+        //       await APIProvider({
+        //         endpoint: "bulk-insert",
+        //         method: "POST",
+        //         table: "order_upload_folders",
+        //         action: "bulk-insert",
+        //         body: {
+        //           rows: folderRows,
+        //           updateOnDuplicate: true,
+        //         },
+        //       });
+        //     }
+        //   }
+        // }
+
         // Tambahkan await Promise.all di depan items.map
         const itemRows = await Promise.all(
           items.map(async (item: any) => {

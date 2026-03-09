@@ -394,7 +394,7 @@ export const NotaPdfTemplate = ({
             {discountAmount > 0 && (
               <>
                 <View style={styles.summaryItem}>
-                  <Text style={{ color: "#6b7280" }}>Subtotal</Text>
+                  <Text style={{ color: "#6b7280" }}>Total</Text>
                   <Text style={{ fontWeight: "bold" }}>
                     {formatCurrency(total + discountAmount)}
                   </Text>

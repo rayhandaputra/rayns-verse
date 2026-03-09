@@ -28,6 +28,7 @@ import { sendTelegramLog } from "~/lib/telegram-log";
 import { getGoogleMapsLink } from "~/constants";
 import JSZip from "jszip";
 import { TwibbonTabContent } from "~/components/ClientUseEditorPage";
+import moment from "moment";
 
 // --- LOADER (LOGIC PRESERVED) ---
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -615,7 +616,7 @@ const Header = ({ orderData, domain, activeCategory }: { orderData: any; domain:
 
   return (
     <div className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
-      <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+      <div className="w-full mx-auto px-4 py-3 flex items-center gap-3">
         {/* Logo */}
         <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-md shadow-blue-200 shrink-0">
           <img src="/head-icon-kinau.png" alt="Kinau" className="w-5 invert brightness-0" />
@@ -648,7 +649,7 @@ const Header = ({ orderData, domain, activeCategory }: { orderData: any; domain:
 const DriveInfoBar = ({ orderData, onViewNota }: { orderData: any; onViewNota: () => void }) => {
   if (!orderData) return null;
   return (
-    <div className="max-w-2xl mx-auto px-3 pt-3 pb-1">
+    <div className="w-full mx-auto px-3 pt-3 pb-1">
       <div className="grid grid-cols-2 gap-2">
         {/* Nota Card */}
         <button
@@ -670,7 +671,7 @@ const DriveInfoBar = ({ orderData, onViewNota }: { orderData: any; onViewNota: (
           href={getGoogleMapsLink()}
           target="_blank"
           rel="noreferrer"
-          className="relative overflow-hidden flex flex-col items-start gap-1 p-3 rounded-2xl bg-red-500 text-white active:scale-95 transition-transform shadow-md shadow-red-200"
+          className="relative overflow-hidden flex flex-col items-start gap-1 p-3 rounded-2xl bg-[#9cff00] text-white active:scale-95 transition-transform shadow-md shadow-[#d7ff99]"
         >
           <div className="absolute -top-3 -right-3 opacity-20">
             <MapPin size={60} />
@@ -679,7 +680,7 @@ const DriveInfoBar = ({ orderData, onViewNota }: { orderData: any; onViewNota: (
             <MapPin size={18} className="text-white" />
           </div>
           <span className="text-xs font-bold leading-tight">Lihat Lokasi</span>
-          <span className="text-[10px] text-red-200">Buka Google Maps</span>
+          <span className="text-[10px] text-[#d7ff99]">Buka Google Maps</span>
         </a>
       </div>
     </div>
@@ -702,7 +703,7 @@ const DriveTabs = ({ activeTab, activeCategory, showBackButton, onBack, onNaviga
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-3 py-2">
+    <div className="w-full mx-auto px-3 py-2">
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
         {showBackButton && (
           <button
@@ -794,7 +795,7 @@ const DriveGrid = ({ folders, files, selectedItem, setSelectedItem, onOpenFolder
           className="group relative p-3 rounded-2xl border border-gray-100 bg-white flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-all duration-150 hover:shadow-md hover:border-gray-200"
         >
           {/* Action menu */}
-          {!folder.isSystem && (
+          {!folder.isSystem && !folder.purpose && (
             <div className="absolute top-2 right-2 z-10" onClick={e => e.stopPropagation()}>
               <button
                 onClick={(e) => { e.stopPropagation(); setSelectedItem(selectedItem === folder.id ? null : folder.id); }}
@@ -931,7 +932,7 @@ const NotFoundPage = ({ domain, session }: { domain: string; session: any; }) =>
 
 const FooterHint = () => (
   <div className="p-3 border-t border-gray-50 text-[10px] text-gray-300 text-center">
-    &copy; 2024 Kinau.id · All rights reserved
+    &copy; {moment().year()} Kinau.id · All rights reserved
   </div>
 );
 

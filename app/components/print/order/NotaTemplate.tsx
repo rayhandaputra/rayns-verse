@@ -198,7 +198,7 @@ export const PrintNotaTemplate = React.forwardRef<
           <div className="w-64 space-y-2">
             {discountAmount > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Subtotal</span>
+                <span className="text-gray-500">Total</span>
                 <span className="font-bold">{formatCurrency(total + discountAmount)}</span>
               </div>
             )}

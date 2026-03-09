@@ -698,13 +698,13 @@ export default function DriveInternalPage() {
   // };
   const handleDownloadAll = (e: React.MouseEvent) => {
     e.preventDefault();
-    
+
     if (!currentFolderId) return toast.error("Folder ID tidak ditemukan");
 
     // Cara paling simpel & efektif:
     // Browser akan menganggap ini sebagai instruksi download file
     const downloadUrl = `/server/drive/${currentFolderId}/download`;
-    
+
     // Membuka di tab baru sebentar lalu otomatis ter-close setelah download trigger
     // Atau langsung ubah location (aman karena ini attachment)
     window.location.href = downloadUrl;
@@ -791,11 +791,11 @@ export default function DriveInternalPage() {
           breadcrumbs={[
             ...(current_folder?.id
               ? [
-                  {
-                    id: current_folder?.id,
-                    name: current_folder?.folder_name,
-                  },
-                ]
+                {
+                  id: current_folder?.id,
+                  name: current_folder?.folder_name,
+                },
+              ]
               : []),
           ]}
           onOpenFolder={(folderId) => handleOpenFolder({ id: folderId })}
@@ -839,11 +839,10 @@ export default function DriveInternalPage() {
                     setSelectedItem(folder.id);
                   }}
                   onDoubleClick={() => handleOpenFolder(folder)}
-                  className={`group relative p-4 rounded-xl border flex flex-col items-center gap-3 cursor-pointer transition-all ${
-                    selectedItem === folder.id
+                  className={`group relative p-4 rounded-xl border flex flex-col items-center gap-3 cursor-pointer transition-all ${selectedItem === folder.id
                       ? "bg-blue-50 border-blue-400 ring-1 ring-blue-400"
                       : "bg-white border-gray-100 hover:border-gray-300 hover:shadow-sm"
-                  } ${clipboard?.id === folder.id ? "opacity-50" : ""}`}
+                    } ${clipboard?.id === folder.id ? "opacity-50" : ""}`}
                 >
                   <Folder
                     size={48}
@@ -873,11 +872,10 @@ export default function DriveInternalPage() {
 
                   {!isSystem && (
                     <div
-                      className={`absolute top-2 right-2 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden transition-all ${
-                        selectedItem === folder.id
+                      className={`absolute top-2 right-2 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden transition-all ${selectedItem === folder.id
                           ? "opacity-100 visible"
                           : "opacity-0 invisible group-hover:visible group-hover:opacity-100"
-                      }`}
+                        }`}
                     >
                       <button
                         onClick={(e) => {
@@ -933,11 +931,10 @@ export default function DriveInternalPage() {
                   setSelectedItem(file.id);
                 }}
                 onDoubleClick={() => window.open(file.file_url, "_blank")}
-                className={`group relative p-4 rounded-xl border flex flex-col items-center gap-3 cursor-pointer transition-all ${
-                  selectedItem === file.id
+                className={`group relative p-4 rounded-xl border flex flex-col items-center gap-3 cursor-pointer transition-all ${selectedItem === file.id
                     ? "bg-blue-50 border-blue-400 ring-1 ring-blue-400"
                     : "bg-white border-gray-100 hover:border-gray-300 hover:shadow-sm"
-                }`}
+                  }`}
               >
                 <FileText size={40} className="text-blue-500" />
                 <div className="text-center w-full">
@@ -950,11 +947,10 @@ export default function DriveInternalPage() {
                 </div>
 
                 <div
-                  className={`absolute top-2 right-2 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden transition-all ${
-                    selectedItem === file.id
+                  className={`absolute top-2 right-2 flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden transition-all ${selectedItem === file.id
                       ? "opacity-100 visible"
                       : "opacity-0 invisible group-hover:visible group-hover:opacity-100"
-                  }`}
+                    }`}
                 >
                   <button
                     onClick={(e) => {

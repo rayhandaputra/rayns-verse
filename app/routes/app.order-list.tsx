@@ -547,7 +547,8 @@ export default function OrderList() {
       {
         key: "no",
         header: "No",
-        cellClassName: "whitespace-nowrap text-xs text-gray-600 font-medium",
+        headerClassName: "w-[60px] min-w-[60px] max-w-[60px] sticky left-0 z-20 bg-gray-100",
+        cellClassName: "bg-white group-hover:bg-gray-50 transition-colors w-[60px] min-w-[60px] max-w-[60px] whitespace-nowrap text-xs text-gray-600 font-medium sticky left-0 z-10",
         cell: (order, index) => {
           const page = orders?.data?.current_page ?? 0;
           const size = 100;
@@ -557,7 +558,8 @@ export default function OrderList() {
       {
         key: "instansi",
         header: "Instansi/Pemesan",
-        cellClassName: "max-w-[180px]",
+        headerClassName: "w-[240px] min-w-[240px] max-w-[240px] sticky left-[60px] z-20 bg-gray-100 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)]",
+        cellClassName: "w-[240px] min-w-[240px] max-w-[240px] bg-white group-hover:bg-gray-50 transition-colors sticky left-[60px] z-10 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)]",
         cell: (order) => (
           <>
             {/* <div className="font-bold text-gray-900 flex items-center gap-2 text-sm">

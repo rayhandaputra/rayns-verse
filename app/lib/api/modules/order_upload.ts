@@ -15,6 +15,7 @@ export const OrderUploadAPI = {
       level,
       id,
       sort,
+      required_order = "",
     } = req.query || {};
 
     const where: any = { deleted_on: "null" };
@@ -28,7 +29,7 @@ export const OrderUploadAPI = {
     if (level !== undefined) {
       where.level = level === null ? "null" : level;
     }
-    if (id) where.id = id;
+    if (id !== undefined) where.id = id;
 
     let sort_by = "created_on";
     let sort_type = "desc";
@@ -46,6 +47,16 @@ export const OrderUploadAPI = {
     //     }
     //   : undefined;
 
+    if (required_order === "true") {
+      where["exists:orders"] = {
+        "foreign_key": "order_number",
+        "reference_key": "order_number",
+        "where": {
+          "deleted_on": "null"
+        }
+      }
+    }
+
     try {
       const result = await APIProvider({
         endpoint: "select",
@@ -60,6 +71,7 @@ export const OrderUploadAPI = {
             "folder_name",
             "parent_id",
             "level",
+            "purpose",
             "product_id",
             "product_name",
             "created_by",
@@ -107,6 +119,7 @@ export const OrderUploadAPI = {
       order_number,
       folder_id,
       sort,
+      required_order = ""
     } = req.query || {};
 
     const where: any = { deleted_on: "null" };
@@ -135,6 +148,16 @@ export const OrderUploadAPI = {
         keyword: search,
       }
       : undefined;
+
+    if (required_order === "true") {
+      where["exists:orders"] = {
+        "foreign_key": "order_number",
+        "reference_key": "order_number",
+        "where": {
+          "deleted_on": "null"
+        }
+      }
+    }
 
     try {
       const result = await APIProvider({
@@ -351,6 +374,7 @@ export const OrderUploadAPI = {
         ...(order_number && { order_number: order_number }),
         ...(product_id && { product_id: product_id }),
         ...(product_name && { product_name: product_name }),
+        ...(req.body?.purpose !== undefined && { purpose: req.body.purpose }),
         folder_name,
       };
 
