@@ -252,7 +252,7 @@ export const NotaPdfTemplate = ({
         <View style={styles.header}>
           <View>
             <Image src={logoPath} style={styles.logo} />
-            <Text style={styles.headerSub}>Your Custom Specialist</Text>
+            <Text style={styles.headerSub}>Kinau | ID Card Specialist</Text>
             <Text style={styles.headerLoc}>Kinau.id Production • Lampung</Text>
           </View>
           <View>

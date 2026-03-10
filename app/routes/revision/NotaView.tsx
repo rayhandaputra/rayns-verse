@@ -137,7 +137,7 @@ const NotaView: React.FC<NotaViewProps> = ({ order, onSaveReview }) => {
               </div>
               <h1 className="text-xl font-bold tracking-tight">Kinau.id</h1>
             </div>
-            <p className="text-xs text-gray-500">Your Custom Specialist</p>
+            <p className="text-xs text-gray-500">Kinau | ID Card Specialist</p>
           </div>
           <div className="text-right">
             <h2 className="text-lg font-bold text-gray-400 uppercase tracking-widest">
@@ -222,13 +222,12 @@ const NotaView: React.FC<NotaViewProps> = ({ order, onSaveReview }) => {
                 </span>
                 <div className="flex flex-col items-start">
                   <span
-                    className={`font-bold text-sm px-2 py-1 rounded print:bg-transparent print:p-0 print:text-black print:border print:border-gray-300 ${
-                      order.statusPembayaran === "Lunas"
+                    className={`font-bold text-sm px-2 py-1 rounded print:bg-transparent print:p-0 print:text-black print:border print:border-gray-300 ${order.statusPembayaran === "Lunas"
                         ? "bg-green-100 text-green-700"
                         : order.statusPembayaran === "DP"
                           ? "bg-yellow-100 text-yellow-700"
                           : "bg-red-100 text-red-600"
-                    }`}
+                      }`}
                   >
                     {order.statusPembayaran === "Tidak Ada"
                       ? "BELUM BAYAR"
@@ -343,7 +342,7 @@ const NotaView: React.FC<NotaViewProps> = ({ order, onSaveReview }) => {
                     order.discount.type === "nominal"
                       ? order.discount.value
                       : (order.totalAmount / (1 - order.discount.value / 100)) *
-                          (order.discount.value / 100) // approx reverse calc
+                      (order.discount.value / 100) // approx reverse calc
                   )}
                 </span>
               </div>

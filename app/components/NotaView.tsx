@@ -186,7 +186,7 @@ const NotaView: React.FC<NotaViewProps> = ({
                 className="w-24 opacity-80 cursor-pointer"
               />
             </div>
-            <p className="text-xs text-gray-500">Your Custom Specialist</p>
+            <p className="text-xs text-gray-500">Kinau | ID Card Specialist</p>
           </div>
           <div className="text-right">
             <h2 className="text-lg font-bold text-gray-400 uppercase tracking-widest">

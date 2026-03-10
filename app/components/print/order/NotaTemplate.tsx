@@ -37,7 +37,7 @@ export const PrintNotaTemplate = React.forwardRef<
               <img src="/kinau-logo.png" alt="Kinau" className="w-28" />
             </div>
             <p className="text-xs text-gray-500 font-medium">
-              Your Custom Specialist
+              Kinau | ID Card Specialist
             </p>
             <p className="text-[10px] text-gray-400">
               Kinau.id Production • Lampung
