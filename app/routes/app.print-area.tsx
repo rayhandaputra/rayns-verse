@@ -851,6 +851,7 @@
 //     </div>
 //   );
 // }
+
 import React, {
   useState,
   useMemo,
@@ -1012,8 +1013,8 @@ const A4Sheet: React.FC<{
             >
               <div
                 className={`relative group flex items-center justify-center overflow-hidden ${slot
-                    ? "bg-white border border-gray-200"
-                    : "bg-gray-50 border border-dashed border-gray-200"
+                  ? "bg-white border border-gray-200"
+                  : "bg-gray-50 border border-dashed border-gray-200"
                   }`}
                 style={{
                   width: "56mm",
@@ -1079,182 +1080,105 @@ const LanyardSheet: React.FC<{
 }> = ({
   pageSlots,
   pageIndex,
-  totalSlots,
   onRemove,
   onClone,
   onCopyByCard,
   onColorChange,
 }) => {
     return (
-      <div
-        className="lanyard-sheet bg-white shadow-2xl mx-auto border border-gray-200 relative mb-20 overflow-hidden print:shadow-none print:border-0 print:m-0"
-        style={{
-          width: "21cm",
-          height: "103.2cm",
-          paddingTop: "15mm",
-          boxSizing: "border-box",
-          display: "block",
-          imageRendering: "-webkit-optimize-contrast",
-        }}
-      >
+      <div className="lanyard-sheet bg-white shadow-2xl mx-auto border border-gray-200 relative mb-20 overflow-hidden print:shadow-none print:border-0 print:m-0">
+        {/* Penomoran Lembar (Hanya Muncul di Layar) */}
         <div className="absolute top-[11mm] left-1/2 -translate-x-1/2 text-black font-extrabold text-[8px] no-print uppercase tracking-widest">
           LEMBAR {pageIndex + 1}
         </div>
 
-        {/* Garis-garis pembantu (Guides) from Kode 2 */}
-        {[
-          { color: "#000000", top: "calc(15mm + 5cm)", thickness: "1px" },
-          { color: "#FFFF00", top: "calc(15mm + 35cm)", thickness: "1px" },
-          { color: "#FF00FF", top: "calc(15mm + 65cm)", thickness: "1px" },
-          { color: "#00FFFF", top: "calc(15mm + 95cm)", thickness: "1px" },
-        ].map((line, i) => (
-          <div
-            key={i}
-            className="absolute left-0 right-0 z-0"
-            style={{
-              top: line.top,
-              height: line.thickness,
-              backgroundColor: line.color,
-            }}
-          />
-        ))}
-        {/* Garis Tengah: CMYK Gradient */}
-        <div
-          className="absolute left-0 right-0 z-0"
-          style={{
-            top: "calc(15mm + 50cm)",
-            height: "2px",
-            background:
-              "linear-gradient(to right, #000000, #FFFF00, #FF00FF, #00FFFF)",
-          }}
-        />
+        {/* Garis Bantu CMYK (Guides) - Dibuat sangat tipis agar tidak merusak presisi */}
+        <div className="absolute inset-0 pointer-events-none">
+          {[
+            { color: "#000000", top: "calc(15mm + 50mm)" },
+            { color: "#FFFF00", top: "calc(15mm + 350mm)" },
+            { color: "#FF00FF", top: "calc(15mm + 650mm)" },
+            { color: "#00FFFF", top: "calc(15mm + 950mm)" },
+          ].map((line, i) => (
+            <div key={i} className="absolute left-0 right-0" style={{ top: line.top, height: "0.2mm", backgroundColor: line.color, opacity: 0.5 }} />
+          ))}
+          {/* Garis Tengah Gradient */}
+          <div className="absolute left-0 right-0" style={{ top: "calc(15mm + 500mm)", height: "0.5mm", background: "linear-gradient(to right, #000, #ff0, #f0f, #0ff)" }} />
+        </div>
 
-        {/* CONTAINER UTAMA: Lebar 21cm, Margin Kiri-Kanan dikunci 6mm */}
+        {/* Flex Container Utama Slot */}
         <div
-          className="flex justify-between relative z-10 px-[6mm]"
-          style={{ width: "21cm" }}
+          className="flex justify-center relative z-10"
+          style={{ width: "210mm", gap: "2mm", paddingTop: "15mm" }}
         >
           {Array.from({ length: 8 }).map((_, idx) => {
             const globalIndex = pageIndex * 8 + idx;
-            const slot = pageSlots[idx]; // Note: pageSlots might differ in length, handled by check below
+            const slot = pageSlots[idx];
 
             return (
               <div key={idx} className="flex flex-col items-center">
                 <div
-                  className={`relative flex flex-col items-center overflow-visible border border-gray-300 ${slot ? "bg-white" : "bg-gray-50/50"
-                    }`}
+                  className="relative group flex flex-col items-center"
                   style={{
-                    width: "2.2cm",
-                    height: "100cm",
-                    boxSizing: "content-box", // Critical from Kode 2
+                    width: "22mm",
+                    height: "1000mm",
+                    backgroundColor: slot ? "white" : "transparent",
+                    outline: "0.1mm solid #e5e7eb", // Menggunakan outline agar tidak menambah lebar 22mm
+                    boxSizing: "content-box",
                   }}
                 >
                   {slot ? (
-                    <div className="w-full h-full relative group flex flex-col">
-                      <div
-                        className="relative overflow-hidden bg-white"
-                        style={{ width: "2.2cm", height: "90cm" }}
-                      >
+                    <>
+                      {/* Area Desain Lanyard (90cm) */}
+                      <div className="relative overflow-hidden" style={{ width: "22mm", height: "900mm" }}>
                         {slot.data && (
                           <img
                             src={slot.data}
-                            alt="Lanyard Design"
-                            className="absolute block"
+                            alt="Lanyard"
+                            className="absolute"
                             style={{
-                              width: "90cm",
-                              height: "2.2cm",
-                              objectFit: "fill",
-                              left: "2.2cm",
+                              width: "900mm",
+                              height: "22mm",
+                              left: "22mm",
                               top: "0",
                               transform: "rotate(90deg)",
                               transformOrigin: "0 0",
                               maxWidth: "none",
+                              objectFit: "fill",
                             }}
                           />
                         )}
                       </div>
 
-                      {/* Pemisah Area Desain dan Hook */}
-                      <div
-                        style={{
-                          width: "100%",
-                          height: "1px",
-                          backgroundColor: "#ffffff",
-                          zIndex: 5,
-                        }}
-                      ></div>
+                      {/* Garis Potong / Lipat Putih Tipis */}
+                      <div style={{ width: "100%", height: "0.2mm", backgroundColor: "#fff", zIndex: 5 }} />
 
-                      {/* Hook Color Area */}
+                      {/* Area Hook (10cm) */}
                       <div
-                        className="flex-1 w-full"
+                        className="w-full flex-1"
                         style={{ backgroundColor: slot.hookColor }}
                       />
 
-                      {/* Action Overlay */}
+                      {/* Action Overlay (Hanya Layar) */}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition no-print flex flex-col items-center justify-start pt-10 gap-4 z-30">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCopyByCard(globalIndex);
-                          }}
-                          className="bg-blue-600 text-white p-4 rounded-full shadow-xl hover:scale-110 active:scale-95 transition flex items-center justify-center"
-                          title="Salin Sesuai ID Card"
-                        >
-                          <Copy size={20} />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onClone(globalIndex);
-                          }}
-                          className="bg-emerald-600 text-white p-4 rounded-full shadow-xl hover:scale-110 active:scale-95 transition flex items-center justify-center"
-                          title="Tambah Manual"
-                        >
-                          <Plus size={20} />
-                        </button>
-
+                        <button onClick={() => onCopyByCard(globalIndex)} className="bg-blue-600 text-white p-4 rounded-full shadow-xl hover:scale-110"><Copy size={20} /></button>
+                        <button onClick={() => onClone(globalIndex)} className="bg-emerald-600 text-white p-4 rounded-full shadow-xl hover:scale-110"><Plus size={20} /></button>
                         {slot.isMasterColor && (
-                          <div className="relative group/color">
-                            <button
-                              className="bg-violet-600 text-white p-4 rounded-full shadow-xl hover:scale-110 active:scale-95 transition flex items-center justify-center"
-                              title="Ubah Warna Hook"
-                            >
-                              <Palette size={20} />
-                            </button>
-                            <input
-                              type="color"
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                              value={slot.hookColor}
-                              onChange={(e) =>
-                                onColorChange(slot.id, e.target.value)
-                              }
-                            />
+                          <div className="relative">
+                            <button className="bg-violet-600 text-white p-4 rounded-full shadow-xl"><Palette size={20} /></button>
+                            <input type="color" className="absolute inset-0 opacity-0 cursor-pointer" value={slot.hookColor} onChange={(e) => onColorChange(slot.id, e.target.value)} />
                           </div>
                         )}
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRemove(globalIndex);
-                          }}
-                          className="bg-red-600 text-white p-4 rounded-full shadow-xl hover:scale-110 active:scale-95 transition flex items-center justify-center mt-6"
-                          title="Hapus"
-                        >
-                          <Trash2 size={20} />
-                        </button>
+                        <button onClick={() => onRemove(globalIndex)} className="bg-red-600 text-white p-4 rounded-full shadow-xl mt-6"><Trash2 size={20} /></button>
                       </div>
-                    </div>
+                    </>
                   ) : (
-                    <div className="text-[10px] text-gray-300 font-bold rotate-90 h-full flex items-center justify-center no-print uppercase tracking-widest">
-                      KOSONG
-                    </div>
+                    <div className="text-[10px] text-gray-300 font-bold rotate-90 h-full flex items-center justify-center no-print uppercase tracking-widest">KOSONG</div>
                   )}
                 </div>
-                <div
-                  className="mt-2 font-black text-xs text-center"
-                  style={{ color: "#000000" }}
-                >
-                  {slot ? globalIndex + 1 : ""}
+                {/* Penomoran Slot di Bawah (Hanya Layar) */}
+                <div className="mt-2 font-black text-[10px] text-gray-400 no-print">
+                  #{globalIndex + 1}
                 </div>
               </div>
             );
@@ -1290,38 +1214,38 @@ export default function PrintPage() {
   // CSS Updated from Kode 2 (Cleaned and merged)
   const printStyles = `
     @media print {
-      @page { size: auto; margin: 0; }
-      body { 
-        background: white !important; 
+      @page { 
+        size: 210mm 1032mm; 
+        margin: 0 !important; 
+      }
+      html, body { 
         margin: 0 !important; 
         padding: 0 !important;
+        background: white !important;
         -webkit-print-color-adjust: exact !important; 
-        print-color-adjust: exact !important; 
+        print-color-adjust: exact !important;
       }
       .no-print, button { display: none !important; }
       
-      /* Print Area Override */
-      .print-area { padding: 0 !important; margin: 0 !important; width: 100% !important; }
-
-      /* Components */
-      .a4-sheet { 
-        width: 210mm !important; height: 297mm !important; 
-        margin: 0 !important; border: 0 !important; 
-        box-shadow: none !important; break-after: page; 
+      .print-area { 
+        width: 210mm !important;
+        padding: 0 !important;
+        margin: 0 !important;
       }
-      
+
       .lanyard-sheet { 
-        width: 210mm !important; height: 1032mm !important;
-        margin: 0 !important; border: 0 !important;
-        padding-top: 15mm !important;
-        box-shadow: none !important; break-after: page;
-        display: block !important;
+        width: 210mm !important; 
+        height: 1032mm !important;
+        position: relative !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        overflow: hidden !important; /* Mencegah elemen guide meluber */
       }
 
-      img { 
-        image-rendering: high-quality; 
-        max-width: 100% !important; 
-      }
+      /* Khusus ID Card tetap A4 */
+      .category-idcard .lanyard-sheet { display: none; } 
     }
   `;
 
@@ -1583,10 +1507,10 @@ export default function PrintPage() {
               key={cat}
               onClick={() => setState((prev) => ({ ...prev, category: cat }))}
               className={`flex-1 py-1.5 text-[10px] font-bold rounded transition uppercase ${state.category === cat
-                  ? cat === "lanyard"
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-gray-900 text-white shadow-sm"
-                  : "text-gray-500 hover:bg-gray-200"
+                ? cat === "lanyard"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-gray-900 text-white shadow-sm"
+                : "text-gray-500 hover:bg-gray-200"
                 }`}
             >
               {cat === "prod3" ? "PROD 3" : cat.replace("-", " ")}
