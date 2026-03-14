@@ -217,7 +217,7 @@ export default function AppLayout() {
 
       {/* Topbar / Navbar */}
       <div
-        className={`fixed top-0 right-0 z-10 transition-all duration-300 ease-in-out ${isDesktopSidebarOpen ? "left-0 lg:left-64" : "left-0"
+        className={`fixed top-0 right-0 z-30 transition-all duration-300 ease-in-out ${isDesktopSidebarOpen ? "left-0 lg:left-64" : "left-0"
           }`}
       >
         <Navbar
@@ -323,7 +323,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
   return (
     <div>
       {/* NEW TOP BAR */}
-      <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm h-[88px]">
+      <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex justify-between items-center sticky top-0 z-30 shadow-sm h-[88px]">
         {/* Left: User Info & Mobile Toggle */}
         {/* <div className="flex items-center gap-3">
           <button

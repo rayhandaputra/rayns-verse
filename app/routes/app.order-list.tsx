@@ -684,17 +684,18 @@ export default function OrderList() {
         cellClassName: "whitespace-nowrap text-sm font-bold text-gray-900",
         // cell: (order) => formatCurrency(order.total_amount ?? 0),
         cell: (order) => {
-          const tAmount = Number(order.total_amount) || 0;
+          const subtotal = Number(order.total_amount) || 0;
           const dAmount = Number(order.discount_value) || 0;
+          const total = subtotal - dAmount;
 
           return (
             <div className="px-6 py-4">
               <div className="text-xs font-bold text-gray-900">
-                {new Intl.NumberFormat("id-ID").format(tAmount)}
+                {new Intl.NumberFormat("id-ID").format(total)}
               </div>
               {dAmount > 0 && (
                 <div className="text-[10px] text-red-500 font-medium line-through">
-                  {new Intl.NumberFormat("id-ID").format(tAmount + dAmount)}
+                  {new Intl.NumberFormat("id-ID").format(subtotal)}
                 </div>
               )}
               {/* {+(order.is_sponsor ?? 0) === 0 && ( */}

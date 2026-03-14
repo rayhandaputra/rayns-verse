@@ -103,11 +103,12 @@ const NotaView: React.FC<NotaViewProps> = ({
     );
   }, [client]);
 
-  const total = Number(order?.total_amount) || 0;
+  const subtotal = Number(order?.total_amount) || 0;
+  const discountAmount = Number((order as any)?.discount_total) || Number((order as any)?.discount_value) || 0;
+  const total = subtotal - discountAmount;
   const paid = Number(order?.dp_amount) || 0;
   const remain = Math.max(0, total - paid);
   const isPaidOff = remain === 0;
-  const discountAmount = Number((order as any)?.discount_total) || Number((order as any)?.discount_value) || 0;
 
   const handleRatingChange = (newRating: number) => {
     setRating(newRating);
@@ -352,7 +353,7 @@ const NotaView: React.FC<NotaViewProps> = ({
             {discountAmount > 0 && (
               <div className="flex justify-between text-sm pt-2 border-t border-gray-100">
                 <span className="text-gray-500">Subtotal</span>
-                <span className="font-bold">{formatCurrency(total + discountAmount)}</span>
+                <span className="font-bold">{formatCurrency(subtotal)}</span>
               </div>
             )}
             {discountAmount > 0 && (

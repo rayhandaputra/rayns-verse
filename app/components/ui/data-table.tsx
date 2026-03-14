@@ -50,50 +50,110 @@ export function DataTable<T>({
   const visibleColumns = columns.filter((col) => col.show !== false);
   const colCount = visibleColumns.length;
 
+  const topScrollRef = React.useRef<HTMLDivElement>(null);
+  const tableScrollRef = React.useRef<HTMLDivElement>(null);
+  const [contentWidth, setContentWidth] = React.useState(0);
+
+  // Sync scroll positions
+  const handleTopScroll = () => {
+    if (topScrollRef.current && tableScrollRef.current) {
+      tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+    }
+  };
+
+  const handleTableScroll = () => {
+    if (topScrollRef.current && tableScrollRef.current) {
+      topScrollRef.current.scrollLeft = tableScrollRef.current.scrollLeft;
+    }
+  };
+
+  // Update content width for top scrollbar
+  React.useEffect(() => {
+    const updateWidth = () => {
+      if (tableScrollRef.current) {
+        const table = tableScrollRef.current.querySelector("table");
+        if (table) {
+          setContentWidth(table.offsetWidth);
+        }
+      }
+    };
+
+    updateWidth();
+    // Re-check after a short delay to ensure table is fully rendered
+    const timeout = setTimeout(updateWidth, 100);
+
+    const observer = new ResizeObserver(updateWidth);
+    if (tableScrollRef.current) {
+      observer.observe(tableScrollRef.current);
+    }
+
+    return () => {
+      clearTimeout(timeout);
+      observer.disconnect();
+    };
+  }, [data, columns]);
+
   return (
-    <div className={cn("overflow-x-auto", className)} style={{ minHeight }}>
-      <table className={cn("w-full text-sm text-left", tableClassName)}>
-        <thead className="text-xs text-gray-700 uppercase bg-gray-100">
-          <tr>
-            {visibleColumns.map((col) => (
-              <th
-                key={col.key}
-                className={cn("px-4 py-3", col.headerClassName)}
-              >
-                {col.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.length === 0 ? (
+    <div className="flex flex-col w-full relative">
+      {/* Top Mirror Scrollbar */}
+      <div
+        ref={topScrollRef}
+        onScroll={handleTopScroll}
+        className="overflow-x-auto overflow-y-hidden h-[16px] sticky top-[88px] z-25 bg-white border-b border-gray-100"
+        style={{ scrollbarWidth: "thin" }}
+      >
+        <div style={{ width: contentWidth, height: "1px" }} />
+      </div>
+
+      <div
+        ref={tableScrollRef}
+        onScroll={handleTableScroll}
+        className={cn("overflow-x-auto", className)}
+        style={{ minHeight }}
+      >
+        <table className={cn("w-full text-sm text-left", tableClassName)}>
+          <thead className="text-xs text-gray-700 uppercase bg-gray-100 italic">
             <tr>
-              <td colSpan={colCount} className="text-center py-8 text-gray-500">
-                {emptyMessage}
-              </td>
+              {visibleColumns.map((col) => (
+                <th
+                  key={col.key}
+                  className={cn("px-4 py-3", col.headerClassName)}
+                >
+                  {col.header}
+                </th>
+              ))}
             </tr>
-          ) : (
-            data.map((row, index) => (
-              <tr
-                key={getRowKey(row, index)}
-                className={cn(
-                  "border-b border-gray-200 hover:bg-gray-50 transition group",
-                  rowClassName?.(row)
-                )}
-              >
-                {visibleColumns.map((col) => (
-                  <td
-                    key={col.key}
-                    className={cn("px-4 py-3", col.cellClassName)}
-                  >
-                    {col.cell(row, index)}
-                  </td>
-                ))}
+          </thead>
+          <tbody>
+            {data.length === 0 ? (
+              <tr>
+                <td colSpan={colCount} className="text-center py-8 text-gray-500">
+                  {emptyMessage}
+                </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              data.map((row, index) => (
+                <tr
+                  key={getRowKey(row, index)}
+                  className={cn(
+                    "border-b border-gray-200 hover:bg-gray-50 transition group",
+                    rowClassName?.(row)
+                  )}
+                >
+                  {visibleColumns.map((col) => (
+                    <td
+                      key={col.key}
+                      className={cn("px-4 py-3", col.cellClassName)}
+                    >
+                      {col.cell(row, index)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

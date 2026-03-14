@@ -618,9 +618,9 @@ export const OrderAPI = {
               ((subtotal - discount_total) * (item?.tax_percent || 0)) / 100;
 
             let defVariant = null;
-            if (item?.variant_id) {
+            if (!item?.variant_id) {
 
-              defVariant = await APIProvider({
+              const isiDefVar = await APIProvider({
                 endpoint: "select",
                 method: "POST",
                 table: "product_variants",
@@ -633,6 +633,7 @@ export const OrderAPI = {
                   },
                 },
               });
+              defVariant = isiDefVar?.items?.[0]
             }
 
             // Return objek data murni
@@ -1018,7 +1019,7 @@ export const OrderAPI = {
 
             let defVariant = null;
             if (!item?.variant_id) {
-              defVariant = await APIProvider({
+              const isiDefVar = await APIProvider({
                 endpoint: "select",
                 method: "POST",
                 table: "product_variants",
@@ -1031,6 +1032,7 @@ export const OrderAPI = {
                   },
                 },
               });
+              defVariant = isiDefVar?.items?.[0]
             }
 
             return {

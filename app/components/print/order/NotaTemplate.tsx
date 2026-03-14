@@ -17,11 +17,12 @@ export const PrintNotaTemplate = React.forwardRef<
   HTMLDivElement,
   PrintNotaTemplateProps
 >(({ order, items }, ref) => {
-  const total = Number(order?.total_amount) || 0;
+  const subtotal = Number(order?.total_amount) || 0;
+  const discountAmount = Number(order?.discount_total) || Number(order?.discount_value) || 0;
+  const total = subtotal - discountAmount;
   const paid = Number(order?.dp_amount) || 0;
   const remain = Math.max(0, total - paid);
-  const isPaidOff = order?.payment_status === "paid";
-  const discountAmount = Number(order?.discount_total) || Number(order?.discount_value) || 0;
+  const isPaidOff = remain === 0;
 
   return (
     <div
@@ -198,8 +199,8 @@ export const PrintNotaTemplate = React.forwardRef<
           <div className="w-64 space-y-2">
             {discountAmount > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Total</span>
-                <span className="font-bold">{formatCurrency(total + discountAmount)}</span>
+                <span className="text-gray-500">Subtotal</span>
+                <span className="font-bold">{formatCurrency(subtotal)}</span>
               </div>
             )}
             {discountAmount > 0 && (

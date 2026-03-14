@@ -223,11 +223,12 @@ export const NotaPdfTemplate = ({
   logoPath: string;
   capPath?: string;
 }) => {
-  const total = order?.total_amount || 0;
+  const subtotal = order?.total_amount || 0;
+  const discountAmount = Number(order?.discount_total) || Number(order?.discount_value) || 0;
+  const total = subtotal - discountAmount;
   const paid = order?.dp_amount || 0;
   const remain = Math.max(0, total - paid);
   const isPaidOff = remain === 0;
-  const discountAmount = Number(order?.discount_total) || Number(order?.discount_value) || 0;
 
   // Helper untuk warna status
   const getStatusColor = (status: string) => {
@@ -394,9 +395,9 @@ export const NotaPdfTemplate = ({
             {discountAmount > 0 && (
               <>
                 <View style={styles.summaryItem}>
-                  <Text style={{ color: "#6b7280" }}>Total</Text>
+                  <Text style={{ color: "#6b7280" }}>Subtotal</Text>
                   <Text style={{ fontWeight: "bold" }}>
-                    {formatCurrency(total + discountAmount)}
+                    {formatCurrency(subtotal)}
                   </Text>
                 </View>
                 <View style={styles.summaryItem}>

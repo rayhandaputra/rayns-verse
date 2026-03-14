@@ -289,7 +289,7 @@ export const ProductAPI = {
           action: "update",
           body: {
             data: { deleted_on: new Date().toISOString() },
-            where: { product_id: id, deleted_on: "null" },
+            where: { product_id: id },
           },
         });
 
@@ -325,14 +325,14 @@ export const ProductAPI = {
 
       if (Array.isArray(variants)) {
         // First, soft delete existing price rules for this product
-        await APIProvider({
+        const resUt = await APIProvider({
           endpoint: "update",
           method: "POST",
           table: "product_variants",
           action: "update",
           body: {
             data: { deleted_on: new Date().toISOString() },
-            where: { product_id: id, deleted_on: "null" },
+            where: { product_id: id },
           },
         });
 

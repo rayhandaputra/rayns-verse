@@ -546,6 +546,11 @@ export default function ProductListPage() {
               ) : (
                 ""
               )}
+              {(!row.product_variants || row.product_variants.length === 0 || !row.product_variants.some((v: any) => +v.is_default === 1)) && (
+                <div className="text-[10px] text-red-500 font-bold mt-1 bg-red-50 px-2 py-0.5 rounded border border-red-100 w-fit">
+                  Variant default belum ditentukan!
+                </div>
+              )}
             </div>
           </div>
         ),
@@ -940,6 +945,12 @@ export default function ProductListPage() {
 
                 {/* VARIASI PRODUK */}
                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                  {(!modal?.data?.product_variants || modal?.data?.product_variants?.length === 0 || !modal?.data?.product_variants?.some((v: any) => +v.is_default === 1)) && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 animate-pulse">
+                      < Star size={16} className="fill-red-500" />
+                      <span className="text-xs font-bold">PENTING: Variant default untuk harga dasar belum ditentukan!</span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center mb-2">
                     <label className="text-xs font-bold text-blue-800 uppercase tracking-wide flex items-center gap-1">
                       <Layers size={14} /> Variasi Produk
