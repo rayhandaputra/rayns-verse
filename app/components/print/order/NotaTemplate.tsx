@@ -22,7 +22,7 @@ export const PrintNotaTemplate = React.forwardRef<
   const total = subtotal - discountAmount;
   const paid = Number(order?.dp_amount) || 0;
   const remain = Math.max(0, total - paid);
-  const isPaidOff = remain === 0;
+  const isPaidOff = remain === 0 || !!order?.payment_proof;
 
   return (
     <div

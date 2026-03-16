@@ -108,7 +108,7 @@ const NotaView: React.FC<NotaViewProps> = ({
   const total = subtotal - discountAmount;
   const paid = Number(order?.dp_amount) || 0;
   const remain = Math.max(0, total - paid);
-  const isPaidOff = remain === 0;
+  const isPaidOff = remain === 0 || !!order?.payment_proof;
 
   const handleRatingChange = (newRating: number) => {
     setRating(newRating);
@@ -513,32 +513,22 @@ const NotaView: React.FC<NotaViewProps> = ({
             </svg>
             Download Nota (PDF)
           </a> */}
-          {isMobile ? (
-            /* TAMPILAN UNTUK MOBILE (Direct Download) */
-            // <a
-            //   href={`/app/orders/${order.id}/download`}
-            //   target="_blank"
-            //   rel="noreferrer"
-            //   className="flex items-center justify-center gap-2 py-2 px-3 bg-gray-900 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 transition-colors"
-            // >
-            //   <Printer size={14} />
-            //   <span>Cetak Nota</span>
-            // </a>
-            <Form
-              action={`/app/orders/${order.id}/download`}
-              method="get" // Gunakan GET untuk resource route download
-              reloadDocument // PENTING: Agar browser menangani response sebagai file, bukan navigasi SPA
+          {/* {isMobile ? ( */}
+          <Form
+            action={`/app/orders/${order.id}/download`}
+            method="get" // Gunakan GET untuk resource route download
+            reloadDocument // PENTING: Agar browser menangani response sebagai file, bukan navigasi SPA
+          >
+            <button
+              type="submit"
+              disabled={isDownloading}
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-gray-900 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 disabled:bg-gray-500"
             >
-              <button
-                type="submit"
-                disabled={isDownloading}
-                className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-gray-900 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 disabled:bg-gray-500"
-              >
-                <Printer size={14} />
-                <span>{isDownloading ? "Memproses..." : "Cetak Nota"}</span>
-              </button>
-            </Form>
-          ) : /* TAMPILAN UNTUK DESKTOP (Print Preview Browser) */
+              <Printer size={14} />
+              <span>{isDownloading ? "Memproses..." : "Cetak Nota"}</span>
+            </button>
+          </Form>
+          {/*) :
             PrintButton ? (
               <PrintButton>
                 {({ handlePrint }: any) => (
@@ -562,7 +552,6 @@ const NotaView: React.FC<NotaViewProps> = ({
                 )}
               </PrintButton>
             ) : (
-              /* LOADING STATE */
               <button
                 disabled
                 className="flex items-center justify-center gap-2 py-2 px-3 bg-gray-300 text-gray-600 rounded-lg text-xs font-semibold cursor-not-allowed"
@@ -570,9 +559,8 @@ const NotaView: React.FC<NotaViewProps> = ({
                 <Printer size={14} />
                 <span>Loading Print...</span>
               </button>
-            )}
+            )}*/}
 
-          {/* Hidden file input */}
           <input
             ref={fileInputRef}
             type="file"

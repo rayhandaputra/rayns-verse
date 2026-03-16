@@ -190,6 +190,7 @@ export default function OrderList() {
   const [page, setPage] = useState(1);
 
   const [modal, setModal] = useModal();
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
 
   // Fetch orders with Nexus
   // ... existing code ...
@@ -444,6 +445,10 @@ export default function OrderList() {
 
   const handleSubmitPaymentProof = (e: any) => {
     e.preventDefault();
+    if (isUploadingFile) {
+      toast.error("Tunggu sebentar, file masih diunggah...");
+      return;
+    }
     submitAction({
       action: "update_payment_proof",
       id: modal?.data?.id,
@@ -922,7 +927,7 @@ export default function OrderList() {
           const successBtn = "bg-green-100 text-green-700 border-green-200";
 
           return (
-            <div className="max-w-[120px]">
+            <div className="max-w-[200px]">
               <div className="flex flex-col gap-1.5">
                 {/* DP */}
                 <button
@@ -936,7 +941,7 @@ export default function OrderList() {
                     }`}
                 >
                   {hasDpProof ? <Check size={10} /> : <Upload size={10} />}
-                  DP
+                  Upload Bukti Bayar (DP)
                 </button>
 
                 {/* LUNAS */}
@@ -951,7 +956,7 @@ export default function OrderList() {
                     }`}
                 >
                   {hasPaidProof ? <Check size={10} /> : <Upload size={10} />}
-                  LUNAS
+                  Upload Bukti Bayar (LUNAS)
                 </button>
 
                 {/* VIEW PROOF */}
@@ -1297,16 +1302,28 @@ export default function OrderList() {
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      const url = await uploadFile(file);
-                      if (url) {
-                        setModal({
-                          ...modal,
-                          data: { ...modal.data, file: url },
-                        });
+                      setIsUploadingFile(true);
+                      try {
+                        const url = await uploadFile(file);
+                        if (url) {
+                          setModal((prev: any) => ({
+                            ...prev,
+                            data: { ...prev.data, file: url },
+                          }));
+                        }
+                      } catch (err) {
+                        toast.error("Gagal mengunggah file gambar");
+                      } finally {
+                        setIsUploadingFile(false);
                       }
                     }}
                     required
                   />
+                  {isUploadingFile && (
+                    <p className="text-xs text-blue-600 font-medium animate-pulse mt-2">
+                      Sedang mengunggah file gambar... (Tunggu sebentar)
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex gap-2 pt-2">
@@ -1319,11 +1336,11 @@ export default function OrderList() {
                   </button>
                   <button
                     type="submit"
-                    disabled={actionLoading}
-                    className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2"
+                    disabled={actionLoading || isUploadingFile}
+                    className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 disabled:bg-blue-400"
                   >
-                    {actionLoading ? <Loader2 size={16} /> : <Upload size={16} />}{" "}
-                    {actionLoading ? "Menyimpan..." : "Simpan"}
+                    {actionLoading || isUploadingFile ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}{" "}
+                    {actionLoading ? "Menyimpan..." : isUploadingFile ? "Mengunggah..." : "Simpan"}
                   </button>
                 </div>
               </form>

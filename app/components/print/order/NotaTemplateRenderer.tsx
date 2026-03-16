@@ -228,7 +228,7 @@ export const NotaPdfTemplate = ({
   const total = subtotal - discountAmount;
   const paid = order?.dp_amount || 0;
   const remain = Math.max(0, total - paid);
-  const isPaidOff = remain === 0;
+  const isPaidOff = remain === 0 || !!order?.payment_proof;
 
   // Helper untuk warna status
   const getStatusColor = (status: string) => {
@@ -476,7 +476,7 @@ export const NotaPdfTemplate = ({
             </View>
           </View>
           <View style={{ alignItems: "center", position: "relative" }}>
-            <Text style={{ fontSize: 8, fontWeight: "bold", marginBottom: 30 }}>
+            <Text style={{ fontSize: 8, fontWeight: "bold", marginBottom: 50 }}>
               Hormat Kami,
             </Text>
             {isPaidOff && capPath && (
@@ -485,10 +485,10 @@ export const NotaPdfTemplate = ({
                 style={{
                   position: "absolute",
                   width: 70,
-                  top: 0,
+                  top: 20,
                   left: 20,
                   opacity: 0.8,
-                  // transform: "rotate(-20deg)" // disabled due to react-pdf image limits
+                  transform: "rotate(-20deg)" // disabled due to react-pdf image limits
                 }}
               />
             )}
