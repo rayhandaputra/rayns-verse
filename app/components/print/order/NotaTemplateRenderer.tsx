@@ -480,17 +480,21 @@ export const NotaPdfTemplate = ({
               Hormat Kami,
             </Text>
             {isPaidOff && capPath && (
-              <Image
-                src={capPath}
+              <View
                 style={{
                   position: "absolute",
                   width: 70,
                   top: 20,
                   left: 20,
                   opacity: 0.8,
-                  transform: "rotate(-20deg)" // disabled due to react-pdf image limits
+                  transform: "rotate(-20deg)"
                 }}
-              />
+              >
+                <Image
+                  src={capPath}
+                  style={{ width: "100%", height: "100%" }}
+                />
+              </View>
             )}
             <View style={styles.signature}>
               <Text style={{ fontSize: 8, fontWeight: "bold" }}>
