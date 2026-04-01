@@ -407,6 +407,20 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
               </button>
               <button
                 onClick={() => navigate("/app/setting/design")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition transform hover:-translate-y-0.5 ${location.pathname.includes("/app/setting/design") ? "bg-gray-800 text-white shadow-lg" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"}`}
+              >
+                <LayoutTemplate size={16} />{" "}
+                <span className="hidden sm:inline">DESAIN</span>
+              </button>
+              <button
+                onClick={() => navigate("/app/print-area")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition transform hover:-translate-y-0.5 ${location.pathname.includes("/app/print-area") ? "bg-gray-800 text-white shadow-lg" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"}`}
+              >
+                <Printer size={16} />{" "}
+                <span className="hidden sm:inline">CETAK</span>
+              </button>
+              {/* <button
+                onClick={() => navigate("/app/setting/design")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold border transition ${location.pathname.includes("/app/setting/design") ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm'}`}
               >
                 <LayoutTemplate size={16} /> DESAIN
@@ -416,7 +430,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition transform hover:-translate-y-0.5 ${location.pathname === "/app/print-area" ? "bg-gray-800 text-white shadow-lg" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"}`}
               >
                 <Printer size={16} /> CETAK
-              </button>
+              </button> */}
               <button
                 onClick={() => navigate("/app/email")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition transform hover:-translate-y-0.5 ${location.pathname === "/app/email" ? "bg-gray-800 text-white shadow-lg" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"}`}

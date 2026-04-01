@@ -4,7 +4,8 @@
       "Bash(npx tsc:*)",
       "Bash(ls -la /home/rayhan/Workspaces/portofolio/rayns-verse/client/app/routes/app.*.tsx)",
       "Bash(npm run dev:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(grep -r \"loader\" /home/rayhan/Workspaces/portofolio/rayns-verse/client/app/routes/*.tsx | head -15)"
     ]
   }
 }
