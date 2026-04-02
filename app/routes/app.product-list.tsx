@@ -8,7 +8,7 @@ import {
   type ActionFunction,
 } from "react-router";
 import type { Product, ProductTier, ProductVariation } from "../types";
-import { formatCurrency, parseCurrency } from "../constants";
+import { formatCurrency, parseCurrency, formatNumberInput } from "../constants";
 import {
   Plus,
   Edit2,
@@ -53,6 +53,37 @@ interface ActionData {
   success?: boolean;
   message?: string;
 }
+
+// ============================================
+// HELPER COMPONENTS
+// ============================================
+
+const PriceInput = ({ value, onChange, placeholder = "0", className = "" }: any) => {
+  const [displayValue, setDisplayValue] = useState(formatNumberInput(value || ""));
+
+  useEffect(() => {
+    setDisplayValue(formatNumberInput(value || ""));
+  }, [value]);
+
+  return (
+    <div className={`relative ${className}`}>
+      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] font-bold">
+        Rp
+      </span>
+      <input
+        type="text"
+        className="w-full border border-gray-300 rounded p-1 pl-7 text-sm font-bold text-right outline-none focus:ring-1 focus:ring-blue-500 transition-all bg-white"
+        value={displayValue}
+        placeholder={placeholder}
+        onChange={(e) => {
+          const raw = e.target.value.replace(/[^0-9]/g, "");
+          setDisplayValue(formatNumberInput(raw));
+          onChange(parseCurrency(raw));
+        }}
+      />
+    </div>
+  );
+};
 
 // ============================================
 // LOADER FUNCTION
@@ -419,8 +450,9 @@ export default function ProductListPage() {
           ...modal,
           data: { ...modal?.data, image: response.url },
         });
-      } catch (error) {
-        toast.error("Gagal mengupload gambar");
+      } catch (error: any) {
+        console.log(error)
+        toast.error(error?.message || "Gagal mengupload gambar");
       } finally {
         setIsUploadingImage(false);
       }
@@ -923,13 +955,10 @@ export default function ProductListPage() {
                         <span className="text-xs text-gray-500 mx-2">
                           Harga:
                         </span>
-                        <input
-                          type="number"
-                          className="w-32 border rounded p-1 text-sm font-bold text-right"
+                        <PriceInput
+                          className="w-32"
                           value={tier.price}
-                          onChange={(e) =>
-                            updateTier(idx, "price", Number(e.target.value))
-                          }
+                          onChange={(val: number) => updateTier(idx, "price", val)}
                         />
                         <button
                           type="button"
@@ -1008,23 +1037,11 @@ export default function ProductListPage() {
                       <span className="text-xs text-blue-500 whitespace-nowrap">
                         + Harga
                       </span>
-                      <div className="relative w-32">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                          Rp
-                        </span>
-                        <input
-                          type="number"
-                          className="w-full border-blue-200 rounded p-1 pl-6 text-sm font-bold text-gray-800"
-                          value={v.base_price}
-                          onChange={(e) =>
-                            updateVariation(
-                              idx,
-                              "base_price",
-                              Number(e.target.value)
-                            )
-                          }
-                        />
-                      </div>
+                      <PriceInput
+                        className="w-32"
+                        value={v.base_price}
+                        onChange={(val: number) => updateVariation(idx, "base_price", val)}
+                      />
                       <button
                         type="button"
                         onClick={() => removeVariation(idx)}

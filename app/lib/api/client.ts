@@ -213,13 +213,33 @@ export async function APIProvider<T = any>(config: ApiConfig): Promise<T> {
       // Bersihkan timeout jika fetch berhasil sebelum 15 detik
       clearTimeout(timeoutId);
 
+      // if (!res.ok) {
+      //   if (res.status >= 500) {
+      //     throw new Error(`Server Error: ${res.statusText}`);
+      //   } else {
+      //     const errorData = await res.json().catch(() => ({}));
+      //     throw new Error(errorData.message || `API Error: ${res.statusText}`);
+      //   }
+      // }
       if (!res.ok) {
-        if (res.status >= 500) {
-          throw new Error(`Server Error: ${res.statusText}`);
-        } else {
-          const errorData = await res.json().catch(() => ({}));
-          throw new Error(errorData.message || `API Error: ${res.statusText}`);
+        // 1. Coba ambil body response sebagai JSON
+        const errorData = await res.json().catch(() => ({}));
+
+        // 2. Ambil pesan dari 'error' (format PHP Anda) atau 'message' (standar umum)
+        const errorMessage = errorData.error || errorData.message || res.statusText;
+
+        // 3. Jika status 400, lempar error dengan pesan dari server
+        if (res.status === 400) {
+          throw { status: 400, message: errorMessage };
         }
+
+        // 4. Untuk status 5xx (Server Error)
+        if (res.status >= 500) {
+          throw { status: res.status, message: `Server Error: ${res.statusText}` };
+        }
+
+        // 5. Default error lainnya
+        throw { status: res.status, message: errorMessage };
       }
 
       return (await res.json()) as T;

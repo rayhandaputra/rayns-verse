@@ -96,6 +96,8 @@ interface EmailFromAPI {
   from: string;
   date: string;
   seen: boolean;
+  uid?: number;
+  body?: string;
 }
 
 interface MailboxResponse {
@@ -108,7 +110,6 @@ interface MailboxResponse {
 }
 
 interface Email {
-  id: string;
   sender: string;
   senderEmail: string;
   subject: string;
@@ -119,6 +120,8 @@ interface Email {
   color: string;
   seen: boolean;
   rawDate: string;
+  uid: number;
+  body?: string;
 }
 
 interface SentEmail {
@@ -192,7 +195,6 @@ function transformEmailData(
   return apiEmails.map((email) => {
     const { name, email: senderEmail } = parseEmailFrom(email.from);
     return {
-      id: `${folder.toLowerCase()}-${email.id}`,
       sender: name,
       senderEmail,
       subject: email.subject,
@@ -204,6 +206,8 @@ function transformEmailData(
       color: getAvatarColor(name),
       seen: email.seen,
       rawDate: email.date,
+      uid: email.uid || email.id,
+      body: email.body,
     };
   });
 }
@@ -231,6 +235,8 @@ export const loader: LoaderFunction = async ({ request }) => {
     fetchError = "Gagal memuat email";
   }
 
+  console.log(mailbox?.data)
+
   return { mailbox, error: fetchError, user };
 };
 
@@ -249,8 +255,10 @@ function EmailListItem({
       onClick={onClick}
       className={`group px-4 py-3 cursor-pointer transition-all duration-150 border-b border-gray-50 ${isSelected
         ? "bg-blue-50 border-l-[3px] border-l-blue-600"
-        : "hover:bg-gray-50/80 border-l-[3px] border-l-transparent"
-        } ${!email.seen ? "bg-blue-50/30" : ""}`}
+        : !email.seen
+          ? "bg-blue-50/40 hover:bg-blue-50/60 border-l-[3px] border-l-transparent"
+          : "bg-white hover:bg-gray-50 border-l-[3px] border-l-transparent"
+        }`}
     >
       <div className="flex items-start gap-3">
         <Avatar className="w-9 h-9 flex-shrink-0 mt-0.5">
@@ -448,7 +456,7 @@ export default function EmailPage() {
 
   const isCEO = user?.role?.toUpperCase() === "CEO" || user?.role?.toUpperCase() === "DEVELOPER";
 
-  const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
+  const [selectedEmail, setSelectedEmail] = useState<number | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<string>("inbox");
   const [selectedAccount, setSelectedAccount] = useState<string>("official@kinau.id");
   const [client, setClient] = useState(false);
@@ -458,6 +466,7 @@ export default function EmailPage() {
   const [isSending, setIsSending] = useState(false);
   const [sentEmails, setSentEmails] = useState<SentEmail[]>([]);
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
+  const [isReadLoading, setIsReadLoading] = useState(false);
 
   useEffect(() => {
     setClient(true);
@@ -471,7 +480,7 @@ export default function EmailPage() {
       setEmails([...inboxEmails, ...spamEmails, ...sentApiEmails]);
 
       if (!selectedEmail && inboxEmails.length > 0) {
-        setSelectedEmail(inboxEmails[0].id);
+        setSelectedEmail(inboxEmails[0].uid);
       }
     }
   }, [mailbox]);
@@ -503,6 +512,53 @@ export default function EmailPage() {
     setSelectedAccount(account);
     fetchEmails(account);
   };
+
+  const handleSelectEmail = (email: Email) => {
+    setSelectedEmail(email.uid);
+    setMobileShowDetail(true);
+  };
+
+  useEffect(() => {
+    const fetchBody = async () => {
+      if (!selectedEmail) return;
+      const email = emails.find((e) => e.uid === selectedEmail);
+      if (email && email.uid && !email.body) {
+        setIsReadLoading(true);
+        try {
+          // Di dalam useEffect fetchBody
+          const url = isCEO
+            ? `https://data.kinau.id/read_email_v3.php?email=${encodeURIComponent(selectedAccount)}&read_uid=${email.uid}&folder=${email.folder === 'Inbox' ? 'INBOX' : email.folder === 'Spam' ? 'INBOX.spam' : 'INBOX.Sent'}`
+            : `https://data.kinau.id/read_email_v3.php?read_uid=${email.uid}&folder=${email.folder === 'Inbox' ? 'INBOX' : email.folder === 'Spam' ? 'INBOX.spam' : 'INBOX.Sent'}`;
+
+          const response = await fetch(url);
+          const result = await response.json();
+
+          if (result.status && result.data) {
+            // Cari email yang sedang dibuka di hasil data terbaru
+            const allNewEmails = [
+              ...transformEmailData(result.data.inbox, "Inbox"),
+              ...transformEmailData(result.data.spam, "Spam"),
+              ...transformEmailData(result.data.sent || [], "Sent")
+            ];
+
+            const updatedCurrentEmail = allNewEmails.find(e => e.uid === email.uid);
+
+            if (updatedCurrentEmail) {
+              setEmails(prev => prev.map(old =>
+                old.uid === updatedCurrentEmail.uid ? updatedCurrentEmail : old
+              ));
+            }
+          }
+        } catch (err) {
+          console.error("Error reading email body:", err);
+        } finally {
+          setIsReadLoading(false);
+        }
+      }
+    };
+
+    fetchBody();
+  }, [selectedEmail, isCEO, selectedAccount]);
 
   const handleSendEmail = async (data: {
     to: string;
@@ -567,8 +623,28 @@ export default function EmailPage() {
 
   const folderMap: Record<string, string> = { inbox: "Inbox", spam: "Spam", sent: "Sent" };
   const filteredEmails = emails.filter((e) => e.folder === folderMap[selectedFolder]);
-  const selectedEmailData = emails.find((e) => e.id === selectedEmail);
+  const selectedEmailData = emails.find((e) => e.uid === selectedEmail);
   const unreadCount = emails.filter((e) => e.folder === "Inbox" && !e.seen).length;
+
+  function prepareEmailBody(html: string): string {
+    if (!html) return "";
+
+    let processed = html
+      // 1. Bersihkan line breaks & karakter escape mentah
+      .replace(/\\r\\n/g, "")
+      .replace(/\r\n/g, "")
+
+      // 2. Fix Mixed Content (tanda kutip opsional untuk menangani HTML minified)
+      .replace(/src=(["']?)http:\/\//g, 'src=$1https://')
+
+      // 3. Hilangkan spasi ekstra di sekitar src yang sering muncul pada email hasil parse IMAP
+      .replace(/src=\s*(["']?)/g, 'src=$1')
+
+      // 4. Atribut Keamanan & Performa
+      .replace(/<img /g, '<img crossorigin="anonymous" referrerpolicy="no-referrer" loading="lazy" ');
+
+    return processed;
+  }
 
   if (!client) return null;
 
@@ -682,10 +758,10 @@ export default function EmailPage() {
                 ) : (
                   filteredEmails.map((email) => (
                     <EmailListItem
-                      key={email.id}
+                      key={email.uid}
                       email={email}
-                      isSelected={selectedEmail === email.id}
-                      onClick={() => { setSelectedEmail(email.id); setMobileShowDetail(true); }}
+                      isSelected={selectedEmail === email.uid}
+                      onClick={() => handleSelectEmail(email)}
                     />
                   ))
                 )}
@@ -699,10 +775,10 @@ export default function EmailPage() {
                 ) : (
                   filteredEmails.map((email) => (
                     <EmailListItem
-                      key={email.id}
+                      key={email.uid}
                       email={email}
-                      isSelected={selectedEmail === email.id}
-                      onClick={() => { setSelectedEmail(email.id); setMobileShowDetail(true); }}
+                      isSelected={selectedEmail === email.uid}
+                      onClick={() => handleSelectEmail(email)}
                     />
                   ))
                 )}
@@ -721,10 +797,10 @@ export default function EmailPage() {
                 ) : (
                   filteredEmails.map((email) => (
                     <EmailListItem
-                      key={email.id}
+                      key={email.uid}
                       email={email}
-                      isSelected={selectedEmail === email.id}
-                      onClick={() => { setSelectedEmail(email.id); setMobileShowDetail(true); }}
+                      isSelected={selectedEmail === email.uid}
+                      onClick={() => handleSelectEmail(email)}
                     />
                   ))
                 )}
@@ -734,7 +810,7 @@ export default function EmailPage() {
         </div>
 
         {/* Right Panel - Email Detail */}
-        <div className={`flex-1 flex flex-col bg-gray-50/50 min-w-0 ${mobileShowDetail ? "flex" : "hidden md:flex"}`}>
+        <div className={`flex-1 flex flex-col bg-gray-50/50 min-w-0 overflow-hidden ${mobileShowDetail ? "flex" : "hidden md:flex"}`}>
           {selectedEmailData ? (
             <>
               {/* Subject Bar */}
@@ -768,7 +844,7 @@ export default function EmailPage() {
               </div>
 
               {/* Email Thread Area */}
-              <ScrollArea className="flex-1">
+              <ScrollArea className="flex-1 min-h-0">
                 <div className="p-3 md:p-6 space-y-4">
                   {/* Email Message Card */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -816,11 +892,61 @@ export default function EmailPage() {
                     <div className="mx-4 md:mx-5 border-t border-gray-100" />
 
                     {/* Email Body */}
-                    <div className="px-4 md:px-5 py-4 md:py-5 min-h-[150px] md:min-h-[200px]">
-                      <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-                        {selectedEmailData.subject}
-                      </div>
+                    <div className="px-4 md:px-5 py-4 md:py-5 min-h-[150px] md:min-h-[200px] relative">
+                      {isReadLoading ? (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
+                          <div className="flex flex-col items-center gap-2">
+                            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                            <span className="text-xs text-gray-500 font-medium">Memuat pesan...</span>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {selectedEmailData.body ? (
+                        <div
+                          className="text-sm text-gray-700 leading-relaxed email-content overflow-hidden" // Tambah overflow-hidden
+                          dangerouslySetInnerHTML={{ __html: prepareEmailBody(selectedEmailData.body) }}
+                        />
+                      ) : (
+                        <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                          {selectedEmailData.subject}
+                        </div>
+                      )}
                     </div>
+
+                    <style dangerouslySetInnerHTML={{
+                      __html: `
+                            .email-content img {
+                              max-width: 100% !important;
+                              height: auto !important;
+                              display: block;
+                              margin: 10px 0;
+                              min-width: 10px;
+                            }
+                            .email-content {
+                              overflow-wrap: break-word;
+                              word-wrap: break-word;
+                              word-break: break-word;
+                            }
+                            .email-content img {
+                              display: inline-block !important;
+                              visibility: visible !important;
+                              opacity: 1 !important;
+                              max-width: 100% !important;
+                              height: auto !important;
+                              min-width: 10px;
+                            }
+                            /* Memastikan elemen yang memiliki tinggi 1px (tracking pixel) tidak mengganggu */
+                            .email-content img[width="1"] {
+                              display: none !important;
+                            }
+                            /* Memastikan tabel tidak pecah di mobile */
+                            .email-content table {
+                              width: 100% !important;
+                              display: block;
+                              overflow-x: auto;
+                            }
+                          `}} />
 
                     {/* Footer Meta */}
                     <div className="px-4 md:px-5 py-3 bg-gray-50/70 border-t border-gray-100 flex items-center justify-between">
@@ -859,7 +985,7 @@ export default function EmailPage() {
               </ScrollArea>
 
               {/* Reply Area */}
-              <div id="reply-area">
+              <div id="reply-area" className="flex-shrink-0">
                 <ReplyArea
                   recipientEmail={selectedEmailData.senderEmail}
                   recipientName={selectedEmailData.sender}

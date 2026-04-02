@@ -524,8 +524,18 @@ const Sidebar: React.FC<SidebarProps> = ({
     <div className={`${baseClasses} ${positionClasses}`}>
       <div className="p-6 border-b border-gray-200 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <img src="/kinau-logo.png" className="w-28 h-auto" alt="Logo" />
+          {/* Kontainer ini adalah 'Bingkai' yang mengunci space */}
+          <div className="w-44 h-12 relative overflow-hidden flex items-center justify-center bg-gray-50">
+            <img
+              src="/kinau-logo.png"
+              // Anda bisa set w-[800px] di sini, gambar akan terpotong (clip) 
+              // sesuai batas w-44 di atas tanpa mendorong elemen lain.
+              className="min-w-40 h-auto object-cover"
+              alt="Logo"
+            />
+          </div>
         </div>
+
         {isMobile && (
           <button onClick={onCloseMobile}>
             <LogOut className="rotate-180" size={20} />
