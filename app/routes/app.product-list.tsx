@@ -1065,10 +1065,7 @@ export default function ProductListPage() {
                           ...modal,
                           data: {
                             ...modal?.data,
-                            show_in_dashboard:
-                              +(modal?.data?.show_in_dashboard ?? 0) > 0
-                                ? 1
-                                : 0,
+                            show_in_dashboard: e.target.checked ? 1 : 0,
                           },
                         })
                       }

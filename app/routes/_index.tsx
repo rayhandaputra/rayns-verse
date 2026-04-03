@@ -537,12 +537,12 @@ export const Portfolio = ({ portfolioItems }: { portfolioItems: any[] }) => {
                   // Determine display string for products + variations
                   const productDisplay =
                     safeParseArray(item.order_items) &&
-                    safeParseArray(item.order_items).length > 0
+                      safeParseArray(item.order_items).length > 0
                       ? safeParseArray(item.order_items)
-                          .map(
-                            (i) => `${i.product_name} ` //${i.variationName ? `(${i.variationName})` : ""}
-                          )
-                          .join(", ")
+                        .map(
+                          (i) => `${i.product_name} ` //${i.variationName ? `(${i.variationName})` : ""}
+                        )
+                        .join(", ")
                       : "";
 
                   return (
@@ -838,7 +838,7 @@ export const Navbar = () => {
                 src="/kinau-logo.png"
                 className="w-28 h-auto"
                 alt="Logo"
-                onClick={() => {}}
+                onClick={() => { }}
               />
             </div>
             {/* <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
@@ -881,13 +881,25 @@ export const Footer = () => {
       >
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            <div className="md:col-span-1">
+            <div className="md:col-span-1 flex flex-col gap-4">
               <img
                 src="/kinau-logo.png"
-                className="w-28 h-auto"
+                className="w-28 h-auto cursor-pointer"
                 alt="Logo"
-                onClick={() => {}}
+                onClick={() => { }}
               />
+
+              <div className="space-y-1 text-sm text-gray-700">
+                <h3 className="font-bold text-base text-gray-900">PT Kinau Digital Kreatif</h3>
+                <p className="flex flex-col">
+                  <span className="font-medium text-gray-500 text-xs uppercase tracking-wider">NIB</span>
+                  <span className="font-mono">0204260115049</span>
+                </p>
+                <p className="flex flex-col">
+                  <span className="font-medium text-gray-500 text-xs uppercase tracking-wider">NPWP</span>
+                  <span className="font-mono">05.091.550.3-232.3000</span>
+                </p>
+              </div>
             </div>
 
             <div>
@@ -972,7 +984,7 @@ export const Footer = () => {
           </div>
 
           <div className="border-t border-gray-100 pt-8 text-center text-sm text-gray-400">
-            &copy; 2025 Kinau.id Production. All rights reserved.
+            &copy; {new Date().getFullYear()} PT Kinau Digital Kreatif. All rights reserved.
           </div>
         </div>
       </footer>

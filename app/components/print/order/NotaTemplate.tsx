@@ -34,9 +34,21 @@ export const PrintNotaTemplate = React.forwardRef<
         {/* Header */}
         <div className="flex justify-between items-start border-b-2 border-gray-800 pb-4 mb-6">
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-2">
               <img src="/kinau-logo.png" alt="Kinau" className="w-28" />
             </div>
+
+            {/* Informasi Perusahaan */}
+            <div className="mb-3">
+              <p className="text-[11px] font-bold text-gray-800 leading-tight uppercase">
+                PT Kinau Digital Kreatif
+              </p>
+              <div className="text-[9px] text-gray-500 font-mono mt-0.5 uppercase">
+                <p>NIB: 0204260115049</p>
+                <p>NPWP: 05.091.550.3-232.3000</p>
+              </div>
+            </div>
+
             <p className="text-xs text-gray-500 font-medium">
               Kinau | ID Card Specialist
             </p>
@@ -44,6 +56,7 @@ export const PrintNotaTemplate = React.forwardRef<
               Kinau.id Production • Lampung
             </p>
           </div>
+
           <div className="text-right">
             <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tighter">
               NOTA PESANAN

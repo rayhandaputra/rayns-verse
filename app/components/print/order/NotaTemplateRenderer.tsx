@@ -252,11 +252,28 @@ export const NotaPdfTemplate = ({
         {/* Header */}
         <View style={styles.header}>
           <View>
+            {/* Bagian Logo */}
             <Image src={logoPath} style={styles.logo} />
+
+            {/* Informasi Legal PT */}
+            <View style={{ marginBottom: 4, marginTop: 2 }}>
+              <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#111827' }}>
+                PT Kinau Digital Kreatif
+              </Text>
+              <Text style={{ fontSize: 7, color: '#6b7280', fontFamily: 'Courier' }}>
+                NIB: 0204260115049
+              </Text>
+              <Text style={{ fontSize: 7, color: '#6b7280', fontFamily: 'Courier' }}>
+                NPWP: 05.091.550.3-232.3000
+              </Text>
+            </View>
+
+            {/* Branding & Lokasi */}
             <Text style={styles.headerSub}>Kinau | ID Card Specialist</Text>
             <Text style={styles.headerLoc}>Kinau.id Production • Lampung</Text>
           </View>
-          <View>
+
+          <View style={{ alignItems: 'flex-end' }}>
             <Text style={styles.headerTitle}>NOTA PESANAN</Text>
             <Text style={styles.orderNum}>#{order?.order_number}</Text>
             <Text style={{ fontSize: 8, color: "#6b7280", textAlign: "right" }}>
