@@ -49,12 +49,12 @@ export const PrintNotaTemplate = React.forwardRef<
               </div>
             </div>
 
-            <p className="text-xs text-gray-500 font-medium">
+            {/* <p className="text-xs text-gray-500 font-medium">
               Kinau | ID Card Specialist
             </p>
             <p className="text-[10px] text-gray-400">
               Kinau.id Production • Lampung
-            </p>
+            </p> */}
           </div>
 
           <div className="text-right">

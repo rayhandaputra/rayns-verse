@@ -269,8 +269,8 @@ export const NotaPdfTemplate = ({
             </View>
 
             {/* Branding & Lokasi */}
-            <Text style={styles.headerSub}>Kinau | ID Card Specialist</Text>
-            <Text style={styles.headerLoc}>Kinau.id Production • Lampung</Text>
+            {/* <Text style={styles.headerSub}>Kinau | ID Card Specialist</Text>
+            <Text style={styles.headerLoc}>Kinau.id Production • Lampung</Text> */}
           </View>
 
           <View style={{ alignItems: 'flex-end' }}>
