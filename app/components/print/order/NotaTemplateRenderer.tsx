@@ -223,9 +223,9 @@ export const NotaPdfTemplate = ({
   logoPath: string;
   capPath?: string;
 }) => {
-  const subtotal = order?.total_amount || 0;
+  const total = Number(order?.total_amount) || 0;
   const discountAmount = Number(order?.discount_total) || Number(order?.discount_value) || 0;
-  const total = subtotal - discountAmount;
+  const subtotal = total + discountAmount;
   const paid = order?.dp_amount || 0;
   const remain = Math.max(0, total - paid);
   const isPaidOff = remain === 0 || !!order?.payment_proof;
@@ -416,12 +416,20 @@ export const NotaPdfTemplate = ({
               </Text>
             </View>
             {discountAmount > 0 && (
-              <View style={styles.summaryItem}>
-                <Text style={{ color: "#6b7280" }}>Diskon</Text>
-                <Text style={{ fontWeight: "bold", color: "#ef4444" }}>
-                  -{formatCurrency(discountAmount)}
-                </Text>
-              </View>
+              <>
+                <View style={styles.summaryItem}>
+                  <Text style={{ color: "#6b7280" }}>Diskon</Text>
+                  <Text style={{ fontWeight: "bold", color: "#ef4444" }}>
+                    -{formatCurrency(discountAmount)}
+                  </Text>
+                </View>
+                <View style={styles.summaryItem}>
+                  <Text style={{ color: "#6b7280" }}>Setelah Diskon</Text>
+                  <Text style={{ fontWeight: "bold" }}>
+                    {formatCurrency(total)}
+                  </Text>
+                </View>
+              </>
             )}
             <View style={styles.summaryItem}>
               <Text style={{ color: "#6b7280" }}>Sudah Bayar (DP)</Text>

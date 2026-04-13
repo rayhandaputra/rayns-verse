@@ -17,9 +17,9 @@ export const PrintNotaTemplate = React.forwardRef<
   HTMLDivElement,
   PrintNotaTemplateProps
 >(({ order, items }, ref) => {
-  const subtotal = Number(order?.total_amount) || 0;
+  const total = Number(order?.total_amount) || 0;
   const discountAmount = Number(order?.discount_total) || Number(order?.discount_value) || 0;
-  const total = subtotal - discountAmount;
+  const subtotal = total + discountAmount;
   const paid = Number(order?.dp_amount) || 0;
   const remain = Math.max(0, total - paid);
   const isPaidOff = remain === 0 || !!order?.payment_proof;
@@ -215,12 +215,18 @@ export const PrintNotaTemplate = React.forwardRef<
               <span className="font-bold">{formatCurrency(subtotal)}</span>
             </div>
             {discountAmount > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Diskon</span>
-                <span className="font-medium text-red-500">
-                  -{formatCurrency(discountAmount)}
-                </span>
-              </div>
+              <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Diskon</span>
+                  <span className="font-medium text-red-500">
+                    -{formatCurrency(discountAmount)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Setelah Diskon</span>
+                  <span className="font-bold">{formatCurrency(total)}</span>
+                </div>
+              </>
             )}
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Sudah Bayar (DP)</span>
