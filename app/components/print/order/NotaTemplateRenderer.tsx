@@ -409,36 +409,28 @@ export const NotaPdfTemplate = ({
           </View>
 
           <View style={styles.summarySection}>
-            {discountAmount > 0 && (
-              <>
-                <View style={styles.summaryItem}>
-                  <Text style={{ color: "#6b7280" }}>Subtotal</Text>
-                  <Text style={{ fontWeight: "bold" }}>
-                    {formatCurrency(subtotal)}
-                  </Text>
-                </View>
-                <View style={styles.summaryItem}>
-                  <Text style={{ color: "#6b7280" }}>Diskon</Text>
-                  <Text style={{ fontWeight: "bold", color: "#ef4444" }}>
-                    -{formatCurrency(discountAmount)}
-                  </Text>
-                </View>
-              </>
-            )}
             <View style={styles.summaryItem}>
               <Text style={{ color: "#6b7280" }}>Total Tagihan</Text>
               <Text style={{ fontWeight: "bold" }}>
-                {formatCurrency(total)}
+                {formatCurrency(subtotal)}
               </Text>
             </View>
+            {discountAmount > 0 && (
+              <View style={styles.summaryItem}>
+                <Text style={{ color: "#6b7280" }}>Diskon</Text>
+                <Text style={{ fontWeight: "bold", color: "#ef4444" }}>
+                  -{formatCurrency(discountAmount)}
+                </Text>
+              </View>
+            )}
             <View style={styles.summaryItem}>
-              <Text style={{ color: "#6b7280" }}>Uang Muka (DP)</Text>
+              <Text style={{ color: "#6b7280" }}>Sudah Bayar (DP)</Text>
               <Text style={{ fontWeight: "bold", color: "#16a34a" }}>
                 {formatCurrency(paid)}
               </Text>
             </View>
             <View style={styles.sisaBayar}>
-              <Text style={{ fontWeight: 900 }}>SISA BAYAR</Text>
+              <Text style={{ fontWeight: 900 }}>SISA PEMBAYARAN</Text>
               <Text
                 style={{
                   fontWeight: 900,

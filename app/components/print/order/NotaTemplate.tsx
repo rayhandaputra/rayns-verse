@@ -210,12 +210,10 @@ export const PrintNotaTemplate = React.forwardRef<
 
           {/* Ringkasan Biaya */}
           <div className="w-64 space-y-2">
-            {discountAmount > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Subtotal</span>
-                <span className="font-bold">{formatCurrency(subtotal)}</span>
-              </div>
-            )}
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Total Tagihan</span>
+              <span className="font-bold">{formatCurrency(subtotal)}</span>
+            </div>
             {discountAmount > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Diskon</span>
@@ -225,17 +223,13 @@ export const PrintNotaTemplate = React.forwardRef<
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Total Tagihan</span>
-              <span className="font-bold">{formatCurrency(total)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Uang Muka (DP)</span>
+              <span className="text-gray-500">Sudah Bayar (DP)</span>
               <span className="font-medium text-green-600">
                 {formatCurrency(paid)}
               </span>
             </div>
             <div className="flex justify-between border-t border-gray-800 pt-2">
-              <span className="font-black text-gray-900">SISA BAYAR</span>
+              <span className="font-black text-gray-900">SISA PEMBAYARAN</span>
               <span
                 className={`font-black ${isPaidOff ? "text-green-600" : "text-red-600"}`}
               >
