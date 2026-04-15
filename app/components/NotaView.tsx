@@ -104,9 +104,21 @@ const NotaView: React.FC<NotaViewProps> = ({
   }, [client]);
 
 
-  const total = Number(order?.total_amount) || 0;
+  // ✅ Compute subtotal from items array for consistency
+  const orderItems = safeParseArray(order?.order_items);
+  const computedItemsSubtotal = orderItems.reduce((sum: number, item: any) => {
+    const itemTotal = Number(item?.variant_final_price) || 0;
+    if (itemTotal > 0) return sum + itemTotal;
+    // Fallback: qty * (price_rule_value + variant_price)
+    const qty = Number(item?.qty) || 0;
+    const unitPrice = (Number(item?.price_rule_value) || 0) + (Number(item?.variant_price) || 0);
+    return sum + (unitPrice > 0 ? qty * unitPrice : Number(item?.subtotal) || 0);
+  }, 0);
+
+  // Use computed subtotal from items if available, fallback to order total_amount + discount
   const discountAmount = Number((order as any)?.discount_total) || Number((order as any)?.discount_value) || 0;
-  const subtotal = total + discountAmount;
+  const subtotal = computedItemsSubtotal > 0 ? computedItemsSubtotal : ((Number(order?.total_amount) || 0) + discountAmount);
+  const total = subtotal - discountAmount;
   const paid = Number(order?.dp_amount) || 0;
   const remain = Math.max(0, total - paid);
   const isPaidOff = remain === 0 || !!order?.payment_proof;
@@ -310,40 +322,38 @@ const NotaView: React.FC<NotaViewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {safeParseArray(order?.order_items)?.map((item: any) => (
-                <tr>
-                  <td className="py-3">
-                    <div className="font-medium flex flex-col">
-                      <span>{item.product_name}</span>
+              {orderItems?.map((item: any, idx: number) => {
+                const itemUnitPrice = (Number(item?.price_rule_value) || 0) + (Number(item?.variant_price) || 0);
+                const itemSubtotal = Number(item?.variant_final_price) || (Number(item?.qty) || 0) * itemUnitPrice;
+                const isInvalid = (Number(item?.qty) || 0) > 0 && itemSubtotal <= 0;
 
-                      {item.variant_name && (
-                        <span className="text-gray-500 font-normal text-xs">
-                          ({item.variant_name})
-                        </span>
-                      )}
-
-                      {/* {item.variant_price && item.variant_price > 0 && (
-                      <span className="text-xs text-emerald-600 font-medium">
-                        + {formatCurrency(item.variant_price)} / pcs
-                      </span>
-                    )} */}
-                    </div>
-                  </td>
-
-                  <td className="py-3 text-right">{item.qty}</td>
-                  <td className="py-3 text-right">
-                    {/* {formatCurrency(item.unit_price)} */}
-                    {formatCurrency(
-                      +(item?.price_rule_value ?? 0) +
-                      +(item?.variant_price ?? 0)
-                    )}
-                  </td>
-                  <td className="py-3 text-right font-medium">
-                    {/* {formatCurrency(item.subtotal)} */}
-                    {formatCurrency(item?.variant_final_price ?? 0)}
-                  </td>
-                </tr>
-              ))}
+                return (
+                  <tr key={idx} className={isInvalid ? "bg-red-50" : ""}>
+                    <td className="py-3">
+                      <div className="font-medium flex flex-col">
+                        <span>{item.product_name}</span>
+                        {item.variant_name && (
+                          <span className="text-gray-500 font-normal text-xs">
+                            ({item.variant_name})
+                          </span>
+                        )}
+                        {isInvalid && (
+                          <span className="text-red-500 font-normal text-xs">
+                            (Data harga tidak valid)
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 text-right">{item.qty}</td>
+                    <td className="py-3 text-right">
+                      {formatCurrency(itemUnitPrice > 0 ? itemUnitPrice : (Number(item?.unit_price) || 0))}
+                    </td>
+                    <td className="py-3 text-right font-medium">
+                      {formatCurrency(itemSubtotal)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

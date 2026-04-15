@@ -689,8 +689,18 @@ export default function OrderList() {
         cellClassName: "whitespace-nowrap text-sm font-bold text-gray-900",
         // cell: (order) => formatCurrency(order.total_amount ?? 0),
         cell: (order) => {
-          const subtotal = Number(order.total_amount) || 0;
+          // ✅ Compute subtotal from items for accuracy, fallback to order.total_amount
+          const items = safeParseArray(order.order_items);
+          const computedItemsSubtotal = items.reduce((sum: number, item: any) => {
+            const itemTotal = Number(item?.variant_final_price) || 0;
+            if (itemTotal > 0) return sum + itemTotal;
+            const qty = Number(item?.qty) || 0;
+            const unitPrice = (Number(item?.price_rule_value) || 0) + (Number(item?.variant_price) || 0);
+            return sum + (unitPrice > 0 ? qty * unitPrice : Number(item?.subtotal) || 0);
+          }, 0);
+
           const dAmount = Number(order.discount_value) || 0;
+          const subtotal = computedItemsSubtotal > 0 ? computedItemsSubtotal : ((Number(order.total_amount) || 0) + dAmount);
           const total = subtotal - dAmount;
 
           return (

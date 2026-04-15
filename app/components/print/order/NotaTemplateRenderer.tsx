@@ -223,10 +223,19 @@ export const NotaPdfTemplate = ({
   logoPath: string;
   capPath?: string;
 }) => {
-  const total = Number(order?.total_amount) || 0;
+  // ✅ Compute subtotal from items array for consistency
+  const computedItemsSubtotal = (items || []).reduce((sum: number, item: any) => {
+    const itemTotal = Number(item?.variant_final_price) || 0;
+    if (itemTotal > 0) return sum + itemTotal;
+    const qty = Number(item?.qty) || 0;
+    const unitPrice = (Number(item?.price_rule_value) || 0) + (Number(item?.variant_price) || 0);
+    return sum + (unitPrice > 0 ? qty * unitPrice : Number(item?.subtotal) || 0);
+  }, 0);
+
   const discountAmount = Number(order?.discount_total) || Number(order?.discount_value) || 0;
-  const subtotal = total + discountAmount;
-  const paid = order?.dp_amount || 0;
+  const subtotal = computedItemsSubtotal > 0 ? computedItemsSubtotal : ((Number(order?.total_amount) || 0) + discountAmount);
+  const total = subtotal - discountAmount;
+  const paid = Number(order?.dp_amount) || 0;
   const remain = Math.max(0, total - paid);
   const isPaidOff = remain === 0 || !!order?.payment_proof;
 
@@ -364,27 +373,36 @@ export const NotaPdfTemplate = ({
               SUBTOTAL
             </Text>
           </View>
-          {items?.map((item, idx) => (
-            <View key={idx} style={styles.tableRow}>
-              <View style={styles.colDesc}>
-                <Text style={{ fontWeight: "bold" }}>{item.product_name}</Text>
-                {item.variant_name && (
-                  <Text style={{ fontSize: 7, color: "#2563eb" }}>
-                    ({item.variant_name})
-                  </Text>
-                )}
+          {items?.map((item, idx) => {
+            const itemUnitPrice = (Number(item?.price_rule_value) || 0) + (Number(item?.variant_price) || 0);
+            const displayUnitPrice = itemUnitPrice > 0 ? itemUnitPrice : (Number(item?.unit_price) || 0);
+            const itemSubtotal = Number(item?.variant_final_price) || (Number(item?.qty) || 0) * displayUnitPrice;
+
+            return (
+              <View key={idx} style={styles.tableRow}>
+                <View style={styles.colDesc}>
+                  <Text style={{ fontWeight: "bold" }}>{item.product_name}</Text>
+                  {item.variant_name && (
+                    <Text style={{ fontSize: 7, color: "#2563eb" }}>
+                      ({item.variant_name})
+                    </Text>
+                  )}
+                  {(Number(item?.qty) || 0) > 0 && itemSubtotal <= 0 && (
+                    <Text style={{ fontSize: 6, color: "#ef4444" }}>
+                      (Harga tidak valid)
+                    </Text>
+                  )}
+                </View>
+                <Text style={styles.colQty}>{item.qty}</Text>
+                <Text style={styles.colPrice}>
+                  {formatCurrency(displayUnitPrice)}
+                </Text>
+                <Text style={styles.colTotal}>
+                  {formatCurrency(itemSubtotal)}
+                </Text>
               </View>
-              <Text style={styles.colQty}>{item.qty}</Text>
-              <Text style={styles.colPrice}>
-                {formatCurrency(
-                  +(item?.price_rule_value ?? 0) + +(item?.variant_price ?? 0)
-                )}
-              </Text>
-              <Text style={styles.colTotal}>
-                {formatCurrency(item.variant_final_price)}
-              </Text>
-            </View>
-          ))}
+            );
+          })}
         </View>
 
         {/* Summary & Payment Information */}

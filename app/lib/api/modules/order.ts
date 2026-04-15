@@ -402,6 +402,37 @@ export const OrderAPI = {
     // const grand_total = total_amount + (shipping_fee || 0) + (other_fee || 0);
 
     const jrnlCode = generateJournalCode();
+
+    // ✅ Server-side: Compute subtotal from items, then derive total_amount
+    let computedSubtotal = 0;
+    if (items?.length > 0) {
+      items.forEach((item: any) => {
+        const itemFinalPrice = Number(item?.variant_final_price) || 0;
+        if (itemFinalPrice > 0) {
+          computedSubtotal += itemFinalPrice;
+        } else {
+          // Fallback: qty * unit_price
+          const qty = Number(item?.qty || item?.quantity) || 0;
+          const unitPrice = Number(item?.unit_price || item?.price) || 0;
+          computedSubtotal += qty * unitPrice;
+        }
+      });
+    }
+
+    // Apply discount to get total_amount
+    let computedDiscount = 0;
+    if (discount_type === "percent") {
+      computedDiscount = computedSubtotal * (Number(discount_value) / 100);
+    } else {
+      computedDiscount = Number(discount_value) || 0;
+    }
+    computedDiscount = Math.min(computedDiscount, computedSubtotal);
+    const computedTotalAmount = computedSubtotal - computedDiscount;
+
+    // Use server-computed values, fallback to client value only if no items
+    const finalSubtotal = items?.length > 0 ? computedSubtotal : (total_amount + computedDiscount);
+    const finalTotalAmount = items?.length > 0 ? computedTotalAmount : total_amount;
+
     let newOrder: any = {
       order_number,
       institution_id,
@@ -418,13 +449,12 @@ export const OrderAPI = {
       payment_due_date,
       discount_code,
       discount_type,
-      discount_value,
+      discount_value: computedDiscount,
       tax_percent,
-      // tax_value: totalTax,
       shipping_fee,
       other_fee,
-      // subtotal,
-      total_amount,
+      subtotal: finalSubtotal,
+      total_amount: finalTotalAmount,
       dp_amount,
       is_sponsor,
       is_kkn,
@@ -435,7 +465,7 @@ export const OrderAPI = {
       kkn_period,
       kkn_year,
       is_personal,
-      // grand_total,
+      grand_total: finalTotalAmount,
       deadline,
       status,
       status_printed: "waiting",
@@ -446,10 +476,9 @@ export const OrderAPI = {
       created_by: safeParseObject(created_by)
         ? JSON.stringify(created_by)
         : null,
-      // created_on: moment().subtract(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
       created_on: moment().add(7, "hours").format("YYYY-MM-DD HH:mm:ss"),
       modified_on: null,
-      ...(total_amount > 0 &&
+      ...(finalTotalAmount > 0 &&
         +is_archive === 1 && {
         ...(payment_status === "down_payment"
           ? {
@@ -607,41 +636,47 @@ export const OrderAPI = {
         // Tambahkan await Promise.all di sini
         const itemRows = await Promise.all(
           items.map(async (item: any) => {
-            const qty = item?.qty || item?.quantity || 1;
-            const unit_price = item?.unit_price || item?.price || 0;
-            const subtotal = qty * unit_price;
-            const discount_total =
-              item?.discount_type === "percent"
-                ? (subtotal * (item?.discount_value || 0)) / 100
-                : item?.discount_value || 0;
-            const tax_value =
-              ((subtotal - discount_total) * (item?.tax_percent || 0)) / 100;
+            const qty = Number(item?.qty || item?.quantity) || 1;
 
             let defVariant = null;
             if (!item?.variant_id) {
-
               const isiDefVar = await APIProvider({
                 endpoint: "select",
                 method: "POST",
                 table: "product_variants",
                 action: "select",
                 body: {
-                  columns: ["id", "variant_name", "is_default"],
+                  columns: ["id", "variant_name", "base_price", "is_default"],
                   where: {
                     product_id: item?.product_id || item?.productId || null,
                     is_default: 1,
                   },
                 },
               });
-              defVariant = isiDefVar?.items?.[0]
+              defVariant = isiDefVar?.items?.[0];
             }
 
-            // Return objek data murni
+            // ✅ Compute unit_price from price_rule + variant_price (never allow 0 if we have rule/variant data)
+            const priceRuleValue = Number(item?.price_rule_value) || 0;
+            const variantPrice = Number(defVariant?.base_price || item?.variant_price) || 0;
+            const computedUnitPrice = priceRuleValue + variantPrice;
+            const unit_price = computedUnitPrice > 0 ? computedUnitPrice : (Number(item?.unit_price || item?.price) || 0);
+
+            const subtotal = qty * unit_price;
+            const variantFinalPrice = Number(item?.variant_final_price) || subtotal;
+
+            const discount_total =
+              item?.discount_type === "percent"
+                ? (subtotal * (Number(item?.discount_value) || 0)) / 100
+                : Number(item?.discount_value) || 0;
+            const tax_value =
+              ((subtotal - discount_total) * (Number(item?.tax_percent) || 0)) / 100;
+
             return {
               order_number,
               variant_id: defVariant?.id || item?.variant_id || null,
               variant_name: defVariant?.variant_name || item?.variant_name || null,
-              variant_price: defVariant?.base_price || item?.variant_price || null,
+              variant_price: variantPrice || null,
               product_id: item?.product_id || item?.productId || null,
               product_name: item?.product_name || item?.productName || null,
               product_type: item?.product_type || "single",
@@ -650,15 +685,15 @@ export const OrderAPI = {
               discount_type: item?.discount_type || null,
               discount_value: item?.discount_value || 0,
               tax_percent: item?.tax_percent || 0,
-              subtotal,
+              subtotal: variantFinalPrice,
               discount_total,
               tax_value,
               total_after_tax: subtotal - discount_total + tax_value,
               notes: item?.notes || null,
-              variant_final_price: item?.variant_final_price || null,
+              variant_final_price: variantFinalPrice,
               price_rule_id: item?.price_rule_id || null,
               price_rule_min_qty: item?.price_rule_min_qty || null,
-              price_rule_value: item?.price_rule_value || null,
+              price_rule_value: priceRuleValue || null,
             };
           })
         );
@@ -675,7 +710,7 @@ export const OrderAPI = {
         });
       }
 
-      if (total_amount > 0 && +is_archive === 1) {
+      if (finalTotalAmount > 0 && +is_archive === 1) {
         createMutation(
           [
             {
@@ -807,10 +842,43 @@ export const OrderAPI = {
       return { success: false, message: "ID order wajib diisi untuk update" };
     }
 
+    // ✅ Server-side: Recompute subtotal/total_amount from items if items are provided
+    let computedSubtotal = 0;
+    if (items?.length > 0) {
+      items.forEach((item: any) => {
+        const itemFinalPrice = Number(item?.variant_final_price) || 0;
+        if (itemFinalPrice > 0) {
+          computedSubtotal += itemFinalPrice;
+        } else {
+          const qty = Number(item?.qty || item?.quantity) || 0;
+          const unitPrice = Number(item?.unit_price || item?.price) || 0;
+          computedSubtotal += qty * unitPrice;
+        }
+      });
+    }
+
+    const discountType = fields?.discount_type || existOrder?.discount_type;
+    const discountVal = Number(fields?.discount_value ?? existOrder?.discount_value) || 0;
+    let computedDiscount = 0;
+    if (discountType === "percent") {
+      computedDiscount = computedSubtotal * (discountVal / 100);
+    } else {
+      computedDiscount = discountVal;
+    }
+    computedDiscount = Math.min(computedDiscount, computedSubtotal);
+    const computedTotalAmount = items?.length > 0 ? (computedSubtotal - computedDiscount) : Number(fields?.total_amount || 0);
+
     const updatedOrder = {
       ...fields,
       ...(fields?.kkn_detail && {
         kkn_detail: JSON.stringify(fields?.kkn_detail),
+      }),
+      // ✅ Sync computed values when items are provided
+      ...(items?.length > 0 && {
+        subtotal: computedSubtotal,
+        total_amount: computedTotalAmount,
+        grand_total: computedTotalAmount,
+        discount_value: computedDiscount,
       }),
       modified_on: new Date().toISOString(),
       ...(fields.deleted === 1 ? { deleted_on: new Date().toISOString() } : {}),
@@ -1004,18 +1072,9 @@ export const OrderAPI = {
         //   }
         // }
 
-        // Tambahkan await Promise.all di depan items.map
         const itemRows = await Promise.all(
           items.map(async (item: any) => {
-            const qty = item?.qty || item?.quantity || 1;
-            const unit_price = item?.unit_price || item?.price || 0;
-            const subtotal = qty * unit_price;
-            const discount_total =
-              item?.discount_type === "percent"
-                ? (subtotal * (item?.discount_value || 0)) / 100
-                : item?.discount_value || 0;
-            const tax_value =
-              ((subtotal - discount_total) * (item?.tax_percent || 0)) / 100;
+            const qty = Number(item?.qty || item?.quantity) || 1;
 
             let defVariant = null;
             if (!item?.variant_id) {
@@ -1025,15 +1084,31 @@ export const OrderAPI = {
                 table: "product_variants",
                 action: "select",
                 body: {
-                  columns: ["id", "variant_name", "is_default"],
+                  columns: ["id", "variant_name", "base_price", "is_default"],
                   where: {
                     product_id: item?.product_id || item?.productId || null,
                     is_default: 1,
                   },
                 },
               });
-              defVariant = isiDefVar?.items?.[0]
+              defVariant = isiDefVar?.items?.[0];
             }
+
+            // ✅ Compute unit_price from price_rule + variant_price
+            const priceRuleValue = Number(item?.price_rule_value) || 0;
+            const variantPrice = Number(defVariant?.base_price || item?.variant_price) || 0;
+            const computedUnitPrice = priceRuleValue + variantPrice;
+            const unit_price = computedUnitPrice > 0 ? computedUnitPrice : (Number(item?.unit_price || item?.price) || 0);
+
+            const subtotal = qty * unit_price;
+            const variantFinalPrice = Number(item?.variant_final_price) || subtotal;
+
+            const discount_total =
+              item?.discount_type === "percent"
+                ? (subtotal * (Number(item?.discount_value) || 0)) / 100
+                : Number(item?.discount_value) || 0;
+            const tax_value =
+              ((subtotal - discount_total) * (Number(item?.tax_percent) || 0)) / 100;
 
             return {
               order_number: order_number || existOrder?.order_number,
@@ -1045,18 +1120,18 @@ export const OrderAPI = {
               discount_type: item?.discount_type || null,
               discount_value: item?.discount_value || 0,
               tax_percent: item?.tax_percent || 0,
-              subtotal,
+              subtotal: variantFinalPrice,
               discount_total,
               tax_value,
               total_after_tax: subtotal - discount_total + tax_value,
               notes: item?.notes || null,
               variant_id: defVariant?.id || item?.variant_id || null,
               variant_name: defVariant?.variant_name || item?.variant_name || null,
-              variant_price: defVariant?.base_price || item?.variant_price || null,
-              variant_final_price: item?.variant_final_price || null,
+              variant_price: variantPrice || null,
+              variant_final_price: variantFinalPrice,
               price_rule_id: item?.price_rule_id || null,
               price_rule_min_qty: item?.price_rule_min_qty || null,
-              price_rule_value: item?.price_rule_value || null,
+              price_rule_value: priceRuleValue || null,
               deleted_on: null,
             };
           })

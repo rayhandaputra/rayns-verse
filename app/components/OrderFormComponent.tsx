@@ -408,6 +408,16 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
     if (items.length === 0) newErrors.items = "Pilih produk dan isi jumlah";
     if (totalQty <= 0) newErrors.items = "Jumlah barang tidak valid";
 
+    // ✅ Validate: no item should have zero price when qty > 0
+    const hasZeroPriceItem = orderItems.some((item) => {
+      const qty = Number(item.quantity) || 0;
+      const finalPrice = Number(item.variant_final_price) || 0;
+      return qty > 0 && finalPrice <= 0 && item.productId;
+    });
+    if (hasZeroPriceItem) {
+      newErrors.items = "Ada item dengan harga Rp 0. Pastikan varian dan jumlah sudah dipilih dengan benar.";
+    }
+
     if (!isArchive && !deadline) newErrors.deadline = "Wajib diisi";
 
     let finalDp = 0;
