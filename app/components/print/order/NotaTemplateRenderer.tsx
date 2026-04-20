@@ -476,7 +476,7 @@ export const NotaPdfTemplate = ({
                   marginTop: 4,
                 }}
               >
-                ✓ PESANAN LUNAS
+                PESANAN LUNAS
               </Text>
             )}
           </View>
