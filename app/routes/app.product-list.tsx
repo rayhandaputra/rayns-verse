@@ -7,8 +7,8 @@ import {
   type LoaderFunction,
   type ActionFunction,
 } from "react-router";
-import type { Product, ProductTier, ProductVariation } from "../types";
-import { formatCurrency, parseCurrency, formatNumberInput } from "../constants";
+import type { Product, ProductTier, ProductVariation } from "~/types";
+import { formatCurrency, parseCurrency, formatNumberInput } from "~/constants";
 import {
   Plus,
   Edit2,
@@ -28,17 +28,17 @@ import {
   FolderCog,
   PencilLine,
 } from "lucide-react";
-import { API } from "~/lib/api";
-import { requireAuth } from "~/lib/session.server";
+import { API } from "~/nexus";
+import { requireAuth } from "~/utils/session.server";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
-import { nexus } from "~/lib/nexus-client";
+import { nexus } from "~/nexus/nexus-client";
 import { DataTable, type ColumnDef } from "~/components/ui/data-table";
 import { Button } from "~/components/ui/button";
-import TableHeader from "~/components/table/TableHeader";
+import TableHeader from "~/components/shared/table/TableHeader";
 import { useModal } from "~/hooks";
-import ModalSecond from "~/components/modal/ModalSecond";
+import ModalSecond from "~/components/shared/modal/ModalSecond";
 import ReactSelect from "react-select";
 
 // ============================================

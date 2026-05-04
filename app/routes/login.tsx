@@ -19,8 +19,8 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
-import { AuthAPI } from "~/lib/api/modules/user_auth";
-import { createUserSession } from "~/lib/session.server";
+import { AuthAPI } from "~/nexus/modules/user_auth";
+import { createUserSession } from "~/utils/session.server";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import type { ActionFunction } from "react-router";
 
@@ -235,14 +235,13 @@ export default function LoginPage() {
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Checkbox
+                <input
+                  type="checkbox"
                   id="remember"
                   name="rememberMe"
                   checked={rememberMe}
-                  onCheckedChange={(checked) =>
-                    setRememberMe(checked as boolean)
-                  }
-                  className="border-emerald-500 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 text-emerald-600 border-emerald-500 rounded focus:ring-emerald-500"
                 />
                 <Label
                   htmlFor="remember"

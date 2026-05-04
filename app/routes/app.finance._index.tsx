@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import type { LoaderFunction, ActionFunction } from "react-router";
 import { Form, useFetcher } from "react-router";
-import { formatCurrency } from "../constants";
+import { formatCurrency } from "~/constants";
 import {
   Wallet,
   TrendingUp,
@@ -36,13 +36,13 @@ import {
 } from "recharts";
 import AssetInventoryPage from "./app.asset.inventory";
 import AccountCoaPage from "./app.finance.account";
-import { requireAuth } from "~/lib/session.server";
-import { API } from "~/lib/api";
+import { requireAuth } from "~/utils/session.server";
+import { API } from "~/nexus";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
-import { nexus, NexusHelpers } from "~/lib/nexus-client";
+import { nexus, NexusHelpers } from "~/nexus/nexus-client";
 import { toast } from "sonner";
-import { APIProvider } from "~/lib/api/client";
-import { safeParseArray, safeParseObject, uploadFile } from "~/lib/utils";
+import { APIProvider } from "~/nexus/client";
+import { safeParseArray, safeParseObject, uploadFile } from "~/utils/utils";
 import { useModal } from "~/hooks";
 import { Button } from "~/components/ui/button";
 import { TablePagination } from "~/components/ui/data-table";

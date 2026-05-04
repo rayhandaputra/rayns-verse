@@ -6,8 +6,8 @@ import {
   type LoaderFunction,
   type ActionFunction,
 } from "react-router";
-import type { Asset } from "../types";
-import { formatCurrency, parseCurrency, formatFullDate } from "../constants";
+import type { Asset } from "~/types";
+import { formatCurrency, parseCurrency, formatFullDate } from "~/constants";
 import {
   Monitor,
   Plus,
@@ -18,12 +18,12 @@ import {
   Check,
   Filter,
 } from "lucide-react";
-import { requireAuth } from "~/lib/session.server";
+import { requireAuth } from "~/utils/session.server";
 import { toast } from "sonner";
-import { API } from "~/lib/api";
+import { API } from "~/nexus";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
-import { nexus } from "~/lib/nexus-client";
-import type { NexusResponse, PaginatedResponse } from "~/lib/nexus-client";
+import { nexus } from "~/nexus/nexus-client";
+import type { NexusResponse, PaginatedResponse } from "~/nexus/nexus-client";
 
 // ============================================
 // TYPES & INTERFACES

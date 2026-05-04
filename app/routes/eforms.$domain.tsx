@@ -1,4 +1,4 @@
-import MenuIcon from "~/components/icon/menu-icon";
+import MenuIcon from "~/components/shared/icon/menu-icon";
 
 import React from "react";
 import {
@@ -15,8 +15,8 @@ import {
   useNavigate,
   type LoaderFunction,
 } from "react-router";
-import { API } from "~/lib/api";
-import CardFolder from "~/components/eform/CardFolder";
+import { API } from "~/nexus";
+import CardFolder from "~/components/features/eform/CardFolder";
 import { Button } from "~/components/ui/button";
 
 export const loader: LoaderFunction = async ({ request, params }) => {

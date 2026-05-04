@@ -1,5 +1,5 @@
 // import React, { useState, useMemo } from "react";
-// import type { StockState, RawMaterial } from "../types";
+// import type { StockState, RawMaterial } from "~/types";
 // import {
 //   formatCurrency,
 //   mlPerPaket,
@@ -13,7 +13,7 @@
 //   PLASTIC_MED_CAP,
 //   PLASTIC_BIG_CAP,
 //   INITIAL_SHOPS,
-// } from "../constants";
+// } from "~/constants";
 // import {
 //   Calculator,
 //   Store,
@@ -30,13 +30,13 @@ import AsyncReactSelect from "react-select/async";
 
 import { Store, Settings, Plus, Edit2, Trash2, X } from "lucide-react";
 import { useState } from "react";
-import { CapacityTable } from "~/components/CapacityTable";
+import { CapacityTable } from "~/components/features/procurement/CapacityTable";
 import { useStockLogic } from "~/hooks/useStockLogic";
-import { API } from "~/lib/api";
+import { API } from "~/nexus";
 import { formatCurrency } from "~/constants";
-import { safeParseArray } from "~/lib/utils";
+import { safeParseArray } from "~/utils/utils";
 import { useFetcherData } from "~/hooks";
-import { nexus } from "~/lib/nexus-client";
+import { nexus } from "~/nexus/nexus-client";
 
 // const StockPage = () => {
 //   const {

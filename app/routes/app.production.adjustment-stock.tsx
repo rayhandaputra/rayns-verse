@@ -1,5 +1,5 @@
-import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
-import { TitleHeader } from "~/components/TitleHedaer";
+import { AppBreadcrumb } from "~/components/core/AppBreadcrumb";
+import { TitleHeader } from "~/components/core/TitleHeader";
 
 const StockAdjustment = () => {
   return (

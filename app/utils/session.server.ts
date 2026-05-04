@@ -1,0 +1,136 @@
+// app/lib/session.server.ts
+import {
+  createCookie,
+  createCookieSessionStorage,
+  redirect,
+} from "react-router";
+
+import { deleteSession, getSessionUser } from "./auth.server";
+
+// COOKIE DEFINITION
+const getSessionSecret = () => {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("SESSION_SECRET must be set in environment variables");
+    }
+    return "dev_secret_only";
+  }
+  return secret;
+};
+
+const sessionCookie = createCookie("session", {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+  maxAge: 60 * 60 * 24 * 7, // 7 days
+  secrets: [getSessionSecret()],
+});
+
+export const sessionStorage = createCookieSessionStorage({
+  cookie: sessionCookie,
+});
+
+/**
+ * Get session from request cookie
+ */
+export async function getSession(cookieHeader: string | null) {
+  return sessionStorage.getSession(cookieHeader);
+}
+
+/**
+ * Commit session and return Set-Cookie header
+ */
+export async function commitSession(session: any) {
+  return sessionStorage.commitSession(session);
+}
+
+/**
+ * Destroy session and return Set-Cookie header
+ */
+export async function destroySession(session: any) {
+  return sessionStorage.destroySession(session);
+}
+
+/**
+ * Create user session and redirect
+ */
+export async function createUserSession(
+  token: string,
+  redirectTo = "/",
+  data?: string
+) {
+  const session = await sessionStorage.getSession();
+  session.set("token", token);
+  session.set("user", data);
+
+  return redirect(redirectTo, {
+    headers: {
+      "Set-Cookie": await sessionStorage.commitSession(session),
+    },
+  });
+}
+
+/**
+ * Require authentication for protected routes
+ * Redirects to /login if not authenticated
+ */
+export async function requireAuth(request: Request) {
+  const session = await sessionStorage.getSession(
+    request.headers.get("Cookie")
+  );
+
+  const token = session.get("token");
+  const user = session.get("user");
+  if (!token) {
+    // throw redirect("/");
+    return Response.json({ unauthorized: true }, { status: 401 });
+    // return ;
+  }
+
+  // const user = await getSessionUser(token);
+  // if (!user) {
+  //   throw redirect("/");
+  // }
+
+  return { user, session, token };
+}
+
+/**
+ * Get user if authenticated (optional)
+ * Returns null if not authenticated
+ */
+export async function getOptionalUser(request: Request) {
+  const session = await sessionStorage.getSession(
+    request.headers.get("Cookie")
+  );
+  const token = session.get("token");
+  const user = session.get("user");
+
+  if (!token) {
+    return null;
+  }
+
+  // const user = await getSessionUser(token);
+  return user ? { user, session, token } : null;
+}
+
+/**
+ * Logout user and redirect to login
+ */
+export async function logout(request: Request) {
+  const session = await sessionStorage.getSession(
+    request.headers.get("Cookie")
+  );
+  const token = session.get("token");
+
+  if (token) {
+    await deleteSession(token);
+  }
+
+  return redirect("/", {
+    headers: {
+      "Set-Cookie": await sessionStorage.destroySession(session),
+    },
+  });
+}

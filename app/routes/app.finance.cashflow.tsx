@@ -1,7 +1,7 @@
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { TrendingUp, TrendingDown, Wallet } from "lucide-react";
-import ChartLazy from "~/components/Chart/ChartLazy";
+import ChartLazy from "~/components/shared/chart/ChartLazy";
 
 export default function CashflowPage() {
   const chartData = {

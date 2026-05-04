@@ -1,7 +1,7 @@
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Users, Wallet, TrendingUp } from "lucide-react";
-import ChartLazy from "~/components/Chart/ChartLazy";
+import ChartLazy from "~/components/shared/chart/ChartLazy";
 
 export default function GajiPegawaiPage() {
   const chartData = {

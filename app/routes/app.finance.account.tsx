@@ -8,13 +8,13 @@ import {
   Trash2,
 } from "lucide-react";
 import { useFetcherData, useModal } from "~/hooks";
-import { nexus } from "~/lib/nexus-client";
-import ModalSecond from "~/components/modal/ModalSecond";
+import { nexus } from "~/nexus/nexus-client";
+import ModalSecond from "~/components/shared/modal/ModalSecond";
 import { Form, type ActionFunction } from "react-router";
 import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
-import { requireAuth } from "~/lib/session.server";
-import { API } from "~/lib/api";
+import { requireAuth } from "~/utils/session.server";
+import { API } from "~/nexus";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { formatCurrency } from "~/constants";

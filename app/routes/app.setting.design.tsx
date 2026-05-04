@@ -9,10 +9,10 @@ import {
     Maximize, Move, Eye, Edit2, Briefcase, Search, Scissors, Minus
 } from 'lucide-react';
 
-import { nexus } from "~/lib/nexus-client"; // Assuming this is where nexus lives
+import { nexus } from "~/nexus/nexus-client"; // Assuming this is where nexus lives
 import { useFetcherData } from "~/hooks/use-fetcher-data"; // Assuming path
-import { API } from "~/lib/api"; // Assuming this exports TwibbonTemplateAPI as API.TWIBBON_TEMPLATE
-import { uploadFile } from '~/lib/utils';
+import { API } from "~/nexus"; // Assuming this exports TwibbonTemplateAPI as API.TWIBBON_TEMPLATE
+import { uploadFile } from '~/utils/utils';
 
 // --- TYPES (app/types/design.ts) ---
 export type DesignCategory = 'twibbon-idcard' | 'twibbon-lanyard'; // Adjusted to match DB ENUM

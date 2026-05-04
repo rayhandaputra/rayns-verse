@@ -2,15 +2,15 @@
 // import { useFetcher, useLoaderData, useParams } from "react-router";
 // import type { ActionFunction } from "react-router";
 // import { Plus, Edit2, Trash2, MapPin, Phone, ExternalLink, Check } from "lucide-react";
-// import { API } from "~/lib/api";
-// import { requireAuth } from "~/lib/session.server";
-// import { nexus } from "~/lib/nexus-client";
+// import { API } from "~/nexus";
+// import { requireAuth } from "~/utils/session.server";
+// import { nexus } from "~/nexus/nexus-client";
 // import { useFetcherData } from "~/hooks";
 // // import { Shop } from "~/types/inventory";
 // import Swal from "sweetalert2";
 // import { toast } from "sonner";
 // import type { Shop } from "./app.procurement.$category";
-// import { formatWA } from "~/lib/utils";
+// import { formatWA } from "~/utils/utils";
 
 // // --- ACTION REMIX ---
 // export const action: ActionFunction = async ({ request }) => {
@@ -210,13 +210,13 @@ import { useState, useEffect } from "react";
 import { useFetcher, useParams } from "react-router"; // Sesuaikan import dengan versi remix/react-router Anda
 import type { ActionFunction } from "react-router";
 import { Plus, Edit2, Trash2, MapPin, Phone, Check, X, ExternalLink } from "lucide-react";
-import { API } from "~/lib/api";
-import { requireAuth } from "~/lib/session.server";
-import { nexus } from "~/lib/nexus-client";
+import { API } from "~/nexus";
+import { requireAuth } from "~/utils/session.server";
+import { nexus } from "~/nexus/nexus-client";
 import { useFetcherData } from "~/hooks";
 import Swal from "sweetalert2";
 import { toast } from "sonner";
-import { formatWA } from "~/lib/utils";
+import { formatWA } from "~/utils/utils";
 
 // --- ACTION REMIX ---
 export const action: ActionFunction = async ({ request }) => {

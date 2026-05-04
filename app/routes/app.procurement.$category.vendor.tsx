@@ -260,13 +260,13 @@ import { useState, useEffect } from "react";
 import { useFetcher, useParams } from "react-router";
 import type { ActionFunction } from "react-router";
 import { Store, Plus, MapPin, Edit2, Trash2, Link as LinkIcon, MessageCircle, Check, Tag, Scissors } from "lucide-react";
-import { API } from "~/lib/api";
-import { requireAuth } from "~/lib/session.server";
-import { nexus } from "~/lib/nexus-client";
+import { API } from "~/nexus";
+import { requireAuth } from "~/utils/session.server";
+import { nexus } from "~/nexus/nexus-client";
 import { useFetcherData } from "~/hooks";
 import Swal from "sweetalert2";
 import { toast } from "sonner";
-import { formatWA } from "~/lib/utils";
+import { formatWA } from "~/utils/utils";
 
 // --- TYPES ---
 export interface Shop {

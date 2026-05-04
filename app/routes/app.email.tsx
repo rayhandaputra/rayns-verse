@@ -37,7 +37,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { requireAuth } from "~/lib/session.server";
+import { requireAuth } from "~/utils/session.server";
 
 /*
  * ============================================================

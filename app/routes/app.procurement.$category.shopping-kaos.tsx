@@ -3,15 +3,15 @@
 // import { useFetcher } from 'react-router';
 // import type { ActionFunction } from 'react-router';
 // import { ShoppingCart, Check, FileText, Palette, Loader2, X, Upload, Scissors, Ruler, Image, Trash2 } from 'lucide-react';
-// import { nexus } from '~/lib/nexus-client';
+// import { nexus } from '~/nexus/nexus-client';
 // import { useFetcherData, useModal } from '~/hooks';
 // import { formatCurrency, parseCurrency, formatNumberInput } from '~/constants';
 // import { toast } from 'sonner';
-// import { API } from '~/lib/api';
-// import { requireAuth } from "~/lib/session.server";
-// import { safeParseArray, uploadFile } from '~/lib/utils';
+// import { API } from '~/nexus';
+// import { requireAuth } from "~/utils/session.server";
+// import { safeParseArray, uploadFile } from '~/utils/utils';
 // import Swal from 'sweetalert2';
-// import { dateFormat } from '~/lib/dateFormatter';
+// import { dateFormat } from '~/utils/dateFormatter';
 // import ReactSelect from "react-select"
 // import AsyncReactSelect from "react-select/async"
 
@@ -955,15 +955,15 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useFetcher } from 'react-router';
 import type { ActionFunction } from 'react-router';
 import { ShoppingCart, Check, FileText, Palette, Loader2, X, Upload, Scissors, Image, Trash2, ImageIcon, Ruler } from 'lucide-react';
-import { nexus } from '~/lib/nexus-client';
+import { nexus } from '~/nexus/nexus-client';
 import { useFetcherData, useModal } from '~/hooks';
 import { formatCurrency, parseCurrency, formatNumberInput } from '~/constants';
 import { toast } from 'sonner';
-import { API } from '~/lib/api';
-import { requireAuth } from "~/lib/session.server";
-import { safeParseArray, uploadFile } from '~/lib/utils';
+import { API } from '~/nexus';
+import { requireAuth } from "~/utils/session.server";
+import { safeParseArray, uploadFile } from '~/utils/utils';
 import Swal from 'sweetalert2';
-import { dateFormat } from '~/lib/dateFormatter';
+import { dateFormat } from '~/utils/dateFormatter';
 import ReactSelect from "react-select";
 import AsyncReactSelect from "react-select/async";
 

@@ -3,8 +3,8 @@
 // import path from "path";
 // import { tmpdir } from "os";
 // import type { LoaderFunction } from "react-router";
-// import { API } from "~/lib/api";
-// import { getOptionalUser } from "~/lib/session.server";
+// import { API } from "~/nexus";
+// import { getOptionalUser } from "~/utils/session.server";
 // import { Readable } from "stream";
 
 // export const loader: LoaderFunction = async ({ params, request }) => {
@@ -176,8 +176,8 @@
 // import type { LoaderFunction } from "react-router";
 // import { PassThrough } from "stream";
 
-// import { API } from "~/lib/api";
-// import { getOptionalUser } from "~/lib/session.server";
+// import { API } from "~/nexus";
+// import { getOptionalUser } from "~/utils/session.server";
 
 // export const loader: LoaderFunction = async ({ params, request }) => {
 //   const folderId = params.folder_id;
@@ -294,8 +294,8 @@
 // import type { ActionFunction } from "react-router";
 // import { PassThrough, Readable } from "stream";
 
-// import { API } from "~/lib/api";
-// import { getOptionalUser } from "~/lib/session.server";
+// import { API } from "~/nexus";
+// import { getOptionalUser } from "~/utils/session.server";
 
 // export const action: ActionFunction = async ({ params, request }) => {
 //   const folderId = params.folder_id;
@@ -391,8 +391,8 @@
 // import type { ActionFunction } from "react-router";
 // import { PassThrough, Readable } from "stream";
 
-// import { API } from "~/lib/api";
-// import { getOptionalUser } from "~/lib/session.server";
+// import { API } from "~/nexus";
+// import { getOptionalUser } from "~/utils/session.server";
 
 // export const action: ActionFunction = async ({ params, request }) => {
 //   const folderId = params.folder_id;
@@ -458,8 +458,8 @@
 import { type LoaderFunctionArgs } from "react-router";
 import archiver from "archiver";
 import { PassThrough, Readable } from "node:stream";
-import { API } from "~/lib/api";
-import { getOptionalUser } from "~/lib/session.server";
+import { API } from "~/nexus";
+import { getOptionalUser } from "~/utils/session.server";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const folderId = params.folder_id;

@@ -3,24 +3,24 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import type { ApexOptions } from "apexcharts";
-import ChartLazy from "~/components/Chart/ChartLazy";
+import ChartLazy from "~/components/shared/chart/ChartLazy";
 import {
   redirect,
   type LoaderFunction,
   type LoaderFunctionArgs,
 } from "react-router";
-import { API } from "~/lib/api";
+import { API } from "~/nexus";
 import {
   getOrderStatusLabel,
   safeParseArray,
   safeParseObject,
   toMoney,
-} from "~/lib/utils";
-import { requireAuth } from "~/lib/session.server";
+} from "~/utils/utils";
+import { requireAuth } from "~/utils/session.server";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
-import { nexus } from "~/lib/nexus-client";
+import { nexus } from "~/nexus/nexus-client";
 
-import type { Order, StockState, PriceList } from "../types";
+import type { Order, StockState, PriceList } from "~/types";
 import {
   ClipboardList,
   Loader2,
@@ -47,7 +47,7 @@ import {
   PLASTIC_MED_CAP,
   PLASTIC_BIG_CAP,
   INK_SET_ML,
-} from "../constants";
+} from "~/constants";
 
 import {
   BarChart,
@@ -61,9 +61,9 @@ import {
   LabelList,
 } from "recharts";
 
-// import { requireUser } from "~/lib/session.client";
-// import { requireUserSession } from "~/lib/session.server";
-// import { unsealSession } from "~/lib/session.client";
+// import { requireUser } from "~/utils/session.client";
+// import { requireUserSession } from "~/utils/session.server";
+// import { unsealSession } from "~/utils/session.client";
 
 // const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
@@ -206,8 +206,11 @@ export default function DashboardOverview() {
     "Des",
   ];
 
-  const months = rawData.map((v) => monthNames[Number(v.month) - 1]);
-  const totals = rawData.map((v) => Number(v.total_sales));
+  const months = rawData.map((v) => {
+    const m = Number(v.month);
+    return isNaN(m) ? "Unknown" : monthNames[m - 1];
+  });
+  const totals = rawData.map((v) => Number(v.total_sales || 0) || 0);
 
   const orderChart = {
     series: [
@@ -552,15 +555,18 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
       c_rivet +
       (c_plast || 0);
 
-    return { maxPackage, cpp: isNaN(cpp) ? 0 : cpp };
+    return { 
+      maxPackage: (isNaN(maxPackage) || maxPackage === Infinity || maxPackage === -Infinity) ? 0 : maxPackage, 
+      cpp: (isNaN(cpp) || cpp === Infinity || cpp === -Infinity) ? 0 : cpp 
+    };
   }, [stock, prices]);
 
   // Analytics Logic
   const totalValue = safeOrders.reduce(
-    (sum, o) => sum + (o.totalAmount || 0),
+    (sum, o) => sum + Number(o.totalAmount || 0),
     0
   );
-  const totalPaid = safeOrders.reduce((sum, o) => sum + (o.dpAmount || 0), 0);
+  const totalPaid = safeOrders.reduce((sum, o) => sum + Number(o.dpAmount || 0), 0);
   const outstanding = Math.max(0, totalValue - totalPaid);
 
   // Highest Value Order
@@ -568,7 +574,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
     safeOrders.length > 0
       ? safeOrders.reduce(
           (prev, current) =>
-            (prev.totalAmount || 0) > (current.totalAmount || 0)
+            (Number(prev.totalAmount || 0)) > (Number(current.totalAmount || 0))
               ? prev
               : current,
           safeOrders[0]
@@ -588,8 +594,8 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
       const m = d.getMonth() + 1;
       result.push({
         name: d.toLocaleDateString("id-ID", { month: "long" }),
-        total: parseFloat(report[`total_${m}`] || "0"),
-        paid: parseFloat(report[`paid_${m}`] || "0"),
+        total: parseFloat(report[`total_${m}`] || "0") || 0,
+        paid: parseFloat(report[`paid_${m}`] || "0") || 0,
       });
     }
     return result;
@@ -637,7 +643,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
             Terbayar (DP + Lunas)
           </h3>
           <div className="text-2xl font-bold text-green-600">
-            {formatCurrency(+overview?.total_paid + +overview?.total_dp)}
+            {formatCurrency(Number(overview?.total_paid || 0) + Number(overview?.total_dp || 0))}
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">

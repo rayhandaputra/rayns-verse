@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import type { Order } from "../types";
+import type { Order } from "~/types";
 import {
   ADMIN_WA,
   formatCurrency,
   formatFullDate,
   getKKNPeriod,
   getWhatsAppLink,
-} from "../constants";
+} from "~/constants";
 import {
   Check,
   Trash2,
@@ -25,20 +25,20 @@ import {
   Pencil,
   RefreshCw,
 } from "lucide-react";
-import NotaView from "../components/NotaView";
+import NotaView from "~/components/shared/NotaView";
 import {
   DataTable,
   TablePagination,
   type ColumnDef,
-} from "../components/ui/data-table";
+} from "~/components/ui/data-table";
 import {
   useNavigate,
   useLocation,
   type LoaderFunction,
   type ActionFunction,
 } from "react-router";
-import { API } from "~/lib/api";
-import { requireAuth } from "~/lib/session.server";
+import { API } from "~/nexus";
+import { requireAuth } from "~/utils/session.server";
 import { toast } from "sonner";
 import moment from "moment";
 import {
@@ -47,17 +47,17 @@ import {
   safeParseArray,
   safeParseObject,
   uploadFile,
-} from "~/lib/utils";
+} from "~/utils/utils";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
-import { nexus } from "~/lib/nexus-client";
+import { nexus } from "~/nexus/nexus-client";
 import { useModal } from "~/hooks";
 import Swal from "sweetalert2";
-import ModalSecond from "~/components/modal/ModalSecond";
+import ModalSecond from "~/components/shared/modal/ModalSecond";
 import { Button } from "~/components/ui/button";
-import { dateFormat } from "~/lib/dateFormatter";
+import { dateFormat } from "~/utils/dateFormatter";
 import { toBlob, toPng } from "html-to-image";
 import QRCode from "qrcode";
-import OrderShareCard from "~/components/print/order/OrderShareTemplate";
+import OrderShareCard from "~/components/shared/print/order/OrderShareTemplate";
 
 export const loader: LoaderFunction = async ({ request }) => {
   // Only check authentication

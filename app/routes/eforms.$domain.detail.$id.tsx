@@ -1,4 +1,4 @@
-import MenuIcon from "~/components/icon/menu-icon";
+import MenuIcon from "~/components/shared/icon/menu-icon";
 
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -18,12 +18,12 @@ import {
   type ActionFunction,
   type LoaderFunction,
 } from "react-router";
-import { API } from "~/lib/api";
-import CardFolder from "~/components/eform/CardFolder";
-import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
-import SectionImageFolder from "~/components/eform/SectionImageFolder";
+import { API } from "~/nexus";
+import CardFolder from "~/components/features/eform/CardFolder";
+import { AppBreadcrumb } from "~/components/core/AppBreadcrumb";
+import SectionImageFolder from "~/components/features/eform/SectionImageFolder";
 import { toast } from "sonner";
-// import { getSession } from "~/lib/session.client";
+// import { getSession } from "~/utils/session.client";
 import { Button } from "~/components/ui/button";
 
 export const loader: LoaderFunction = async ({ request, params }) => {

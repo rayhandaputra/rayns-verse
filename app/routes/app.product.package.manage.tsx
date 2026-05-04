@@ -12,17 +12,17 @@ import {
   type LoaderFunction,
 } from "react-router";
 import { useNavigate } from "react-router";
-import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
-import { TitleHeader } from "~/components/TitleHedaer";
+import { AppBreadcrumb } from "~/components/core/AppBreadcrumb";
+import { TitleHeader } from "~/components/core/TitleHeader";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { API, API_KEY, API_URL } from "~/lib/api";
+import { API, API_KEY, API_URL } from "~/nexus";
 import AsyncReactSelect from "react-select/async";
 import { useEffect, useState } from "react";
-import { getSession } from "~/lib/session.client";
-import { toMoney } from "~/lib/utils";
+import { getSession } from "~/utils/session.client";
+import { toMoney } from "~/utils/utils";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const url = new URL(request.url);

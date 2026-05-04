@@ -32,14 +32,14 @@ import {
   type ActionFunction,
   type LoaderFunction,
 } from "react-router";
-import { API, API_KEY, API_URL } from "~/lib/api";
-import SelectBasic from "~/components/select/SelectBasic";
+import { API, API_KEY, API_URL } from "~/nexus";
+import SelectBasic from "~/components/shared/select/SelectBasic";
 import AsyncReactSelect from "react-select/async";
 import { CONFIG } from "~/config";
 import { toast } from "sonner";
-import { toMoney } from "~/lib/utils";
-import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
-import { TitleHeader } from "~/components/TitleHedaer";
+import { toMoney } from "~/utils/utils";
+import { AppBreadcrumb } from "~/components/core/AppBreadcrumb";
+import { TitleHeader } from "~/components/core/TitleHeader";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   // const session = await unsealSession(request);

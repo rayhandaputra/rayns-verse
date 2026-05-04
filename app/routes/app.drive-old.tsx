@@ -7,9 +7,9 @@ import {
   type ActionFunction,
 } from "react-router";
 import { useState, useEffect } from "react";
-import MenuIcon from "~/components/icon/menu-icon";
-import { DriveLayout } from "~/components/drive/drive-layout";
-import { API } from "~/lib/api";
+import MenuIcon from "~/components/shared/icon/menu-icon";
+import { DriveLayout } from "~/components/features/drive/drive-layout";
+import { API } from "~/nexus";
 import { Button } from "~/components/ui/button";
 import {
   Plus,
@@ -25,11 +25,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { CreateFolderModal } from "~/components/drive/create-folder-modal";
-import { UploadFileModal } from "~/components/drive/upload-file-modal";
+import { CreateFolderModal } from "~/components/features/drive/create-folder-modal";
+import { UploadFileModal } from "~/components/features/drive/upload-file-modal";
 import { toast } from "sonner";
-import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
-import { TitleHeader } from "~/components/TitleHedaer";
+import { AppBreadcrumb } from "~/components/core/AppBreadcrumb";
+import { TitleHeader } from "~/components/core/TitleHeader";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   try {

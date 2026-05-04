@@ -1,13 +1,13 @@
 import moment from "moment";
 import { useParams, type ActionFunction } from "react-router";
 import { useNavigate, useFetcher } from "react-router";
-import OrderFormComponent from "~/components/EditOrderFormComponent";
-import ModalSecond from "~/components/modal/ModalSecond";
+import OrderFormComponent from "~/components/features/order/EditOrderForm";
+import ModalSecond from "~/components/shared/modal/ModalSecond";
 import { useFetcherData } from "~/hooks";
-import { API } from "~/lib/api";
-import { nexus } from "~/lib/nexus-client";
-import { requireAuth } from "~/lib/session.server";
-import { safeParseArray, safeParseObject } from "~/lib/utils";
+import { API } from "~/nexus";
+import { nexus } from "~/nexus/nexus-client";
+import { requireAuth } from "~/utils/session.server";
+import { safeParseArray, safeParseObject } from "~/utils/utils";
 import { toast } from "sonner";
 import { useEffect } from "react";
 

@@ -6,9 +6,7 @@ startTransition(() => {
   hydrateRoot(
     document,
     <StrictMode>
-      {/* <Suspense fallback={<div>Loading app...</div>}> */}
-        <HydratedRouter />
-      {/* </Suspense> */}
+      <HydratedRouter />
     </StrictMode>,
   );
 });

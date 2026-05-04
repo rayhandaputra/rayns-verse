@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLoaderData, type LoaderFunction } from "react-router";
-import { API } from "~/lib/api";
+import { API } from "~/nexus";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   try {

@@ -28,10 +28,13 @@ export function LoaderProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useLoader() {
+export function useLoading() {
   const context = useContext(LoaderContext);
   if (!context) {
-    throw new Error("useLoader must be used within LoaderProvider");
+    throw new Error("useLoading must be used within LoaderProvider");
   }
   return context;
 }
+
+// Add alias for safety
+export const useLoader = useLoading;

@@ -7,14 +7,14 @@ import {
   type LoaderFunction,
   type ActionFunction,
 } from "react-router";
-import type { HistoryEntry, Order, Product, OrderItem } from "../types";
+import type { HistoryEntry, Order, Product, OrderItem } from "~/types";
 import {
   formatCurrency,
   parseCurrency,
   generateAccessCode,
   getKKNPeriod,
   formatPhoneNumber,
-} from "../constants";
+} from "~/constants";
 import {
   Save,
   Eraser,
@@ -29,13 +29,13 @@ import {
   Upload,
 } from "lucide-react";
 import AsyncReactSelect from "react-select/async";
-import { API } from "~/lib/api";
-import { requireAuth } from "~/lib/session.server";
+import { API } from "~/nexus";
+import { requireAuth } from "~/utils/session.server";
 import { toast } from "sonner";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
-import { nexus } from "~/lib/nexus-client";
-import { safeParseObject } from "~/lib/utils";
-import OrderFormComponent from "~/components/OrderFormComponent";
+import { nexus } from "~/nexus/nexus-client";
+import { safeParseObject } from "~/utils/utils";
+import OrderFormComponent from "~/components/features/order/OrderForm";
 import moment from "moment";
 
 // ============================================

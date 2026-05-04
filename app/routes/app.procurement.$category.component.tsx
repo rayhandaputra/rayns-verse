@@ -2,11 +2,11 @@
 // import { useFetcher, useParams } from "react-router";
 // import type { ActionFunction } from "react-router";
 // import { Plus, Edit2, Trash2, Check } from "lucide-react";
-// import { API } from "~/lib/api";
-// import { requireAuth } from "~/lib/session.server";
-// import { nexus } from "~/lib/nexus-client";
+// import { API } from "~/nexus";
+// import { requireAuth } from "~/utils/session.server";
+// import { nexus } from "~/nexus/nexus-client";
 // import { useFetcherData } from "~/hooks";
-// import { safeParseArray } from "~/lib/utils"; // Pindahkan helper ke utils
+// import { safeParseArray } from "~/utils/utils"; // Pindahkan helper ke utils
 // import Swal from "sweetalert2";
 // import type { RawMaterial, SubComponent } from "./app.procurement.$category";
 // import { formatCurrency } from "~/constants";
@@ -232,11 +232,11 @@
 // import { useParams, useFetcher } from "react-router";
 // import type { ActionFunction } from "react-router";
 // import { Plus, Edit2, Trash2, Check, Package, Layers, X, PlusCircle, Info } from "lucide-react";
-// import { API } from "~/lib/api";
-// import { requireAuth } from "~/lib/session.server";
-// import { nexus } from "~/lib/nexus-client";
+// import { API } from "~/nexus";
+// import { requireAuth } from "~/utils/session.server";
+// import { nexus } from "~/nexus/nexus-client";
 // import { useFetcherData } from "~/hooks";
-// import { safeParseArray } from "~/lib/utils";
+// import { safeParseArray } from "~/utils/utils";
 // import { toast } from "sonner";
 // import Swal from "sweetalert2";
 
@@ -652,11 +652,11 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useFetcher, useParams } from "react-router";
 import type { ActionFunction } from "react-router";
 import { Plus, Edit2, Trash2, Check, X } from "lucide-react";
-import { API } from "~/lib/api";
-import { requireAuth } from "~/lib/session.server";
-import { nexus } from "~/lib/nexus-client";
+import { API } from "~/nexus";
+import { requireAuth } from "~/utils/session.server";
+import { nexus } from "~/nexus/nexus-client";
 import { useFetcherData } from "~/hooks";
-import { safeParseArray } from "~/lib/utils";
+import { safeParseArray } from "~/utils/utils";
 import Swal from "sweetalert2";
 import { formatCurrency, formatCurrencyUnprefix } from "~/constants"; // Pastikan path ini benar
 import { toast } from "sonner";

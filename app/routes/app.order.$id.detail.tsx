@@ -11,19 +11,19 @@ import {
   Download,
 } from "lucide-react";
 import { useLoaderData, useNavigate } from "react-router";
-import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
-import { TitleHeader } from "~/components/TitleHedaer";
+import { AppBreadcrumb } from "~/components/core/AppBreadcrumb";
+import { TitleHeader } from "~/components/core/TitleHeader";
 import { Button } from "~/components/ui/button";
 import { useEffect, useRef, useState } from "react";
-import { ReceiptTemplate } from "~/components/print/order/ReceiptTemplate";
+import { ReceiptTemplate } from "~/components/shared/print/order/ReceiptTemplate";
 import { usePrintJS } from "~/hooks/usePrintJS";
 import QRCode from "qrcode";
-import { toMoney } from "~/lib/utils";
+import { toMoney } from "~/utils/utils";
 import { Badge } from "~/components/ui/badge";
 import moment from "moment";
 import "moment/locale/id";
 import type { LoaderFunction } from "react-router";
-import { API } from "~/lib/api";
+import { API } from "~/nexus";
 import { toast } from "sonner";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -109,7 +109,7 @@ export default function DetailOrder() {
 
   useEffect(() => {
     if (!client) return;
-    import("~/components/PrintButton.client").then((mod) =>
+    import("~/components/shared/PrintButton.client").then((mod) =>
       setPrintButton(() => mod.PrintButton)
     );
   }, [client]);

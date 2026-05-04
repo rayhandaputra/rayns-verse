@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useFetcherData } from "~/hooks";
-import { nexus } from "~/lib/nexus-client";
+import { nexus } from "~/nexus/nexus-client";
 
 export const useStockLogic = () => {
   // 1. Fetch Master Data (Settings, Components, Commodities)

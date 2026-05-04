@@ -22,11 +22,11 @@
 
 // // Assuming these hook paths exist in your project structure
 // import { useFetcherData } from "~/hooks";
-// import { nexus } from "~/lib/nexus-client";
+// import { nexus } from "~/nexus/nexus-client";
 // import type { ActionFunction, MetaFunction } from "react-router";
-// import { safeParseArray } from "~/lib/utils";
-// import { API } from "~/lib/api";
-// import { requireAuth } from "~/lib/session.server";
+// import { safeParseArray } from "~/utils/utils";
+// import { API } from "~/nexus";
+// import { requireAuth } from "~/utils/session.server";
 // import { toast } from "sonner";
 // import moment from "moment";
 
@@ -389,7 +389,7 @@
 //   }, []);
 //   useEffect(() => {
 //     if (!client) return;
-//     import("~/components/PrintButton.client").then((mod) =>
+//     import("~/components/shared/PrintButton.client").then((mod) =>
 //       setPrintButton(() => mod.PrintButton)
 //     );
 //   }, [client]);
@@ -876,11 +876,11 @@ import {
 
 // Assuming these hook paths exist in your project structure
 import { useFetcherData } from "~/hooks";
-import { nexus } from "~/lib/nexus-client";
+import { nexus } from "~/nexus/nexus-client";
 import type { ActionFunction, MetaFunction } from "react-router";
-import { safeParseArray } from "~/lib/utils";
-import { API } from "~/lib/api";
-import { requireAuth } from "~/lib/session.server";
+import { safeParseArray } from "~/utils/utils";
+import { API } from "~/nexus";
+import { requireAuth } from "~/utils/session.server";
 import { toast } from "sonner";
 import moment from "moment";
 
@@ -1206,7 +1206,7 @@ export default function PrintPage() {
   }, []);
   useEffect(() => {
     if (!client) return;
-    import("~/components/PrintButton.client").then((mod) =>
+    import("~/components/shared/PrintButton.client").then((mod) =>
       setPrintButton(() => mod.PrintButton)
     );
   }, [client]);

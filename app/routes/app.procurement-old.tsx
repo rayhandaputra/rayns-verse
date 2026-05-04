@@ -23,13 +23,13 @@ import {
     Settings,
 } from "lucide-react";
 import { useFetcherData, useModal } from "~/hooks";
-import { nexus } from "~/lib/nexus-client";
+import { nexus } from "~/nexus/nexus-client";
 import type { ActionFunction } from "react-router";
-import { requireAuth } from "~/lib/session.server";
-import { API } from "~/lib/api";
+import { requireAuth } from "~/utils/session.server";
+import { API } from "~/nexus";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
-import { safeParseArray } from "~/lib/utils";
+import { safeParseArray } from "~/utils/utils";
 import ReactSelect from "react-select";
 
 // --- MOCK TYPES (Sesuaikan dengan ../types Anda) ---

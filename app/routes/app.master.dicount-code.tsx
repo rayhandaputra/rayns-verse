@@ -11,17 +11,17 @@ import {
 } from "react-router";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
-import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
-import { Modal } from "~/components/modal/Modal";
-import TableComponent from "~/components/table/Table";
-import { TitleHeader } from "~/components/TitleHedaer";
+import { AppBreadcrumb } from "~/components/core/AppBreadcrumb";
+import { Modal } from "~/components/shared/modal/Modal";
+import TableComponent from "~/components/shared/table/Table";
+import { TitleHeader } from "~/components/core/TitleHeader";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import SelectBasic from "~/components/select/SelectBasic";
+import SelectBasic from "~/components/shared/select/SelectBasic";
 import { useModal } from "~/hooks/use-modal";
-import { API } from "~/lib/api";
-import SlideInModal from "~/components/modal/SlideInModal";
+import { API } from "~/nexus";
+import SlideInModal from "~/components/shared/modal/SlideInModal";
 
 // ===================== LOADER =====================
 export const loader: LoaderFunction = async ({ request }) => {

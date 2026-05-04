@@ -40,7 +40,7 @@ function MyComponent() {
 ### With Nexus Builder (Recommended)
 
 ```tsx
-import { nexus } from "~/lib/nexus-client";
+import { nexus } from "~/nexus/nexus-client";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
 
 function MyComponent() {
@@ -181,7 +181,7 @@ const handleDelete = (id: number) => {
 ### Basic Methods
 
 ```tsx
-import { nexus } from "~/lib/nexus-client";
+import { nexus } from "~/nexus/nexus-client";
 
 // Chain methods untuk build query
 const endpoint = nexus()
@@ -198,7 +198,7 @@ const endpoint = nexus()
 Pre-configured builders untuk operasi umum:
 
 ```tsx
-import { NexusPresets } from "~/lib/nexus-client";
+import { NexusPresets } from "~/nexus/nexus-client";
 
 // List dengan pagination
 const listEndpoint = NexusPresets.list("INVENTORY_ASSET", 0, 10).build();
@@ -224,7 +224,7 @@ const deleteEndpoint = NexusPresets.delete("INVENTORY_ASSET", 123).build();
 Quick helpers untuk modules yang sering digunakan:
 
 ```tsx
-import { NexusHelpers } from "~/lib/nexus-client";
+import { NexusHelpers } from "~/nexus/nexus-client";
 
 // Inventory Assets
 const endpoint = NexusHelpers.inventoryAssets.list({
@@ -309,7 +309,7 @@ function SearchComponent() {
 ### TypeScript with Strong Typing
 
 ```tsx
-import type { NexusResponse, PaginatedResponse } from "~/lib/nexus-client";
+import type { NexusResponse, PaginatedResponse } from "~/nexus/nexus-client";
 
 interface Asset {
   id: number;
@@ -431,7 +431,7 @@ useFetcherData({
 ## 🚀 Getting Started
 
 1. Pastikan `useFetcherData` hook sudah tersedia
-2. Import nexus utilities: `import { nexus, NexusHelpers } from "~/lib/nexus-client"`
+2. Import nexus utilities: `import { nexus, NexusHelpers } from "~/nexus/nexus-client"`
 3. Build endpoint dengan builder atau helpers
 4. Use dengan `useFetcherData` hook
 5. Enjoy! 🎉

@@ -1,4 +1,4 @@
-import type { Product, Order } from "../types";
+import type { Product, Order } from "~/types";
 
 // Physics & Math Constants from HTML
 export const AREA_PAKET = 0.053856;

@@ -10,12 +10,12 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useLoaderData, useNavigate, type LoaderFunction } from "react-router";
-import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
-import SelectBasic from "~/components/select/SelectBasic";
-import { TitleHeader } from "~/components/TitleHedaer";
+import { AppBreadcrumb } from "~/components/core/AppBreadcrumb";
+import SelectBasic from "~/components/shared/select/SelectBasic";
+import { TitleHeader } from "~/components/core/TitleHeader";
 import { Button } from "~/components/ui/button";
-import { useLoader } from "~/hooks/use-loading";
-import { API } from "~/lib/api";
+import { useLoading } from "~/hooks/use-loading";
+import { API } from "~/nexus";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   // const session = await unsealSession(request);

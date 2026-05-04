@@ -6,14 +6,14 @@ import {
   type LoaderFunction,
   type ActionFunction,
 } from "react-router";
-import type { Order, Product } from "../types";
-import { formatFullDate } from "../constants";
+import type { Order, Product } from "~/types";
+import { formatFullDate } from "~/constants";
 import { Star, Edit, Upload, Check, X, Plus } from "lucide-react";
-import { API } from "~/lib/api";
-import { requireAuth } from "~/lib/session.server";
+import { API } from "~/nexus";
+import { requireAuth } from "~/utils/session.server";
 import { toast } from "sonner";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
-import { nexus } from "~/lib/nexus-client";
+import { nexus } from "~/nexus/nexus-client";
 
 // ============================================
 // TYPES & INTERFACES
@@ -39,13 +39,13 @@ interface OrderFormProps {
 }
 
 // Import OrderForm component
-import OrderFormComponent from "~/components/OrderFormComponent";
-import TableHeader from "~/components/table/TableHeader";
+import OrderFormComponent from "~/components/features/order/OrderForm";
+import TableHeader from "~/components/shared/table/TableHeader";
 import DataTable, { type ColumnDef } from "~/components/ui/data-table";
 import { Button } from "~/components/ui/button";
 import { useModal } from "~/hooks";
-import ModalSecond from "~/components/modal/ModalSecond";
-import { safeParseArray, safeParseObject, uploadFile } from "~/lib/utils";
+import ModalSecond from "~/components/shared/modal/ModalSecond";
+import { safeParseArray, safeParseObject, uploadFile } from "~/utils/utils";
 
 // ============================================
 // LOADER FUNCTION

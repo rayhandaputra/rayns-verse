@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { formatCurrency, unitAdd, INITIAL_STOCK } from "../constants";
+import { formatCurrency, unitAdd, INITIAL_STOCK } from "~/constants";
 import {
   Calculator,
   Store,
@@ -17,12 +17,12 @@ import {
   useNavigate,
   type ClientLoaderFunction,
 } from "react-router";
-import { API } from "~/lib/api";
-import { requireAuth } from "~/lib/session.server";
+import { API } from "~/nexus";
+import { requireAuth } from "~/utils/session.server";
 import { toast } from "sonner";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
-import { nexus } from "~/lib/nexus-client";
-import { safeParseArray } from "~/lib/utils";
+import { nexus } from "~/nexus/nexus-client";
+import { safeParseArray } from "~/utils/utils";
 import AsyncReactSelect from "react-select/async";
 import { useQueryParams } from "~/hooks/use-query-params";
 
@@ -33,8 +33,8 @@ import Swal from "sweetalert2";
 import DataTable, { type ColumnDef } from "~/components/ui/data-table";
 import { useAnimateMini } from "framer-motion";
 import { useLoaderData } from "react-router";
-import ModalSecond from "~/components/modal/ModalSecond";
-import TableHeader from "~/components/table/TableHeader";
+import ModalSecond from "~/components/shared/modal/ModalSecond";
+import TableHeader from "~/components/shared/table/TableHeader";
 import SupplierPage from "./app.master.supplier";
 
 // Mapping specific commodity codes to StockState keys if needed

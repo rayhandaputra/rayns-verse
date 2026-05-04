@@ -15,30 +15,30 @@ import {
   type ActionFunction,
   type LoaderFunction,
 } from "react-router";
-import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
-import TableComponent from "~/components/table/Table";
-import TabsComponent from "~/components/Tabs";
-import { TitleHeader } from "~/components/TitleHedaer";
+import { AppBreadcrumb } from "~/components/core/AppBreadcrumb";
+import TableComponent from "~/components/shared/table/Table";
+import TabsComponent from "~/components/shared/Tabs";
+import { TitleHeader } from "~/components/core/TitleHeader";
 import { Button } from "~/components/ui/button";
-import { API, API_KEY, API_URL } from "~/lib/api";
+import { API, API_KEY, API_URL } from "~/nexus";
 import moment from "moment";
 import "moment/locale/id";
-import { dateFormat, formatDate } from "~/lib/dateFormatter";
-import { requireAuth } from "~/lib/session.server";
+import { dateFormat, formatDate } from "~/utils/dateFormatter";
+import { requireAuth } from "~/utils/session.server";
 import {
   getOrderLabel,
   getOrderStatusLabel,
   getPaymentLabel,
   getPaymentStatusLabel,
   toMoney,
-} from "~/lib/utils";
+} from "~/utils/utils";
 import { Badge } from "~/components/ui/badge";
 import { toast } from "sonner";
-import { ReceiptTemplate } from "~/components/print/order/ReceiptTemplate";
+import { ReceiptTemplate } from "~/components/shared/print/order/ReceiptTemplate";
 import QRCode from "qrcode";
 import { useModal } from "~/hooks/use-modal";
-import { Modal } from "~/components/modal/Modal";
-import SelectBasic from "~/components/select/SelectBasic";
+import { Modal } from "~/components/shared/modal/Modal";
+import SelectBasic from "~/components/shared/select/SelectBasic";
 // import { useModal } from "~/provider/modal-provider";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -158,7 +158,7 @@ export default function AppOrder() {
 
   useEffect(() => {
     if (!client) return;
-    import("~/components/PrintButton.client").then((mod) =>
+    import("~/components/shared/PrintButton.client").then((mod) =>
       setPrintButton(() => mod.PrintButton)
     );
   }, [client]);

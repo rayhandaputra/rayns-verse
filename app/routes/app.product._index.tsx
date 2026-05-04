@@ -24,33 +24,33 @@ import {
 } from "react-router";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
-import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
-import { Modal } from "~/components/modal/Modal";
-import SelectBasic from "~/components/select/SelectBasic";
-import TableComponent from "~/components/table/Table";
-import { TitleHeader } from "~/components/TitleHedaer";
+import { AppBreadcrumb } from "~/components/core/AppBreadcrumb";
+import { Modal } from "~/components/shared/modal/Modal";
+import SelectBasic from "~/components/shared/select/SelectBasic";
+import TableComponent from "~/components/shared/table/Table";
+import { TitleHeader } from "~/components/core/TitleHeader";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { useModal } from "~/hooks/use-modal";
-import { API } from "../lib/api";
-import { toMoney } from "~/lib/utils";
+import { API } from "~/nexus";
+import { toMoney } from "~/utils/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import PaginationItem from "~/components/table/PaginationOnly";
-import ProductCard from "~/components/card/ProductCard";
-import { ConfirmDialog } from "~/components/modal/ConfirmDialog";
-import SlideInModal from "~/components/modal/SlideInModal";
-import ProductFullFormModal from "~/components/form/FormProduct";
-import { getSession } from "~/lib/session.client";
+import PaginationItem from "~/components/shared/table/PaginationOnly";
+import ProductCard from "~/components/shared/card/ProductCard";
+import { ConfirmDialog } from "~/components/shared/modal/ConfirmDialog";
+import SlideInModal from "~/components/shared/modal/SlideInModal";
+import ProductFullFormModal from "~/components/shared/form/FormProduct";
+import { getSession } from "~/utils/session.client";
 import {
   PopoverMenu,
   type PopoverMenuItem,
-} from "~/components/popover/PopoverMenu";
+} from "~/components/shared/popover/PopoverMenu";
 import { DropdownMenu } from "~/components/ui/dropdown-menu";
-// import SlideInModal from "~/components/modal/SlideInModal";
-// import { API } from "~/lib/api";
-// import { API } from "~/lib/api";
+// import SlideInModal from "~/components/shared/modal/SlideInModal";
+// import { API } from "~/nexus";
+// import { API } from "~/nexus";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const url = new URL(request.url);

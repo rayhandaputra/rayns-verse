@@ -8,28 +8,28 @@
 // import { CONFIG } from "~/config";
 // import ComingSoon from "./pre-launch/_index";
 // import { Button } from "~/components/ui/button";
-// // import HeroSection from "~/components/section/hero-section";
+// // import HeroSection from "~/components/shared/section/hero-section";
 // import { db } from "~/config/supabase";
-// import FloatingWhatsApp from "~/components/FloatingWhatsapp";
-// import CardFeatureSection from "~/components/section/feature-section";
-// import CardTestimoniSection from "~/components/section/testimoni-seection";
-// // import { SlideInModal } from "~/components/modal/SlideInModal";
+// import FloatingWhatsApp from "~/components/shared/FloatingWhatsapp";
+// import CardFeatureSection from "~/components/shared/section/feature-section";
+// import CardTestimoniSection from "~/components/shared/section/testimoni-seection";
+// // import { SlideInModal } from "~/components/shared/modal/SlideInModal";
 // import { useMemo, useState } from "react";
-// import { HighlightSection } from "~/components/section/highlight-event-section";
+// import { HighlightSection } from "~/components/shared/section/highlight-event-section";
 // // import { getSession } from "~/lib/session";
-// import EventsSection from "~/components/section/new-event-section";
-// import StatsSection from "~/components/section/stats-section";
-// import HeroSection from "~/components/section/new-hero-section";
-// import { API } from "~/lib/api";
-// import ImageCarousel from "~/components/slider/ImageCarousel";
-// import { getOptionalUser } from "~/lib/session.server";
+// import EventsSection from "~/components/shared/section/new-event-section";
+// import StatsSection from "~/components/shared/section/stats-section";
+// import HeroSection from "~/components/shared/section/new-hero-section";
+// import { API } from "~/nexus";
+// import ImageCarousel from "~/components/shared/slider/ImageCarousel";
+// import { getOptionalUser } from "~/utils/session.server";
 // import MediaEvent from "./media.event.$slug";
-// // import { blockUserIfLoggedIn } from "~/lib/session.client";
-// // import { blockLoggedIn } from "~/lib/session.server";
-// // import { unsealSession } from "~/lib/session.client";
-// // import { unsealSession } from "~/lib/session.server";
-// // import Navbar from "~/components/section/navbar";
-// // import FooterSection from "~/components/section/footer";
+// // import { blockUserIfLoggedIn } from "~/utils/session.client";
+// // import { blockLoggedIn } from "~/utils/session.server";
+// // import { unsealSession } from "~/utils/session.client";
+// // import { unsealSession } from "~/utils/session.server";
+// // import Navbar from "~/components/shared/section/navbar";
+// // import FooterSection from "~/components/shared/section/footer";
 
 import {
   ArrowRight,
@@ -58,10 +58,10 @@ import {
   safeParseArray,
   safeParseObject,
   toMoney,
-} from "~/lib/utils";
-import { API } from "~/lib/api";
+} from "~/utils/utils";
+import { API } from "~/nexus";
 import { useFetcherData } from "~/hooks";
-import { nexus } from "~/lib/nexus-client";
+import { nexus } from "~/nexus/nexus-client";
 import { useState } from "react";
 import { formatFullDate } from "~/constants";
 const fmt = (n: number) => n.toLocaleString("id-ID");

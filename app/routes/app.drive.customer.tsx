@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from "react";
 import { Folder, FileText, Download, Trash2 } from "lucide-react";
 import { useLoaderData, useNavigate, type LoaderFunction, type ActionFunction } from "react-router";
-import { API } from "~/lib/api";
-import { requireAuth } from "~/lib/session.server";
+import { API } from "~/nexus";
+import { requireAuth } from "~/utils/session.server";
 import { useFetcherData } from "~/hooks";
-import { nexus } from "~/lib/nexus-client";
+import { nexus } from "~/nexus/nexus-client";
 import { useQueryParams } from "~/hooks/use-query-params";
-import { DriveBreadcrumb } from "~/components/breadcrumb/DriveBreadcrumb";
+import { DriveBreadcrumb } from "~/components/shared/breadcrumb/DriveBreadcrumb";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 // import type { Order } from "~/types";

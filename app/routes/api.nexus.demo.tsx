@@ -7,8 +7,8 @@
 
 import { useState, useEffect } from "react";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
-import { nexus, NexusHelpers, NexusPresets } from "~/lib/nexus-client";
-import type { NexusResponse, PaginatedResponse } from "~/lib/nexus-client";
+import { nexus, NexusHelpers, NexusPresets } from "~/nexus/nexus-client";
+import type { NexusResponse, PaginatedResponse } from "~/nexus/nexus-client";
 
 // Type definitions
 interface InventoryAsset {

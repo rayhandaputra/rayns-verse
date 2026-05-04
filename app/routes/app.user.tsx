@@ -8,12 +8,12 @@ import React, { useEffect, useRef, useState } from "react";
 import { Plus, Edit2, Trash2, X, Shield, Upload } from "lucide-react";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
-import { API } from "~/lib/api";
-import { AuthAPI } from "~/lib/api/modules/user_auth";
+import { API } from "~/nexus";
+import { AuthAPI } from "~/nexus/modules/user_auth";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
-import { nexus } from "~/lib/nexus-client";
-import { requireAuth } from "~/lib/session.server";
-import { safeParseArray, uploadFile } from "~/lib/utils";
+import { nexus } from "~/nexus/nexus-client";
+import { requireAuth } from "~/utils/session.server";
+import { safeParseArray, uploadFile } from "~/utils/utils";
 
 export const loader: LoaderFunction = async ({ request }) => {
   // Only check authentication

@@ -7,7 +7,7 @@ import {
   Outlet,
   type LoaderFunction,
 } from "react-router";
-import { requireAuth } from "~/lib/session.server";
+import { requireAuth } from "~/utils/session.server";
 
 // ============================================
 // LOADER FUNCTION

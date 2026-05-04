@@ -13,18 +13,18 @@ import {
   useNavigate,
   type ActionFunction,
 } from "react-router";
-import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
-import SelectBasic from "~/components/select/SelectBasic";
-import { TitleHeader } from "~/components/TitleHedaer";
+import { AppBreadcrumb } from "~/components/core/AppBreadcrumb";
+import SelectBasic from "~/components/shared/select/SelectBasic";
+import { TitleHeader } from "~/components/core/TitleHeader";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import moment from "moment";
-import { API, API_KEY, API_URL } from "~/lib/api";
-import { requireAuth } from "~/lib/session.server";
+import { API, API_KEY, API_URL } from "~/nexus";
+import { requireAuth } from "~/utils/session.server";
 import AsyncReactSelect from "react-select/async";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { generateShortId, toMoney } from "~/lib/utils";
+import { generateShortId, toMoney } from "~/utils/utils";
 import AsyncCreatableSelect from "react-select/async-creatable";
 
 // === ACTION ===

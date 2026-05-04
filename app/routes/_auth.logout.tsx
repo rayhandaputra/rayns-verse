@@ -1,5 +1,5 @@
 import type { ActionFunction } from "react-router";
-import { logout } from "~/lib/session.server";
+import { logout } from "~/utils/session.server";
 
 export const action: ActionFunction = async ({ request }) => {
   // Use the logout function from session.server which handles

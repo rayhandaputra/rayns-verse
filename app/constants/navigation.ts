@@ -1,4 +1,4 @@
-import type { Icons } from "~/components/icon/asset";
+import type { Icons } from "~/components/shared/icon/asset";
 
 export type NavItem = {
   name: string;

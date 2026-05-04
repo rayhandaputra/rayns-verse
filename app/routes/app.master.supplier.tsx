@@ -11,19 +11,19 @@ import {
 } from "react-router";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
-import { AppBreadcrumb } from "~/components/app-component/AppBreadcrumb";
-import { Modal } from "~/components/modal/Modal";
-import SelectBasic from "~/components/select/SelectBasic";
-import TableComponent from "~/components/table/Table";
-import { TitleHeader } from "~/components/TitleHedaer";
+import { AppBreadcrumb } from "~/components/core/AppBreadcrumb";
+import { Modal } from "~/components/shared/modal/Modal";
+import SelectBasic from "~/components/shared/select/SelectBasic";
+import TableComponent from "~/components/shared/table/Table";
+import { TitleHeader } from "~/components/core/TitleHeader";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { useFetcherData } from "~/hooks";
 import { useModal } from "~/hooks/use-modal";
-import { API } from "~/lib/api";
-import { nexus } from "~/lib/nexus-client";
+import { API } from "~/nexus";
+import { nexus } from "~/nexus/nexus-client";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const url = new URL(request.url);

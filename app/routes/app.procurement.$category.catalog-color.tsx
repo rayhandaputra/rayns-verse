@@ -2,13 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { type ActionFunction } from 'react-router';
 import { useFetcher } from 'react-router';
 import { Palette, Upload, Check, Trash2 } from 'lucide-react';
-import { API } from "~/lib/api";
-import { requireAuth } from "~/lib/session.server";
-import { nexus } from "~/lib/nexus-client";
+import { API } from "~/nexus";
+import { requireAuth } from "~/utils/session.server";
+import { nexus } from "~/nexus/nexus-client";
 import { useFetcherData } from "~/hooks";
 import Swal from "sweetalert2";
 import { toast } from "sonner";
-import { uploadFile } from '~/lib/utils';
+import { uploadFile } from '~/utils/utils';
 
 // --- TYPES ---
 export interface ShirtColor {

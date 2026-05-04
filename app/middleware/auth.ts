@@ -1,7 +1,7 @@
 import { redirect } from "react-router";
 import { userContext } from "~/context";
 // import { getUserById } from "~/models/user.server";
-// import { unsealSession } from "~/lib/session.client";
+// import { unsealSession } from "~/utils/session.client";
 
 export const authMiddleware = async ({ request, context }: any) => {
   // const session = await unsealSession(request);

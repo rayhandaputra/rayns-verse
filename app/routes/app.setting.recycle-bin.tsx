@@ -9,10 +9,10 @@ import DataTable, {
   type ColumnDef,
 } from "~/components/ui/data-table";
 import { useFetcherData, useModal } from "~/hooks";
-import { API } from "~/lib/api";
-import { nexus } from "~/lib/nexus-client";
-import { requireAuth } from "~/lib/session.server";
-import { safeParseObject } from "~/lib/utils";
+import { API } from "~/nexus";
+import { nexus } from "~/nexus/nexus-client";
+import { requireAuth } from "~/utils/session.server";
+import { safeParseObject } from "~/utils/utils";
 
 export const action: ActionFunction = async ({ request }) => {
   const { user, token } = await requireAuth(request);

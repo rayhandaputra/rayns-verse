@@ -1,7 +1,7 @@
 import { type LoaderFunctionArgs } from "react-router";
-import { API } from "~/lib/api";
-import { generateOrderPdfBuffer } from "~/lib/pdf.server";
-import { safeParseArray } from "~/lib/utils";
+import { API } from "~/nexus";
+import { generateOrderPdfBuffer } from "~/utils/pdf.server";
+import { safeParseArray } from "~/utils/utils";
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const orderId = params.id;

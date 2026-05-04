@@ -2,8 +2,8 @@
 import { useState, useMemo } from "react";
 import { useParams } from "react-router";
 import { useFetcherData } from "~/hooks";
-import { nexus } from "~/lib/nexus-client";
-import { safeParseArray } from "~/lib/utils";
+import { nexus } from "~/nexus/nexus-client";
+import { safeParseArray } from "~/utils/utils";
 import { Calculator, Check, Info, Package, Plus, Zap } from "lucide-react";
 import { formatCurrency } from "~/constants";
 

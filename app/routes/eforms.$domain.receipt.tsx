@@ -20,12 +20,12 @@ import { Separator } from "~/components/ui/separator";
 import { Textarea } from "~/components/ui/textarea";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { API, API_KEY, API_URL } from "~/lib/api";
+import { API, API_KEY, API_URL } from "~/nexus";
 import QRCode from "qrcode";
-import { toMoney } from "~/lib/utils";
-import { useSWRLoader } from "~/lib/api-client";
+import { toMoney } from "~/utils/utils";
+import { useSWRLoader } from "~/nexus/api-client";
 import { toast } from "sonner";
-// import { useSWRLoader } from "~/lib/swr-loader";
+// import { useSWRLoader } from "~/nexus/swr-loader";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   try {

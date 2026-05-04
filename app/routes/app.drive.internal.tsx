@@ -1,6 +1,6 @@
 // app/routes/app.drive.internal.tsx
 import React, { useState, useEffect, useRef } from "react";
-import type { DriveItem } from "../types";
+import type { DriveItem } from "~/types";
 import {
   Folder,
   Trash2,
@@ -24,16 +24,16 @@ import {
   useActionData,
   Form,
 } from "react-router";
-import { API } from "~/lib/api";
-import { requireAuth } from "~/lib/session.server";
+import { API } from "~/nexus";
+import { requireAuth } from "~/utils/session.server";
 import { toast } from "sonner";
 import { useFetcherData } from "~/hooks";
-import { nexus } from "~/lib/nexus-client";
+import { nexus } from "~/nexus/nexus-client";
 import { useQueryParams } from "~/hooks/use-query-params";
-import ModalSecond from "~/components/modal/ModalSecond";
+import ModalSecond from "~/components/shared/modal/ModalSecond";
 import { Button } from "~/components/ui/button";
 import { useModal } from "~/hooks";
-import { DriveBreadcrumb } from "~/components/breadcrumb/DriveBreadcrumb";
+import { DriveBreadcrumb } from "~/components/shared/breadcrumb/DriveBreadcrumb";
 import { Link } from "react-router";
 
 // ============================================

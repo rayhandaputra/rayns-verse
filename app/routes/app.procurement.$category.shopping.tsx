@@ -6,11 +6,11 @@ import {
 } from "lucide-react";
 import ReactSelect from "react-select";
 import { useFetcherData } from "~/hooks";
-import { nexus } from "~/lib/nexus-client";
-import { safeParseArray, uploadFile } from "~/lib/utils";
+import { nexus } from "~/nexus/nexus-client";
+import { safeParseArray, uploadFile } from "~/utils/utils";
 import { toast } from "sonner";
-import { requireAuth } from "~/lib/session.server";
-import { API } from "~/lib/api";
+import { requireAuth } from "~/utils/session.server";
+import { API } from "~/nexus";
 import {
     formatCurrency, parseCurrency,
     // formatNumberInput,

@@ -23,8 +23,8 @@
  */
 
 import type { LoaderFunction, ActionFunction } from "react-router";
-import { requireAuth, getOptionalUser } from "~/lib/session.server";
-import { API } from "~/lib/api";
+import { requireAuth, getOptionalUser } from "~/utils/session.server";
+import { API } from "~/nexus";
 
 interface NexusRequest {
   module: keyof typeof API;
