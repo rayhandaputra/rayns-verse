@@ -2,8 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { DesignTemplate } from '~/types';
 import {
-    Upload, Move, ZoomIn, ZoomOut, Type, Image as ImageIcon,
-    Check, X, RefreshCw, Printer, Save, Minus, Plus, AlignCenter, Loader2, Download, Edit3, Trash2, PlusCircle, Palette, Link, Link2, Maximize2, User
+    Type, Image as ImageIcon, X, Printer, Save, Minus, Plus, Loader2, Download, Edit3, Trash2, Palette, User
 } from 'lucide-react';
 
 interface TwibbonEditorProps {
@@ -29,8 +28,6 @@ interface ElementState {
 }
 
 const TwibbonEditor: React.FC<TwibbonEditorProps> = ({ template, onExport, onClose }) => {
-    const [elements, setElements] = useState<ElementState[]>([]);
-    const [isExporting, setIsExporting] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
     const [previewData, setPreviewData] = useState<string | null>(null);
 
@@ -49,7 +46,11 @@ const TwibbonEditor: React.FC<TwibbonEditorProps> = ({ template, onExport, onClo
     const visualWidth = isLanyard ? 900 : 350;
     const visualHeight = isLanyard ? 22 : 550;
 
-    useEffect(() => {
+    const [elements, setElements] = useState<ElementState[]>([]);
+    const [prevTemplate, setPrevTemplate] = useState<DesignTemplate | null>(null);
+
+    if (template !== prevTemplate) {
+        setPrevTemplate(template);
         const initial = template.rules.map(rule => ({
             id: rule.id,
             type: rule.type,
@@ -62,10 +63,12 @@ const TwibbonEditor: React.FC<TwibbonEditorProps> = ({ template, onExport, onClo
 
         const firstTextRule = template.rules.find(r => r.type === 'text');
         if (firstTextRule) {
-            if (firstTextRule.fontFamily) setGlobalFont(firstTextRule.fontFamily);
-            if (firstTextRule.fontColor) setGlobalColor(firstTextRule.fontColor);
+            if (firstTextRule.fontFamily) setGlobalFont(firstTextRule.fontFamily || 'Inter');
+            if (firstTextRule.fontColor) setGlobalColor(firstTextRule.fontColor || '#000000');
         }
-    }, [template]);
+    }
+
+    const [isExporting, setIsExporting] = useState(false);
 
     const injectFont = (name: string, data: string) => {
         const style = document.createElement('style');

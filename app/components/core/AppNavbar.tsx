@@ -23,7 +23,6 @@ export const AppNavbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
     currentUser?.role === "staff" || currentUser?.role === "Staff";
 
   useEffect(() => {
-    setCurrentTime(new Date());
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);

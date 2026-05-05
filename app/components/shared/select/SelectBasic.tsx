@@ -61,11 +61,12 @@ export function SelectBasic({
     onChange?.(v);
   };
 
-  const [client, setClient] = React.useState<boolean>(false);
-  React.useEffect(() => {
-    setClient(true);
-  }, []);
-  if (!client) return null;
+  const isClient = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+  if (!isClient) return null;
 
   return (
     <div className={cn("flex flex-col space-y-1", className)}>

@@ -42,23 +42,12 @@ export const action: ActionFunction = async ({ request, params }) => {
           kkn_period: +payload?.kkn_period || 1,
           kkn_year: +payload?.kkn_year || moment().year(),
           kkn_detail: payload?.kkn_detail,
-          // kkn_detail: {
-          //   period: payload?.kkn_period || 1,
-          //   year: payload?.kkn_year || moment().year(),
-          //   value: payload?.kkn_value || 0,
-          //   total_group: payload?.kkn_total_group || 0,
-          //   total_qty: payload?.kkn_total_qty || 0,
-          // },
         }),
         discount_type: payload?.discount_type || null,
         discount_value: payload?.discount_value || 0,
         status: payload.status || "pending",
         images: payload.portfolioImages,
         items: payload.items,
-        // updated_by: {
-        //   id: user?.id,
-        //   fullname: user?.fullname,
-        // },
         is_personal: payload?.is_personal ? 1 : 0,
       };
 
@@ -97,7 +86,7 @@ export default function OrderEdit() {
   const params = useParams<{ id: string }>();
   const fetcher = useFetcher();
 
-  const { data: orders, reload } = useFetcherData({
+  const { data: orders } = useFetcherData({
     endpoint: nexus()
       .module("ORDERS")
       .action("get")
@@ -110,14 +99,11 @@ export default function OrderEdit() {
   });
   const detail = orders?.data?.items?.[0] || {};
 
-  const { data: products, reload: reloadProducts } = useFetcherData({
+  const { data: products } = useFetcherData({
     endpoint: nexus()
       .module("PRODUCT")
       .action("get")
       .params({
-        // id: safeParseArray(detail?.order_items)
-        //   ?.map((item: any) => item.product_id)
-        //   .join(","),
         id: [
           ...new Set(
             safeParseArray(detail?.order_items)?.map(
@@ -154,6 +140,7 @@ export default function OrderEdit() {
         size="7xl"
       >
         <OrderFormComponent
+          key={detail?.id}
           order={detail}
           products={products?.data?.items || []}
           onSubmit={(data) => {

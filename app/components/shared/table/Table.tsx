@@ -2,7 +2,7 @@
 "use client";
 
 import { InboxIcon } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useSyncExternalStore } from "react";
 import DataTable, {
   type ExpanderComponentProps,
   type TableColumn,
@@ -51,11 +51,11 @@ export default function TableComponent<T>({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const paramsObject = Object.fromEntries(searchParams.entries());
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(typeof window !== "undefined");
-  }, []);
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   if (!isClient) {
     return <div className="text-center py-4">Loading...</div>;

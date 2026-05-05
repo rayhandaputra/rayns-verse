@@ -18,7 +18,7 @@ import Swal from "sweetalert2";
 
 export const action: ActionFunction = async ({ request }) => {
   const authData = await requireAuth(request);
-  // @ts-ignore
+  // @ts-expect-error - legacy auth property from session server
   const { user, token } = authData;
   const formData = await request.formData();
   const intent = formData.get("intent");
@@ -80,13 +80,12 @@ export default function DriveCustomerPage() {
   const query = useQueryParams();
   const [sortBy, setSortBy] = useState("created_on:desc");
 
-  const { data: actionDataFetcher, loading: loadingActionFetcher, load: submitAction } = useFetcherData({
+  const { data: actionDataFetcher, load: submitAction } = useFetcherData({
     endpoint: "", method: "POST", autoLoad: false,
   });
 
   const {
     data: realFolders,
-    loading: isLoading,
     reload: reloadRealFolders,
   } = useFetcherData<any>({
     endpoint: nexus()
@@ -106,7 +105,6 @@ export default function DriveCustomerPage() {
 
   const {
     data: realFiles,
-    loading: isLoadingFiles,
     reload: reloadRealFiles,
   } = useFetcherData<any>({
     endpoint: nexus()
@@ -134,7 +132,7 @@ export default function DriveCustomerPage() {
     } else if (actionDataFetcher?.success === false) {
       toast.error(actionDataFetcher.message);
     }
-  }, [actionDataFetcher]);
+  }, [actionDataFetcher, reloadRealFolders, reloadRealFiles]);
 
   const onDeleteItem = (item: any, type: "folder" | "file") => {
     Swal.fire({
@@ -157,96 +155,15 @@ export default function DriveCustomerPage() {
     navigate(`/app/drive/customer?folder_id=${folderId}`);
   };
 
-  const [isDownloading, setIsDownloading] = React.useState(false);
+  const [isDownloading] = React.useState(false);
 
-  // const handleDownloadAll = async (e: React.MouseEvent) => {
-  //   e.preventDefault();
-
-  //   // 1. Validasi Awal
-  //   if (!query?.folder_id) {
-  //     toast.error("Tidak ada folder yang dipilih");
-  //     return;
-  //   }
-
-  //   if (files.length === 0) {
-  //     toast.error("Tidak ada file untuk diunduh");
-  //     return;
-  //   }
-
-  //   setIsDownloading(true);
-  //   const loadingToast = toast.loading("Menyiapkan dan mengompres file...");
-
-  //   try {
-  //     // 2. Eksekusi Request ke Server Action
-  //     const res = await fetch(`/server/drive/${query?.folder_id}/download`, {
-  //       method: "POST",
-  //     });
-
-  //     // 3. Penanganan Error dari Server
-  //     if (!res.ok) {
-  //       // Mencoba membaca pesan error dari body response (JSON)
-  //       const errData = await res.json().catch(() => ({}));
-  //       throw new Error(
-  //         errData.message || errData.error || "Gagal mengunduh file dari server"
-  //       );
-  //     }
-
-  //     // 4. Konversi Stream ke Blob
-  //     const blob = await res.blob();
-  //     if (blob.size === 0) throw new Error("File ZIP kosong");
-
-  //     // 5. Ekstraksi Nama File dari Content-Disposition Header
-  //     const contentDisposition = res.headers.get("Content-Disposition");
-  //     let filename = `folder-${query?.folder_id}.zip`; // Nama default
-
-  //     if (contentDisposition) {
-  //       // Regex untuk mengambil nama file di dalam tanda kutip atau setelah 'filename='
-  //       const filenameMatch = contentDisposition.match(
-  //         /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
-  //       );
-  //       if (filenameMatch && filenameMatch[1]) {
-  //         filename = filenameMatch[1].replace(/['"]/g, "");
-  //       }
-  //     }
-
-  //     // 6. Proses Trigger Download di Browser
-  //     const url = window.URL.createObjectURL(blob);
-  //     const a = document.createElement("a");
-  //     a.href = url;
-  //     a.download = filename;
-
-  //     // Append ke body (penting untuk kompabilitas Firefox)
-  //     document.body.appendChild(a);
-  //     a.click();
-
-  //     // 7. Cleanup & Notifikasi Sukses
-  //     toast.success("Download berhasil dimulai", { id: loadingToast });
-
-  //     // Beri jeda sedikit sebelum menghapus URL untuk memastikan browser menangkap kliknya
-  //     setTimeout(() => {
-  //       window.URL.revokeObjectURL(url);
-  //       document.body.removeChild(a);
-  //     }, 150);
-  //   } catch (err: any) {
-  //     console.error("Download error:", err);
-  //     toast.error(err.message || "Terjadi kesalahan saat mengunduh", {
-  //       id: loadingToast,
-  //     });
-  //   } finally {
-  //     setIsDownloading(false);
-  //   }
-  // };
   const handleDownloadAll = (e: React.MouseEvent) => {
     e.preventDefault();
 
     if (!query?.folder_id) return toast.error("Folder ID tidak ditemukan");
 
-    // Cara paling simpel & efektif:
-    // Browser akan menganggap ini sebagai instruksi download file
+    // Simple & effective download trigger
     const downloadUrl = `/server/drive/${query.folder_id}/download`;
-
-    // Membuka di tab baru sebentar lalu otomatis ter-close setelah download trigger
-    // Atau langsung ubah location (aman karena ini attachment)
     window.location.href = downloadUrl;
 
     toast.success("Download dimulai... Periksa bar progres browser Anda.");

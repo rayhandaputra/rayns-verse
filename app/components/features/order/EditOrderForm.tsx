@@ -1,11 +1,10 @@
 import React, {
   useState,
-  useEffect,
   useRef,
   useMemo,
   useCallback,
 } from "react";
-import type { Order, OrderItem } from "~/types";
+import type { OrderItem } from "~/types";
 import {
   formatCurrency,
   parseCurrency,
@@ -16,15 +15,11 @@ import {
 import {
   Save,
   Eraser,
-  AlertTriangle,
   Plus,
   Trash2,
   Calendar,
-  Check,
-  X,
-  Handshake,
   Upload,
-  Copy,
+  Handshake,
 } from "lucide-react";
 import AsyncReactSelect from "react-select/async";
 import { API } from "~/nexus";
@@ -123,18 +118,6 @@ interface FormState {
 // MODULAR SUB-COMPONENTS
 // ============================================
 
-const FormSection = ({ title, children, icon: Icon }: any) => (
-  <div className="space-y-4">
-    <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-      {Icon && <Icon size={18} className="text-gray-400" />}
-      <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
-        {title}
-      </h3>
-    </div>
-    {children}
-  </div>
-);
-
 const SwitchToggle = ({
   options,
   value,
@@ -230,15 +213,16 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
   const [form, setForm] = useState<FormState>(getInitialState());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showConfirm, setShowConfirm] = useState(false);
-  const [selectedProductsData, setSelectedProductsData] = useState<
-    Record<string, any>
-  >({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync state when order changes (essential for Edit pages)
-  useEffect(() => {
+  // We now use key={detail?.id} in the route to handle this more cleanly!
+  // BUT we keep this as a secondary safety if the prop changes without a key change
+  const lastOrderId = useRef(order?.id);
+  if (order?.id !== lastOrderId.current) {
+    lastOrderId.current = order?.id;
     setForm(getInitialState());
-  }, [getInitialState]);
+  }
 
   // ========== API LOADERS ==========
   const loadOptions = {
@@ -356,7 +340,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
         updateForm({ images: [...form.images, response.url] });
         toast.dismiss();
         toast.success("Gambar berhasil diunggah");
-      } catch (err) {
+      } catch {
         toast.error("Gagal mengunggah gambar");
       }
     }

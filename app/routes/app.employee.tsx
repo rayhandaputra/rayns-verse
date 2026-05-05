@@ -55,6 +55,7 @@ interface LoaderData {
 }
 
 interface ActionData {
+  id: string;
   success?: boolean;
   message?: string;
 }
@@ -78,45 +79,50 @@ export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
-  if (intent === "create_employee") {
-    try {
-      const name = formData.get("name") as string;
-      const structural = formData.get("structural") as string;
-      const phone = formData.get("phone") as string;
-      const status = formData.get("status") as string;
+    if (intent === "create_employee") {
+      const id = Math.random().toString(36).substring(7);
+      try {
+        const name = formData.get("name") as string;
+        const structural = formData.get("structural") as string;
+        const phone = formData.get("phone") as string;
+        const status = formData.get("status") as string;
 
-      if (!name || !structural || !phone) {
+        if (!name || !structural || !phone) {
+          return Response.json({
+            id,
+            success: false,
+            message: "Nama, jabatan, dan nomor HP wajib diisi",
+          });
+        }
+
+        const response = await API.EMPLOYEE.create({
+          session: { user, token },
+          req: {
+            body: {
+              name,
+              structural,
+              phone,
+              status: status || "active",
+            },
+          },
+        });
+
         return Response.json({
+          id,
+          success: response.success,
+          message: response.message || "Pegawai berhasil ditambahkan",
+        });
+      } catch (error: any) {
+        return Response.json({
+          id,
           success: false,
-          message: "Nama, jabatan, dan nomor HP wajib diisi",
+          message: error.message || "Gagal menambahkan pegawai",
         });
       }
-
-      const response = await API.EMPLOYEE.create({
-        session: { user, token },
-        req: {
-          body: {
-            name,
-            structural,
-            phone,
-            status: status || "active",
-          },
-        },
-      });
-
-      return Response.json({
-        success: response.success,
-        message: response.message || "Pegawai berhasil ditambahkan",
-      });
-    } catch (error: any) {
-      return Response.json({
-        success: false,
-        message: error.message || "Gagal menambahkan pegawai",
-      });
     }
-  }
 
   if (intent === "attendance") {
+    const id = Math.random().toString(36).substring(7);
     try {
       const empId = formData.get("empId") as string;
       const empName = formData.get("empName") as string;
@@ -352,10 +358,11 @@ export default function EmployeePage() {
     status: "active",
   });
 
-  // ========== EFFECTS ==========
-  useEffect(() => {
-    if (actionData?.success) {
-      toast.success(actionData.message || "Berhasil");
+  const [prevActionId, setPrevActionId] = useState<string | null>(null);
+
+  if (actionData && actionData.id !== prevActionId) {
+    setPrevActionId(actionData.id);
+    if (actionData.success) {
       setPhotoData(null);
       setCurrentCoords(null);
       setLocationStatus("Checking");
@@ -367,12 +374,21 @@ export default function EmployeePage() {
         phone: "",
         status: "active",
       });
-      // Reload data
-      reload();
-    } else if (actionData?.success === false) {
-      toast.error(actionData.message || "Gagal");
     }
-  }, [actionData]);
+  }
+
+  // ========== EFFECTS ==========
+  useEffect(() => {
+    if (actionData && actionData.id === prevActionId) {
+      if (actionData.success) {
+        toast.success(actionData.message || "Berhasil");
+        // Reload data
+        reload();
+      } else if (actionData.success === false) {
+        toast.error(actionData.message || "Gagal");
+      }
+    }
+  }, [actionData, prevActionId, reload]);
 
   // ========== ATTENDANCE HANDLERS ==========
   const startCamera = async () => {

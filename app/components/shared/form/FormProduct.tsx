@@ -36,6 +36,13 @@ export default function ProductFullFormModal({
   };
 
   const [state, setState] = useState<any>(defState);
+  const [prevDetailId, setPrevDetailId] = useState(detail?.id);
+
+  if (detail?.id !== prevDetailId) {
+    setPrevDetailId(detail?.id);
+    setState(defState);
+  }
+
   const [loading, setLoading] = useState<boolean>(false);
 
   const fetcherAction = async (filters: any) => {
@@ -44,17 +51,13 @@ export default function ProductFullFormModal({
     });
     return res?.items;
   };
-  const { data: product_components, mutate } = useSWR(
+  const { data: product_components } = useSWR(
     detail?.id ? detail?.id : null,
     () =>
       fetcherAction({
         product_id: detail?.id || "null",
       })
   );
-
-  useEffect(() => {
-    setState(defState);
-  }, [detail]);
 
   const defComponent = useMemo(() => {
     if (product_components?.length > 0) {
@@ -69,12 +72,15 @@ export default function ProductFullFormModal({
     return [defItem];
   }, [product_components]);
 
-  useEffect(() => {
-    setItems(defComponent);
-  }, [defComponent]);
-
-  // === SET ITEMS (DARI LOADER) ===
   const [items, setItems] = useState<any[]>(defComponent);
+  const [prevDefComponent, setPrevDefComponent] = useState(defComponent);
+
+  if (defComponent !== prevDefComponent) {
+    setPrevDefComponent(defComponent);
+    setItems(defComponent);
+  }
+
+  // === DARI LOADER ===
 
   // === HITUNG OTOMATIS ===
   const subtotal = items.reduce((a, b) => a + (b.subtotal || 0), 0);

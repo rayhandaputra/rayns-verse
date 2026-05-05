@@ -1,10 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import type { Order } from "~/types";
 import {
-  ADMIN_WA,
-  formatCurrency,
   formatFullDate,
-  getKKNPeriod,
   getWhatsAppLink,
 } from "~/constants";
 import {
@@ -12,8 +9,6 @@ import {
   Trash2,
   Copy,
   FileText,
-  MessageCircle,
-  FolderOpen,
   Handshake,
   X,
   Upload,
@@ -40,9 +35,7 @@ import {
 import { API } from "~/nexus";
 import { requireAuth } from "~/utils/session.server";
 import { toast } from "sonner";
-import moment from "moment";
 import {
-  getOrderLabel,
   getPaymentStatusLabel,
   safeParseArray,
   safeParseObject,
@@ -53,7 +46,6 @@ import { nexus } from "~/nexus/nexus-client";
 import { useModal } from "~/hooks";
 import Swal from "sweetalert2";
 import ModalSecond from "~/components/shared/modal/ModalSecond";
-import { Button } from "~/components/ui/button";
 import { dateFormat } from "~/utils/dateFormatter";
 import { toBlob, toPng } from "html-to-image";
 import QRCode from "qrcode";
@@ -219,14 +211,13 @@ export default function OrderList() {
 
   // ... existing code ...
 
-  const { data: kknInstitutions, loading: loadingKknInstitutions } =
+  const { data: kknInstitutions } =
     useFetcherData({
       endpoint: nexus().module("OVERVIEW").action("getKknInstitutions").build(),
     });
 
   const {
     data: orders,
-    loading,
     reload,
   } = useFetcherData({
     endpoint: nexus()
@@ -258,8 +249,6 @@ export default function OrderList() {
 
   const {
     data: bankList,
-    loading: loadingBank,
-    reload: reloadBank,
   } = useFetcherData({
     endpoint: nexus()
       .module("ACCOUNT")
@@ -469,10 +458,6 @@ export default function OrderList() {
     submitAction({ action: "update_status", id, status });
   };
 
-  const onMarkDone = (id: string) => {
-    submitAction({ action: "update_status", id, status: "done" });
-  };
-
   const onDelete = (order: any) => {
     Swal.fire({
       title: "Hapus Pesanan?",
@@ -501,24 +486,23 @@ export default function OrderList() {
     } else if (actionData?.success === false) {
       toast.error(actionData.message || "Gagal");
     }
-  }, [actionData]);
-
-  const onOpenDrive = (folderId: string) => {
-    // Trying to construct a valid drive link.
-    // Assuming accessCode acts as identifier or we navigate to main drive page
-    navigate(`/app/drive?folder_id=${folderId}`);
-  };
+  }, [actionData, reload, modal, setModal]);
 
   const getStatusColor = (status: string) => {
-    if (status === "done")
-      return "bg-green-100 text-green-700 border border-green-200";
-    if (status === "confirmed")
-      return "bg-blue-100 text-blue-700 border border-blue-200";
-    return "bg-gray-100 text-gray-700 border border-gray-200";
+    switch (status) {
+      case "done":
+        return "bg-green-100 text-green-700 border-green-200";
+      case "confirmed":
+        return "bg-blue-100 text-blue-700 border-blue-200";
+      case "in_production":
+        return "bg-yellow-100 text-yellow-700 border-yellow-200";
+      case "pending":
+      case "ordered":
+        return "bg-gray-100 text-gray-700 border-gray-200";
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-200";
+    }
   };
-
-  const getFunctionalLink = (accessCode: string) =>
-    `/public/drive-link/${accessCode}`;
 
   const STATUS_OPTIONS = ["pending", "confirmed", "done"] as const;
 
@@ -532,32 +516,15 @@ export default function OrderList() {
   // Column definitions for DataTable
   const columns: ColumnDef<Order>[] = useMemo(
     () => [
-      // {
-      //   key: "createdAt",
-      //   header: "No Order",
-      //   cellClassName: "whitespace-nowrap text-xs text-gray-600 font-medium",
-      //   cell: (order) => (
-      //     <div className="flex flex-col">
-      //       <p className="font-semibold">
-      //         {+order?.is_archive === 1 ? "Arsip" : order.order_number}
-      //       </p>
-      //       {/* <p>
-      //         {order?.order_date
-      //           ? moment(order.order_date).format("DD MMM YYYY HH:mm")
-      //           : "-"}
-      //       </p> */}
-      //     </div>
-      //   ),
-      // },
       {
         key: "no",
         header: "No",
         headerClassName: "w-[60px] min-w-[60px] max-w-[60px] sticky left-0 z-20 bg-gray-100",
         cellClassName: "bg-white group-hover:bg-gray-50 transition-colors w-[60px] min-w-[60px] max-w-[60px] whitespace-nowrap text-xs text-gray-600 font-medium sticky left-0 z-10",
         cell: (order, index) => {
-          const page = orders?.data?.current_page ?? 0;
-          const size = 100;
-          return page * size + index + 1;
+          const pageNum = orders?.data?.current_page ?? 0;
+          const pageSize = 100;
+          return pageNum * pageSize + index + 1;
         },
       },
       {
@@ -567,21 +534,7 @@ export default function OrderList() {
         cellClassName: "w-[240px] min-w-[240px] max-w-[240px] bg-white group-hover:bg-gray-50 transition-colors sticky left-[60px] z-10 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)]",
         cell: (order) => (
           <>
-            {/* <div className="font-bold text-gray-900 flex items-center gap-2 text-sm">
-              {order.institution_name}
-              {+(order?.is_sponsor ?? 0) === 1 && (
-                <span
-                  title="Sponsor / Kerja Sama"
-                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700 border border-purple-200"
-                >
-                  <Handshake size={10} className="mr-0.5" /> SPONSOR
-                </span>
-              )}
-            </div> */}
             <div className="font-bold text-gray-900 w-[180px] flex items-center gap-2">
-              {/* {+(order?.is_kkn ?? 0) === 1
-                ? `${order?.kkn_type?.toLowerCase() === "ppm" ? "Kelompok" : "Desa"} ${safeParseObject(order?.kkn_detail)?.value}`
-                : order.institution_name} */}
               {+(order?.is_kkn ?? 0) === 1
                 ? (
                   <div className="flex items-center gap-1.5">
@@ -589,7 +542,6 @@ export default function OrderList() {
                       {order?.kkn_type?.toLowerCase() === "ppm" ? "Kelompok" : "Desa"}{" "}
                       {safeParseObject(order?.kkn_detail)?.value}
                     </span>
-                    {/* Badge Periode disisipkan di sini */}
                     {!filterKknInstitution && (
                       <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
                         Periode {order.kkn_period}
@@ -735,48 +687,6 @@ export default function OrderList() {
         cellClassName: "max-w-[220px]",
         cell: (order) =>
           +order?.is_archive !== 1 ? (
-            // <div className="flex flex-col gap-2">
-            //   {order.driveFolderId ? (
-            //     <button
-            //       onClick={() => onOpenDrive(order.driveFolderId!)}
-            //       className="flex items-center justify-center gap-1 text-xs font-medium text-yellow-700 bg-yellow-50 border border-yellow-200 rounded px-2 py-1 hover:bg-yellow-100 whitespace-nowrap"
-            //     >
-            //       <FolderOpen size={14} /> Buka
-            //     </button>
-            //   ) : (
-            //     <span className="text-xs text-gray-400 italic">-</span>
-            //   )}
-            // </div>
-            // <div className="flex flex-col gap-2">
-            //   {order.drive_folder_id ? (
-            //     <button
-            //       onClick={() => onOpenDrive(order.drive_folder_id!)}
-            //       className="flex items-center gap-1 text-[10px] font-medium text-gray-700 bg-white border border-gray-200 rounded px-2 py-1 hover:bg-gray-50 shadow-sm w-fit"
-            //     >
-            //       <FolderOpen size={10} className="text-yellow-500" /> Buka
-            //     </button>
-            //   ) : (
-            //     "-"
-            //   )}
-            //   <div className="flex items-center gap-1 group">
-            //     <a
-            //       href={`/public/drive-link/${order.order_number}`}
-            //       className="truncate text-blue-600 hover:underline text-[10px] font-mono w-16"
-            //     >
-            //       link
-            //     </a>
-            //     <button
-            //       onClick={() =>
-            //         copyToClipboard(
-            //           "kinau.id/public/drive-link/" + order.order_number
-            //         )
-            //       }
-            //       className="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition"
-            //     >
-            //       <Copy size={10} />
-            //     </button>
-            //   </div>
-            // </div>
             <div className="flex flex-col">
               <div className="flex items-center whitespace-nowrap gap-2">
                 <button
@@ -786,7 +696,6 @@ export default function OrderList() {
                   <QrCode size={10} /> Salin QR
                 </button>
 
-                {/* Aksi 2: Copy Link Publik */}
                 <button
                   onClick={() =>
                     copyToClipboard(
@@ -799,7 +708,6 @@ export default function OrderList() {
                 </button>
               </div>
               <div className="flex items-center whitespace-nowrap gap-2">
-                {/* Aksi 1: Buka Link Publik */}
                 <a
                   href={`/public/drive-link/${order.order_number}`}
                   target="_blank"
@@ -810,7 +718,6 @@ export default function OrderList() {
                 </a>
                 <button
                   title="Share Link"
-                  // Gunakan perbandingan langsung tanpa tanda + jika ID sudah pasti angka/string
                   disabled={isProcessingShare === order.id}
                   onClick={() => handleShare(order)}
                   className={`p-1.5 rounded transition flex items-center justify-center min-w-[32px] ${isProcessingShare === order.id
@@ -1078,7 +985,20 @@ export default function OrderList() {
         ),
       },
     ],
-    [orders]
+    [
+      orders,
+      filterKknInstitution,
+      handleCopyImageQrCode,
+      handleShare,
+      isProcessingShare,
+      modal,
+      navigate,
+      normalizeStatus,
+      onDelete,
+      onUpdateStatus,
+      onUpdateStatusPrinted,
+      setModal,
+    ]
   );
 
   return (
@@ -1172,7 +1092,7 @@ export default function OrderList() {
       <DataTable
         columns={columns}
         data={orders?.data?.items || []}
-        getRowKey={(order, _index) => order.id}
+        getRowKey={(order) => order.id}
         rowClassName={(order) => (order.finishedAt ? "bg-green-50/30" : "")}
         emptyMessage="Belum ada pesanan di kategori ini."
         minHeight="400px"
@@ -1253,53 +1173,6 @@ export default function OrderList() {
                   </select>
                 </div>
 
-                {/* {modal?.data?.payment_method &&
-                modal?.data?.payment_method !== "cash" && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1">
-                        Nomor Rekening Pengirim
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded-lg p-2 text-sm"
-                        placeholder="Contoh: 1234567890"
-                        value={modal?.data?.ref_account_number || ""}
-                        onChange={(e) =>
-                          setModal({
-                            ...modal,
-                            data: {
-                              ...modal.data,
-                              ref_account_number: e.target.value,
-                            },
-                          })
-                        }
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1">
-                        Nama Pemilik Rekening
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded-lg p-2 text-sm"
-                        placeholder="Contoh: John Doe"
-                        value={modal?.data?.ref_account_holder || ""}
-                        onChange={(e) =>
-                          setModal({
-                            ...modal,
-                            data: {
-                              ...modal.data,
-                              ref_account_holder: e.target.value,
-                            },
-                          })
-                        }
-                        required
-                      />
-                    </div>
-                  </>
-                )} */}
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -1321,7 +1194,7 @@ export default function OrderList() {
                             data: { ...prev.data, file: url },
                           }));
                         }
-                      } catch (err) {
+                      } catch (error: any) {
                         toast.error("Gagal mengunggah file gambar");
                       } finally {
                         setIsUploadingFile(false);
@@ -1523,49 +1396,6 @@ export default function OrderList() {
                   </div>
                 )}
 
-                {/* ===================== */}
-                {/* DP (MULTIPLE) */}
-                {/* ===================== */}
-                {/* {safeParseArray(modal?.data?.dp_payment_proofs).map(
-                (proof, idx) => (
-                  <div key={idx} className="border rounded-lg p-3 bg-gray-50">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-yellow-100 text-yellow-700">
-                        Bukti DP
-                      </span>
-
-                      {proof.proof_date && (
-                        <span className="text-[10px] text-gray-400">
-                          {new Date(proof.proof_date).toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-
-                    {(proof.proof_method || proof.proof_channel) && (
-                      <div className="text-xs text-gray-600 mb-2">
-                        {proof.proof_method && (
-                          <span>
-                            via <b>{proof.proof_method}</b>
-                          </span>
-                        )}
-                        {proof.proof_channel && (
-                          <span className="ml-1 text-gray-400">
-                            ({proof.proof_channel})
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="rounded-lg overflow-hidden border border-gray-200">
-                      <img
-                        src={proof.proof_url}
-                        alt={`Bukti DP ${idx + 1}`}
-                        className="w-full max-h-[320px] object-contain bg-white"
-                      />
-                    </div>
-                  </div>
-                )
-              )} */}
               </div>
             </div>
           </div>

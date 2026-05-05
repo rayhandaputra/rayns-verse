@@ -67,6 +67,14 @@ function Carousel({
     setCanScrollNext(api.canScrollNext())
   }, [])
 
+  // Sync scroll state during render if API is ready
+  if (api) {
+    const nextPrev = api.canScrollPrev();
+    const nextNext = api.canScrollNext();
+    if (nextPrev !== canScrollPrev) setCanScrollPrev(nextPrev);
+    if (nextNext !== canScrollNext) setCanScrollNext(nextNext);
+  }
+
   const scrollPrev = React.useCallback(() => {
     api?.scrollPrev()
   }, [api])
@@ -95,7 +103,6 @@ function Carousel({
 
   React.useEffect(() => {
     if (!api) return
-    onSelect(api)
     api.on("reInit", onSelect)
     api.on("select", onSelect)
 

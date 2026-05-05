@@ -10,9 +10,7 @@ import {
   Scissors,
   Clipboard,
   Share2,
-  HardDrive,
   FileText,
-  Lock,
   Download,
 } from "lucide-react";
 import {
@@ -22,7 +20,6 @@ import {
   type LoaderFunction,
   type ActionFunction,
   useActionData,
-  Form,
 } from "react-router";
 import { API } from "~/nexus";
 import { requireAuth } from "~/utils/session.server";
@@ -34,7 +31,6 @@ import ModalSecond from "~/components/shared/modal/ModalSecond";
 import { Button } from "~/components/ui/button";
 import { useModal } from "~/hooks";
 import { DriveBreadcrumb } from "~/components/shared/breadcrumb/DriveBreadcrumb";
-import { Link } from "react-router";
 
 // ============================================
 // TYPES & INTERFACES
@@ -260,7 +256,6 @@ export default function DriveInternalPage() {
 
   const {
     data: realFolders,
-    loading: isLoading,
     reload: reloadRealFolders,
   } = useFetcherData<any>({
     endpoint: nexus()
@@ -281,7 +276,6 @@ export default function DriveInternalPage() {
 
   const {
     data: realFiles,
-    loading: isLoadingFiles,
     reload: reloadRealFiles,
   } = useFetcherData<any>({
     endpoint: nexus()
@@ -305,15 +299,16 @@ export default function DriveInternalPage() {
       reloadRealFolders();
       reloadRealFiles();
     }
-  }, [actionData]);
+  }, [actionData, reloadRealFolders, reloadRealFiles]);
 
   // Local state initialized from loader
   const [items, setItems] = useState<DriveItem[]>(initialItems);
+  const [prevInitialItems, setPrevInitialItems] = useState(initialItems);
 
-  // Sync state with loader revalidation
-  useEffect(() => {
+  if (initialItems !== prevInitialItems) {
+    setPrevInitialItems(initialItems);
     setItems(initialItems);
-  }, [initialItems]);
+  }
 
   // Handle fetcher responses
   useEffect(() => {
@@ -330,7 +325,7 @@ export default function DriveInternalPage() {
         fetcher.load(window.location.pathname + window.location.search);
       }
     }
-  }, [fetcher.data, fetcher.state]);
+  }, [fetcher, reloadRealFolders, reloadRealFiles]);
 
   const [modal, setModal] = useModal();
   // Use query.folder_id as source of truth for currentFolderId
@@ -506,9 +501,9 @@ export default function DriveInternalPage() {
       const newItems = items.filter((i) => !idsToDelete.has(i.id));
       setItems(newItems);
       setSelectedItem(null);
-    } catch (err: any) {
-      toast.error(err.message || "Gagal menghapus item");
-      console.error(err);
+    } catch (error: any) {
+      toast.error(error.message || "Gagal menghapus item");
+      console.error(error);
     }
   };
 
@@ -617,96 +612,15 @@ export default function DriveInternalPage() {
     navigate(`/app/drive/internal?folder_id=${item.id}`);
   };
 
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloading] = useState(false);
 
-  // const handleDownloadAll = async (e: React.MouseEvent) => {
-  //   e.preventDefault();
-
-  //   // 1. Validasi Awal
-  //   if (!currentFolderId) {
-  //     toast.error("Tidak ada folder yang dipilih");
-  //     return;
-  //   }
-
-  //   if (files.length === 0) {
-  //     toast.error("Tidak ada file untuk diunduh");
-  //     return;
-  //   }
-
-  //   setIsDownloading(true);
-  //   const loadingToast = toast.loading("Menyiapkan dan mengompres file...");
-
-  //   try {
-  //     // 2. Eksekusi Request ke Server Action
-  //     const res = await fetch(`/server/drive/${currentFolderId}/download`, {
-  //       method: "POST",
-  //     });
-
-  //     // 3. Penanganan Error dari Server
-  //     if (!res.ok) {
-  //       // Mencoba membaca pesan error dari body response (JSON)
-  //       const errData = await res.json().catch(() => ({}));
-  //       throw new Error(
-  //         errData.message || errData.error || "Gagal mengunduh file dari server"
-  //       );
-  //     }
-
-  //     // 4. Konversi Stream ke Blob
-  //     const blob = await res.blob();
-  //     if (blob.size === 0) throw new Error("File ZIP kosong");
-
-  //     // 5. Ekstraksi Nama File dari Content-Disposition Header
-  //     const contentDisposition = res.headers.get("Content-Disposition");
-  //     let filename = `folder-${currentFolderId}.zip`; // Nama default
-
-  //     if (contentDisposition) {
-  //       // Regex untuk mengambil nama file di dalam tanda kutip atau setelah 'filename='
-  //       const filenameMatch = contentDisposition.match(
-  //         /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
-  //       );
-  //       if (filenameMatch && filenameMatch[1]) {
-  //         filename = filenameMatch[1].replace(/['"]/g, "");
-  //       }
-  //     }
-
-  //     // 6. Proses Trigger Download di Browser
-  //     const url = window.URL.createObjectURL(blob);
-  //     const a = document.createElement("a");
-  //     a.href = url;
-  //     a.download = filename;
-
-  //     // Append ke body (penting untuk kompabilitas Firefox)
-  //     document.body.appendChild(a);
-  //     a.click();
-
-  //     // 7. Cleanup & Notifikasi Sukses
-  //     toast.success("Download berhasil dimulai", { id: loadingToast });
-
-  //     // Beri jeda sedikit sebelum menghapus URL untuk memastikan browser menangkap kliknya
-  //     setTimeout(() => {
-  //       window.URL.revokeObjectURL(url);
-  //       document.body.removeChild(a);
-  //     }, 150);
-  //   } catch (err: any) {
-  //     console.error("Download error:", err);
-  //     toast.error(err.message || "Terjadi kesalahan saat mengunduh", {
-  //       id: loadingToast,
-  //     });
-  //   } finally {
-  //     setIsDownloading(false);
-  //   }
-  // };
   const handleDownloadAll = (e: React.MouseEvent) => {
     e.preventDefault();
 
     if (!currentFolderId) return toast.error("Folder ID tidak ditemukan");
 
-    // Cara paling simpel & efektif:
-    // Browser akan menganggap ini sebagai instruksi download file
+    // Simple & effective: Browser will handle the download
     const downloadUrl = `/server/drive/${currentFolderId}/download`;
-
-    // Membuka di tab baru sebentar lalu otomatis ter-close setelah download trigger
-    // Atau langsung ubah location (aman karena ini attachment)
     window.location.href = downloadUrl;
 
     toast.success("Download dimulai... Periksa bar progres browser Anda.");

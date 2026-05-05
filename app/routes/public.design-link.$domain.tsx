@@ -2,16 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
     type LoaderFunction, type ActionFunction,
     useLoaderData,
-    useNavigation,
     useNavigate
 } from 'react-router';
 import {
     LayoutTemplate, Lock, Link2OffIcon, HardDrive,
-    X, ImageIcon, LayoutGrid,
-    Layers,
-    Tag,
-    Hash,
-    User,
+    ImageIcon,
+} from 'lucide-react';
+import {
     Info,
     ExternalLink,
     MessageCircle,
@@ -30,24 +27,13 @@ import { sendTelegramLog } from "~/utils/telegram-log";
 import { nexus } from "~/nexus/nexus-client";
 import { useFetcherData } from "~/hooks";
 import { useQueryParams } from '~/hooks/use-query-params';
-import { base64ToFile, getMimeType, getWhatsAppLink, safeParseObject, uploadFile } from "~/utils/utils";
+import { base64ToFile, getMimeType, getWhatsAppLink, uploadFile } from "~/utils/utils";
 import ClientTwibbonEditorPage from '~/components/features/twibbon/ClientTwibbonEditor';
 import { toast } from 'sonner';
 import { ADMIN_WA } from '~/constants';
 
 // --- COMPONENTS ---
 // import ClientTwibbonEditorPage from '~/components/ClientTwibbonEditorPage';
-
-// --- TYPES ---
-interface DesignTemplate {
-    id: string;
-    name: string;
-    category: 'idcard' | 'lanyard';
-    baseImage: string;
-    rules: any[];
-    styleMode: 'dynamic' | 'static';
-    createdAt: string;
-}
 
 // --- LOADER ---
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -59,50 +45,54 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     }
 
     try {
-        const assignmentRes = await API.TWIBBON_ASSIGNMENT.get({
-            session: {},
-            req: {
-                query: {
-                    unique_code: domain,
-                    size: 1,
-                },
-            },
-        });
+        // Parallel fetch for better performance
+        const [assignmentRes, orderRes] = await Promise.all([
+            API.TWIBBON_ASSIGNMENT.get({
+                session: {},
+                req: { query: { unique_code: domain, size: 1 } },
+            }),
+            API.ORDERS.get({
+                session: {},
+                req: { query: { ...(domain.includes("ORD") ? { order_number: domain } : { institution_domain: domain }), size: 1 } },
+            })
+        ]);
 
-        const orderRes = await API.ORDERS.get({
-            session: {},
-            req: {
-                query: {
-                    order_number: assignmentRes?.items?.[0]?.order_trx_code,
-                    size: 1,
-                },
-            },
-        });
+        const order = orderRes?.items?.[0];
+        const assignment = assignmentRes?.items?.[0];
 
-        // Optional: Fetch detail folder if needed for uploads later
+        if (!order) {
+            return Response.json({ session: authData?.user || null, domain, orderData: null });
+        }
+
+        // Fetch folders for storage
         const detailFolder = await API.ORDER_UPLOAD.get_folder({
             session: {},
-            req: { query: { order_number: orderRes?.items?.[0]?.order_number, folder_id: "null", size: 1 } },
+            req: { query: { order_number: order.order_number, folder_id: "null", size: 1 } },
         });
 
-        const getFolderIDCardLanyard = await API.ORDER_UPLOAD.get_folder({
-            session: {},
-            req: {
-                query: {
-                    folder_id: detailFolder?.items?.[0]?.id,
-                    search: assignmentRes?.items?.[0]?.category === "idcard" ? "ID Card (Depan)" : "Lanyard",
-                    size: 1,
+        const mainFolder = detailFolder?.items?.[0];
+        let bucketTwibbon = null;
+
+        if (mainFolder) {
+            const folderSearch = await API.ORDER_UPLOAD.get_folder({
+                session: {},
+                req: {
+                    query: {
+                        folder_id: mainFolder.id,
+                        search: assignment?.category === "idcard" ? "ID Card (Depan)" : "Lanyard",
+                        size: 1,
+                    }
                 }
-            }
-        })
+            });
+            bucketTwibbon = folderSearch?.items?.[0];
+        }
 
         return Response.json({
             session: authData?.user || null,
             domain,
-            orderData: orderRes?.items?.[0] ?? null,
-            current_folder: detailFolder?.items?.[0] ?? null,
-            assignmentData: assignmentRes?.items?.[0] ?? null,
-            bucketTwibbon: getFolderIDCardLanyard?.items?.[0] ?? null,
+            orderData: order,
+            assignmentData: assignment,
+            bucketTwibbon,
         });
 
     } catch (error: any) {
@@ -113,7 +103,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 };
 
 // --- ACTION ---
-export const action: ActionFunction = async ({ request, params }) => {
+export const action: ActionFunction = async ({ request }) => {
     const formData = await request.formData();
     const intent = formData.get('intent');
 
@@ -133,16 +123,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 // --- MAIN PAGE ---
 export default function PublicDesignLinkPage() {
-    const { domain, orderData, assignmentData, bucketTwibbon } = useLoaderData<any>();
-    const { data: actionRes, load: submitAction } = useFetcherData({ endpoint: "", method: "POST", autoLoad: false });
+    const { orderData, domain, assignmentData, bucketTwibbon } = useLoaderData<any>();
 
-    const navigate = useNavigate();
-    const query = useQueryParams();
-    const [activeTab, setActiveTab] = useState<'idcard' | 'lanyard' | 'files'>(assignmentData?.category);
+    const [activeTab] = useState<'idcard' | 'lanyard' | 'files'>(assignmentData?.category);
     // const [activeTab, setActiveTab] = useState<'idcard' | 'lanyard' | 'files'>('idcard');
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => { setIsClient(true); }, []);
+    const isClient = useIsClient();
 
     // --- 1. Fetch Real Templates (Master Data) ---
     const { data: templateRes } = useFetcherData<any>({
@@ -184,7 +169,7 @@ export default function PublicDesignLinkPage() {
             level: 2,
             order_number: orderData?.order_number,
         };
-        const result = await API.ORDER_UPLOAD.create_single_file({ session: {}, req: { body: newFilePayload } });
+        await API.ORDER_UPLOAD.create_single_file({ session: {}, req: { body: newFilePayload } });
         toast.success(`Berhasil menyimpan twibbon ${newFileName}`)
 
         setSuccessModal({
@@ -400,7 +385,11 @@ const DesignSkeleton = () => (
 
 function useIsClient() {
     const [isClient, setIsClient] = useState(false);
-    useEffect(() => setIsClient(true), []);
+    useEffect(() => {
+        // Use a microtask/macrotask to avoid synchronous update warning
+        const timer = setTimeout(() => setIsClient(true), 0);
+        return () => clearTimeout(timer);
+    }, []);
     return isClient;
 }
 
@@ -412,7 +401,7 @@ interface SuccessModalProps {
     orderNumber: string;
 }
 
-const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, fileName, orderNumber }) => {
+const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, fileName }) => {
     if (!isOpen) return null;
 
     return (

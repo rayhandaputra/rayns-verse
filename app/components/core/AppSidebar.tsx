@@ -1,4 +1,4 @@
-import { Link, useLocation, useFetcher } from "react-router";
+import { Link, useFetcher } from "react-router";
 import { LogOut } from "lucide-react";
 import Swal from "sweetalert2";
 import React from "react";

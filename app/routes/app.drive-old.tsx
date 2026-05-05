@@ -6,7 +6,7 @@ import {
   type LoaderFunction,
   type ActionFunction,
 } from "react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import MenuIcon from "~/components/shared/icon/menu-icon";
 import { DriveLayout } from "~/components/features/drive/drive-layout";
 import { API } from "~/nexus";
@@ -165,15 +165,22 @@ export default function DrivePage() {
   const actionData = useActionData();
   const submit = useSubmit();
 
-  const [folders, setFolders] = useState<any[]>([]);
-  const [files, setFiles] = useState<any[]>([]);
+  const [folders, setFolders] = useState<any[]>(initialFolders || []);
+  const [prevInitialFolders, setPrevInitialFolders] = useState(initialFolders);
+  const [files, setFiles] = useState<any[]>(initialFiles || []);
+  const [prevInitialFiles, setPrevInitialFiles] = useState(initialFiles);
+
+  if (initialFolders !== prevInitialFolders) {
+    setPrevInitialFolders(initialFolders);
+    setFolders(initialFolders || []);
+  }
+  if (initialFiles !== prevInitialFiles) {
+    setPrevInitialFiles(initialFiles);
+    setFiles(initialFiles || []);
+  }
+
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [isUploadFileOpen, setIsUploadFileOpen] = useState(false);
-
-  useEffect(() => {
-    if (initialFolders) setFolders(initialFolders);
-    if (initialFiles) setFiles(initialFiles);
-  }, [initialFolders, initialFiles]);
 
   useEffect(() => {
     if (actionData?.flash) {
@@ -251,7 +258,7 @@ export default function DrivePage() {
   const mappedRecentFiles = files.slice(0, 3).map((f: any) => ({
     id: f.id,
     name: f.file_name,
-    date: new Date(f.created_at || Date.now()).toLocaleDateString(),
+    date: f.created_at ? new Date(f.created_at).toLocaleDateString() : "-",
     size: "0 MB",
     type: f.file_type || "doc",
   }));
@@ -259,16 +266,17 @@ export default function DrivePage() {
   const mappedAllFiles = files.map((f: any) => ({
     id: f.id,
     name: f.file_name,
-    date: new Date(f.created_at || Date.now()).toLocaleDateString(),
+    date: f.created_at ? new Date(f.created_at).toLocaleDateString() : "-",
     uploadedBy: "User",
     avatar: "https://github.com/shadcn.png",
   }));
 
-  const [client, setClient] = useState(false);
-  useEffect(() => {
-    setClient(true);
-  }, []);
-  if (!client) return null;
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+  if (!isClient) return null;
 
   return (
     <div className="">

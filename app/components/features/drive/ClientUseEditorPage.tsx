@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import type { DriveItem, Order, Product, ShirtSizeItem, ShirtColor, DesignTemplate, TwibbonEntry, TwibbonValue, TwibbonAssignment } from '~/types';
+import React, { useState, useRef, useMemo } from 'react';
+import type { DriveItem, Order, DesignTemplate, TwibbonAssignment } from '~/types';
 import {
     Folder, FileText, Receipt, Layout, ImageIcon, LayoutGrid, List,
     FolderPlus, Upload, Trash2, X, Printer, CheckCircle2, AlertTriangle,
@@ -17,9 +17,7 @@ interface TwibbonTabContentProps {
     designTemplates: DesignTemplate[];
     twibbonAssignments?: any;
     onUpdateAssignments: (orderId: string, assignments: TwibbonAssignment[]) => void;
-    onShowEditor: (template: DesignTemplate) => void;
     onAddAssignment: () => void;
-    handleDeleteAssignment?: (asgId: string) => void;
 }
 
 export const TwibbonTabContent: React.FC<TwibbonTabContentProps> = ({
@@ -27,18 +25,13 @@ export const TwibbonTabContent: React.FC<TwibbonTabContentProps> = ({
     currentOrder,
     designTemplates,
     onUpdateAssignments,
-    onShowEditor,
     onAddAssignment,
-    handleDeleteAssignment
 }) => {
-
-    const navigate = useNavigate();
-
     const type = activeTab === 'twibbon-idcard' ? 'idcard' : 'lanyard';
     const typeLabel = activeTab.split('-')[1]?.toUpperCase();
     const assignments = (currentOrder.twibbonAssignments || []).filter((a: any) => a.type === type);
 
-    const generatePublicLink = (asgId: string, index: number) => {
+    const generatePublicLink = () => {
         // return `kinau.id/public/design-link/${currentOrder?.id?.toUpperCase()}/${type === 'idcard' ? 'IdCard' : 'Lanyard'}${index + 1}`;
         return `kinau.id/public/design-link/${currentOrder?.id}`;
     };
@@ -72,11 +65,8 @@ export const TwibbonTabContent: React.FC<TwibbonTabContentProps> = ({
                 </div>
 
                 <div className="space-y-6">
-                    {assignments.map((asg: any, idx: number) => {
+                    {assignments.map((asg: any) => {
                         const assignedTpl = designTemplates?.find((t: any) => t.id === asg.templateId);
-                        const usedIds = (currentOrder.twibbonAssignments || [])
-                            .filter((a: any) => a.id !== asg.id)
-                            .map((a: any) => a.templateId);
 
                         const available = designTemplates?.filter((t: any) =>
                             t.category === type
@@ -85,7 +75,7 @@ export const TwibbonTabContent: React.FC<TwibbonTabContentProps> = ({
                         //     t.category === type && !usedIds.includes(t.id)
                         // ) || [];
 
-                        const link = generatePublicLink(asg.id, idx);
+                        generatePublicLink();
 
                         return (
                             <div key={asg.id} className={`bg-gray-50 border-2 rounded-[32px] p-6 transition-all ${asg.templateId ? 'border-gray-100 bg-white shadow-sm' : 'border-dashed border-indigo-200 bg-indigo-50/20'}`}>
@@ -161,17 +151,12 @@ export const TwibbonTabContent: React.FC<TwibbonTabContentProps> = ({
 interface DrivePageProps {
     items: DriveItem[];
     orders?: Order[];
-    products?: Product[];
-    shirtColors?: ShirtColor[];
     designTemplates?: DesignTemplate[];
     onUpdateItems: (newItems: DriveItem[]) => void;
-    onUpdateOrderSizes?: (orderId: string, sizes: ShirtSizeItem[]) => void;
-    onUpdateTwibbonData?: (orderId: string, entries: TwibbonEntry[]) => void;
     onUpdateTwibbonAssignments?: (orderId: string, assignments: TwibbonAssignment[]) => void;
     initialFolderId?: string | null;
     rootFolderId?: string | null;
     isGuest?: boolean;
-    onSaveReview?: (orderId: string, rating: number, review: string) => void;
 }
 
 const ClientUseEditorPage: React.FC<DrivePageProps> = ({
@@ -180,25 +165,28 @@ const ClientUseEditorPage: React.FC<DrivePageProps> = ({
     initialFolderId, rootFolderId, isGuest = false
 }) => {
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(initialFolderId || rootFolderId || null);
+    const [prevInitialFolderId, setPrevInitialFolderId] = useState(initialFolderId);
+    const [prevRootFolderId, setPrevRootFolderId] = useState(rootFolderId);
+
+    if (initialFolderId !== prevInitialFolderId) {
+        setPrevInitialFolderId(initialFolderId);
+        setCurrentFolderId(initialFolderId || null);
+        setActiveTab('files');
+    }
+
+    if (rootFolderId !== prevRootFolderId) {
+        setPrevRootFolderId(rootFolderId);
+        if (!currentFolderId) {
+            setCurrentFolderId(rootFolderId || null);
+        }
+    }
+
     const [activeTab, setActiveTab] = useState<'files' | 'nota' | 'sizes' | 'twibbon-idcard' | 'twibbon-lanyard'>('files');
     const [showNewFolderModal, setShowNewFolderModal] = useState(false);
     const [newFolderName, setNewFolderName] = useState('');
     const [showVisualEditor, setShowVisualEditor] = useState<DesignTemplate | null>(null);
     const [zoomedFile, setZoomedFile] = useState<DriveItem | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        if (initialFolderId !== undefined) {
-            setCurrentFolderId(initialFolderId);
-            setActiveTab('files');
-        }
-    }, [initialFolderId]);
-
-    useEffect(() => {
-        if (rootFolderId && !currentFolderId) {
-            setCurrentFolderId(rootFolderId);
-        }
-    }, [rootFolderId, currentFolderId]);
 
     const effectiveOrderId = rootFolderId || currentFolderId;
     const currentOrder: any = effectiveOrderId ? orders.find(o => o.driveFolderId === effectiveOrderId || o.id === effectiveOrderId) : null;
@@ -220,7 +208,7 @@ const ClientUseEditorPage: React.FC<DrivePageProps> = ({
 
         const nameCounts: Record<string, number> = {};
         filesInFolder.forEach(f => {
-            let cleanName = f.name.replace(/\.png$/i, '').replace(/\s\(\d+\)$/, '').trim();
+            const cleanName = f.name.replace(/\.png$/i, '').replace(/\s\(\d+\)$/, '').trim();
             nameCounts[cleanName] = (nameCounts[cleanName] || 0) + 1;
         });
 

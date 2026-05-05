@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Folder, FileText, Trash2, Edit2, FolderPlus, Upload, Download,
-  Check, X, Eye, Lock, AlertCircle, Link2OffIcon, MapPin,
-  Shirt, IdCard, LayoutGrid, ChevronRight, Layers, ArrowLeft
+  X, Lock, Link2OffIcon,
+  Shirt
 } from "lucide-react";
 import {
   useLoaderData,
@@ -15,20 +15,15 @@ import {
 import { API } from "~/nexus";
 import { toast } from "sonner";
 import { getOptionalUser } from "~/utils/session.server";
-import NotaView from "~/components/shared/NotaView";
 import { useFetcherData, useModal } from "~/hooks";
 import { nexus } from "~/nexus/nexus-client";
 import { useQueryParams } from "~/hooks/use-query-params";
-import ModalSecond from "~/components/shared/modal/ModalSecond";
-import { Button } from "~/components/ui/button";
 import { DriveBreadcrumb } from "~/components/shared/breadcrumb/DriveBreadcrumb";
 import Swal from "sweetalert2";
 import { getMimeType, safeParseObject } from "~/utils/utils";
 import { sendTelegramLog } from "~/utils/telegram-log";
-import { getGoogleMapsLink } from "~/constants";
 import JSZip from "jszip";
 import { TwibbonTabContent } from "~/components/features/drive/ClientUseEditorPage";
-import moment from "moment";
 import { DrivePublicHeader } from "~/components/features/drive/public/DrivePublicHeader";
 import { DriveInfoBar } from "~/components/features/drive/public/DriveInfoBar";
 import { DriveTabs } from "~/components/features/drive/public/DriveTabs";
@@ -264,7 +259,7 @@ export default function PublicDriveLinkPage() {
   });
 
   // 3. Data Fetching Templates
-  const { data: templateRes, loading: loadingTemplates } = useFetcherData<any>({
+  const { data: templateRes } = useFetcherData<any>({
     endpoint: nexus().module("TWIBBON_TEMPLATE").action("get").params({ page: 0, size: 100 }).build(),
     autoLoad: true,
   });
@@ -354,53 +349,129 @@ export default function PublicDriveLinkPage() {
       return { success: true, fileName: file.name };
     } catch (err) { return { success: false, fileName: file.name, error: err }; }
   };
-  const uploadWithLimit = async (files: File[], limit: number, onProgress: any, processFn: any) => {
-    const results: any[] = []; const queue = [...files]; let completed = 0;
+  const uploadWithLimit = async (files: File[], limit: number, onProgress: (completed: number, failedList: string[]) => void, processFn: any) => {
+    const results: any[] = [];
+    const queue = [...files];
+    let completed = 0;
+    const failedList: string[] = [];
+
     const worker = async () => {
       while (queue.length > 0) {
-        const file = queue.shift(); if (!file) continue;
-        try { const res = await processFn(file); results.push(res); } catch (err) { results.push({ success: false, fileName: file.name, error: err }); } finally { completed++; onProgress(completed); }
+        const file = queue.shift();
+        if (!file) continue;
+        try {
+          const res = await processFn(file);
+          results.push(res);
+          if (!res.success) {
+            failedList.push(file.name);
+          }
+        } catch (err) {
+          results.push({ success: false, fileName: file.name, error: err });
+          failedList.push(file.name);
+        } finally {
+          completed++;
+          onProgress(completed, failedList);
+        }
       }
     };
-    const workers = Array(Math.min(limit, files.length)).fill(null).map(() => worker());
-    await Promise.all(workers); return results;
+
+    const workers = Array(Math.min(limit, files.length))
+      .fill(null)
+      .map(() => worker());
+
+    await Promise.all(workers);
+    return results;
   };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileList = e.target.files; if (!fileList || fileList.length === 0) return;
-    setLoadingUpload(true); const toastId = toast.loading("Mempersiapkan file...");
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+
+    setLoadingUpload(true);
+    const toastId = toast.loading("Mempersiapkan file...");
+
     try {
-      let filesToUpload: File[] = []; const rawFiles = Array.from(fileList);
+      let filesToUpload: File[] = [];
+      const rawFiles = Array.from(fileList);
+
       for (const file of rawFiles) {
         const ext = file.name.split(".").pop()?.toLowerCase();
         if (ext === "zip" || file.type === "application/zip" || file.type === "application/x-zip-compressed") {
           toast.loading(`Mengekstrak ${file.name}...`, { id: toastId });
           try {
-            const zip = new JSZip(); const content = await zip.loadAsync(file); const entries = Object.keys(content.files);
+            const zip = new JSZip();
+            const content = await zip.loadAsync(file);
+            const entries = Object.keys(content.files);
             for (const filename of entries) {
-              const item = content.files[filename]; if (item.dir || filename.includes("__MACOSX") || filename.startsWith(".")) continue;
-              const blob = await item.async("blob"); const cleanName = filename.split("/").pop() || filename;
-              filesToUpload.push(new File([blob], cleanName, { type: getMimeType(cleanName) === "image" ? `image/${cleanName.split(".").pop()}` : blob.type }));
+              const item = content.files[filename];
+              if (item.dir || filename.includes("__MACOSX") || filename.startsWith(".")) continue;
+              const blob = await item.async("blob");
+              const cleanName = filename.split("/").pop() || filename;
+              filesToUpload.push(new File([blob], cleanName, {
+                type: getMimeType(cleanName) === "image" ? `image/${cleanName.split(".").pop()}` : blob.type
+              }));
             }
-          } catch (zipErr) { toast.error(`Gagal mengekstrak ${file.name}, upload biasa.`); filesToUpload.push(file); }
-        } else { filesToUpload.push(file); }
+          } catch (zipErr) {
+            toast.error(`Gagal mengekstrak ${file.name}, upload biasa.`);
+            filesToUpload.push(file);
+          }
+        } else {
+          filesToUpload.push(file);
+        }
       }
-      if (filesToUpload.length === 0) { toast.dismiss(toastId); toast.warning("Tidak ada file valid"); setLoadingUpload(false); return; }
-      const results = await uploadWithLimit(filesToUpload, 3, (count: any) => { toast.loading(`Mengunggah ${count}/${filesToUpload.length}...`, { id: toastId }); }, (file: any) => processUploadFile(file));
-      const successful = results.filter((r: any) => r.success).length; const failed = results.filter((r: any) => !r.success).length;
+
+      if (filesToUpload.length === 0) {
+        toast.dismiss(toastId);
+        toast.warning("Tidak ada file valid");
+        setLoadingUpload(false);
+        return;
+      }
+
+      const results = await uploadWithLimit(
+        filesToUpload,
+        3,
+        (count, currentFailed) => {
+          const failureText = currentFailed.length > 0 ? ` (${currentFailed.length} gagal)` : "";
+          toast.loading(`Mengunggah ${count}/${filesToUpload.length}${failureText}...`, { id: toastId });
+        },
+        (file: any) => processUploadFile(file)
+      );
+
+      const successful = results.filter((r: any) => r.success).length;
+      const failed = results.filter((r: any) => !r.success).length;
+
       if (failed === 0) {
-        toast.success(`${successful} File berhasil`, { id: toastId });
+        toast.success(`${successful} File berhasil diunggah`, { id: toastId });
       } else {
         const failedFileNames = results
           .filter((r: any) => !r.success)
-          .map((r: any) => r.fileName)
-          .join(", ");
+          .map((r: any) => r.fileName);
+
         toast.warning(
-          `Upload ${successful} file berhasil, ${failed} file gagal: ${failedFileNames}`,
-          { id: toastId }
+          <div className="flex flex-col gap-1">
+            <p className="font-bold">Unggah selesai dengan beberapa kendala</p>
+            <p className="text-xs">Berhasil: {successful}, Gagal: {failed}</p>
+            <div className="mt-2 max-h-32 overflow-y-auto text-[10px] bg-red-50 p-2 rounded border border-red-100">
+              <p className="font-semibold mb-1 text-red-700">Daftar file gagal:</p>
+              <ul className="list-disc list-inside">
+                {failedFileNames.map((name, i) => (
+                  <li key={i} className="truncate">{name}</li>
+                ))}
+              </ul>
+            </div>
+          </div>,
+          { id: toastId, duration: 8000 }
         );
       }
-      reloadRealFolders(); reloadRealFiles();
-    } catch (err: any) { toast.error("Error sistem"); sendTelegramLog("UPLOAD_ERROR", { domain, error: err }); } finally { setLoadingUpload(false); e.target.value = ""; }
+      reloadRealFolders();
+      reloadRealFiles();
+    } catch (err: any) {
+      toast.error("Error sistem saat mengunggah file");
+      sendTelegramLog("UPLOAD_ERROR", { domain, error: err });
+    } finally {
+      setLoadingUpload(false);
+      e.target.value = "";
+    }
   };
 
   const getTemplateName = (tplId: string) => templates.find((t: any) => t.id === tplId)?.name || "Unknown Template";

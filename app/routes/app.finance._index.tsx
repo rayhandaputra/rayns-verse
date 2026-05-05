@@ -491,9 +491,11 @@ const FinancePage: React.FC<FinancePageProps> = ({
     productCost?.data?.items
   );
 
-  useEffect(() => {
+  const [prevProductCost, setPrevProductCost] = useState(productCost);
+  if (productCost !== prevProductCost) {
+    setPrevProductCost(productCost);
     setProductCostData(productCost?.data?.items);
-  }, [productCost]);
+  }
 
   // Fetch transactions with filters
   const {
@@ -650,26 +652,27 @@ const FinancePage: React.FC<FinancePageProps> = ({
   const bankBalances = balancesData?.data?.balances || {};
 
   // Handle form submission results
-  React.useEffect(() => {
-    if (actionFetcher.data) {
-      const result = actionFetcher.data as any;
-      if (result.success) {
-        toast.success(result.message);
-        reloadTransactions();
-        reloadBanks();
-        setIsTxModalOpen(false);
-        setTxForm({
-          type: "Expense",
-          date: new Date().toISOString().split("T")[0],
-        });
-        setProofImage("");
-        setBankForm({});
-        setEditingBankId(null);
-      } else {
-        toast.error(result.message);
-      }
+  const [prevActionData, setPrevActionData] = useState<any>(null);
+
+  if (actionFetcher.data && actionFetcher.data !== prevActionData) {
+    setPrevActionData(actionFetcher.data);
+    const result = actionFetcher.data as any;
+    if (result.success) {
+      toast.success(result.message);
+      reloadTrx();
+      reloadBank();
+      setIsTxModalOpen(false);
+      setTxForm({
+        type: "Expense",
+        date: new Date().toISOString().split("T")[0],
+      });
+      setProofImage("");
+      setBankForm({});
+      setEditingBankId(null);
+    } else {
+      toast.error(result.message);
     }
-  }, [actionFetcher.data]);
+  }
 
   // Export logic
   const handleExportExcel = () => {
@@ -781,15 +784,18 @@ const FinancePage: React.FC<FinancePageProps> = ({
     submitAction({ intent: "update_hpp_product", id, hpp_price: val });
   };
 
+  const prevActionIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (actionData?.success) {
+    if (actionData?.success && actionData.id !== prevActionIdRef.current) {
+      prevActionIdRef.current = actionData.id;
       reloadProductCost();
       reloadTrx();
       toast.success(
         actionData?.message || actionData?.error_message || "Berhasil"
       );
     }
-  }, [actionData]);
+  }, [actionData, reloadProductCost, reloadTrx]);
 
   const formatFullDateTime = (isoString: string) => {
     try {

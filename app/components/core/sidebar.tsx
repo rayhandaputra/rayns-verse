@@ -65,7 +65,7 @@ export function Sidebar({
         }));
       }
     });
-  }, [currentPath]);
+  }, [currentPath, navigation]);
 
   const renderNav = (
     items: NavItem[],

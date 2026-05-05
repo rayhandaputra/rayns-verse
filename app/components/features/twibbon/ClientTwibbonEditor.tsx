@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { DriveItem, DesignTemplate } from '~/types'; // Pastikan path import benar
 import TwibbonEditor from '~/components/features/twibbon/TwibbonEditor';
-import { X, Save, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 interface TwibbonEditorPageProps {
     /** Template awal yang akan di-load ke editor */
@@ -28,12 +28,12 @@ const ClientTwibbonEditorPage: React.FC<TwibbonEditorPageProps> = ({
     // State lokal untuk template aktif (jika ingin bisa ganti template di dalam page ini, 
     // tapi biasanya initialTemplate cukup)
     const [currentTemplate, setCurrentTemplate] = useState<DesignTemplate | null>(initialTemplate);
+    const [prevInitialTemplate, setPrevInitialTemplate] = useState(initialTemplate);
 
-    useEffect(() => {
-        if (initialTemplate) {
-            setCurrentTemplate(initialTemplate);
-        }
-    }, [initialTemplate]);
+    if (initialTemplate !== prevInitialTemplate) {
+        setPrevInitialTemplate(initialTemplate);
+        setCurrentTemplate(initialTemplate);
+    }
 
     // Handler saat user klik "Export/Simpan" di dalam TwibbonEditor
     const handleExport = (base64: string, fileName: string, firstValue: string) => {

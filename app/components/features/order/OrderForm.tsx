@@ -16,10 +16,10 @@ import {
   Trash2,
   Calendar,
   Check,
-  X,
+  Upload,
   Handshake,
   Copy,
-  Upload,
+  X,
 } from "lucide-react";
 import AsyncReactSelect from "react-select/async";
 import { API } from "~/nexus";
@@ -160,11 +160,6 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingData, setPendingData] = useState<OrderFormData | null>(null);
 
-  // ========== EFFECTS ==========
-  useEffect(() => {
-    setAccessCode(generateAccessCode(6));
-  }, [isKKN]);
-
   // ========== API LOADERS ==========
   const loadOptionProduct = async (search: string) => {
     try {
@@ -179,12 +174,10 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
         },
       });
 
-      return (result?.items || []).map((v: any) => ({
-        ...v,
-        value: v?.id,
-        // label: `${v?.type === "package" ? "[PAKET] " : ""}${v?.name} - Rp${formatCurrency(v?.total_price || 0)}`,
-        // label: `${v?.name} - Rp${formatCurrency(v?.total_price || 0)}`,
-        label: `${v?.name}`,
+      return (result?.items || []).map((item: any) => ({
+        ...item,
+        value: item?.id,
+        label: `${item?.name}`,
       }));
     } catch (error) {
       console.log(error);
@@ -205,10 +198,10 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
         },
       });
 
-      return (result?.items || []).map((v: any) => ({
-        ...v,
-        value: v?.id,
-        label: `${v?.abbr ? v?.abbr + " - " : ""}${v?.name}`,
+      return (result?.items || []).map((item: any) => ({
+        ...item,
+        value: item?.id,
+        label: `${item?.abbr ? item?.abbr + " - " : ""}${item?.name}`,
       }));
     } catch (error) {
       console.log(error);
@@ -217,7 +210,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
   };
 
   // ========== CALCULATIONS ==========
-  const getPriceForProduct = (productId: string, qty: number) => {
+  const getPriceForProduct = React.useCallback((productId: string, _qty: number) => {
     if (!productId) return 0;
 
     let p: any = selectedProductsData[productId];
@@ -237,9 +230,9 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
     }
 
     return finalPrice;
-  };
+  }, [selectedProductsData, kknArchiveProductId, kknArchiveProductData, products]);
 
-  const calculateFinancials = () => {
+  const calculateFinancials = React.useCallback(() => {
     let subTotal = 0;
     let totalQty = 0;
     const items: OrderItem[] = [];
@@ -257,7 +250,6 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
           if (p) {
             const unitPrice = getPriceForProduct(item.productId, qtyNum);
             const lineTotal = unitPrice * qtyNum;
-            // subTotal += lineTotal;
             totalQty += qtyNum;
             items.push({
               ...p,
@@ -282,7 +274,6 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
       if (p && qtyNum > 0) {
         const unitPrice = getPriceForProduct(kknArchiveProductId, qtyNum);
         const lineTotal = unitPrice * qtyNum;
-        // subTotal = lineTotal;
         totalQty = qtyNum;
         items.push({
           ...p,
@@ -314,7 +305,7 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
     const grandTotal = subTotal - discountAmount;
 
     return { subTotal, totalQty, items, discountAmount, grandTotal };
-  };
+  }, [isArchive, isKKN, orderItems, selectedProductsData, products, getPriceForProduct, kknArchiveTotalQty, kknArchiveProductData, kknArchiveProductId, discountValStr, discountType]);
 
   // ========== HANDLERS ==========
   const handleAddItem = () => {

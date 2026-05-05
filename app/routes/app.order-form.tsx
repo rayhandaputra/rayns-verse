@@ -1,35 +1,13 @@
 // app/routes/app.order-form.tsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import {
-  Form,
   useActionData,
-  useNavigate,
   type LoaderFunction,
   type ActionFunction,
 } from "react-router";
-import type { HistoryEntry, Order, Product, OrderItem } from "~/types";
+import type { Product, OrderItem } from "~/types";
 import {
-  formatCurrency,
-  parseCurrency,
-  generateAccessCode,
-  getKKNPeriod,
-  formatPhoneNumber,
-} from "~/constants";
-import {
-  Save,
-  Eraser,
-  AlertTriangle,
-  Plus,
-  Trash2,
-  Calendar,
-  Check,
-  X,
-  Handshake,
-  Copy,
-  Upload,
-} from "lucide-react";
-import AsyncReactSelect from "react-select/async";
-import { API } from "~/nexus";
+  API } from "~/nexus";
 import { requireAuth } from "~/utils/session.server";
 import { toast } from "sonner";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
@@ -37,38 +15,6 @@ import { nexus } from "~/nexus/nexus-client";
 import { safeParseObject } from "~/utils/utils";
 import OrderFormComponent from "~/components/features/order/OrderForm";
 import moment from "moment";
-
-// ============================================
-// TYPES & INTERFACES
-// ============================================
-
-interface LoaderData {
-  products: Product[];
-  history: HistoryEntry[];
-  user: any;
-}
-
-interface OrderFormData {
-  instansi: string;
-  items: OrderItem[];
-  jenisPesanan: string;
-  jumlah: number;
-  deadline: string;
-  statusPembayaran: string;
-  dpAmount: number;
-  domain: string;
-  accessCode: string;
-  totalAmount: number;
-  isKKN: boolean;
-  kknDetails?: any;
-  pemesanName: string;
-  pemesanPhone: string;
-  discount?: { type: string; value: number };
-  isSponsor: boolean;
-  createdAt: string;
-  portfolioImages: string[];
-  is_portfolio: boolean;
-}
 
 // ============================================
 // LOADER FUNCTION
@@ -174,7 +120,6 @@ export const action: ActionFunction = async ({ request }) => {
 
 export default function OrderFormPage() {
   const actionData = useActionData<{ success?: boolean; message?: string }>();
-  const navigate = useNavigate();
 
   // Fetch products
   const { data: productsData } = useFetcherData({
@@ -187,56 +132,15 @@ export default function OrderFormPage() {
 
   const products = productsData?.data?.items || [];
 
-  // ========== STATE ==========
-  const [isKKN, setIsKKN] = useState(false);
-  const [autoPeriod, setAutoPeriod] = useState(getKKNPeriod());
-
-  // Form Fields
-  const [instansiMode, setInstansiMode] = useState<
-    "new" | "existing" | "perorangan"
-  >("new");
-  const [instansi, setInstansi] = useState("");
-  const [pemesanName, setPemesanName] = useState("");
-  const [pemesanPhone, setPemesanPhone] = useState("");
-
-  // KKN Specific
-  const [kknType, setKknType] = useState<"PPM" | "Tematik">("PPM");
-  const [kknGroupNo, setKknGroupNo] = useState("");
-  const [kknVillage, setKknVillage] = useState("");
-
-  // Products
-  const [orderItems, setOrderItems] = useState<
-    { productId: string; quantity: string | number }[]
-  >([{ productId: "", quantity: "" }]);
-  const [selectedProductsData, setSelectedProductsData] = useState<
-    Record<string, any>
-  >({});
-
-  // Financial
-  const [deadline, setDeadline] = useState("");
-  const [pay, setPay] = useState<"Tidak Ada" | "DP" | "Lunas">("Tidak Ada");
-  const [dpAmountStr, setDpAmountStr] = useState("");
-  const [accessCode, setAccessCode] = useState(generateAccessCode(6));
-  const [isSponsor, setIsSponsor] = useState(false);
-  const [discountType, setDiscountType] = useState<"nominal" | "percent">(
-    "nominal"
-  );
-  const [discountValStr, setDiscountValStr] = useState("");
-
-  // UI State
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [pendingData, setPendingData] = useState<OrderFormData | null>(null);
-
-  // Fetch done orders
-  const { data: getOrdersData, reload } = useFetcherData({
+  // Fetch done orders for autocomplete or reference
+  const { data: getOrdersData } = useFetcherData({
     endpoint: nexus()
       .module("ORDERS")
       .action("get")
       .params({
         status: "done",
         page: 0,
-        size: 200,
+        size: 50,
         pagination: "true",
       })
       .build(),
@@ -248,204 +152,12 @@ export default function OrderFormPage() {
   useEffect(() => {
     if (actionData?.success) {
       toast.success(actionData.message || "Berhasil");
-      handleClear();
     } else if (actionData?.success === false) {
       toast.error(actionData.message || "Gagal");
     }
   }, [actionData]);
 
-  useEffect(() => {
-    setAccessCode(generateAccessCode(6));
-  }, [isKKN]);
-
-  // ========== CALCULATIONS ==========
-  const getPriceForProduct = (productId: string, qty: number) => {
-    if (!productId) return 0;
-
-    let p: any = selectedProductsData[productId];
-    if (!p) {
-      p = products.find((prod: any) => prod.id === productId);
-    }
-    if (!p) return 0;
-
-    let finalPrice = 0;
-    if (p.total_price !== undefined && p.total_price !== null) {
-      finalPrice = Number(p.total_price);
-    } else if (p.price !== undefined && p.price !== null) {
-      finalPrice = Number(p.price);
-    }
-
-    // Wholesale pricing logic can be added here if needed
-
-    return finalPrice;
-  };
-
-  const calculateFinancials = () => {
-    let subTotal = 0;
-    let totalQty = 0;
-    const items: OrderItem[] = [];
-
-    orderItems.forEach((item) => {
-      const qtyNum = Number(item.quantity) || 0;
-      if (item.productId && qtyNum > 0) {
-        let p = selectedProductsData[item.productId];
-        if (!p) {
-          p = products.find((prod: any) => prod.id === item.productId);
-        }
-
-        if (p) {
-          const unitPrice = getPriceForProduct(item.productId, qtyNum);
-          const lineTotal = unitPrice * qtyNum;
-          subTotal += lineTotal;
-          totalQty += qtyNum;
-          items.push({
-            productId: p.id,
-            productName: p.name,
-            price: unitPrice,
-            quantity: qtyNum,
-            total: lineTotal,
-          });
-        }
-      }
-    });
-
-    let discountAmount = 0;
-    if (!isKKN) {
-      const val = parseCurrency(discountValStr);
-      if (discountType === "percent") {
-        discountAmount = subTotal * (val / 100);
-      } else {
-        discountAmount = val;
-      }
-    }
-
-    discountAmount = Math.min(discountAmount, subTotal);
-    const grandTotal = subTotal - discountAmount;
-
-    return { subTotal, totalQty, items, discountAmount, grandTotal };
-  };
-
-  const handlePreSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newErrors: Record<string, string> = {};
-    const { totalQty, grandTotal, items } = calculateFinancials();
-
-    // Validation
-    if (!isKKN) {
-      if (instansiMode !== "perorangan" && !instansi.trim()) {
-        newErrors.instansi = "Wajib diisi";
-      }
-    } else {
-      if (
-        kknType === "PPM" &&
-        (!kknGroupNo || Number(kknGroupNo) < 1 || Number(kknGroupNo) > 400)
-      ) {
-        newErrors.kknGroup = "Pilih kelompok 1-400";
-      }
-      if (kknType === "Tematik" && !kknVillage.trim()) {
-        newErrors.kknVillage = "Nama desa wajib diisi";
-      }
-    }
-
-    if (!pemesanName.trim()) newErrors.pemesanName = "Nama Pemesan wajib diisi";
-    if (!pemesanPhone.trim()) newErrors.pemesanPhone = "No WA wajib diisi";
-    if (items.length === 0) newErrors.items = "Pilih produk dan isi jumlah";
-    if (totalQty <= 0) newErrors.items = "Jumlah barang tidak valid";
-    if (!deadline) newErrors.deadline = "Wajib diisi";
-
-    let finalDp = 0;
-    if (pay === "DP") {
-      finalDp = parseCurrency(dpAmountStr);
-      if (finalDp <= 0 || finalDp > grandTotal) {
-        newErrors.dp = "Nominal DP tidak valid";
-      }
-    } else if (pay === "Lunas") {
-      finalDp = grandTotal;
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    // Construct data
-    let finalInstansi = instansi;
-    if (isKKN) {
-      finalInstansi = kknType === "PPM" ? `Kelompok ${kknGroupNo}` : kknVillage;
-    } else if (instansiMode === "perorangan") {
-      finalInstansi = pemesanName;
-    }
-
-    const mainProduct =
-      items.length > 0
-        ? items.length > 1
-          ? `${items[0].productName} (+${items.length - 1})`
-          : items[0].productName
-        : "Custom";
-
-    const orderData: OrderFormData = {
-      instansi: finalInstansi,
-      items: items,
-      jenisPesanan: mainProduct,
-      jumlah: totalQty,
-      deadline: deadline,
-      statusPembayaran: pay,
-      dpAmount: finalDp,
-      domain: "kinau.id/public/drive-link/" + accessCode,
-      accessCode: accessCode,
-      totalAmount: grandTotal,
-      isKKN,
-      kknDetails: isKKN
-        ? {
-            periode: autoPeriod.period,
-            tahun: autoPeriod.year,
-            tipe: kknType,
-            nilai: kknType === "PPM" ? String(kknGroupNo) : kknVillage,
-            jumlahKelompok: 1,
-          }
-        : undefined,
-      pemesanName: pemesanName,
-      pemesanPhone: pemesanPhone,
-      discount:
-        !isKKN && parseCurrency(discountValStr) > 0
-          ? {
-              type: discountType,
-              value: parseCurrency(discountValStr),
-            }
-          : undefined,
-      isSponsor: isSponsor,
-      createdAt: new Date().toISOString(),
-      portfolioImages: [],
-      is_portfolio: false,
-    };
-
-    setPendingData(orderData);
-    setShowConfirm(true);
-  };
-
-  const handleClear = () => {
-    setInstansiMode("new");
-    setInstansi("");
-    setOrderItems([{ productId: "", quantity: "" }]);
-    setDeadline("");
-    setPay("Tidak Ada");
-    setDpAmountStr("");
-    setKknGroupNo("");
-    setKknVillage("");
-    setPemesanName("");
-    setPemesanPhone("");
-    setIsSponsor(false);
-    setDiscountValStr("");
-    setErrors({});
-    setAccessCode(generateAccessCode(6));
-    setShowConfirm(false);
-    setPendingData(null);
-    setSelectedProductsData({});
-  };
-
   const handleOrderSubmit = (data: any) => {
-    // This will be called by OrderForm component
-    // We need to trigger the form submission
     const form = document.createElement("form");
     form.method = "post";
     form.style.display = "none";
@@ -464,12 +176,6 @@ export default function OrderFormPage() {
 
     document.body.appendChild(form);
     form.submit();
-  };
-
-  const copyLink = (code: string) => {
-    const link = `kinau.id/public/drive-link/${code}`;
-    navigator.clipboard.writeText(link);
-    toast.success("Link disalin: " + link);
   };
 
   // ========== RENDER ==========

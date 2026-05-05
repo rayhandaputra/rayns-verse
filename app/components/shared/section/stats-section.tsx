@@ -146,7 +146,7 @@ function StatCard({ stat }: { stat: StatItem }) {
   return (
     <div className="flex flex-col items-center justify-center">
       <div className="p-3 rounded-xl border border-blue-100 bg-blue-50/30 mb-3">
-        <IconComponent className="w-6 h-6 text-blue-500" />
+        {React.createElement(IconComponent, { className: "w-6 h-6 text-blue-500" })}
       </div>
       <h3 className="text-3xl font-bold text-gray-900">
         {isPercent

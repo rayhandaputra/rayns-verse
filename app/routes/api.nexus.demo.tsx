@@ -152,6 +152,12 @@ function InventoryList() {
   const [status, setStatus] = useState("");
   const pageSize = 10;
 
+  const [prevFilters, setPrevFilters] = useState({ search, category, status });
+  if (search !== prevFilters.search || category !== prevFilters.category || status !== prevFilters.status) {
+    setPrevFilters({ search, category, status });
+    setPage(0);
+  }
+
   // Build endpoint dynamically based on filters
   const endpoint = nexus()
     .module("INVENTORY_ASSET")
@@ -168,11 +174,6 @@ function InventoryList() {
   const { data, loading, reload } = useFetcherData<AssetListResponse>({
     endpoint,
   });
-
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(0);
-  }, [search, category, status]);
 
   const totalPages = Math.ceil((data?.data?.total || 0) / pageSize);
 
