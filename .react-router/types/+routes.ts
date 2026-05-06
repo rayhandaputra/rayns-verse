@@ -37,27 +37,6 @@ type Pages = {
       "slug": string;
     };
   };
-  "/eforms/:domain": {
-    params: {
-      "domain": string;
-    };
-  };
-  "/eforms/:domain/detail/:id": {
-    params: {
-      "domain": string;
-      "id": string;
-    };
-  };
-  "/eforms/:domain/receipt": {
-    params: {
-      "domain": string;
-    };
-  };
-  "/drive/:domain": {
-    params: {
-      "domain": string;
-    };
-  };
   "/logout": {
     params: {};
   };
@@ -76,22 +55,7 @@ type Pages = {
   "/app": {
     params: {};
   };
-  "/app/production/adjustment-stock": {
-    params: {};
-  };
-  "/app/production/purchase-order": {
-    params: {};
-  };
   "/app/finance/salary-employee": {
-    params: {};
-  };
-  "/app/product/package": {
-    params: {};
-  };
-  "/app/product/package/manage": {
-    params: {};
-  };
-  "/app/production/retur-order": {
     params: {};
   };
   "/app/procurement/:category": {
@@ -134,12 +98,6 @@ type Pages = {
       "category": string;
     };
   };
-  "/app/master/dicount-code": {
-    params: {};
-  };
-  "/app/media/content-event": {
-    params: {};
-  };
   "/app/orders/:id/download": {
     params: {
       "id": string;
@@ -151,33 +109,10 @@ type Pages = {
   "/app/master/institution": {
     params: {};
   };
-  "/app/productIon/restock": {
-    params: {};
-  };
-  "/app/stock-rill-but-old": {
-    params: {};
-  };
   "/app/finance/inventory": {
     params: {};
   };
-  "/app/media/main-banner": {
-    params: {};
-  };
   "/app/finance/cashflow": {
-    params: {};
-  };
-  "/app/master/commodity": {
-    params: {};
-  };
-  "/app/order/:id/detail": {
-    params: {
-      "id": string;
-    };
-  };
-  "/app/product/category": {
-    params: {};
-  };
-  "/app/production/stock": {
     params: {};
   };
   "/app/asset/inventory": {
@@ -189,24 +124,10 @@ type Pages = {
   "/app/master/supplier": {
     params: {};
   };
-  "/app/procurement-old": {
-    params: {};
-  };
   "/app/setting/account": {
     params: {};
   };
   "/app/finance": {
-    params: {};
-  };
-  "/app/order-edit/:id": {
-    params: {
-      "id": string;
-    };
-  };
-  "/app/product": {
-    params: {};
-  };
-  "/app/product/manage": {
     params: {};
   };
   "/app/setting/design": {
@@ -215,18 +136,10 @@ type Pages = {
   "/app/order-history": {
     params: {};
   };
-  "/app/order/:status": {
-    params: {
-      "status": string;
-    };
-  };
   "/app/order-manage": {
     params: {};
   };
   "/app/product-list": {
-    params: {};
-  };
-  "/app/media/stats": {
     params: {};
   };
   "/app/order-form": {
@@ -236,12 +149,6 @@ type Pages = {
     params: {};
   };
   "/app/print-area": {
-    params: {};
-  };
-  "/app/drive-old": {
-    params: {};
-  };
-  "/app/employee": {
     params: {};
   };
   "/app/overview": {
@@ -259,9 +166,6 @@ type Pages = {
   "/app/email": {
     params: {};
   };
-  "/app/stock": {
-    params: {};
-  };
   "/app/user": {
     params: {};
   };
@@ -270,7 +174,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/server/drive/:folder_id/download" | "/public/design-link/:domain" | "/public/drive-link/:domain" | "/resources/image-proxy" | "/media/event/:slug" | "/eforms/:domain" | "/eforms/:domain/detail/:id" | "/eforms/:domain/receipt" | "/drive/:domain" | "/logout" | "/api/nexus" | "/api/nexus/example" | "/api/nexus/demo" | "/login" | "/app" | "/app/production/adjustment-stock" | "/app/production/purchase-order" | "/app/finance/salary-employee" | "/app/product/package" | "/app/product/package/manage" | "/app/production/retur-order" | "/app/procurement/:category" | "/app/procurement/:category/catalog-color" | "/app/procurement/:category/shopping-kaos" | "/app/procurement/:category/component" | "/app/procurement/:category/capacity" | "/app/procurement/:category/shopping" | "/app/procurement/:category/supplier" | "/app/procurement/:category/vendor" | "/app/master/dicount-code" | "/app/media/content-event" | "/app/orders/:id/download" | "/app/setting/recycle-bin" | "/app/master/institution" | "/app/productIon/restock" | "/app/stock-rill-but-old" | "/app/finance/inventory" | "/app/media/main-banner" | "/app/finance/cashflow" | "/app/master/commodity" | "/app/order/:id/detail" | "/app/product/category" | "/app/production/stock" | "/app/asset/inventory" | "/app/finance/account" | "/app/master/supplier" | "/app/procurement-old" | "/app/setting/account" | "/app/finance" | "/app/order-edit/:id" | "/app/product" | "/app/product/manage" | "/app/setting/design" | "/app/order-history" | "/app/order/:status" | "/app/order-manage" | "/app/product-list" | "/app/media/stats" | "/app/order-form" | "/app/order-list" | "/app/print-area" | "/app/drive-old" | "/app/employee" | "/app/overview" | "/app/drive" | "/app/drive/customer" | "/app/drive/internal" | "/app/email" | "/app/stock" | "/app/user";
+    page: "/" | "/server/drive/:folder_id/download" | "/public/design-link/:domain" | "/public/drive-link/:domain" | "/resources/image-proxy" | "/media/event/:slug" | "/logout" | "/api/nexus" | "/api/nexus/example" | "/api/nexus/demo" | "/login" | "/app" | "/app/finance/salary-employee" | "/app/procurement/:category" | "/app/procurement/:category/catalog-color" | "/app/procurement/:category/shopping-kaos" | "/app/procurement/:category/component" | "/app/procurement/:category/capacity" | "/app/procurement/:category/shopping" | "/app/procurement/:category/supplier" | "/app/procurement/:category/vendor" | "/app/orders/:id/download" | "/app/setting/recycle-bin" | "/app/master/institution" | "/app/finance/inventory" | "/app/finance/cashflow" | "/app/asset/inventory" | "/app/finance/account" | "/app/master/supplier" | "/app/setting/account" | "/app/finance" | "/app/setting/design" | "/app/order-history" | "/app/order-manage" | "/app/product-list" | "/app/order-form" | "/app/order-list" | "/app/print-area" | "/app/overview" | "/app/drive" | "/app/drive/customer" | "/app/drive/internal" | "/app/email" | "/app/user";
   };
   "routes/server.drive.$folder_id.download.tsx": {
     id: "routes/server.drive.$folder_id.download";
@@ -291,22 +195,6 @@ type RouteFiles = {
   "routes/media.event.$slug.tsx": {
     id: "routes/media.event.$slug";
     page: "/media/event/:slug";
-  };
-  "routes/eforms.$domain.tsx": {
-    id: "routes/eforms.$domain";
-    page: "/eforms/:domain" | "/eforms/:domain/detail/:id" | "/eforms/:domain/receipt";
-  };
-  "routes/eforms.$domain.detail.$id.tsx": {
-    id: "routes/eforms.$domain.detail.$id";
-    page: "/eforms/:domain/detail/:id";
-  };
-  "routes/eforms.$domain.receipt.tsx": {
-    id: "routes/eforms.$domain.receipt";
-    page: "/eforms/:domain/receipt";
-  };
-  "routes/drive.$domain.tsx": {
-    id: "routes/drive.$domain";
-    page: "/drive/:domain";
   };
   "routes/_auth.logout.tsx": {
     id: "routes/_auth.logout";
@@ -334,31 +222,11 @@ type RouteFiles = {
   };
   "routes/app.tsx": {
     id: "routes/app";
-    page: "/app" | "/app/production/adjustment-stock" | "/app/production/purchase-order" | "/app/finance/salary-employee" | "/app/product/package" | "/app/product/package/manage" | "/app/production/retur-order" | "/app/procurement/:category" | "/app/procurement/:category/catalog-color" | "/app/procurement/:category/shopping-kaos" | "/app/procurement/:category/component" | "/app/procurement/:category/capacity" | "/app/procurement/:category/shopping" | "/app/procurement/:category/supplier" | "/app/procurement/:category/vendor" | "/app/master/dicount-code" | "/app/media/content-event" | "/app/orders/:id/download" | "/app/setting/recycle-bin" | "/app/master/institution" | "/app/productIon/restock" | "/app/stock-rill-but-old" | "/app/finance/inventory" | "/app/media/main-banner" | "/app/finance/cashflow" | "/app/master/commodity" | "/app/order/:id/detail" | "/app/product/category" | "/app/production/stock" | "/app/asset/inventory" | "/app/finance/account" | "/app/master/supplier" | "/app/procurement-old" | "/app/setting/account" | "/app/finance" | "/app/order-edit/:id" | "/app/product" | "/app/product/manage" | "/app/setting/design" | "/app/order-history" | "/app/order/:status" | "/app/order-manage" | "/app/product-list" | "/app/media/stats" | "/app/order-form" | "/app/order-list" | "/app/print-area" | "/app/drive-old" | "/app/employee" | "/app/overview" | "/app/drive" | "/app/drive/customer" | "/app/drive/internal" | "/app/email" | "/app/stock" | "/app/user";
-  };
-  "routes/app.production.adjustment-stock.tsx": {
-    id: "routes/app.production.adjustment-stock";
-    page: "/app/production/adjustment-stock";
-  };
-  "routes/app.production.purchase-order.tsx": {
-    id: "routes/app.production.purchase-order";
-    page: "/app/production/purchase-order";
+    page: "/app" | "/app/finance/salary-employee" | "/app/procurement/:category" | "/app/procurement/:category/catalog-color" | "/app/procurement/:category/shopping-kaos" | "/app/procurement/:category/component" | "/app/procurement/:category/capacity" | "/app/procurement/:category/shopping" | "/app/procurement/:category/supplier" | "/app/procurement/:category/vendor" | "/app/orders/:id/download" | "/app/setting/recycle-bin" | "/app/master/institution" | "/app/finance/inventory" | "/app/finance/cashflow" | "/app/asset/inventory" | "/app/finance/account" | "/app/master/supplier" | "/app/setting/account" | "/app/finance" | "/app/setting/design" | "/app/order-history" | "/app/order-manage" | "/app/product-list" | "/app/order-form" | "/app/order-list" | "/app/print-area" | "/app/overview" | "/app/drive" | "/app/drive/customer" | "/app/drive/internal" | "/app/email" | "/app/user";
   };
   "routes/app.finance.salary-employee.tsx": {
     id: "routes/app.finance.salary-employee";
     page: "/app/finance/salary-employee";
-  };
-  "routes/app.product.package._index.tsx": {
-    id: "routes/app.product.package._index";
-    page: "/app/product/package";
-  };
-  "routes/app.product.package.manage.tsx": {
-    id: "routes/app.product.package.manage";
-    page: "/app/product/package/manage";
-  };
-  "routes/app.production.retur-order.tsx": {
-    id: "routes/app.production.retur-order";
-    page: "/app/production/retur-order";
   };
   "routes/app.procurement.$category.tsx": {
     id: "routes/app.procurement.$category";
@@ -392,14 +260,6 @@ type RouteFiles = {
     id: "routes/app.procurement.$category.vendor";
     page: "/app/procurement/:category/vendor";
   };
-  "routes/app.master.dicount-code.tsx": {
-    id: "routes/app.master.dicount-code";
-    page: "/app/master/dicount-code";
-  };
-  "routes/app.media.content-event.tsx": {
-    id: "routes/app.media.content-event";
-    page: "/app/media/content-event";
-  };
   "routes/app.orders.$id.download.tsx": {
     id: "routes/app.orders.$id.download";
     page: "/app/orders/:id/download";
@@ -412,41 +272,13 @@ type RouteFiles = {
     id: "routes/app.master.institution";
     page: "/app/master/institution";
   };
-  "routes/app.productIon.restock.tsx": {
-    id: "routes/app.productIon.restock";
-    page: "/app/productIon/restock";
-  };
-  "routes/app.stock-rill-but-old.tsx": {
-    id: "routes/app.stock-rill-but-old";
-    page: "/app/stock-rill-but-old";
-  };
   "routes/app.finance.inventory.tsx": {
     id: "routes/app.finance.inventory";
     page: "/app/finance/inventory";
   };
-  "routes/app.media.main-banner.tsx": {
-    id: "routes/app.media.main-banner";
-    page: "/app/media/main-banner";
-  };
   "routes/app.finance.cashflow.tsx": {
     id: "routes/app.finance.cashflow";
     page: "/app/finance/cashflow";
-  };
-  "routes/app.master.commodity.tsx": {
-    id: "routes/app.master.commodity";
-    page: "/app/master/commodity";
-  };
-  "routes/app.order.$id.detail.tsx": {
-    id: "routes/app.order.$id.detail";
-    page: "/app/order/:id/detail";
-  };
-  "routes/app.product.category.tsx": {
-    id: "routes/app.product.category";
-    page: "/app/product/category";
-  };
-  "routes/app.production.stock.tsx": {
-    id: "routes/app.production.stock";
-    page: "/app/production/stock";
   };
   "routes/app.asset.inventory.tsx": {
     id: "routes/app.asset.inventory";
@@ -460,10 +292,6 @@ type RouteFiles = {
     id: "routes/app.master.supplier";
     page: "/app/master/supplier";
   };
-  "routes/app.procurement-old.tsx": {
-    id: "routes/app.procurement-old";
-    page: "/app/procurement-old";
-  };
   "routes/app.setting.account.tsx": {
     id: "routes/app.setting.account";
     page: "/app/setting/account";
@@ -471,18 +299,6 @@ type RouteFiles = {
   "routes/app.finance._index.tsx": {
     id: "routes/app.finance._index";
     page: "/app/finance";
-  };
-  "routes/app.order-edit.$id.tsx": {
-    id: "routes/app.order-edit.$id";
-    page: "/app/order-edit/:id";
-  };
-  "routes/app.product._index.tsx": {
-    id: "routes/app.product._index";
-    page: "/app/product";
-  };
-  "routes/app.product.manage.tsx": {
-    id: "routes/app.product.manage";
-    page: "/app/product/manage";
   };
   "routes/app.setting.design.tsx": {
     id: "routes/app.setting.design";
@@ -492,10 +308,6 @@ type RouteFiles = {
     id: "routes/app.order-history";
     page: "/app/order-history";
   };
-  "routes/app.order.$status.tsx": {
-    id: "routes/app.order.$status";
-    page: "/app/order/:status";
-  };
   "routes/app.order-manage.tsx": {
     id: "routes/app.order-manage";
     page: "/app/order-manage";
@@ -503,10 +315,6 @@ type RouteFiles = {
   "routes/app.product-list.tsx": {
     id: "routes/app.product-list";
     page: "/app/product-list";
-  };
-  "routes/app.media.stats.tsx": {
-    id: "routes/app.media.stats";
-    page: "/app/media/stats";
   };
   "routes/app.order-form.tsx": {
     id: "routes/app.order-form";
@@ -519,14 +327,6 @@ type RouteFiles = {
   "routes/app.print-area.tsx": {
     id: "routes/app.print-area";
     page: "/app/print-area";
-  };
-  "routes/app.drive-old.tsx": {
-    id: "routes/app.drive-old";
-    page: "/app/drive-old";
-  };
-  "routes/app.employee.tsx": {
-    id: "routes/app.employee";
-    page: "/app/employee";
   };
   "routes/app.overview.tsx": {
     id: "routes/app.overview";
@@ -548,10 +348,6 @@ type RouteFiles = {
     id: "routes/app.email";
     page: "/app/email";
   };
-  "routes/app.stock.tsx": {
-    id: "routes/app.stock";
-    page: "/app/stock";
-  };
   "routes/app.user.tsx": {
     id: "routes/app.user";
     page: "/app/user";
@@ -565,10 +361,6 @@ type RouteModules = {
   "routes/public.drive-link.$domain": typeof import("./app/routes/public.drive-link.$domain.tsx");
   "routes/resources.image-proxy": typeof import("./app/routes/resources.image-proxy.tsx");
   "routes/media.event.$slug": typeof import("./app/routes/media.event.$slug.tsx");
-  "routes/eforms.$domain": typeof import("./app/routes/eforms.$domain.tsx");
-  "routes/eforms.$domain.detail.$id": typeof import("./app/routes/eforms.$domain.detail.$id.tsx");
-  "routes/eforms.$domain.receipt": typeof import("./app/routes/eforms.$domain.receipt.tsx");
-  "routes/drive.$domain": typeof import("./app/routes/drive.$domain.tsx");
   "routes/_auth.logout": typeof import("./app/routes/_auth.logout.tsx");
   "routes/api.nexus": typeof import("./app/routes/api.nexus.tsx");
   "routes/api.nexus.example": typeof import("./app/routes/api.nexus.example.tsx");
@@ -576,12 +368,7 @@ type RouteModules = {
   "routes/_index": typeof import("./app/routes/_index.tsx");
   "routes/login": typeof import("./app/routes/login.tsx");
   "routes/app": typeof import("./app/routes/app.tsx");
-  "routes/app.production.adjustment-stock": typeof import("./app/routes/app.production.adjustment-stock.tsx");
-  "routes/app.production.purchase-order": typeof import("./app/routes/app.production.purchase-order.tsx");
   "routes/app.finance.salary-employee": typeof import("./app/routes/app.finance.salary-employee.tsx");
-  "routes/app.product.package._index": typeof import("./app/routes/app.product.package._index.tsx");
-  "routes/app.product.package.manage": typeof import("./app/routes/app.product.package.manage.tsx");
-  "routes/app.production.retur-order": typeof import("./app/routes/app.production.retur-order.tsx");
   "routes/app.procurement.$category": typeof import("./app/routes/app.procurement.$category.tsx");
   "routes/app.procurement.$category.catalog-color": typeof import("./app/routes/app.procurement.$category.catalog-color.tsx");
   "routes/app.procurement.$category.shopping-kaos": typeof import("./app/routes/app.procurement.$category.shopping-kaos.tsx");
@@ -590,45 +377,27 @@ type RouteModules = {
   "routes/app.procurement.$category.shopping": typeof import("./app/routes/app.procurement.$category.shopping.tsx");
   "routes/app.procurement.$category.supplier": typeof import("./app/routes/app.procurement.$category.supplier.tsx");
   "routes/app.procurement.$category.vendor": typeof import("./app/routes/app.procurement.$category.vendor.tsx");
-  "routes/app.master.dicount-code": typeof import("./app/routes/app.master.dicount-code.tsx");
-  "routes/app.media.content-event": typeof import("./app/routes/app.media.content-event.tsx");
   "routes/app.orders.$id.download": typeof import("./app/routes/app.orders.$id.download.tsx");
   "routes/app.setting.recycle-bin": typeof import("./app/routes/app.setting.recycle-bin.tsx");
   "routes/app.master.institution": typeof import("./app/routes/app.master.institution.tsx");
-  "routes/app.productIon.restock": typeof import("./app/routes/app.productIon.restock.tsx");
-  "routes/app.stock-rill-but-old": typeof import("./app/routes/app.stock-rill-but-old.tsx");
   "routes/app.finance.inventory": typeof import("./app/routes/app.finance.inventory.tsx");
-  "routes/app.media.main-banner": typeof import("./app/routes/app.media.main-banner.tsx");
   "routes/app.finance.cashflow": typeof import("./app/routes/app.finance.cashflow.tsx");
-  "routes/app.master.commodity": typeof import("./app/routes/app.master.commodity.tsx");
-  "routes/app.order.$id.detail": typeof import("./app/routes/app.order.$id.detail.tsx");
-  "routes/app.product.category": typeof import("./app/routes/app.product.category.tsx");
-  "routes/app.production.stock": typeof import("./app/routes/app.production.stock.tsx");
   "routes/app.asset.inventory": typeof import("./app/routes/app.asset.inventory.tsx");
   "routes/app.finance.account": typeof import("./app/routes/app.finance.account.tsx");
   "routes/app.master.supplier": typeof import("./app/routes/app.master.supplier.tsx");
-  "routes/app.procurement-old": typeof import("./app/routes/app.procurement-old.tsx");
   "routes/app.setting.account": typeof import("./app/routes/app.setting.account.tsx");
   "routes/app.finance._index": typeof import("./app/routes/app.finance._index.tsx");
-  "routes/app.order-edit.$id": typeof import("./app/routes/app.order-edit.$id.tsx");
-  "routes/app.product._index": typeof import("./app/routes/app.product._index.tsx");
-  "routes/app.product.manage": typeof import("./app/routes/app.product.manage.tsx");
   "routes/app.setting.design": typeof import("./app/routes/app.setting.design.tsx");
   "routes/app.order-history": typeof import("./app/routes/app.order-history.tsx");
-  "routes/app.order.$status": typeof import("./app/routes/app.order.$status.tsx");
   "routes/app.order-manage": typeof import("./app/routes/app.order-manage.tsx");
   "routes/app.product-list": typeof import("./app/routes/app.product-list.tsx");
-  "routes/app.media.stats": typeof import("./app/routes/app.media.stats.tsx");
   "routes/app.order-form": typeof import("./app/routes/app.order-form.tsx");
   "routes/app.order-list": typeof import("./app/routes/app.order-list.tsx");
   "routes/app.print-area": typeof import("./app/routes/app.print-area.tsx");
-  "routes/app.drive-old": typeof import("./app/routes/app.drive-old.tsx");
-  "routes/app.employee": typeof import("./app/routes/app.employee.tsx");
   "routes/app.overview": typeof import("./app/routes/app.overview.tsx");
   "routes/app.drive": typeof import("./app/routes/app.drive.tsx");
   "routes/app.drive.customer": typeof import("./app/routes/app.drive.customer.tsx");
   "routes/app.drive.internal": typeof import("./app/routes/app.drive.internal.tsx");
   "routes/app.email": typeof import("./app/routes/app.email.tsx");
-  "routes/app.stock": typeof import("./app/routes/app.stock.tsx");
   "routes/app.user": typeof import("./app/routes/app.user.tsx");
 };

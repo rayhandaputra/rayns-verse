@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { toast } from "sonner";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
@@ -7,7 +7,6 @@ import { useModal } from "~/hooks";
 import Swal from "sweetalert2";
 import QRCode from "qrcode";
 import { toBlob, toPng } from "html-to-image";
-import { uploadFile } from "~/utils/utils";
 
 export function useOrderListLogic() {
   const navigate = useNavigate();
@@ -210,15 +209,20 @@ export function useOrderListLogic() {
     toast.success("Disalin ke clipboard");
   };
 
+  const lastProcessedActionData = useRef<any>(null);
+
   useEffect(() => {
-    if (actionData?.success) {
-      setModal({ ...modal, open: false, type: "" });
-      toast.success(actionData.message || "Berhasil");
-      reload();
-    } else if (actionData?.success === false) {
-      toast.error(actionData.message || "Gagal");
+    if (actionData && actionData !== lastProcessedActionData.current) {
+      lastProcessedActionData.current = actionData;
+      if (actionData.success) {
+        setModal((prev: any) => ({ ...prev, open: false, type: "" }));
+        toast.success(actionData.message || "Berhasil");
+        reload();
+      } else if (actionData.success === false) {
+        toast.error(actionData.message || "Gagal");
+      }
     }
-  }, [actionData, reload, modal, setModal]);
+  }, [actionData, reload, setModal]);
 
   return {
     navigate,

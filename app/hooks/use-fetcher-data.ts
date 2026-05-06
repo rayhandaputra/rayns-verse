@@ -73,7 +73,7 @@ interface UseFetcherDataReturn<T> {
 //     fetcher,
 //   } as any;
 // }
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import { useFetcher, useNavigate } from "react-router";
 
 export function useFetcherData<T = any>(
@@ -84,10 +84,20 @@ export function useFetcherData<T = any>(
   const mountedRef = useRef(false);
   const navigate = useNavigate();
 
-  const load = (customParams?: Record<string, any>) => {
+  // Use a ref for fetcher to avoid identity changes triggering re-renders of the load callback
+  const fetcherRef = useRef(fetcher);
+  useEffect(() => {
+    fetcherRef.current = fetcher;
+  }, [fetcher]);
+
+  // Stabilize params to prevent identity changes on every render
+  const paramsKey = JSON.stringify(params);
+  const memoParams = useMemo(() => params, [paramsKey]);
+
+  const load = useCallback((customParams?: Record<string, any>) => {
     if (!mountedRef.current) return;
 
-    const finalParams = { ...params, ...customParams };
+    const finalParams = { ...memoParams, ...customParams };
     const searchParams = new URLSearchParams(
       Object.entries(finalParams).reduce(
         (acc, [key, value]) => {
@@ -103,28 +113,24 @@ export function useFetcherData<T = any>(
       : endpoint;
 
     if (method === "POST") {
-      fetcher.submit(finalParams, {
+      fetcherRef.current.submit(finalParams, {
         method: "POST",
         action: endpoint,
       });
     } else {
-      if (fetcher.state === "idle" && !url.includes("undefined")) {
-        fetcher.load(url);
+      if (!url.includes("undefined") && fetcherRef.current.state === "idle") {
+        fetcherRef.current.load(url);
       }
     }
-  };
+  }, [endpoint, method, memoParams]);
+
+  const reload = useCallback(() => load(memoParams), [load, memoParams]);
 
   // --- LOGIKA HANDLING GLOBAL ---
   useEffect(() => {
     const data = fetcher.data as any;
 
-    // Cek apakah ada flag unauthorized di dalam data
     if (data && data.unauthorized) {
-      // 1. Logika pembersihan (opsional)
-      // localStorage.removeItem("token");
-
-      // 2. Redirect ke halaman login
-      // Kita tambahkan pengecekan agar tidak terjadi infinite loop jika sudah di login
       if (window.location.pathname !== "/login") {
         navigate("/login", { replace: true });
       }
@@ -142,14 +148,14 @@ export function useFetcherData<T = any>(
     return () => {
       mountedRef.current = false;
     };
-  }, [endpoint]);
+  }, [autoLoad, load]);
 
   return {
     data: fetcher.data,
     loading: fetcher.state === "loading" || fetcher.state === "submitting",
     error: (fetcher.data as any)?.error,
     load,
-    reload: () => load(params),
+    reload,
     fetcher,
   };
 }
