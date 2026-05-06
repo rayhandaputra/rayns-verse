@@ -12,7 +12,7 @@ export const SettingsAPI = {
       sort = "",
     } = req.query || {};
 
-    let where: any = {};
+    const where: any = {};
 
     if (id) where.id = id;
     where.deleted_on = "null";

@@ -57,6 +57,20 @@ export function toMoney(value: number, locale: string = "id-ID"): string {
   }).format(value);
 }
 
+export function formatCurrency(
+  value: number,
+  locale: string = "id-ID",
+  currency: string = "IDR"
+): string {
+  if (isNaN(value)) return "Rp 0";
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 export const getPaymentStatusLabel = (status: string) => {
   switch (status) {
     case "none":

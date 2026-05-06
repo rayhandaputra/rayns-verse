@@ -81,8 +81,8 @@ const SwitchToggle = ({
         type="button"
         onClick={() => onChange(opt.val)}
         className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${value === opt.val
-            ? "bg-white shadow text-gray-900"
-            : "text-gray-500 hover:text-gray-700"
+          ? "bg-white shadow text-gray-900"
+          : "text-gray-500 hover:text-gray-700"
           }`}
       >
         {opt.label}

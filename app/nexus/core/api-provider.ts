@@ -109,8 +109,10 @@ export class APIProviderBuilder {
           throw errorObj;
         }
 
-        return response.json();
+        const result = await response.json()
+        return result.data;
       } catch (error: any) {
+        console.log(error)
         clearTimeout(timeoutId);
         lastError = error;
 

@@ -6,3 +6,4 @@ export { LoaderProvider, useLoading, useLoader } from "./use-loading";
 export { useClickAway } from "./use-clickaway";
 export { useQueryParams } from "./use-query-params";
 export { useStockLogic } from "./useStockLogic";
+export { usePrintSlots } from "./use-print-slots";

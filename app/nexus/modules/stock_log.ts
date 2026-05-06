@@ -217,7 +217,7 @@ export const StockLogAPI = {
     },
 
     update: async ({ session, req }: any) => {
-        let { id, stock_log, ...fields } = req.body || {};
+        const { id, stock_log, ...fields } = req.body || {};
 
         if (!id) {
             return { success: false, message: "ID stock log wajib diisi untuk update" };

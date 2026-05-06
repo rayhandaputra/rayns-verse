@@ -258,7 +258,7 @@ export default function ProductFullFormModal({
                   loadOptions={loadOptionCommodity}
                   defaultOptions
                   onChange={(val: any) => {
-                    let copy = [...items];
+                    const copy = [...items];
                     copy[index] = {
                       ...item,
                       commodity_id: val.value,

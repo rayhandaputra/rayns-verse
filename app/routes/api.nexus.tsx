@@ -97,7 +97,7 @@ async function executeModuleAction(
     });
   }
 
-  // @ts-ignore - Dynamic action resolution
+  // @ts-expect-error - Dynamic action resolution
   const actionFn = apiModule[action];
 
   if (typeof actionFn !== "function") {

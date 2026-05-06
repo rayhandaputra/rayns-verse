@@ -66,7 +66,7 @@ export const OrderAPI = {
       filter_folder = "id_card_front,id_card_back",
     } = req.query || {};
 
-    let where: any = {};
+    const where: any = {};
 
     if (id) where.id = id;
     if (institution_id) where.institution_id = institution_id;
@@ -286,10 +286,13 @@ export const OrderAPI = {
   // ✅ CREATE ORDER
   // ================================
   create: async ({ session, req }: any) => {
+    const body = req.body || {};
     let {
       institution_id = null,
       institution_name = null,
       institution_abbr = null,
+    } = body;
+    const {
       institution_abbr_id = null,
       institution_domain = null,
       order_type = "package",
@@ -325,7 +328,7 @@ export const OrderAPI = {
       pic_phone = null,
       items = [],
       images = [],
-    } = req.body || {};
+    } = body;
 
     // if (!institution_id || !institution_name) {
     //   return {
@@ -425,7 +428,7 @@ export const OrderAPI = {
     const finalSubtotal = items?.length > 0 ? computedSubtotal : (total_amount + computedDiscount);
     const finalTotalAmount = items?.length > 0 ? computedTotalAmount : total_amount;
 
-    let newOrder: any = {
+    const newOrder: any = {
       order_number,
       institution_id,
       institution_name,
@@ -798,7 +801,7 @@ export const OrderAPI = {
   // ✅ UPDATE ORDER
   // ================================
   update: async ({ session, req }: any) => {
-    let { id, order, order_number, items, ...fields } = req.body || {};
+    const { id, order, order_number, items, ...fields } = req.body || {};
 
     const existOrder: any = order ? safeParseObject(order) : null;
     if (!id) {

@@ -42,7 +42,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 }
 
-export function meta({ }: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "Kinau | ID Card Specialist" },
     { name: "description", content: "" },

@@ -311,3 +311,6 @@ export interface ShirtColor {
   imageUrl: string;
   createdAt: string;
 }
+
+export * from "./core-entities";
+export * from "./supporting-entities";

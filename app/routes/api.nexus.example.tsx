@@ -416,14 +416,16 @@ export function AssetFormExample() {
   // Reset form on success
   useEffect(() => {
     if (data?.success) {
-      setFormData({
-        asset_name: "",
-        category: "",
-        purchase_date: "",
-        location: "",
-        total_value: "",
-        total_unit: "1",
-      });
+      setTimeout(() => {
+        setFormData({
+          asset_name: "",
+          category: "",
+          purchase_date: "",
+          location: "",
+          total_value: "",
+          total_unit: "1",
+        });
+      }, 0);
     }
   }, [data]);
 

@@ -652,7 +652,7 @@ export const Portfolio = ({ portfolioItems }: { portfolioItems: any[] }) => {
                               </div>
                             </div>
                             <p className="text-gray-600 italic line-clamp-3">
-                              "{item.review}"
+                              &quot;{item.review}&quot;
                             </p>
                           </div>
                         )}

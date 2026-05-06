@@ -131,7 +131,8 @@ export const OrderUploadAPI = {
     let sort_by = "created_on";
     let sort_type = "desc";
     if (sort) {
-      let [column, type] = sort.split(":");
+      const [raw_column, type] = sort.split(":");
+      let column = raw_column;
 
       if (column === "folder_name") column = "file_name";
       sort_by = column;
