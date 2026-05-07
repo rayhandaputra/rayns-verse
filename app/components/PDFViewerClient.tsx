@@ -3,8 +3,32 @@ import React, { useEffect, useRef, useState } from "react";
 export function PDFViewerClient({ pdfUrl }: { pdfUrl: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isHidden, setIsHidden] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const viewerUrl = `${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&view=FitH`;
+
+  const handleFullscreen = async () => {
+    if (!containerRef.current) return;
+    try {
+      if (!isFullscreen) {
+        await containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (err) {
+      console.error("Fullscreen error:", err);
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => e.preventDefault();
@@ -75,6 +99,17 @@ export function PDFViewerClient({ pdfUrl }: { pdfUrl: string }) {
           </div>
           <span className="text-white font-bold text-sm tracking-tight uppercase">Digital Catalog • Kinau.id</span>
         </div>
+        <button
+          onClick={handleFullscreen}
+          className="p-2 rounded-lg bg-violet-600 hover:bg-violet-700 transition-colors text-white"
+          title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+        >
+          {isFullscreen ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          )}
+        </button>
       </div>
 
       <div className="flex-1 w-full bg-[#0a0a0a] relative overflow-hidden">
