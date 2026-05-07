@@ -180,14 +180,21 @@ export async function APIProvider<T = any>(config: ApiConfig): Promise<T> {
   // ... (persiapan URL dan Headers tetap sama)
   const queryString = new URLSearchParams(query).toString();
   const url = `${API_BASE}/${endpoint}${queryString ? `?${queryString}` : ""}`;
+  const isFormDataObj = body && (
+    (typeof FormData !== 'undefined' && body instanceof FormData) ||
+    (body.constructor && (body.constructor.name === 'FormData' || body.constructor.name === 'f')) ||
+    (typeof (body as any).append === 'function' && typeof (body as any).get === 'function' && typeof (body as any).forEach === 'function') ||
+    Object.prototype.toString.call(body) === '[object FormData]'
+  );
+
   const finalHeaders: Record<string, string> = {
-    ...(formData ? {} : { "Content-Type": "application/json" }),
+    ...(isFormDataObj ? {} : { "Content-Type": "application/json" }),
     ...(auth ? { Authorization: `Bearer ${API_KEY}` } : {}),
     ...headers,
   };
 
   let payload: any = null;
-  if (formData && body instanceof FormData) {
+  if (isFormDataObj) {
     payload = body;
   } else if (body) {
     payload = JSON.stringify({ table, action, ...body });

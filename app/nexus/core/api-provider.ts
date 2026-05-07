@@ -63,17 +63,42 @@ export class APIProviderBuilder {
    * Execute the request and return the JSON response
    */
   async Result(): Promise<any> {
-    const requestBody = {
-      table: this.table?.replace(/^\//, ""),
-      action: this.action,
-      ...this.payload,
-    };
-
+    let body: any;
     const headers: Record<string, string> = {
       ...generateHeader(this.session),
       Authorization: `Bearer ${API_KEY}`,
-      "Content-Type": "application/json",
     };
+
+    // Extremely robust check for FormData
+    const isFormData = this.payload && (
+      (typeof FormData !== 'undefined' && this.payload instanceof FormData) ||
+      (this.payload.constructor && (this.payload.constructor.name === 'FormData' || this.payload.constructor.name === 'f')) ||
+      (typeof this.payload.append === 'function' && typeof this.payload.get === 'function' && typeof this.payload.forEach === 'function') ||
+      Object.prototype.toString.call(this.payload) === '[object FormData]'
+    );
+
+    if (isFormData) {
+      body = this.payload;
+
+      // Ensure table and action are present in FormData for routing if they aren't already
+      if (this.table && !body.has("table")) {
+        const t = this.table.replace(/^\//, "");
+        if (t) body.append("table", t);
+      }
+      if (this.action && !body.has("action")) {
+        body.append("action", this.action);
+      }
+      delete headers["Content-Type"];
+      delete headers["content-type"]; // Jaga-jaga jika ada perbedaan case
+      // For FormData, we must NOT set Content-Type header manually to allow fetch to set boundary
+    } else {
+      headers["Content-Type"] = "application/json";
+      body = JSON.stringify({
+        table: this.table?.replace(/^\//, ""),
+        action: this.action,
+        ...this.payload,
+      });
+    }
 
     let lastError: any;
 
@@ -86,7 +111,7 @@ export class APIProviderBuilder {
         const response = await fetch(url, {
           method: "POST", // Proxied through POST
           headers,
-          body: JSON.stringify(requestBody),
+          body,
           signal: controller.signal,
         });
 
@@ -109,8 +134,8 @@ export class APIProviderBuilder {
           throw errorObj;
         }
 
-        const result = await response.json()
-        return result.data;
+        const result = await response.json();
+        return result?.data;
       } catch (error: any) {
         console.log(error)
         clearTimeout(timeoutId);
