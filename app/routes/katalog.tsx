@@ -1,9 +1,8 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { Loader2 } from "lucide-react";
-import pdfUrl from "./../../public/catalog.pdf";
 
 // Client-only component wrapper
-const PDFViewerClient = React.lazy(() =>
+const PDFViewerClient = React.lazy(() => 
   import("~/components/PDFViewerClient").then(module => ({ default: module.PDFViewerClient }))
 );
 
@@ -28,7 +27,7 @@ export default function KatalogPage() {
         <Loader2 className="text-violet-500 animate-spin" size={48} />
       </div>
     }>
-      <PDFViewerClient pdfUrl={pdfUrl} />
+      <PDFViewerClient pdfUrl="https://data.kinau.id/api/resource/KatalogWarnaKain2.pdf" />
     </Suspense>
   );
 }

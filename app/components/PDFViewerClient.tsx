@@ -1,161 +1,133 @@
-import React, { useState, useEffect } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
-import { Lock, AlertCircle, FileText, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2 } from "lucide-react";
-
-// Set worker from CDN
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+import React, { useEffect, useRef, useState } from "react";
 
 export function PDFViewerClient({ pdfUrl }: { pdfUrl: string }) {
-  const [numPages, setNumPages] = useState<number>(0);
-  const [pageNumber, setPageNumber] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.0);
-  
-  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
-    setNumPages(numPages);
-  }
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isHidden, setIsHidden] = useState(false);
 
-  // Deterrent for screenshots (CSS-based)
+  const viewerUrl = `${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&view=FitH`;
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.key === "p" || e.key === "s" || e.key === "u")
-      ) {
-        e.preventDefault();
-        alert("Aksi ini tidak diizinkan untuk melindungi hak cipta.");
-      }
+    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
 
-      if (e.key === "PrintScreen") {
-        navigator.clipboard.writeText("");
-        alert("Screenshot tidak diizinkan.");
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      const blocked =
+        (e.ctrlKey || e.metaKey) &&
+        ["s", "p", "u", "c", "a"].includes(key);
+      const blockedShift =
+        (e.ctrlKey || e.metaKey) && e.shiftKey && ["s", "p", "i", "c"].includes(key);
+      const printScreen = key === "printscreen" || e.code === "PrintScreen";
+      const f12 = key === "f12";
+
+      if (blocked || blockedShift || printScreen || f12) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (printScreen) {
+          navigator.clipboard?.writeText("").catch(() => {});
+          setIsHidden(true);
+          setTimeout(() => setIsHidden(false), 1500);
+        }
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    const handleVisibility = () => {
+      if (document.visibilityState !== "visible") setIsHidden(true);
+      else setIsHidden(false);
+    };
+
+    const handleBlur = () => setIsHidden(true);
+    const handleFocus = () => setIsHidden(false);
+
+    const handleDragStart = (e: DragEvent) => e.preventDefault();
+    const handleSelectStart = (e: Event) => e.preventDefault();
+
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyDown);
+    document.addEventListener("visibilitychange", handleVisibility);
+    document.addEventListener("dragstart", handleDragStart);
+    document.addEventListener("selectstart", handleSelectStart);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keyup", handleKeyDown);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      document.removeEventListener("dragstart", handleDragStart);
+      document.removeEventListener("selectstart", handleSelectStart);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
 
-  const changePage = (offset: number) => {
-    setPageNumber((prevPageNumber) => Math.min(numPages, Math.max(1, prevPageNumber + offset)));
-  };
-
   return (
-    <div 
-      className="min-h-screen bg-[#121212] flex flex-col items-center select-none w-full"
+    <div
+      ref={containerRef}
+      className="flex flex-col w-full h-screen bg-[#0a0a0a] select-none"
       onContextMenu={(e) => e.preventDefault()}
     >
-      {/* Header / Toolbar */}
-      <div className="w-full bg-[#1a1a1a] border-b border-gray-800 p-4 sticky top-0 z-50 flex items-center justify-between shadow-2xl">
+      <div className="w-full bg-[#141414] border-b border-gray-800 p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="bg-violet-600 p-2 rounded-xl">
-            <FileText className="text-white" size={20} />
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
           </div>
-          <div>
-            <h1 className="text-white font-bold text-sm tracking-tight uppercase">KATALOG PRODUK</h1>
-            <p className="text-gray-500 text-[10px] font-medium uppercase tracking-widest">Digital Catalog • Protected Content</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="bg-[#242424] rounded-xl flex items-center p-1 border border-gray-700">
-            <button 
-              onClick={() => changePage(-1)}
-              disabled={pageNumber <= 1}
-              className="p-2 text-gray-400 hover:text-white disabled:opacity-30 transition-colors"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <span className="px-4 text-xs font-bold text-violet-400 min-w-[80px] text-center">
-              {pageNumber} / {numPages || "--"}
-            </span>
-            <button 
-              onClick={() => changePage(1)}
-              disabled={pageNumber >= numPages}
-              className="p-2 text-gray-400 hover:text-white disabled:opacity-30 transition-colors"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-
-          <div className="hidden md:flex bg-[#242424] rounded-xl items-center p-1 border border-gray-700">
-            <button 
-              onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
-              className="p-2 text-gray-400 hover:text-white transition-colors"
-            >
-              <ZoomOut size={18} />
-            </button>
-            <span className="px-2 text-[10px] font-bold text-gray-500">{Math.round(scale * 100)}%</span>
-            <button 
-              onClick={() => setScale(s => Math.min(2.5, s + 0.1))}
-              className="p-2 text-gray-400 hover:text-white transition-colors"
-            >
-              <ZoomIn size={18} />
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <Lock className="text-red-500" size={12} />
-          <span className="text-[10px] font-bold text-red-500 uppercase tracking-tighter">Read Only</span>
+          <span className="text-white font-bold text-sm tracking-tight uppercase">Digital Catalog • Kinau.id</span>
         </div>
       </div>
 
-      {/* Viewer Content */}
-      <div className="flex-1 w-full flex flex-col items-center p-4 md:p-8 overflow-auto">
-        <div className="relative group max-w-full">
-          <div className="absolute inset-0 z-10 bg-transparent cursor-default" />
-          
-          <div className="bg-white shadow-[0_0_100px_rgba(0,0,0,0.5)] rounded-lg overflow-hidden border border-gray-800 max-w-full">
-            <Document
-              file={pdfUrl}
-              onLoadSuccess={onDocumentLoadSuccess}
-              loading={
-                <div className="w-[300px] h-[400px] md:w-[600px] md:h-[800px] bg-[#1a1a1a] flex flex-col items-center justify-center gap-4">
-                  <Loader2 className="text-violet-500 animate-spin" size={48} />
-                  <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">Memuat Katalog...</p>
-                </div>
-              }
-              error={
-                <div className="w-[300px] h-[400px] md:w-[600px] md:h-[800px] bg-[#1a1a1a] flex flex-col items-center justify-center p-10 text-center">
-                  <AlertCircle className="text-red-500 mb-4" size={48} />
-                  <h3 className="text-white font-bold mb-2">Gagal Memuat PDF</h3>
-                  <p className="text-gray-500 text-xs leading-relaxed">
-                    Pastikan file <b>/public/catalog.pdf</b> sudah tersedia di server atau periksa koneksi internet Anda.
-                  </p>
-                </div>
-              }
-            >
-              <Page 
-                pageNumber={pageNumber} 
-                scale={scale}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-                width={typeof window !== 'undefined' ? (window.innerWidth < 768 ? window.innerWidth - 40 : undefined) : undefined}
-              />
-            </Document>
-          </div>
+      <div className="flex-1 w-full bg-[#0a0a0a] relative overflow-hidden">
+        <iframe
+          src={viewerUrl}
+          className="w-full h-full border-none pdf-protected"
+          title="Digital Catalog"
+          referrerPolicy="no-referrer"
+        />
+
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "repeating-linear-gradient(45deg, transparent 0 120px, rgba(139,92,246,0.04) 120px 122px)",
+          }}
+        />
+
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+          <span className="text-white/5 text-6xl font-black uppercase tracking-widest rotate-[-30deg] select-none">
+            Kinau.id
+          </span>
         </div>
 
-        {/* Floating Security Banner */}
-        <div className="mt-12 max-w-lg w-full bg-[#1a1a1a] border border-gray-800 p-6 rounded-2xl flex items-start gap-4 shadow-xl">
-          <div className="bg-amber-500/10 p-3 rounded-xl border border-amber-500/20">
-            <AlertCircle className="text-amber-500" size={24} />
+        {isHidden && (
+          <div className="absolute inset-0 bg-black flex items-center justify-center z-50">
+            <span className="text-white/60 text-sm uppercase tracking-widest">
+              Content Protected
+            </span>
           </div>
-          <div>
-            <h4 className="text-white font-bold text-sm uppercase tracking-tight mb-1">Proteksi Konten Digital</h4>
-            <p className="text-gray-500 text-xs leading-relaxed">
-              Katalog ini dilindungi hak cipta. Sistem memantau aktivitas yang tidak sah termasuk upaya unduhan dan tangkapan layar. Harap hubungi admin untuk mendapatkan salinan resmi.
-            </p>
-          </div>
-        </div>
+        )}
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          body { display: none !important; }
+        body { margin: 0; overflow: hidden; }
+        .pdf-protected {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+          -webkit-touch-callout: none;
+          pointer-events: auto;
         }
-        ::selection {
-          background: transparent;
+        @media print {
+          body * { display: none !important; visibility: hidden !important; }
+          body::after {
+            content: "Printing is disabled for this content.";
+            display: block !important;
+            visibility: visible !important;
+            font-size: 24px;
+            text-align: center;
+            margin-top: 50vh;
+          }
         }
       `}} />
     </div>
