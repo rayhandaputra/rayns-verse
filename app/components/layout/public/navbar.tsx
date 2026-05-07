@@ -34,6 +34,12 @@ export default function Navbar({ session }: { session?: any }) {
           />
           
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate("/katalog")}
+              className="px-4 py-2 rounded-full border-2 border-[#103557] text-[#103557] text-xs font-bold hover:bg-[#103557] hover:text-white transition-all flex items-center gap-2"
+            >
+              Lihat Katalog
+            </button>
             {session ? (
               <button
                 onClick={() => navigate("/app/overview")}
