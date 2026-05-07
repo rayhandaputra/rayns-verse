@@ -27,7 +27,7 @@ export default function KatalogPage() {
         <Loader2 className="text-violet-500 animate-spin" size={48} />
       </div>
     }>
-      <PDFViewerClient pdfUrl="https://data.kinau.id/api/resource/KatalogWarnaKain2.pdf" />
+      <PDFViewerClient pdfUrl="./catalog.pdf" />
     </Suspense>
   );
 }

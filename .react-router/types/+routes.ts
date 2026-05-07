@@ -49,6 +49,9 @@ type Pages = {
   "/api/nexus/demo": {
     params: {};
   };
+  "/katalog": {
+    params: {};
+  };
   "/login": {
     params: {};
   };
@@ -174,7 +177,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/server/drive/:folder_id/download" | "/public/design-link/:domain" | "/public/drive-link/:domain" | "/resources/image-proxy" | "/media/event/:slug" | "/logout" | "/api/nexus" | "/api/nexus/example" | "/api/nexus/demo" | "/login" | "/app" | "/app/finance/salary-employee" | "/app/procurement/:category" | "/app/procurement/:category/catalog-color" | "/app/procurement/:category/shopping-kaos" | "/app/procurement/:category/component" | "/app/procurement/:category/capacity" | "/app/procurement/:category/shopping" | "/app/procurement/:category/supplier" | "/app/procurement/:category/vendor" | "/app/orders/:id/download" | "/app/setting/recycle-bin" | "/app/master/institution" | "/app/finance/inventory" | "/app/finance/cashflow" | "/app/asset/inventory" | "/app/finance/account" | "/app/master/supplier" | "/app/setting/account" | "/app/finance" | "/app/setting/design" | "/app/order-history" | "/app/order-manage" | "/app/product-list" | "/app/order-form" | "/app/order-list" | "/app/print-area" | "/app/overview" | "/app/drive" | "/app/drive/customer" | "/app/drive/internal" | "/app/email" | "/app/user";
+    page: "/" | "/server/drive/:folder_id/download" | "/public/design-link/:domain" | "/public/drive-link/:domain" | "/resources/image-proxy" | "/media/event/:slug" | "/logout" | "/api/nexus" | "/api/nexus/example" | "/api/nexus/demo" | "/katalog" | "/login" | "/app" | "/app/finance/salary-employee" | "/app/procurement/:category" | "/app/procurement/:category/catalog-color" | "/app/procurement/:category/shopping-kaos" | "/app/procurement/:category/component" | "/app/procurement/:category/capacity" | "/app/procurement/:category/shopping" | "/app/procurement/:category/supplier" | "/app/procurement/:category/vendor" | "/app/orders/:id/download" | "/app/setting/recycle-bin" | "/app/master/institution" | "/app/finance/inventory" | "/app/finance/cashflow" | "/app/asset/inventory" | "/app/finance/account" | "/app/master/supplier" | "/app/setting/account" | "/app/finance" | "/app/setting/design" | "/app/order-history" | "/app/order-manage" | "/app/product-list" | "/app/order-form" | "/app/order-list" | "/app/print-area" | "/app/overview" | "/app/drive" | "/app/drive/customer" | "/app/drive/internal" | "/app/email" | "/app/user";
   };
   "routes/server.drive.$folder_id.download.tsx": {
     id: "routes/server.drive.$folder_id.download";
@@ -211,6 +214,10 @@ type RouteFiles = {
   "routes/api.nexus.demo.tsx": {
     id: "routes/api.nexus.demo";
     page: "/api/nexus/demo";
+  };
+  "routes/katalog.tsx": {
+    id: "routes/katalog";
+    page: "/katalog";
   };
   "routes/_index.tsx": {
     id: "routes/_index";
@@ -365,6 +372,7 @@ type RouteModules = {
   "routes/api.nexus": typeof import("./app/routes/api.nexus.tsx");
   "routes/api.nexus.example": typeof import("./app/routes/api.nexus.example.tsx");
   "routes/api.nexus.demo": typeof import("./app/routes/api.nexus.demo.tsx");
+  "routes/katalog": typeof import("./app/routes/katalog.tsx");
   "routes/_index": typeof import("./app/routes/_index.tsx");
   "routes/login": typeof import("./app/routes/login.tsx");
   "routes/app": typeof import("./app/routes/app.tsx");
