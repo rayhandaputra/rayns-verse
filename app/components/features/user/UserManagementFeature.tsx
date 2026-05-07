@@ -1,14 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Form, useActionData } from "react-router";
-import { Plus, Edit2, Trash2, X, Shield, Upload } from "lucide-react";
+import { Form, useActionData, useSearchParams } from "react-router";
+import { Edit2, Trash2, X, Shield, Upload, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
 import { nexus } from "~/nexus/nexus-client";
 import { safeParseArray, uploadFile } from "~/utils/utils";
+import { CustomDataTable } from "~/components/shared/table/CustomDataTable";
+import { Button } from "~/components/ui/button";
 
 export default function UserManagementFeature() {
   const actionData = useActionData() as any;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = Number(searchParams.get("page")) || 0;
+  const size = Number(searchParams.get("size")) || 10;
+  const search = searchParams.get("search") || "";
 
   const { data: cmsContentData, reload: reloadCmsContent } = useFetcherData({
     endpoint: nexus()
@@ -23,14 +29,15 @@ export default function UserManagementFeature() {
       .build(),
   });
 
-  const { data: usersData, reload } = useFetcherData({
+  const { data: usersData, reload, loading: isLoading } = useFetcherData({
     endpoint: nexus()
       .module("USER")
       .action("get")
       .params({
         pagination: "true",
-        page: 0,
-        size: 100,
+        page,
+        size,
+        search,
       })
       .build(),
   });
@@ -90,6 +97,12 @@ export default function UserManagementFeature() {
     }
   }, [deleteData]);
 
+  const handleAddNew = () => {
+    setEditingId(null);
+    setFormData({ role: "Staff", email: "", password: "", fullname: "" });
+    setIsModalOpen(true);
+  };
+
   const handleEdit = (user: any) => {
     setEditingId(user.id);
     setFormData({
@@ -127,87 +140,122 @@ export default function UserManagementFeature() {
     }
   };
 
-  const handleAddNew = () => {
-    setEditingId(null);
-    setFormData({ role: "Staff", email: "", password: "", fullname: "" });
-    setIsModalOpen(true);
-  };
+  const columns = [
+    {
+      name: "Nama Lengkap",
+      selector: (row: any) => row.fullname,
+      sortable: true,
+      cell: (row: any) => (
+        <div className="flex flex-col py-2 font-bold text-gray-900">
+          {row.fullname}
+        </div>
+      ),
+    },
+    {
+      name: "Email",
+      selector: (row: any) => row.email,
+      sortable: true,
+      cell: (row: any) => (
+        <span className="text-gray-600 font-medium">{row.email}</span>
+      ),
+    },
+    {
+      name: "Role / Posisi",
+      selector: (row: any) => row.role,
+      sortable: true,
+      cell: (user: any) => (
+        <div
+          className={`px-3 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 ${
+            user.role?.toLowerCase() === "ceo"
+              ? "bg-purple-50 text-purple-700 border border-purple-100"
+              : user.role?.toLowerCase() === "developer"
+              ? "bg-blue-50 text-blue-700 border border-blue-100"
+              : "bg-gray-50 text-gray-700 border border-gray-100"
+          }`}
+        >
+          <Shield size={12} className="opacity-70" /> {user.role || "-"}
+        </div>
+      ),
+    },
+    {
+      name: "Aksi",
+      width: "120px",
+      cell: (user: any) => (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 text-blue-600 border-gray-200 hover:bg-blue-50 hover:border-blue-200 transition-all shadow-sm"
+            onClick={() => handleEdit(user)}
+          >
+            <Edit2 size={16} />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 text-red-600 border-gray-200 hover:bg-red-50 hover:border-red-200 transition-all shadow-sm"
+            onClick={() => handleDelete(user.id)}
+          >
+            <Trash2 size={16} />
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-lg font-bold text-gray-800">Manajemen User</h2>
-          <p className="text-gray-500 text-sm">
-            Atur akses login untuk pegawai dan admin.
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Manajemen User</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Atur akses login untuk pegawai dan admin secara terpusat.
           </p>
         </div>
-        <button
+        <Button
           onClick={handleAddNew}
-          className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 flex items-center gap-2"
+          className="bg-gray-900 border-gray-800 hover:bg-black text-white px-6 h-12 shadow-xl shadow-gray-200 rounded-2xl transition-all active:scale-95 flex items-center gap-2 group"
         >
-          <Plus size={16} /> Tambah User
-        </button>
+          <UserPlus size={18} className="group-hover:rotate-12 transition-transform" /> 
+          <span className="font-bold">Tambah User</span>
+        </Button>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-50 text-xs uppercase text-gray-700">
-            <tr>
-              <th className="px-6 py-3">Nama Lengkap</th>
-              <th className="px-6 py-3">Email</th>
-              <th className="px-6 py-3">Password</th>
-              <th className="px-6 py-3">Role / Posisi</th>
-              <th className="px-6 py-3 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {users.map((user: any) => (
-              <tr key={user.id} className="hover:bg-gray-50">
-                <td className="px-6 py-3 font-medium text-gray-900">
-                  {user.fullname}
-                </td>
-                <td className="px-6 py-3 text-gray-600">{user.email}</td>
-                <td className="px-6 py-3 font-mono text-gray-400">••••••</td>
-                <td className="px-6 py-3">
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 w-fit ${
-                      user.role === "CEO"
-                        ? "bg-purple-100 text-purple-700"
-                        : user.role === "Developer"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    <Shield size={10} /> {user.role}
-                  </span>
-                </td>
-                <td className="px-6 py-3 flex justify-center gap-2">
-                  <button
-                    onClick={() => handleEdit(user)}
-                    className="text-blue-600 hover:text-blue-800 p-1"
-                  >
-                    <Edit2 size={16} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(user.id)}
-                    className="text-red-600 hover:text-red-800 p-1"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {users.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                  Tidak ada data user.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* Main Content */}
+      <CustomDataTable
+        title="Daftar Pengguna"
+        description="Kelola hak akses dan profil setiap pengguna sistem."
+        totalData={usersData?.data?.total_items || 0}
+        columns={columns}
+        data={users}
+        loading={isLoading}
+        onSearch={(val) => {
+          setSearchParams((prev) => {
+            const params = new URLSearchParams(prev);
+            params.set("search", val);
+            params.set("page", "0");
+            return params;
+          });
+        }}
+        paginationServer
+        paginationTotalRows={usersData?.data?.total_items || 0}
+        onChangePage={(p) => {
+          setSearchParams((prev) => {
+            const params = new URLSearchParams(prev);
+            params.set("page", (p - 1).toString());
+            return params;
+          });
+        }}
+        onChangeRowsPerPage={(s) => {
+          setSearchParams((prev) => {
+            const params = new URLSearchParams(prev);
+            params.set("size", s.toString());
+            params.set("page", "0");
+            return params;
+          });
+        }}
+      />
 
       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mt-8">
         <h2 className="text-lg font-bold text-gray-800 mb-2">
@@ -285,104 +333,110 @@ export default function UserManagementFeature() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold">
-                {editingId ? "Edit User" : "Tambah User Baru"}
-              </h3>
-              <button onClick={() => setIsModalOpen(false)}>
-                <X className="text-gray-400" />
-              </button>
-            </div>
-            <Form method="post" className="space-y-4" autoComplete="off">
-              {editingId && <input type="hidden" name="id" value={editingId} />}
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Nama Lengkap
-                </label>
-                <input
-                  name="fullname"
-                  className="w-full border border-gray-300 rounded-lg p-2 text-sm"
-                  value={formData.fullname || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, fullname: e.target.value })
-                  }
-                  required
-                  placeholder="Masukkan Nama Lengkap"
-                />
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">
+                  {editingId ? "Ubah Data Pengguna" : "Daftarkan Pengguna Baru"}
+                </h3>
+                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                  <X className="text-gray-400 w-5 h-5" />
+                </button>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Email
+              <Form method="post" className="space-y-5" autoComplete="off">
+                {editingId && <input type="hidden" name="id" value={editingId} />}
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 ml-1">
+                    Nama Lengkap
                   </label>
                   <input
-                    name="email"
-                    autoComplete="off"
-                    className="w-full border border-gray-300 rounded-lg p-2 text-sm"
-                    value={formData.email || ""}
+                    name="fullname"
+                    className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                    value={formData.fullname || ""}
                     onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
+                      setFormData({ ...formData, fullname: e.target.value })
                     }
                     required
-                    placeholder="Masukkan Email"
+                    placeholder="Contoh: Budi Santoso"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Password
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-700 ml-1">
+                      Email
+                    </label>
+                    <input
+                      name="email"
+                      autoComplete="off"
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                      value={formData.email || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      required
+                      placeholder="email@perusahaan.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-700 ml-1">
+                      Password
+                    </label>
+                    <input
+                      name="password"
+                      type="password"
+                      autoComplete="off"
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                      value={formData.password || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                      required={!editingId}
+                      placeholder={editingId ? "Isi untuk ubah" : "********"}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 ml-1">
+                    Posisi / Role
                   </label>
-                  <input
-                    name="password"
-                    type="password"
-                    autoComplete="off"
-                    className="w-full border border-gray-300 rounded-lg p-2 text-sm"
-                    value={formData.password || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    required={!editingId}
-                    placeholder={editingId ? "Isi untuk ubah" : "********"}
-                  />
+                  <div className="relative">
+                    <select
+                      name="role"
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none appearance-none bg-white"
+                      value={formData.role}
+                      onChange={(e) =>
+                        setFormData({ ...formData, role: e.target.value as any })
+                      }
+                    >
+                      <option value="staff">Staff (Absensi Only)</option>
+                      <option value="ceo">CEO (Full Access)</option>
+                      <option value="developer">Developer (Full Access)</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <Shield size={16} className="text-gray-400" />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-2 px-1 leading-relaxed">
+                    * Perhatian: Staff hanya memiliki hak akses terbatas ke modul absensi dan tidak dapat melihat data finansial atau produksi.
+                  </p>
                 </div>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Posisi / Role
-                </label>
-                <select
-                  name="role"
-                  className="w-full border border-gray-300 rounded-lg p-2 text-sm"
-                  value={formData.role}
-                  onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value as any })
-                  }
-                >
-                  <option value="staff">Staff (Absensi Only)</option>
-                  <option value="ceo">CEO (Full Access)</option>
-                  <option value="developer">Developer (Full Access)</option>
-                  <option value="admin">Admin</option>
-                </select>
-                <p className="text-[10px] text-gray-500 mt-1">
-                  * Staff hanya bisa mengakses halaman absensi/kepegawaian.
-                </p>
-              </div>
 
-              <div className="pt-2 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-gray-900 text-white py-2 rounded-lg text-sm font-medium"
-                >
-                  Simpan
-                </button>
-              </div>
+                <div className="pt-6 flex gap-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsModalOpen(false)}
+                    className="flex-1 rounded-xl h-12 font-bold text-gray-500 hover:bg-gray-50"
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-gray-900 hover:bg-black text-white rounded-xl h-12 font-bold shadow-xl shadow-gray-100 transition-all active:scale-95"
+                  >
+                    {editingId ? "Update User" : "Simpan User"}
+                  </Button>
+                </div>
             </Form>
           </div>
         </div>

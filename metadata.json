@@ -1,4 +1,9 @@
 {
-  "name": "KINAU REFACTORED",
-  "description": "A modern personal finance and budgeting application with real-time tracking and beautiful visualizations."
+  "name": "Kinau Digital Kreatif",
+  "description": "Percetakan ID Card & Lanyard berkualitas tinggi di Lampung. Layanan profesional, cepat, dan presisi.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
 }

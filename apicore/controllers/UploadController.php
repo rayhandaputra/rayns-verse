@@ -8,11 +8,36 @@ class UploadController {
     }
 
     public function uploadImage(): void {
+        // DEBUG: Log request info
+        // sendTelegram("Upload Attempt: " . json_encode([
+        //     '_FILES' => $_FILES,
+        //     '_POST' => $_POST,
+        //     'CONTENT_TYPE' => $_SERVER['CONTENT_TYPE'] ?? 'N/A'
+        // ]));
+
         // 1. Cek apakah file ada dan tidak ada error dari server
         if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-            $errorCode = $_FILES['file']['error'] ?? 400;
-            $msg = ($errorCode === UPLOAD_ERR_INI_SIZE) ? 'File melebihi batas php.ini' : 'No file uploaded';
-            respond(['error' => $msg], 400);
+            $errorCode = $_FILES['file']['error'] ?? 'NONE';
+            $msg = 'No file uploaded';
+            
+            if ($errorCode === UPLOAD_ERR_INI_SIZE) $msg = 'File melebihi batas php.ini (upload_max_filesize)';
+            if ($errorCode === UPLOAD_ERR_FORM_SIZE) $msg = 'File melebihi batas MAX_FILE_SIZE di form HTML';
+            if ($errorCode === UPLOAD_ERR_PARTIAL) $msg = 'File hanya terupload sebagian';
+            if ($errorCode === UPLOAD_ERR_NO_FILE) $msg = 'Tidak ada file yang dikirim (UPLOAD_ERR_NO_FILE)';
+            if ($errorCode === UPLOAD_ERR_NO_TMP_DIR) $msg = 'Folder temporary hilang di server';
+            if ($errorCode === UPLOAD_ERR_CANT_WRITE) $msg = 'Gagal menulis file ke disk (I/O Error)';
+            if ($errorCode === UPLOAD_ERR_EXTENSION) $msg = 'Upload dihentikan oleh ekstensi PHP';
+
+            respond([
+                'error' => $msg, 
+                'code' => $errorCode,
+                'debug' => [
+                   'files_count' => count($_FILES),
+                   'has_file_key' => isset($_FILES['file']),
+                   'post_data' => array_keys($_POST),
+                   'content_type' => $_SERVER['CONTENT_TYPE'] ?? ''
+                ]
+            ], 400);
         }
 
         $fileTmp   = $_FILES['file']['tmp_name'];
@@ -46,7 +71,7 @@ class UploadController {
 
         // ================= PROSES UPLOAD =================
 
-        $uploadDir = __DIR__ . '/../resource/';
+        $uploadDir = __DIR__ . '/../../api/resource/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }

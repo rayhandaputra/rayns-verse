@@ -49,8 +49,20 @@ class CrudController {
     }
 
     public function bulkInsert(array $input): void {
-        // Logika detail bulk insert dipindah ke Model untuk konsistensi
-        // Implementasi sederhana di sini
-        respond(['message' => 'Bulk insert success'], 201);
+        $table             = clean($input['table'] ?? '');
+        $rows              = $input['rows'] ?? [];
+        $updateOnDuplicate = (bool)($input['updateOnDuplicate'] ?? false);
+        $withId            = (bool)($input['with_id'] ?? false);
+
+        if (!$table || empty($rows)) {
+            respond(null, 400, 'Missing table or rows');
+        }
+
+        try {
+            $result = $this->model->bulkInsert($table, $rows, $updateOnDuplicate, $withId);
+            respond($result, 201);
+        } catch (Throwable $e) {
+            respond(['error' => $e->getMessage()], 500);
+        }
     }
 }

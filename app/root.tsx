@@ -8,6 +8,7 @@ import {
   useLoaderData,
   useLocation,
   useNavigation,
+  type LinksFunction,
   type LoaderFunctionArgs,
 } from "react-router";
 
@@ -50,7 +51,7 @@ export function meta() {
   ];
 }
 
-export const links = (): any[] => [
+export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
@@ -76,7 +77,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="referrer" content="no-referrer" />
         <Meta />
         <Links />
       </head>

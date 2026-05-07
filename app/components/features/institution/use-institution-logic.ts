@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { useActionData, useFetcher } from "react-router";
+import { useActionData, useFetcher, useSearchParams } from "react-router";
 import moment from "moment";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
@@ -12,14 +12,20 @@ export function useInstitutionLogic() {
   const [modal, setModal] = useModal();
   const fetcher = useFetcher();
 
-  const { data: institution, reload: reloadInstitution } = useFetcherData({
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = Number(searchParams.get("page")) || 0;
+  const size = Number(searchParams.get("size")) || 10;
+  const search = searchParams.get("search") || "";
+
+  const { data: institution, reload: reloadInstitution, loading: isLoading } = useFetcherData({
     endpoint: nexus()
       .module("INSTITUTION")
       .action("get")
       .params({
         pagination: "true",
-        page: 0,
-        size: 10,
+        page,
+        size,
+        search,
       })
       .build(),
   });
@@ -86,8 +92,9 @@ export function useInstitutionLogic() {
 
   const table = {
     ...institution?.data,
-    page: 0,
-    size: 10,
+    page,
+    size,
+    search,
   };
 
   return {
@@ -98,5 +105,8 @@ export function useInstitutionLogic() {
     handleDelete,
     handleSubmit,
     reloadInstitution,
+    isLoading,
+    searchParams,
+    setSearchParams,
   };
 }

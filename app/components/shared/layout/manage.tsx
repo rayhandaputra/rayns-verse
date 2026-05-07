@@ -19,9 +19,9 @@ export default function RootLayout({
       {/* Cegah scroll horizontal global */}
       {location.pathname === "/" ? (
         <>
-          <Navbar session={session} />
-          <main className="pt-[64px]">{children}</main>
-          <Footer />
+          {/* <Navbar session={session} /> */}
+          <main className="">{children}</main>
+          {/* <Footer /> */}
         </>
       ) : (
         <div className="flex-1 flex flex-col">{children}</div>
