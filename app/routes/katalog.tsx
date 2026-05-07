@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { Loader2 } from "lucide-react";
+import pdfUrl from "./../../public/catalog.pdf";
 
 // Client-only component wrapper
 const PDFViewerClient = React.lazy(() =>
@@ -27,7 +28,7 @@ export default function KatalogPage() {
         <Loader2 className="text-violet-500 animate-spin" size={48} />
       </div>
     }>
-      <PDFViewerClient pdfUrl="./catalog.pdf" />
+      <PDFViewerClient pdfUrl={pdfUrl} />
     </Suspense>
   );
 }
