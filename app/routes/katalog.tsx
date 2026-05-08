@@ -1,6 +1,8 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { Loader2, Palette, FileText, Search } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useLoaderData } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
 import { nexus } from "~/lib/nexus-client";
@@ -10,14 +12,20 @@ const PDFViewerClient = React.lazy(() =>
   import("~/components/PDFViewerClient").then(module => ({ default: module.PDFViewerClient }))
 );
 
+export const loader = ({ request }: LoaderFunctionArgs) => {
+  return {
+    katalogPdfUrl: process.env.KATALOG_PDF_URL || "",
+  };
+};
+
 export default function KatalogPage() {
+  const { katalogPdfUrl } = useLoaderData<typeof loader>();
   const [isClient, setIsClient] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: colorData, loading: colorsLoading } = useFetcherData({
     endpoint: nexus().module("SHIRT_COLOR").action("get").params({ size: 100 }).build(),
   });
-  console.log(colorData)
 
   useEffect(() => {
     setIsClient(true);
@@ -78,7 +86,7 @@ export default function KatalogPage() {
                   <p className="text-zinc-400 animate-pulse">Memuat Katalog PDF...</p>
                 </div>
               }>
-                <PDFViewerClient pdfUrl="https://data.kinau.id/api/resource/KatalogWarnaKain2.pdf" />
+                <PDFViewerClient pdfUrl={katalogPdfUrl} />
               </Suspense>
             </motion.div>
           </TabsContent>

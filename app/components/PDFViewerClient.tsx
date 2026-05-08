@@ -89,7 +89,7 @@ export function PDFViewerClient({ pdfUrl }: { pdfUrl: string }) {
   return (
     <div
       ref={containerRef}
-      className="flex flex-col w-full h-screen bg-[#0a0a0a] select-none"
+      className="flex flex-col w-full h-[80vh] md:h-screen bg-[#0a0a0a] select-none"
       onContextMenu={(e) => e.preventDefault()}
     >
       <div className="w-full bg-[#141414] border-b border-gray-800 p-4 flex items-center justify-between">
