@@ -116,6 +116,7 @@ export function useFetcherData<T = any>(
       fetcherRef.current.submit(finalParams, {
         method: "POST",
         action: endpoint,
+        encType: "application/x-www-form-urlencoded",
       });
     } else {
       if (!url.includes("undefined") && fetcherRef.current.state === "idle") {

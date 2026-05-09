@@ -96,6 +96,25 @@ export const action: ActionFunction = async ({ request }) => {
     });
   }
 
+  if (actionType === "delete_payment_proof") {
+    const field = formData.get("field") as string;
+    const res = await API.ORDERS.update({
+      session: { user, token },
+      req: {
+        body: {
+          id,
+          [field]: "",
+          ...(field === "payment_proof" ? { payment_status: "down_payment", payment_journal_code: "" } : {}),
+          ...(field === "dp_payment_proof" ? { dp_payment_journal_code: "" } : {}),
+        },
+      },
+    });
+    return Response.json({
+      success: res.success,
+      message: res.success ? "Bukti pembayaran dihapus" : "Gagal menghapus bukti pembayaran",
+    });
+  }
+
   return Response.json({ success: false });
 };
 

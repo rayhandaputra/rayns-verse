@@ -157,6 +157,7 @@ export function useOrderListLogic() {
 
   const handleSubmitPaymentProof = (e: any) => {
     e.preventDefault();
+    console.log(modal?.data)
     if (isUploadingFile) {
       toast.error("Tunggu sebentar, file masih diunggah...");
       return;
@@ -186,6 +187,10 @@ export function useOrderListLogic() {
 
   const onUpdatePaymentProof = (id: string, proof: string) => {
     submitAction({ action: "update_payment_proof", id, proof });
+  };
+
+  const onDeletePaymentProof = (id: string, field: string) => {
+    submitAction({ action: "delete_payment_proof", id, field });
   };
 
   const onDelete = (order: any) => {
@@ -254,6 +259,7 @@ export function useOrderListLogic() {
     onUpdateStatusPrinted,
     onUpdateReview,
     onUpdatePaymentProof,
+    onDeletePaymentProof,
     onDelete,
     copyToClipboard,
     cardRef,

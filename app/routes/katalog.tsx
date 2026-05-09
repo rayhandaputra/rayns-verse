@@ -1,27 +1,18 @@
-import React, { useState, useEffect, Suspense } from "react";
-import { Loader2, Palette, FileText, Search } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { Loader2, Palette, FileText, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { useLoaderData } from "react-router";
-import type { LoaderFunctionArgs } from "react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
 import { nexus } from "~/lib/nexus-client";
 
-// Client-only component wrapper for PDF Viewer
-const PDFViewerClient = React.lazy(() =>
-  import("~/components/PDFViewerClient").then(module => ({ default: module.PDFViewerClient }))
-);
-
-export const loader = ({ request }: LoaderFunctionArgs) => {
-  return {
-    katalogPdfUrl: process.env.KATALOG_PDF_URL || "",
-  };
-};
+// Static list of catalog page images from public/katalog/
+const KATALOG_PAGES = Array.from({ length: 16 }, (_, i) => `/katalog/${i}.png`);
 
 export default function KatalogPage() {
-  const { katalogPdfUrl } = useLoaderData<typeof loader>();
   const [isClient, setIsClient] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedPage, setSelectedPage] = useState(0);
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set([0]));
 
   const { data: colorData, loading: colorsLoading } = useFetcherData({
     endpoint: nexus().module("SHIRT_COLOR").action("get").params({ size: 100 }).build(),
@@ -30,6 +21,37 @@ export default function KatalogPage() {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const goToPage = useCallback((index: number) => {
+    if (index >= 0 && index < KATALOG_PAGES.length) {
+      setSelectedPage(index);
+      setLoadedImages(prev => new Set(prev).add(index));
+    }
+  }, []);
+
+  const goNext = useCallback(() => goToPage(selectedPage + 1), [selectedPage, goToPage]);
+  const goPrev = useCallback(() => goToPage(selectedPage - 1), [selectedPage, goToPage]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") goPrev();
+      if (e.key === "ArrowRight") goNext();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [goPrev, goNext]);
+
+  // Preload adjacent images
+  useEffect(() => {
+    const preload = [selectedPage - 1, selectedPage + 1].filter(
+      i => i >= 0 && i < KATALOG_PAGES.length
+    );
+    preload.forEach(i => {
+      const img = new Image();
+      img.src = KATALOG_PAGES[i];
+    });
+  }, [selectedPage]);
 
   if (!isClient) {
     return (
@@ -60,12 +82,12 @@ export default function KatalogPage() {
           </p>
         </motion.div>
 
-        <Tabs defaultValue="pdf" className="w-full">
+        <Tabs defaultValue="catalog" className="w-full">
           <div className="flex justify-center mb-8">
             <TabsList className="bg-zinc-900/50 border border-zinc-800 p-1">
-              <TabsTrigger value="pdf" className="gap-2 px-6">
+              <TabsTrigger value="catalog" className="gap-2 px-6">
                 <FileText size={16} />
-                Katalog PDF
+                Katalog
               </TabsTrigger>
               <TabsTrigger value="colors" className="gap-2 px-6">
                 <Palette size={16} />
@@ -74,21 +96,101 @@ export default function KatalogPage() {
             </TabsList>
           </div>
 
-          <TabsContent value="pdf" className="mt-0">
+          <TabsContent value="catalog" className="mt-0">
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900/30 backdrop-blur-sm h-[80vh] shadow-2xl shadow-violet-500/5"
+              className="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900/30 backdrop-blur-sm shadow-2xl shadow-violet-500/5"
             >
-              <Suspense fallback={
-                <div className="h-full flex flex-col items-center justify-center gap-4">
-                  <Loader2 className="text-violet-500 animate-spin" size={48} />
-                  <p className="text-zinc-400 animate-pulse">Memuat Katalog PDF...</p>
+              {/* Main Image Viewer */}
+              <div className="relative flex items-center justify-center bg-zinc-950 min-h-[60vh] md:min-h-[70vh]">
+                {/* Loading overlay */}
+                {!loadedImages.has(selectedPage) && (
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <Loader2 className="text-violet-500 animate-spin" size={48} />
+                  </div>
+                )}
+
+                {/* Previous Button */}
+                <button
+                  onClick={goPrev}
+                  disabled={selectedPage === 0}
+                  className="absolute left-2 md:left-4 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 text-white/80 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm border border-white/10"
+                  aria-label="Halaman sebelumnya"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+
+                {/* Image */}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={selectedPage}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="w-full h-full flex items-center justify-center p-4 md:p-8"
+                  >
+                    <img
+                      src={KATALOG_PAGES[selectedPage]}
+                      alt={`Katalog halaman ${selectedPage}`}
+                      className="max-w-full max-h-[65vh] object-contain rounded-lg shadow-2xl select-none"
+                      draggable={false}
+                      onLoad={() =>
+                        setLoadedImages(prev => new Set(prev).add(selectedPage))
+                      }
+                    />
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Next Button */}
+                <button
+                  onClick={goNext}
+                  disabled={selectedPage === KATALOG_PAGES.length - 1}
+                  className="absolute right-2 md:right-4 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 text-white/80 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm border border-white/10"
+                  aria-label="Halaman selanjutnya"
+                >
+                  <ChevronRight size={24} />
+                </button>
+
+                {/* Page Counter */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-sm text-white/80">
+                  {selectedPage + 1} / {KATALOG_PAGES.length}
                 </div>
-              }>
-                <PDFViewerClient pdfUrl={katalogPdfUrl} />
-              </Suspense>
+              </div>
+
+              {/* Thumbnail Strip */}
+              <div className="bg-zinc-900/80 border-t border-zinc-800 px-3 py-3 md:px-6 md:py-4 overflow-x-auto">
+                <div className="flex gap-2 md:gap-3 justify-center min-w-max">
+                  {KATALOG_PAGES.map((src, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => goToPage(idx)}
+                      className={`relative flex-shrink-0 w-14 h-20 md:w-20 md:h-28 rounded-lg overflow-hidden border-2 transition-all duration-200 ${selectedPage === idx
+                          ? "border-violet-500 shadow-lg shadow-violet-500/30 scale-105"
+                          : "border-zinc-700 hover:border-zinc-500 opacity-60 hover:opacity-100"
+                        }`}
+                    >
+                      <img
+                        src={src}
+                        alt={`Halaman ${idx}`}
+                        className="w-full h-full object-cover pointer-events-none select-none"
+                        draggable={false}
+                        loading="lazy"
+                      />
+                      <span className="absolute bottom-0 left-0 right-0 bg-black/70 text-[10px] md:text-xs py-0.5 text-center text-white/80">
+                        {idx + 1}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </motion.div>
+
+            {/* Keyboard hint */}
+            <p className="text-center text-zinc-600 text-xs mt-3">
+              Gunakan tombol ← → pada keyboard untuk navigasi halaman
+            </p>
           </TabsContent>
 
           <TabsContent value="colors" className="mt-0">

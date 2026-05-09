@@ -908,7 +908,6 @@ export const OrderAPI = {
               payment_proof_uploaded_on: moment()
                 .add(7, "hours")
                 .format("YYYY-MM-DD HH:mm:ss"),
-              status: "done",
             }),
           },
           where: { id },

@@ -6,7 +6,9 @@
       "Bash(npm run dev:*)",
       "Bash(npm install:*)",
       "Bash(grep -r \"loader\" /home/rayhan/Workspaces/portofolio/rayns-verse/client/app/routes/*.tsx | head -15)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "mcp__plugin_context-mode_context-mode__ctx_execute_file",
+      "mcp__plugin_context-mode_context-mode__ctx_execute"
     ]
   }
 }

@@ -137,10 +137,13 @@ export default function OrderListFeature() {
       <OrderShareCard order={selectedOrder} qrCodeUrl={tempQr} ref={cardRef} />
 
       {/* Modals are handled below for brevity and organization */}
-      {modal?.type === "upload_payment_proof" && (
+      {modal?.open && modal?.type === "upload_payment_proof" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
-            <h3 className="text-lg font-bold mb-4">Upload Bukti Bayar</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold">Upload Bukti Bayar</h3>
+              <button onClick={() => setModal({ open: false })}><X size={20} /></button>
+            </div>
             <form onSubmit={handleSubmitPaymentProof} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Tujuan Transfer</label>
@@ -203,9 +206,9 @@ export default function OrderListFeature() {
                 />
               </div>
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setModal({ ...modal, open: false })} className="flex-1 bg-gray-100 py-2 rounded-lg text-sm">Batal</button>
+                <button type="button" onClick={() => setModal({ open: false })} className="flex-1 bg-gray-100 py-2 rounded-lg text-sm">Batal</button>
                 <button type="submit" disabled={logic.actionLoading || isUploadingFile} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">
-                  {logic.actionLoading ? <Loader2 className="animate-spin inline mr-2" size={16} /> : null} Simpan
+                  {isUploadingFile ? "" : logic.actionLoading ? <Loader2 className="animate-spin inline mr-2" size={16} /> : null} {isUploadingFile ? " Mengunggah file..." : "Simpan"}
                 </button>
               </div>
             </form>
@@ -213,12 +216,12 @@ export default function OrderListFeature() {
         </div>
       )}
 
-      {modal?.type === "view_payment_proof" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setModal({ ...modal, open: false })}>
+      {modal?.open && modal?.type === "view_payment_proof" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setModal({ open: false })}>
           <div className="bg-white rounded-xl p-4 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4 border-b pb-2">
               <h3 className="font-bold text-lg">Bukti Pembayaran</h3>
-              <button onClick={() => setModal({ ...modal, open: false })}><X size={20} /></button>
+              <button onClick={() => setModal({ open: false })}><X size={20} /></button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {['dp_payment_proof', 'payment_proof'].map((field) => {
@@ -232,13 +235,13 @@ export default function OrderListFeature() {
                       <button onClick={() => {
                         Swal.fire({
                           title: "Hapus Bukti?",
-                          text: "Yakin ingin menghapus bukti pembayaran?",
+                          text: `Yakin ingin menghapus ${isDP ? 'bukti DP' : 'bukti pelunasan'}?`,
                           icon: "warning",
                           showCancelButton: true,
                           confirmButtonText: "Ya, Hapus",
                         }).then((result) => {
                           if (result.isConfirmed) {
-                            logic.onUpdatePaymentProof(modal.data.id, ""); // Simple cleanup, or more specific API call if needed
+                            logic.onDeletePaymentProof(modal.data.id, field);
                           }
                         });
                       }} className="text-red-600"><Trash2 size={14} /></button>
@@ -252,15 +255,15 @@ export default function OrderListFeature() {
         </div>
       )}
 
-      {modal?.type === "zoom_payment_proof" && (
-        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4" onClick={() => setModal({ ...modal, open: false })}>
-          <button className="absolute top-4 right-4 text-white"><X size={32} /></button>
+      {modal?.open && modal?.type === "zoom_payment_proof" && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4" onClick={() => setModal({ open: false })}>
+          <button className="absolute top-4 right-4 text-white" onClick={() => setModal({ open: false })}><X size={32} /></button>
           <img src={modal?.data?.payment_proof} className="max-w-full max-h-[90vh] object-contain" />
         </div>
       )}
 
-      {modal?.type === "view_nota" && (
-        <ModalSecond open={modal?.open} onClose={() => setModal({ ...modal, open: false })} title="" size="lg">
+      {modal?.open && modal?.type === "view_nota" && (
+        <ModalSecond open={modal?.open} onClose={() => setModal({ open: false })} title="" size="lg">
           <NotaView
             order={modal?.data}
             isEditable={true}
