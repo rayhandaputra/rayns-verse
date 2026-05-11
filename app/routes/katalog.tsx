@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Loader2, Palette, FileText, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Palette, FileText, Search, ChevronLeft, ChevronRight, Shirt, Users } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
@@ -86,12 +86,12 @@ export default function KatalogPage() {
           <div className="flex justify-center mb-8">
             <TabsList className="bg-zinc-900/50 border border-zinc-800 p-1">
               <TabsTrigger value="catalog" className="gap-2 px-6">
-                <FileText size={16} />
-                Katalog
+                <Users size={16} />
+                Warna Seragam
               </TabsTrigger>
               <TabsTrigger value="colors" className="gap-2 px-6">
-                <Palette size={16} />
-                Daftar Warna
+                <Shirt size={16} />
+                Warna Kaos
               </TabsTrigger>
             </TabsList>
           </div>
@@ -167,8 +167,8 @@ export default function KatalogPage() {
                       key={idx}
                       onClick={() => goToPage(idx)}
                       className={`relative flex-shrink-0 w-14 h-20 md:w-20 md:h-28 rounded-lg overflow-hidden border-2 transition-all duration-200 ${selectedPage === idx
-                          ? "border-violet-500 shadow-lg shadow-violet-500/30 scale-105"
-                          : "border-zinc-700 hover:border-zinc-500 opacity-60 hover:opacity-100"
+                        ? "border-violet-500 shadow-lg shadow-violet-500/30 scale-105"
+                        : "border-zinc-700 hover:border-zinc-500 opacity-60 hover:opacity-100"
                         }`}
                     >
                       <img
