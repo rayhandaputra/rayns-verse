@@ -21,6 +21,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       pagination: "true",
       page: 0,
       size: 10,
+      role: "customer",
     } as any,
   });
 
