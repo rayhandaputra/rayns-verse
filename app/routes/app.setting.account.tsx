@@ -10,8 +10,8 @@ import {
   type ActionFunction,
   type LoaderFunction,
 } from "react-router";
-import { API } from "~/nexus";
-import { AuthAPI } from "~/nexus/modules/user_auth";
+import { API } from "~/nexus/index.server";
+import { AuthAPI } from "~/nexus/modules/user_auth.server";
 import AccountSettingsFeature from "~/components/features/settings/AccountSettingsFeature";
 
 export const loader: LoaderFunction = async ({ request, params }) => {

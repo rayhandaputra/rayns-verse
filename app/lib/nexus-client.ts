@@ -5,7 +5,7 @@
  * for working with the API Nexus endpoint.
  */
 
-import type { API } from "./api";
+import type { API } from "./api.server";
 
 // Re-export types for convenience
 export type * from "./nexus-client.types";

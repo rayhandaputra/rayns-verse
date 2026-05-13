@@ -38,9 +38,18 @@ export default function UserManagementFeature() {
         page,
         size,
         search,
+        role: searchParams.get("role") || undefined,
       })
       .build(),
   });
+
+  const roles = [
+    { label: "Semua", value: "" },
+    { label: "Internal Team", value: "staff,admin,ceo,developer" },
+    { label: "Customer", value: "customer" },
+  ];
+
+  const currentRole = searchParams.get("role") || "";
 
   const users = usersData?.data?.items || [];
   const [settings, setSettings] = useState<any>([]);
@@ -163,19 +172,25 @@ export default function UserManagementFeature() {
       name: "Role / Posisi",
       selector: (row: any) => row.role,
       sortable: true,
-      cell: (user: any) => (
-        <div
-          className={`px-3 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 ${
-            user.role?.toLowerCase() === "ceo"
-              ? "bg-purple-50 text-purple-700 border border-purple-100"
-              : user.role?.toLowerCase() === "developer"
-              ? "bg-blue-50 text-blue-700 border border-blue-100"
-              : "bg-gray-50 text-gray-700 border border-gray-100"
-          }`}
-        >
-          <Shield size={12} className="opacity-70" /> {user.role || "-"}
-        </div>
-      ),
+      cell: (user: any) => {
+        const role = user.role?.toLowerCase() || "";
+        const isCustomer = role === "customer";
+        return (
+          <div
+            className={`px-3 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 ${
+              role === "ceo"
+                ? "bg-purple-50 text-purple-700 border border-purple-100"
+                : role === "developer"
+                ? "bg-blue-50 text-blue-700 border border-blue-100"
+                : isCustomer
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                : "bg-gray-50 text-gray-700 border border-gray-100"
+            }`}
+          >
+            <Shield size={12} className="opacity-70" /> {user.role || "-"}
+          </div>
+        );
+      },
     },
     {
       name: "Aksi",
@@ -220,6 +235,31 @@ export default function UserManagementFeature() {
           <UserPlus size={18} className="group-hover:rotate-12 transition-transform" /> 
           <span className="font-bold">Tambah User</span>
         </Button>
+      </div>
+
+      {/* Role Tabs */}
+      <div className="flex items-center gap-1 bg-gray-100 p-1.5 rounded-2xl w-fit">
+        {roles.map((r) => (
+          <button
+            key={r.value}
+            onClick={() => {
+              setSearchParams((prev) => {
+                const params = new URLSearchParams(prev);
+                if (r.value) params.set("role", r.value);
+                else params.delete("role");
+                params.set("page", "0");
+                return params;
+              });
+            }}
+            className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all ${
+              currentRole === r.value
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            {r.label}
+          </button>
+        ))}
       </div>
 
       {/* Main Content */}
@@ -411,6 +451,7 @@ export default function UserManagementFeature() {
                       <option value="ceo">CEO (Full Access)</option>
                       <option value="developer">Developer (Full Access)</option>
                       <option value="admin">Admin</option>
+                      <option value="customer">Customer (Dashboard Order)</option>
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                       <Shield size={16} className="text-gray-400" />

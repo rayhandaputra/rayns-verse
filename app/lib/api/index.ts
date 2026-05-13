@@ -38,11 +38,13 @@ import { TestimonialAPI } from "./modules/testimonial";
 import { TransactionAPI } from "./modules/transaction";
 import { OrderAssignmentAPI } from "./modules/twibbon_assignment";
 import { TwibbonTemplateAPI } from "./modules/twibbon_template";
-import { UserAPI } from "./modules/user";
+
+// UserAPI and AuthAPI are server-only and excluded from this browser-safe index
+// to prevent bundling of Node-specific dependencies like crypto.
+
 
 // optional: unified API wrapper
 export const API = {
-  USER: UserAPI,
   ORDERS: OrderAPI,
   ORDER_ITEMS: OrderItemAPI,
   ORDER_UPLOAD: OrderUploadAPI,

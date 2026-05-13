@@ -97,6 +97,27 @@ export async function requireAuth(request: Request) {
 }
 
 /**
+ * Require a specific role for protected routes
+ */
+export async function requireRole(request: Request, allowedRoles: string[]) {
+  const { user, session, token } = await requireAuth(request);
+  
+  // user might be a string (JSON) or object depending on how it's stored
+  const userData = typeof user === 'string' ? JSON.parse(user) : user;
+  
+  if (!userData?.role || !allowedRoles.includes(userData.role)) {
+    // If it's a customer trying to access admin, redirect to customer dashboard
+    if (userData?.role === 'customer') {
+      throw redirect("/dashboard/customer");
+    }
+    // Otherwise rediect to login
+    throw redirect("/login");
+  }
+  
+  return { user: userData, session, token };
+}
+
+/**
  * Get user if authenticated (optional)
  * Returns null if not authenticated
  */

@@ -1,10 +1,10 @@
 
 import { type LoaderFunctionArgs } from "react-router";
-import { requireAuth } from "~/utils/session.server";
+import { requireRole } from "~/utils/session.server";
 import OverviewFeature from "~/components/features/overview/OverviewFeature";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireAuth(request);
+  await requireRole(request, ["admin", "ceo", "developer", "staff"]);
   return Response.json({ initialized: true });
 }
 

@@ -37,7 +37,7 @@ export const PublicHero = () => {
               Daftar Produk
             </a>
             <a href="#portfolio" className="px-10 py-4 rounded-full border border-gray-200 text-[#1a1a1a] font-bold hover:bg-gray-50 transition-all text-base shadow-sm">
-              Latest Production
+              Produksi Terbaru
             </a>
             <a href="#kontak" className="px-10 py-4 rounded-full border border-gray-200 text-[#1a1a1a] font-bold hover:bg-gray-50 transition-all text-base shadow-sm">
               Kontak

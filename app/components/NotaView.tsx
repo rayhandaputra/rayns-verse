@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Order } from "../types";
 import {
   formatCurrency,
@@ -71,7 +71,8 @@ const NotaView: React.FC<NotaViewProps> = ({
 
   const [PrintButton, setPrintButton] =
     useState<React.ComponentType<any> | null>(null);
-  const [client, setClient] = useState<boolean>(false);
+  const subscribe = () => () => { };
+  const client = useSyncExternalStore(subscribe, () => true, () => false);
 
   // Fetch header background from CMS
   const { data: cmsContentData } = useFetcherData({
@@ -92,9 +93,9 @@ const NotaView: React.FC<NotaViewProps> = ({
       cmsContentData?.data?.items?.[0]?.image_gallery
     )?.[0] as string) || "";
 
-  useEffect(() => {
-    setClient(true);
-  }, []);
+  // useEffect(() => {
+  //   setClient(true);
+  // }, []);
 
   useEffect(() => {
     if (!client) return;
@@ -638,7 +639,7 @@ const NotaView: React.FC<NotaViewProps> = ({
                 <Star key={i} size={14} fill="currentColor" />
               ))}
             </div>
-            <p className="text-sm italic text-gray-700">"{review}"</p>
+            <p className="text-sm italic text-gray-700">&quot;{review}&quot;</p>
           </div>
         ) : null}
 

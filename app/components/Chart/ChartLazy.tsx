@@ -1,17 +1,17 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useSyncExternalStore } from "react";
 
 const ChartWrapper = lazy(() => import("~/components/Chart/ChartWrapper"));
 
+const subscribe = () => () => { };
+
 export default function ChartLazy(props: any) {
-  if (typeof window === "undefined") return null; // Hindari SSR render
+  const isClient = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false
+  );
 
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) return null;
+  if (!isClient) return null; // Hindari SSR render dan pastikan di client
 
   return (
     <Suspense fallback={<div>Loading chart...</div>}>

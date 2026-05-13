@@ -113,11 +113,7 @@ function StatCard({ stat }: { stat: StatItem }) {
     typeof stat.value === "string" ? parseFloat(stat.value) : stat.value;
   const isPercent = stat.suffix === "%" || stat.suffix === "percent";
 
-  // Get icon component - stable selection based on id or icon_type
-  // This ensures same icon is rendered on server and client
-  const IconComponent = useMemo(() => {
-    return getIconComponent(stat.icon_type, stat.id);
-  }, [stat.icon_type, stat.id]);
+  const IconComponent = (LucideIcons as any)[stat.icon_type || ""] || (stat.id !== undefined ? (LucideIcons as any)[availableIcons[stat.id % availableIcons.length]] : LucideIcons.Package);
 
   useEffect(() => {
     let start = 0;

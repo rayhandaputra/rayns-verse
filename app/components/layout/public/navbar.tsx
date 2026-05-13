@@ -42,17 +42,24 @@ export default function Navbar({ session }: { session?: any }) {
             </button>
             {session ? (
               <button
-                onClick={() => navigate("/app/overview")}
+                onClick={() => {
+                  const userData = typeof session === 'string' ? JSON.parse(session) : session;
+                  if (userData?.role === "customer") {
+                    navigate("/dashboard/customer");
+                  } else {
+                    navigate("/app/overview");
+                  }
+                }}
                 className="px-4 py-2 rounded-full bg-[#103557] text-white text-xs font-bold hover:bg-[#103557]/90 transition-all flex items-center gap-2"
               >
-                Dashboard
+                Dasbor
               </button>
             ) : (
               <button
                 onClick={() => navigate("/login")}
                 className="px-4 py-2 rounded-full bg-[#103557] text-white text-xs font-bold hover:bg-[#103557]/90 transition-all flex items-center gap-2"
               >
-                <LogIn size={14} className="rotate-180" /> Login Admin
+                <LogIn size={14} className="rotate-180" /> Login
               </button>
             )}
           </div>

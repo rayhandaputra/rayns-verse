@@ -1,17 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import { useOrderListLogic } from "./use-order-list-logic";
 import { useOrderColumns } from "./order-columns";
 import { DataTable, TablePagination } from "~/components/ui/data-table";
 import OrderShareCard from "~/components/shared/print/order/OrderShareTemplate";
 import ModalSecond from "~/components/shared/modal/ModalSecond";
 import NotaView from "~/components/shared/NotaView";
-import { X, Upload, Loader2, Image, Trash2 } from "lucide-react";
+import { X, Upload, Loader2, Image, Trash2, AlertCircle, Wifi, WifiOff } from "lucide-react";
 import { uploadFile } from "~/utils/utils";
+import { API } from "~/nexus";
 import { dateFormat } from "~/utils/dateFormatter";
 import Swal from "sweetalert2";
 import { toast } from "sonner";
 
 export default function OrderListFeature() {
+  const [isSlowConnection, setIsSlowConnection] = useState(false);
   const logic = useOrderListLogic();
   const columns = useOrderColumns({
     orders: logic.orders,
@@ -141,9 +143,36 @@ export default function OrderListFeature() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold">Upload Bukti Bayar</h3>
-              <button onClick={() => setModal({ open: false })}><X size={20} /></button>
+              <h3 className="text-lg font-bold text-gray-800">Upload Bukti Bayar</h3>
+              <button onClick={() => setModal({ open: false })} className="text-gray-400 hover:text-gray-600 transition-colors"><X size={20} /></button>
             </div>
+
+            {/* Detail Pesanan */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Detail Pesanan</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+                <div>
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">No. Pesanan</p>
+                  <p className="text-xs font-bold text-gray-700">#{modal?.data?.order_number}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">Instansi</p>
+                  <p className="text-xs font-bold text-gray-700 truncate" title={modal?.data?.institution_name}>{modal?.data?.institution_name}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">Nama PIC</p>
+                  <p className="text-xs font-bold text-gray-700">{modal?.data?.pic_name || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">Total Bayar</p>
+                  <p className="text-xs font-black text-blue-600">Rp {new Intl.NumberFormat("id-ID").format(modal?.data?.total_amount || 0)}</p>
+                </div>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmitPaymentProof} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Tujuan Transfer</label>
@@ -185,26 +214,80 @@ export default function OrderListFeature() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">File Bukti Pembayaran</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    setIsUploadingFile(true);
-                    try {
-                      const url = await uploadFile(file);
-                      if (url) setModal((prev: any) => ({ ...prev, data: { ...prev.data, file: url } }));
-                    } catch {
-                      toast.error("Gagal mengunggah file");
-                    } finally {
-                      setIsUploadingFile(false);
-                    }
-                  }}
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      
+                      setIsUploadingFile(true);
+                      setIsSlowConnection(false);
+
+                      const slowTimer = setTimeout(() => {
+                        setIsSlowConnection(true);
+                      }, 5000); 
+
+                      try {
+                        const response = await API.ASSET.upload(file);
+                        if (response.success && response.url) {
+                          setModal((prev: any) => ({ ...prev, data: { ...prev.data, file: response.url } }));
+                          toast.success("File bukti bayar berhasil diunggah");
+                        } else {
+                          // Handle API error message explicitly
+                          const errorMsg = response.error_message || response.message || "Gagal mengunggah file. Silakan coba lagi.";
+                          toast.error(errorMsg);
+                          console.error("API Upload Error:", response);
+                        }
+                      } catch (err: any) {
+                        console.error("Network Upload error:", err);
+                        let errorMessage = "Terjadi kesalahan jaringan saat mengunggah. Cek koneksi internet Anda.";
+                        
+                        // Try to parse error if it's a JSON string from our standardized error handler
+                        try {
+                          const parsedError = JSON.parse(err.message);
+                          errorMessage = parsedError.error || errorMessage;
+                        } catch {
+                          errorMessage = err.message || errorMessage;
+                        }
+                        
+                        toast.error(errorMessage);
+                      } finally {
+                        clearTimeout(slowTimer);
+                        setIsUploadingFile(false);
+                        setIsSlowConnection(false);
+                      }
+                    }}
+                    required
+                  />
+                  <p className="mt-2 text-[11px] text-amber-600 font-bold bg-amber-50 px-3 py-1.5 rounded-lg flex items-center gap-2 border border-amber-100">
+                    <Wifi size={12} /> Penting: Pastikan koneksi internet Anda stabil untuk kelancaran unggah bukti bayar.
+                  </p>
+                  {isUploadingFile && (
+                    <div className="mt-2 flex items-center gap-2 text-[10px] font-bold text-blue-600 animate-pulse">
+                      <Loader2 className="animate-spin" size={12} />
+                      Sedang memproses unggahan...
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Alert Internet Lambat */}
+              {isSlowConnection && isUploadingFile && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
+                  <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 text-amber-600">
+                    <WifiOff size={16} />
+                  </div>
+                  <div>
+                    <h5 className="text-[10px] font-black text-amber-800 uppercase tracking-wider mb-0.5">Koneksi Lambat Terdeteksi</h5>
+                    <p className="text-[10px] text-amber-700 leading-tight">
+                      Proses unggah memakan waktu lebih lama. Pastikan koneksi internet Anda stabil untuk kelancaran unggah bukti bayar.
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => setModal({ open: false })} className="flex-1 bg-gray-100 py-2 rounded-lg text-sm">Batal</button>
                 <button type="submit" disabled={logic.actionLoading || isUploadingFile} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm">

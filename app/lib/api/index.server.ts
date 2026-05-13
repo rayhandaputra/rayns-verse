@@ -1,5 +1,4 @@
 export * from "./core/callApi";
-export * from "./core/api-provider";
 export * from "./core/config";
 export * from "./core/helpers";
 export * from "./core/types";
@@ -39,14 +38,14 @@ import { TestimonialAPI } from "./modules/testimonial";
 import { TransactionAPI } from "./modules/transaction";
 import { OrderAssignmentAPI } from "./modules/twibbon_assignment";
 import { TwibbonTemplateAPI } from "./modules/twibbon_template";
-
-// UserAPI and AuthAPI are server-only and excluded from this browser-safe index
-// to prevent bundling of Node-specific dependencies like crypto.
-// Use useFetcherData with nexus() builder in components instead.
+import { UserAPI } from "./modules/user.server";
+import { AuthAPI } from "./modules/user_auth.server";
 
 
 // optional: unified API wrapper
 export const API = {
+  USER: UserAPI,
+  USER_AUTH: AuthAPI,
   ORDERS: OrderAPI,
   ORDER_ITEMS: OrderItemAPI,
   ORDER_UPLOAD: OrderUploadAPI,

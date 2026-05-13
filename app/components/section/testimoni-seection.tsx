@@ -83,7 +83,7 @@ const CardTestimoniSection = ({
                 ))}
               </div>
               <blockquote className="text-gray-600 mb-4 line-clamp-4">
-                "{testimonial.comment}"
+                &quot;{testimonial.comment}&quot;
               </blockquote>
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-semibold">

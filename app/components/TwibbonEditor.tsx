@@ -29,13 +29,10 @@ interface ElementState {
 }
 
 const TwibbonEditor: React.FC<TwibbonEditorProps> = ({ template, onExport, onClose }) => {
-    const [elements, setElements] = useState<ElementState[]>([]);
     const [isExporting, setIsExporting] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
     const [previewData, setPreviewData] = useState<string | null>(null);
 
-    const [globalFont, setGlobalFont] = useState('Inter');
-    const [globalColor, setGlobalColor] = useState('#000000');
     const [syncText, setSyncText] = useState(false);
 
     const [zoom, setZoom] = useState(1);
@@ -49,21 +46,33 @@ const TwibbonEditor: React.FC<TwibbonEditorProps> = ({ template, onExport, onClo
     const visualWidth = isLanyard ? 900 : 350;
     const visualHeight = isLanyard ? 22 : 550;
 
-    useEffect(() => {
-        const initial = template.rules.map(rule => ({
+    const [elements, setElements] = useState<ElementState[]>(() => {
+        return template.rules.map(rule => ({
             id: rule.id,
             type: rule.type,
             x: 0, y: 0, scale: 1,
             value: rule.type === 'logo' ? '[]' : (rule.type === 'dropdown' ? (rule.options?.[0] || '') : ''),
             fontSize: isLanyard ? 16 : 24,
-            logoGap: isLanyard ? 5 : 32 // Default gaps
+            logoGap: isLanyard ? 5 : 32
         }));
-        setElements(initial);
+    });
 
+    const [globalFont, setGlobalFont] = useState(() => {
         const firstTextRule = template.rules.find(r => r.type === 'text');
-        if (firstTextRule) {
-            if (firstTextRule.fontFamily) setGlobalFont(firstTextRule.fontFamily);
-            if (firstTextRule.fontColor) setGlobalColor(firstTextRule.fontColor);
+        return (firstTextRule && firstTextRule.fontFamily) || 'Inter';
+    });
+
+    const [globalColor, setGlobalColor] = useState(() => {
+        const firstTextRule = template.rules.find(r => r.type === 'text');
+        return (firstTextRule && firstTextRule.fontColor) || '#000000';
+    });
+
+    useEffect(() => {
+        // We still need this to ensure fonts are inject/loaded if template changes without remount
+        // (though remounting via key is better)
+        const firstTextRule = template.rules.find(r => r.type === 'text');
+        if (firstTextRule && firstTextRule.fontFamily) {
+             // ... handle font injection if needed
         }
     }, [template]);
 

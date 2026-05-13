@@ -4,7 +4,7 @@ import { Loader2, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useFetcher, useNavigate } from "react-router";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth } from "~/config/firebase";
+import { auth } from "~/lib/firebase.client";
 import SlideInModal from "~/components/shared/modal/SlideInModal";
 import { toast } from "sonner";
 

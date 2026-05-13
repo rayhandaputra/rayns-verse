@@ -1,8 +1,79 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Package, ShoppingBag, Star, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Package, ShoppingBag, Star, X, ImageOff } from "lucide-react";
 import { safeParseArray } from "~/utils/utils";
 import { formatFullDate } from "~/constants";
+
+const ImageWithFallback = ({ src, alt, className, onClick }: { src: string; alt: string; className?: string; onClick?: () => void }) => {
+  const [error, setError] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // Reset when src changes
+  if (src !== currentSrc) {
+    setCurrentSrc(src);
+    setLoaded(false);
+    setError(false);
+    setIsLoadingSlow(false);
+  }
+
+  // Handle cached images
+  useEffect(() => {
+    if (imgRef.current?.complete && !loaded) {
+      setLoaded(true);
+      setIsLoadingSlow(false);
+    }
+  }, [src, loaded]);
+
+  useEffect(() => {
+    if (!src || loaded || error) return;
+    
+    // Timer to detect slow loading
+    const timer = setTimeout(() => {
+      if (!loaded && !error) {
+        setIsLoadingSlow(true);
+      }
+    }, 3000); 
+
+    return () => clearTimeout(timer);
+  }, [src, loaded, error]);
+
+  if (!src || error) {
+    return (
+      <div className={`flex items-center justify-center text-gray-300 flex-col gap-3 bg-gray-50 ${className}`} onClick={onClick}>
+        <ImageOff size={48} strokeWidth={1} />
+        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 text-center px-4">Gambar tidak tersedia</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`relative overflow-hidden ${className}`} key={src}>
+      {!loaded && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse flex flex-col items-center justify-center gap-2">
+          <Package className="text-gray-300" size={48} />
+          {isLoadingSlow && (
+            <span className="text-[8px] font-bold text-gray-400 uppercase animate-pulse">Memuat...</span>
+          )}
+        </div>
+      )}
+      <img
+        ref={imgRef}
+        src={src}
+        alt={alt}
+        className={`${className} transition-opacity duration-700 ${loaded ? "opacity-100" : "opacity-0"}`}
+        onLoad={() => {
+          setLoaded(true);
+          setIsLoadingSlow(false);
+        }}
+        onError={() => setError(true)}
+        onClick={onClick}
+      />
+    </div>
+  );
+};
 
 export const PublicPortfolio = ({ portfolioItems }: { portfolioItems: any[] }) => {
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
@@ -28,7 +99,7 @@ export const PublicPortfolio = ({ portfolioItems }: { portfolioItems: any[] }) =
     <section id="portfolio" className="py-32 bg-white">
       <div className="max-w-7xl mx-auto px-6 mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <span className="text-[#0097B2] font-bold text-sm tracking-widest uppercase">Portfolio</span>
+          <span className="text-[#0097B2] font-bold text-sm tracking-widest uppercase">Portofolio</span>
           <h2 className="text-3xl md:text-5xl font-black text-[#1E434C] mt-2">
             Produksi Terbaru
           </h2>
@@ -42,7 +113,7 @@ export const PublicPortfolio = ({ portfolioItems }: { portfolioItems: any[] }) =
         <div className="flex gap-10 px-8">
           {portfolioItems.length === 0 ? (
             <div className="w-full text-center text-gray-400 py-20 bg-[#F3F8FC] rounded-[40px] italic">
-              No documentation available yet.
+              Belum ada dokumentasi tersedia.
             </div>
           ) : (
             portfolioItems.map((item, idx) => {
@@ -61,18 +132,12 @@ export const PublicPortfolio = ({ portfolioItems }: { portfolioItems: any[] }) =
                 >
                   <div className="bg-[#F3F8FC] rounded-[48px] p-4 border border-[#1E434C]/5 shadow-sm hover:shadow-2xl transition-all duration-700">
                     <div className="w-full aspect-[4/3] rounded-[40px] overflow-hidden bg-gray-200 relative">
-                      {currentImg ? (
-                        <img
-                          src={currentImg}
-                          alt=""
-                          className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-700"
-                          onClick={() => setZoomedImage(currentImg)}
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-gray-300">
-                          <Package size={60} strokeWidth={1} />
-                        </div>
-                      )}
+                      <ImageWithFallback
+                        src={currentImg}
+                        alt=""
+                        className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-700"
+                        onClick={() => setZoomedImage(currentImg)}
+                      />
 
                       <div className="absolute top-6 right-6 bg-white/20 backdrop-blur-md text-white text-[10px] font-black tracking-widest px-3 py-1.5 rounded-full z-10 border border-white/20">
                         {formatFullDate(item.created_on)}
@@ -112,14 +177,14 @@ export const PublicPortfolio = ({ portfolioItems }: { portfolioItems: any[] }) =
                       <div className="flex items-center gap-2 text-[#0097B2] font-bold text-xs uppercase tracking-widest mb-4">
                         <ShoppingBag size={14} />
                         <span>
-                          {safeParseArray(item.order_items)?.reduce((acc, i) => acc + +i.qty, 0)} Units
+                          {safeParseArray(item.order_items)?.reduce((acc: number, i: any) => acc + +i.qty, 0)} Pcs
                         </span>
                       </div>
 
                       {item.review && (
-                        <div className="bg-white/60 backdrop-blur-sm p-5 rounded-[24px] border border-white text-xs relative">
+                        <div className="bg-white/60 backdrop-blur-sm p-5 rounded-[24px] border border-white text-xs relative text-left">
                           <div className="flex justify-between items-center mb-2">
-                            <span className="font-bold text-[#1E434C]">{item.pic_name || "Customer"}</span>
+                            <span className="font-bold text-[#1E434C]">{item.pic_name || "Pelanggan"}</span>
                             <div className="flex gap-0.5 text-[#0097B2]">
                               {Array.from({ length: item.rating || 5 }).map((_, i) => (
                                 <Star key={i} size={10} fill="currentColor" />

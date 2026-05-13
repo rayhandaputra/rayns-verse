@@ -167,24 +167,16 @@ const NotaView: React.FC<NotaViewProps> = ({
     }
   };
 
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    // Cek lebar layar atau user agent
-    const checkMobile = () => {
-      const userAgent =
-        typeof window.navigator === "undefined" ? "" : navigator.userAgent;
-      const mobile =
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          userAgent
-        );
-      setIsMobile(mobile || window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+  const isMobile = useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof window === "undefined") return () => {};
+      const mediaQuery = window.matchMedia("(max-width: 768px)");
+      mediaQuery.addEventListener("change", onStoreChange);
+      return () => mediaQuery.removeEventListener("change", onStoreChange);
+    },
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches,
+    () => false
+  );
 
   return (
     <>

@@ -54,7 +54,7 @@ export default function Footer() {
               <li><a href="#produk" className="text-sm text-gray-500 hover:text-[#0097B2] transition-colors">Produksi</a></li>
               <li><a href="#produk" className="text-sm text-gray-500 hover:text-[#0097B2] transition-colors">Daftar Harga</a></li>
               <li><a href="#kontak" className="text-sm text-gray-500 hover:text-[#0097B2] transition-colors">Kontak</a></li>
-              <li><button onClick={() => navigate("/login")} className="text-sm text-gray-500 hover:text-[#0097B2] transition-colors">Login Admin</button></li>
+              <li><button onClick={() => navigate("/login")} className="text-sm text-gray-500 hover:text-[#0097B2] transition-colors">Login</button></li>
             </ul>
           </div>
 

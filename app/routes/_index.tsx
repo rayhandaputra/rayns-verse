@@ -32,7 +32,7 @@
 // // import FooterSection from "~/components/shared/section/footer";
 
 import { Phone } from "lucide-react";
-import { useLoaderData } from "react-router";
+import { useLoaderData, useRouteLoaderData } from "react-router";
 import {
   ADMIN_WA,
   getWhatsAppLink,
@@ -100,10 +100,13 @@ export default function LandingPage() {
     };
   }>();
 
+  const rootData = useRouteLoaderData("root") as { user?: any };
+  const user = rootData?.user;
+
   return (
     <div className="min-h-screen bg-[#F3F8FC] selection:bg-[#0097B2]/30">
       <div className="max-w-[1600px] mx-auto bg-white shadow-2xl relative min-h-screen overflow-hidden">
-        <Navbar />
+        <Navbar session={user} />
 
         <PublicHero />
 

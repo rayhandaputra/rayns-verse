@@ -52,9 +52,11 @@ export default function ProductFullFormModal({
       })
   );
 
-  useEffect(() => {
+  const [prevDetail, setPrevDetail] = useState(detail);
+  if (detail !== prevDetail) {
+    setPrevDetail(detail);
     setState(defState);
-  }, [detail]);
+  }
 
   const defComponent = useMemo(() => {
     if (product_components?.length > 0) {
@@ -69,12 +71,13 @@ export default function ProductFullFormModal({
     return [defItem];
   }, [product_components]);
 
-  useEffect(() => {
-    setItems(defComponent);
-  }, [defComponent]);
-
-  // === SET ITEMS (DARI LOADER) ===
   const [items, setItems] = useState<any[]>(defComponent);
+
+  const [prevDefComponent, setPrevDefComponent] = useState(defComponent);
+  if (defComponent !== prevDefComponent) {
+    setPrevDefComponent(defComponent);
+    setItems(defComponent);
+  }
 
   // === HITUNG OTOMATIS ===
   const subtotal = items.reduce((a, b) => a + (b.subtotal || 0), 0);
@@ -252,7 +255,7 @@ export default function ProductFullFormModal({
                   loadOptions={loadOptionCommodity}
                   defaultOptions
                   onChange={(val: any) => {
-                    let copy = [...items];
+                    const copy = [...items];
                     copy[index] = {
                       ...item,
                       commodity_id: val.value,

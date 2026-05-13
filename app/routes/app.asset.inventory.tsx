@@ -241,15 +241,18 @@ export default function AssetInventoryPage() {
   useEffect(() => {
     if (actionData?.success) {
       toast.success(actionData.message || "Berhasil");
-      setIsModalOpen(false);
-      setEditingId(null);
-      setFormData({});
-      // Reload assets data
-      reloadAssets();
+      // Use setTimeout to ensure state updates happen outside the current update window
+      const timer = setTimeout(() => {
+        setIsModalOpen(false);
+        setEditingId(null);
+        setFormData({});
+        reloadAssets();
+      }, 0);
+      return () => clearTimeout(timer);
     } else if (actionData?.success === false) {
       toast.error(actionData.message || "Gagal");
     }
-  }, [actionData]);
+  }, [actionData, reloadAssets]);
 
   // ========== COMPUTED ==========
   // Map API response to Asset type

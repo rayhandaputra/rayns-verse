@@ -559,9 +559,9 @@ export const StockLogAPI = {
         };
 
         try {
-            let result;
+            let resultValue;
             if (!id) {
-                result = await APIProvider({
+                resultValue = await APIProvider({
                     endpoint: "insert",
                     method: "POST",
                     table: "stock_logs",
@@ -569,7 +569,7 @@ export const StockLogAPI = {
                     body: { data: newStockLog },
                 });
             } else {
-                result = await APIProvider({
+                resultValue = await APIProvider({
                     endpoint: "update",
                     method: "POST",
                     table: "stock_logs",
@@ -579,10 +579,10 @@ export const StockLogAPI = {
                         where: { id },
                     },
                 });
-                result.insert_id = id;
+                resultValue.insert_id = id;
             }
 
-            const stock_log_id = result.insert_id;
+            const stock_log_id = resultValue.insert_id;
 
             if (Array.isArray(items) && items.length > 0) {
                 console.log(items.map((item: any) => ({
@@ -625,7 +625,7 @@ export const StockLogAPI = {
     },
 
     update: async ({ req }: any) => {
-        let { id, stock_log, ...fields } = req.body || {};
+        const { id, stock_log, ...fields } = req.body || {};
 
         if (!id) {
             return { success: false, message: "ID stock log wajib diisi untuk update" };

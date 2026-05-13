@@ -161,9 +161,8 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
   const [pendingData, setPendingData] = useState<OrderFormData | null>(null);
 
   // ========== EFFECTS ==========
-  useEffect(() => {
-    setAccessCode(generateAccessCode(6));
-  }, [isKKN]);
+  // Removed access code auto-generation useEffect to satisfy linter
+  // Access code is now generated during clear/reset or specific transitions
 
   // ========== API LOADERS ==========
   const loadOptionProduct = async (search: string) => {
@@ -570,9 +569,9 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
             value={String(isKKN)}
             onChange={(val) => {
               const newVal = val === "true";
-              setIsKKN(newVal);
               handleClear();
               setIsKKN(newVal);
+              setAccessCode(generateAccessCode(6));
             }}
           />
         </div>

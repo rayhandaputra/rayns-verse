@@ -61,10 +61,8 @@ export function SelectBasic({
     onChange?.(v);
   };
 
-  const [client, setClient] = React.useState<boolean>(false);
-  React.useEffect(() => {
-    setClient(true);
-  }, []);
+  const subscribe = () => () => { };
+  const client = React.useSyncExternalStore(subscribe, () => true, () => false);
   if (!client) return null;
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { Loader2, Palette, FileText, Search, ChevronLeft, ChevronRight, Shirt, Users } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -9,7 +9,8 @@ import { nexus } from "~/lib/nexus-client";
 const KATALOG_PAGES = Array.from({ length: 16 }, (_, i) => `/katalog/${i}.png`);
 
 export default function KatalogPage() {
-  const [isClient, setIsClient] = useState(false);
+  const subscribe = () => () => { };
+  const isClient = useSyncExternalStore(subscribe, () => true, () => false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPage, setSelectedPage] = useState(0);
   const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set([0]));
@@ -17,10 +18,6 @@ export default function KatalogPage() {
   const { data: colorData, loading: colorsLoading } = useFetcherData({
     endpoint: nexus().module("SHIRT_COLOR").action("get").params({ size: 100 }).build(),
   });
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const goToPage = useCallback((index: number) => {
     if (index >= 0 && index < KATALOG_PAGES.length) {

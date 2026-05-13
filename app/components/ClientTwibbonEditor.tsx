@@ -25,23 +25,13 @@ const ClientTwibbonEditorPage: React.FC<TwibbonEditorPageProps> = ({
     onSaveResult,
     existingItems = []
 }) => {
-    // State lokal untuk template aktif (jika ingin bisa ganti template di dalam page ini, 
-    // tapi biasanya initialTemplate cukup)
-    const [currentTemplate, setCurrentTemplate] = useState<DesignTemplate | null>(initialTemplate);
-
-    useEffect(() => {
-        if (initialTemplate) {
-            setCurrentTemplate(initialTemplate);
-        }
-    }, [initialTemplate]);
-
     // Handler saat user klik "Export/Simpan" di dalam TwibbonEditor
     const handleExport = (base64: string, fileName: string, firstValue: string) => {
-        if (!currentTemplate) return;
+        if (!initialTemplate) return;
 
         // Logic penamaan file otomatis (cek duplikasi)
         // Misal format: "[TemplateName] NamaUser.png"
-        const baseFileName = `[${currentTemplate.name}] ${firstValue || 'Untitled'}`;
+        const baseFileName = `[${initialTemplate.name}] ${firstValue || 'Untitled'}`;
 
         let finalName = `${baseFileName}.png`;
 
@@ -69,7 +59,7 @@ const ClientTwibbonEditorPage: React.FC<TwibbonEditorPageProps> = ({
     };
 
     // Render State: Loading / Empty
-    if (!currentTemplate) {
+    if (!initialTemplate) {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-gray-50 text-gray-400">
                 <AlertCircle size={48} className="mb-4 opacity-50" />
@@ -97,7 +87,7 @@ const ClientTwibbonEditorPage: React.FC<TwibbonEditorPageProps> = ({
                         Editor Desain
                     </h1>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                        {currentTemplate.name}
+                        {initialTemplate.name}
                     </p>
                 </div>
 
@@ -121,7 +111,8 @@ const ClientTwibbonEditorPage: React.FC<TwibbonEditorPageProps> = ({
                 <div className="w-full h-full flex justify-center bg-gray-50/50">
                     <div className="w-full max-w-7xl h-full p-4 md:p-6 animate-scale-in">
                         <TwibbonEditor
-                            template={currentTemplate}
+                            key={initialTemplate.id}
+                            template={initialTemplate}
                             onExport={handleExport}
                             onClose={onClose || (() => { })}
                         />

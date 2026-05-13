@@ -104,7 +104,9 @@ export const slugifyBase = (s: string) => {
   s = (s || "").toLowerCase();
   try {
     s = s.normalize("NFD");
-  } catch { }
+  } catch {
+    // Fallback for environments where normalize is not available
+  }
   s = s.replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "");
   return s.slice(0, 63);
 };

@@ -180,25 +180,30 @@ const ClientUseEditorPage: React.FC<DrivePageProps> = ({
     initialFolderId, rootFolderId, isGuest = false
 }) => {
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(initialFolderId || rootFolderId || null);
+    const [prevInitialFolderId, setPrevInitialFolderId] = useState(initialFolderId);
+    
+    if (initialFolderId !== prevInitialFolderId) {
+        setPrevInitialFolderId(initialFolderId);
+        if (initialFolderId !== undefined) {
+             setCurrentFolderId(initialFolderId);
+             setActiveTab('files');
+        }
+    }
+
+    const [prevRootFolderId, setPrevRootFolderId] = useState(rootFolderId);
+    if (rootFolderId !== prevRootFolderId) {
+        setPrevRootFolderId(rootFolderId);
+        if (rootFolderId && !currentFolderId) {
+            setCurrentFolderId(rootFolderId);
+        }
+    }
+
     const [activeTab, setActiveTab] = useState<'files' | 'nota' | 'sizes' | 'twibbon-idcard' | 'twibbon-lanyard'>('files');
     const [showNewFolderModal, setShowNewFolderModal] = useState(false);
     const [newFolderName, setNewFolderName] = useState('');
     const [showVisualEditor, setShowVisualEditor] = useState<DesignTemplate | null>(null);
     const [zoomedFile, setZoomedFile] = useState<DriveItem | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        if (initialFolderId !== undefined) {
-            setCurrentFolderId(initialFolderId);
-            setActiveTab('files');
-        }
-    }, [initialFolderId]);
-
-    useEffect(() => {
-        if (rootFolderId && !currentFolderId) {
-            setCurrentFolderId(rootFolderId);
-        }
-    }, [rootFolderId, currentFolderId]);
 
     const effectiveOrderId = rootFolderId || currentFolderId;
     const currentOrder: any = effectiveOrderId ? orders.find(o => o.driveFolderId === effectiveOrderId || o.id === effectiveOrderId) : null;
@@ -220,7 +225,7 @@ const ClientUseEditorPage: React.FC<DrivePageProps> = ({
 
         const nameCounts: Record<string, number> = {};
         filesInFolder.forEach(f => {
-            let cleanName = f.name.replace(/\.png$/i, '').replace(/\s\(\d+\)$/, '').trim();
+            const cleanName = f.name.replace(/\.png$/i, '').replace(/\s\(\d+\)$/, '').trim();
             nameCounts[cleanName] = (nameCounts[cleanName] || 0) + 1;
         });
 

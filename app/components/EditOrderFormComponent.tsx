@@ -235,10 +235,11 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
   >({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sync state when order changes (essential for Edit pages)
-  useEffect(() => {
+  const [prevOrder, setPrevOrder] = useState(order);
+  if (order !== prevOrder) {
+    setPrevOrder(order);
     setForm(getInitialState());
-  }, [getInitialState]);
+  }
 
   // ========== API LOADERS ==========
   const loadOptions = {
