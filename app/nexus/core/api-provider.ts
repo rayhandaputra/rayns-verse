@@ -135,7 +135,7 @@ export class APIProviderBuilder {
         }
 
         const result = await response.json();
-        return result?.data;
+        return { ...result?.data, status: response.status, success: response.status === 200 ? true : false, error_message: result?.error_message };
       } catch (error: any) {
         console.log(error)
         clearTimeout(timeoutId);

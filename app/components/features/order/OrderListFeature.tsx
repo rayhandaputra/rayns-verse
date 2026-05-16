@@ -222,13 +222,13 @@ export default function OrderListFeature() {
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      
+
                       setIsUploadingFile(true);
                       setIsSlowConnection(false);
 
                       const slowTimer = setTimeout(() => {
                         setIsSlowConnection(true);
-                      }, 5000); 
+                      }, 20000);
 
                       try {
                         const response = await API.ASSET.upload(file);
@@ -244,7 +244,7 @@ export default function OrderListFeature() {
                       } catch (err: any) {
                         console.error("Network Upload error:", err);
                         let errorMessage = "Terjadi kesalahan jaringan saat mengunggah. Cek koneksi internet Anda.";
-                        
+
                         // Try to parse error if it's a JSON string from our standardized error handler
                         try {
                           const parsedError = JSON.parse(err.message);
@@ -252,7 +252,7 @@ export default function OrderListFeature() {
                         } catch {
                           errorMessage = err.message || errorMessage;
                         }
-                        
+
                         toast.error(errorMessage);
                       } finally {
                         clearTimeout(slowTimer);
