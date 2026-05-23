@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { TrendingUp, TrendingDown, Wallet, Plus, Download } from "lucide-react";
 import ChartLazy from "~/components/shared/chart/ChartLazy";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
-import { nexus } from "~/nexus/nexus-client";
 import { formatCurrency } from "~/utils/utils";
 import { TablePagination } from "~/components/ui/data-table";
 
@@ -14,29 +13,25 @@ export const CashflowDashboard: React.FC = () => {
 
   // Fetch Summary data (Income/Expense balance)
   const { data: balanceData } = useFetcherData({
-    endpoint: nexus()
-      .module("ACCOUNT_LEDGER_JOURNAL")
-      .action("report_finance")
-      .params({ year: filterYear })
-      .build(),
+    endpoint: "/api/nexus",
+    params: { module: "ACCOUNT_LEDGER_JOURNAL", action: "report_finance", year: filterYear },
   });
 
   // Fetch Transactions list
   const { data: transactionData, loading: loadingTrx } = useFetcherData({
-    endpoint: nexus()
-      .module("ACCOUNT_LEDGER_JOURNAL")
-      .action("get_transaction_balance")
-      .params({ 
-        year: filterYear,
-        page: page,
-        limit: 10
-      })
-      .build(),
+    endpoint: "/api/nexus",
+    params: {
+      module: "ACCOUNT_LEDGER_JOURNAL",
+      action: "get_transaction_balance",
+      year: filterYear,
+      page: page,
+      limit: 10,
+    },
   });
 
-  const balance = balanceData?.data || { income: 0, expense: 0 };
-  const transactions = transactionData?.data?.items || [];
-  const totalPages = transactionData?.data?.total_pages || 0;
+  const balance = balanceData?.items || { income: 0, expense: 0 };
+  const transactions = transactionData?.items || [];
+  const totalPages = transactionData?.total_pages || 0;
 
   const chartData = {
     series: [
@@ -185,7 +180,7 @@ export const CashflowDashboard: React.FC = () => {
               </tbody>
             </table>
           </div>
-          
+
           <div className="p-4 border-t border-gray-50 bg-gray-50/20">
             <TablePagination
               currentPage={page}

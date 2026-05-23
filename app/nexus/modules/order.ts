@@ -719,8 +719,6 @@ export const OrderAPI = {
           ],
           jrnlCode
         );
-
-        console.log("INSERT JOURNAL")
       }
       // account_code: accBank?.code || "1-101",
       //           account_name: accBank?.name || "Kas Utama (Cash on Hand)",

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { toast } from "sonner";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
-import { nexus } from "~/nexus/nexus-client";
 import { useModal } from "~/hooks";
 import Swal from "sweetalert2";
 import QRCode from "qrcode";
@@ -27,32 +26,32 @@ export function useOrderListLogic() {
   const [modal, setModal] = useModal();
   const [isUploadingFile, setIsUploadingFile] = useState(false);
 
+  // ✅ refactored: nexus() builder → useFetcherData langsung dengan params
   const { data: kknInstitutions, loading: loadingKknInstitutions } = useFetcherData({
-    endpoint: nexus().module("OVERVIEW").action("getKknInstitutions").build(),
+    endpoint: "/api/nexus",
+    params: { module: "OVERVIEW", action: "getKknInstitutions" },
   });
 
+  const ordersParams = {
+    module: "ORDERS",
+    action: "get",
+    page: page ? page - 1 : 0,
+    size: 100,
+    pagination: "true",
+    ...(viewMode === "kkn" ? { is_kkn: "1" } : { is_kkn: "0" }),
+    ...(filterYear && { year: filterYear }),
+    ...(viewMode === "kkn" && filterKknInstitution && { institution_id: filterKknInstitution }),
+    ...(sortBy && { sort: sortBy }),
+  };
+
   const { data: orders, reload } = useFetcherData({
-    endpoint: nexus()
-      .module("ORDERS")
-      .action("get")
-      .params({
-        page: page ? page - 1 : 0,
-        size: 100,
-        pagination: "true",
-        ...(viewMode === "kkn" ? { is_kkn: "1" } : { is_kkn: "0" }),
-        ...(filterYear && { year: filterYear }),
-        ...(viewMode === "kkn" && filterKknInstitution && { institution_id: filterKknInstitution }),
-        ...(sortBy && { sort: sortBy }),
-      })
-      .build(),
+    endpoint: "/api/nexus",
+    params: ordersParams,
   });
 
   const { data: bankList } = useFetcherData({
-    endpoint: nexus()
-      .module("ACCOUNT")
-      .action("get")
-      .params({ size: 100, pagination: "true", is_bank: "1" })
-      .build(),
+    endpoint: "/api/nexus",
+    params: { module: "ACCOUNT", action: "get", size: 100, pagination: "true", is_bank: "1" },
   });
 
   const { data: actionData, load: submitAction, loading: actionLoading } = useFetcherData({
@@ -157,7 +156,6 @@ export function useOrderListLogic() {
 
   const handleSubmitPaymentProof = (e: any) => {
     e.preventDefault();
-    console.log(modal?.data)
     if (isUploadingFile) {
       toast.error("Tunggu sebentar, file masih diunggah...");
       return;

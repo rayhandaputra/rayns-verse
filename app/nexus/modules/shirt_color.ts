@@ -41,8 +41,6 @@ export const ShirtColorAPI = {
             image_url: image_url || null,
         };
 
-        console.log("INSERT COLOR => ", newColor);
-
         try {
             await APIProvider(session)
                 .Endpoint("POST", "insert", "x_shirt_colors")

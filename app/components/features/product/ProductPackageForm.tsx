@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { CheckCircle2Icon, ChevronLeftIcon, PlusCircleIcon, Trash2Icon } from "lucide-react";
-import { useLoaderData, useNavigate, useActionData, Form } from "react-router";
+import { useLoaderData, useNavigate, useActionData, Form, useFetcher } from "react-router";
 import AsyncReactSelect from "react-select/async";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
@@ -9,7 +9,6 @@ import { Label } from "~/components/ui/label";
 import { TitleHeader } from "~/components/core/TitleHeader";
 import { AppBreadcrumb } from "~/components/core/AppBreadcrumb";
 import { toMoney } from "~/utils/utils";
-import { API_URL, API_KEY } from "~/nexus";
 
 export const ProductPackageForm: React.FC = () => {
   const { detail, items: currentItems } = useLoaderData() as any;
@@ -50,36 +49,42 @@ export const ProductPackageForm: React.FC = () => {
     return [defItem];
   });
 
-  const loadOptionInstitution = async (search: string) => {
-    try {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${API_KEY}`,
-        },
-        body: JSON.stringify({
-          action: "select",
-          table: "products",
-          columns: ["id", "name", "total_price"],
-          where: { deleted_on: "null", type: "single" },
-          search,
-          page: 0,
-          size: 50,
-        }),
-      });
-      const result = await response.json();
-      return result?.items?.map((v: any) => ({
-        ...v,
-        value: v?.id,
-        label: `${v?.abbr ? v?.abbr + "- " : ""}${v?.name}`,
-        name: v.name,
-        base_price: v.total_price
-      }));
-    } catch (error) {
-      console.log(error);
+  // Replace direct fetch() with /api/nexus via useFetcher
+  const searchFetcher = useFetcher();
+  const searchResolveRef = useRef<((value: any) => void) | null>(null);
+
+  useEffect(() => {
+    if (searchFetcher.state === "idle" && searchResolveRef.current && searchFetcher.data) {
+      const result = searchFetcher.data as any;
+      const items = result?.success ? (result.data?.items || result.data || []) : [];
+      searchResolveRef.current(items);
+      searchResolveRef.current = null;
     }
-  };
+  }, [searchFetcher.state, searchFetcher.data]);
+
+  const loadOptionInstitution = useCallback(
+    (search: string): Promise<any[]> =>
+      new Promise((resolve) => {
+        searchResolveRef.current = resolve;
+        const qs = new URLSearchParams({
+          module: "PRODUCT",
+          action: "get",
+          search: search || "",
+          size: "50",
+          pagination: "false",
+        }).toString();
+        searchFetcher.load(`/api/nexus?${qs}`);
+      }).then((items: any) =>
+        (Array.isArray(items) ? items : []).map((v: any) => ({
+          ...v,
+          value: v?.id,
+          label: `${v?.abbr ? v?.abbr + "- " : ""}${v?.name}`,
+          name: v.name,
+          base_price: v.total_price,
+        })),
+      ),
+    [searchFetcher],
+  );
 
   const subtotal = items.reduce((a, b) => a + (b.subtotal || 0), 0);
   const discount = Number(state.discount_value || 0);
@@ -282,7 +287,7 @@ export const ProductPackageForm: React.FC = () => {
               <div className="border-t border-dashed border-gray-100 my-4" />
 
               <div className="flex justify-between items-center mb-6">
-                <span className="text-sm font-bold text-gray-900 leading-tight">Total Harga<br/><span className="text-[10px] font-normal text-gray-400 font-sans tracking-normal">Sudah termasuk pajak & biaya</span></span>
+                <span className="text-sm font-bold text-gray-900 leading-tight">Total Harga<br /><span className="text-[10px] font-normal text-gray-400 font-sans tracking-normal">Sudah termasuk pajak & biaya</span></span>
                 <span className="text-xl font-bold text-indigo-600">Rp {toMoney(total)}</span>
               </div>
 

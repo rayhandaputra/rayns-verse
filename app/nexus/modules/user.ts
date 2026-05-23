@@ -146,7 +146,6 @@ export const UserAPI = {
       modified_on: new Date().toISOString(),
     };
 
-    console.log("updatedData => ", updatedData);
     const result = await APIProvider(session)
       .Endpoint("POST", "update", "users")
       .Data({

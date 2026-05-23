@@ -335,7 +335,6 @@ export const ProductAPI = {
         affected: result.affected_rows,
       };
     } catch (err: any) {
-      console.log(err);
       return { success: false, message: err.message };
     }
   },

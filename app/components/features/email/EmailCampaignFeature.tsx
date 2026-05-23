@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useFetcher } from "react-router";
 import {
   Pencil,
   Send,
@@ -179,13 +180,12 @@ function EmailListItem({
   return (
     <div
       onClick={onClick}
-      className={`group px-4 py-3 cursor-pointer transition-all duration-150 border-b border-gray-50 ${
-        isSelected
-          ? "bg-blue-50 border-l-[3px] border-l-blue-600"
-          : !email.seen
+      className={`group px-4 py-3 cursor-pointer transition-all duration-150 border-b border-gray-50 ${isSelected
+        ? "bg-blue-50 border-l-[3px] border-l-blue-600"
+        : !email.seen
           ? "bg-blue-50/40 hover:bg-blue-50/60 border-l-[3px] border-l-transparent"
           : "bg-white hover:bg-gray-50 border-l-[3px] border-l-transparent"
-      }`}
+        }`}
     >
       <div className="flex items-start gap-3">
         <Avatar className="w-9 h-9 flex-shrink-0 mt-0.5">
@@ -196,9 +196,8 @@ function EmailListItem({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-0.5">
             <span
-              className={`text-sm truncate ${
-                !email.seen ? "font-bold text-gray-900" : "font-medium text-gray-700"
-              }`}
+              className={`text-sm truncate ${!email.seen ? "font-bold text-gray-900" : "font-medium text-gray-700"
+                }`}
             >
               {email.sender}
             </span>
@@ -207,9 +206,8 @@ function EmailListItem({
             </span>
           </div>
           <p
-            className={`text-sm truncate ${
-              !email.seen ? "font-semibold text-gray-800" : "text-gray-600"
-            }`}
+            className={`text-sm truncate ${!email.seen ? "font-semibold text-gray-800" : "text-gray-600"
+              }`}
           >
             {email.subject}
           </p>
@@ -579,6 +577,15 @@ export default function EmailCampaignFeature({
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const [isReadLoading, setIsReadLoading] = useState(false);
 
+  // Fetcher for refresh mailbox (re-trigger loader via route action)
+  const refreshFetcher = useFetcher();
+
+  // Fetcher for read email body
+  const readBodyFetcher = useFetcher();
+
+  // Fetcher for send email
+  const sendFetcher = useFetcher();
+
   useEffect(() => {
     setTimeout(() => {
       setClient(true);
@@ -601,30 +608,79 @@ export default function EmailCampaignFeature({
     }
   }, [mailbox]);
 
-  const fetchEmails = async (account?: string) => {
-    setIsRefreshing(true);
-    try {
-      const url = isCEO
-        ? `https://data.kinau.id/mailbox.php?email=${encodeURIComponent(
-            account || selectedAccount
-          )}`
-        : "https://data.kinau.id/mailbox.php";
-      const response = await fetch(url);
-      const data: MailboxResponse = await response.json();
-      if (data.status && data.data) {
-        const inboxEmails = transformEmailData(data.data.inbox, "Inbox");
-        const spamEmails = transformEmailData(data.data.spam, "Spam");
-        const sentApiEmails = transformEmailData(data.data.sent || [], "Sent");
+  // Sync refresh fetcher
+  useEffect(() => {
+    if (refreshFetcher.state === "idle" && refreshFetcher.data) {
+      const result = refreshFetcher.data as any;
+      if (result?.mailbox?.data) {
+        const m = result.mailbox;
+        const inboxEmails = transformEmailData(m.data.inbox, "Inbox");
+        const spamEmails = transformEmailData(m.data.spam, "Spam");
+        const sentApiEmails = transformEmailData(m.data.sent || [], "Sent");
         setEmails([...inboxEmails, ...spamEmails, ...sentApiEmails]);
         setSelectedEmail(null);
       }
-    } catch (err) {
-      console.error("Refresh error:", err);
-      toast.error("Gagal memuat email");
-    } finally {
       setIsRefreshing(false);
     }
-  };
+  }, [refreshFetcher.state, refreshFetcher.data]);
+
+  // Sync read body fetcher
+  useEffect(() => {
+    if (readBodyFetcher.state === "idle" && readBodyFetcher.data) {
+      const result = readBodyFetcher.data as any;
+      setIsReadLoading(false);
+      if (result?.status && result?.data) {
+        // Update email body in emails array
+        const bodyData = result.data;
+        setEmails((prev) =>
+          prev.map((e) =>
+            e.uid === bodyData.uid ? { ...e, body: bodyData.body } : e
+          )
+        );
+      }
+    }
+  }, [readBodyFetcher.state, readBodyFetcher.data]);
+
+  // Sync send fetcher
+  useEffect(() => {
+    if (sendFetcher.state === "idle" && sendFetcher.data) {
+      const result = sendFetcher.data as any;
+      setIsSending(false);
+      if (result?.status) {
+        // Update sent email status based on tempId stored in fetcher
+        setSentEmails((prev) =>
+          prev.map((e) =>
+            e.status === "pending" ? { ...e, status: "sent" } : e
+          )
+        );
+        toast.success(result.message || "Email berhasil dikirim!");
+      } else {
+        setSentEmails((prev) =>
+          prev.map((e) =>
+            e.status === "pending" ? { ...e, status: "failed" } : e
+          )
+        );
+        toast.error(result.error_message || "Gagal mengirim email");
+      }
+    }
+  }, [sendFetcher.state, sendFetcher.data]);
+
+  // Refresh: re-trigger route loader via fetcher
+  const fetchEmails = useCallback(
+    (account?: string) => {
+      setIsRefreshing(true);
+      const acct = account || selectedAccount;
+      refreshFetcher.submit(
+        { module: "EMAIL", action: "getMailbox", email: acct },
+        {
+          method: "POST",
+          action: "/api/nexus",
+          encType: "application/x-www-form-urlencoded",
+        }
+      );
+    },
+    [selectedAccount, refreshFetcher]
+  );
 
   const handleAccountChange = (account: string) => {
     setSelectedAccount(account);
@@ -636,127 +692,71 @@ export default function EmailCampaignFeature({
     setMobileShowDetail(true);
   };
 
+  // Fetch email body when selectedEmail changes
   useEffect(() => {
-    const fetchBody = async () => {
-      if (!selectedEmail) return;
-      const email = emails.find((e) => e.uid === selectedEmail);
-      if (email && email.uid && !email.body) {
-        setIsReadLoading(true);
-        try {
-          const url = isCEO
-            ? `https://data.kinau.id/read_email_v3.php?email=${encodeURIComponent(
-                selectedAccount
-              )}&read_uid=${email.uid}&folder=${
-                email.folder === "Inbox"
-                  ? "INBOX"
-                  : email.folder === "Spam"
-                  ? "INBOX.spam"
-                  : "INBOX.Sent"
-              }`
-            : `https://data.kinau.id/read_email_v3.php?read_uid=${
-                email.uid
-              }&folder=${
-                email.folder === "Inbox"
-                  ? "INBOX"
-                  : email.folder === "Spam"
-                  ? "INBOX.spam"
-                  : "INBOX.Sent"
-              }`;
-
-          const response = await fetch(url);
-          const result = await response.json();
-
-          if (result.status && result.data) {
-            const allNewEmails = [
-              ...transformEmailData(result.data.inbox, "Inbox"),
-              ...transformEmailData(result.data.spam, "Spam"),
-              ...transformEmailData(result.data.sent || [], "Sent"),
-            ];
-
-            const updatedCurrentEmail = allNewEmails.find(
-              (e) => e.uid === email.uid
-            );
-
-            if (updatedCurrentEmail) {
-              setEmails((prev) =>
-                prev.map((old) =>
-                  old.uid === updatedCurrentEmail.uid
-                    ? updatedCurrentEmail
-                    : old
-                )
-              );
-            }
-          }
-        } catch (err) {
-          console.error("Error reading email body:", err);
-        } finally {
-          setIsReadLoading(false);
+    if (!selectedEmail) return;
+    const email = emails.find((e) => e.uid === selectedEmail);
+    if (email && email.uid && !email.body) {
+      setIsReadLoading(true);
+      const folder =
+        email.folder === "Inbox"
+          ? "INBOX"
+          : email.folder === "Spam"
+            ? "INBOX.spam"
+            : "INBOX.Sent";
+      readBodyFetcher.submit(
+        {
+          module: "EMAIL",
+          action: "readEmail",
+          email: isCEO ? selectedAccount : "official@kinau.id",
+          read_uid: String(email.uid),
+          folder: folder,
+        },
+        {
+          method: "POST",
+          action: "/api/nexus",
+          encType: "application/x-www-form-urlencoded",
         }
-      }
-    };
-
-    fetchBody();
+      );
+    }
   }, [selectedEmail, isCEO, selectedAccount]);
 
-  const handleSendEmail = async (data: {
-    to: string;
-    subject: string;
-    body: string;
-    fromName: string;
-  }) => {
-    const tempId = Date.now().toString();
-    const newSentEmail: SentEmail = {
-      id: tempId,
-      to: data.to,
-      subject: data.subject,
-      body: data.body,
-      fromName: data.fromName,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-    };
-    setSentEmails((prev) => [newSentEmail, ...prev]);
-    setComposeOpen(false);
-    toast.info("Mengirim email...");
-
-    setIsSending(true);
-    try {
-      const payload: Record<string, string> = {
+  const handleSendEmail = useCallback(
+    (data: { to: string; subject: string; body: string; fromName: string }) => {
+      const tempId = Date.now().toString();
+      const newSentEmail: SentEmail = {
+        id: tempId,
         to: data.to,
         subject: data.subject,
         body: data.body,
+        fromName: data.fromName,
+        status: "pending",
+        createdAt: new Date().toISOString(),
       };
-      if (data.fromName) {
-        payload.from_name = data.fromName;
-      }
+      setSentEmails((prev) => [newSentEmail, ...prev]);
+      setComposeOpen(false);
+      toast.info("Mengirim email...");
 
-      const response = await fetch("https://data.kinau.id/send_email.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const result = await response.json();
-
-      if (result.status) {
-        setSentEmails((prev) =>
-          prev.map((e) => (e.id === tempId ? { ...e, status: "sent" } : e))
-        );
-        toast.success(result.message || "Email berhasil dikirim!");
-      } else {
-        setSentEmails((prev) =>
-          prev.map((e) => (e.id === tempId ? { ...e, status: "failed" } : e))
-        );
-        toast.error(result.error || "Gagal mengirim email");
-      }
-    } catch (err) {
-      console.log(err);
-      setSentEmails((prev) =>
-        prev.map((e) => (e.id === tempId ? { ...e, status: "failed" } : e))
+      setIsSending(true);
+      sendFetcher.submit(
+        {
+          module: "EMAIL",
+          action: "sendEmail",
+          email: isCEO ? selectedAccount : "official@kinau.id",
+          to: data.to,
+          subject: data.subject,
+          body: data.body,
+          from_name: data.fromName || "",
+        },
+        {
+          method: "POST",
+          action: "/api/nexus",
+          encType: "application/x-www-form-urlencoded",
+        }
       );
-      toast.error("Gagal mengirim email. Periksa koneksi internet.");
-    } finally {
-      setIsSending(false);
-    }
-  };
+    },
+    [isCEO, selectedAccount, sendFetcher]
+  );
 
   const folderMap: Record<string, string> = {
     inbox: "Inbox",
@@ -767,7 +767,9 @@ export default function EmailCampaignFeature({
     (e) => e.folder === folderMap[selectedFolder]
   );
   const selectedEmailData = emails.find((e) => e.uid === selectedEmail);
-  const unreadCount = emails.filter((e) => e.folder === "Inbox" && !e.seen).length;
+  const unreadCount = emails.filter(
+    (e) => e.folder === "Inbox" && !e.seen
+  ).length;
 
   function prepareEmailBody(html: string): string {
     if (!html) return "";
@@ -870,9 +872,8 @@ export default function EmailCampaignFeature({
 
       <div className="flex h-[calc(100vh-200px)] min-h-[500px]">
         <div
-          className={`w-full md:w-80 border-r border-gray-200 flex flex-col bg-white flex-shrink-0 ${
-            mobileShowDetail ? "hidden md:flex" : "flex"
-          }`}
+          className={`w-full md:w-80 border-r border-gray-200 flex flex-col bg-white flex-shrink-0 ${mobileShowDetail ? "hidden md:flex" : "flex"
+            }`}
         >
           <Tabs value={selectedFolder} onValueChange={setSelectedFolder}>
             <div className="px-3 pt-3 pb-2 border-b border-gray-100">
@@ -954,9 +955,8 @@ export default function EmailCampaignFeature({
         </div>
 
         <div
-          className={`flex-1 flex flex-col bg-gray-50/50 min-w-0 overflow-hidden ${
-            mobileShowDetail ? "flex" : "hidden md:flex"
-          }`}
+          className={`flex-1 flex flex-col bg-gray-50/50 min-w-0 overflow-hidden ${mobileShowDetail ? "flex" : "hidden md:flex"
+            }`}
         >
           {selectedEmailData ? (
             <>
@@ -1009,7 +1009,7 @@ export default function EmailCampaignFeature({
                             {selectedEmailData.sender}
                           </span>
                           <span className="text-xs text-gray-400 truncate hidden sm:inline">
-                            &lt;{selectedEmailData.senderEmail}&gt;
+                            {'<'}{selectedEmailData.senderEmail}{'>'}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5">

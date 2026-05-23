@@ -69,7 +69,6 @@ export const AccountAPI = {
             data: createdOrder,
           })
           .Result();
-        console.log("CREATE RESULT => ", result);
 
         return {
           success: true,
@@ -77,7 +76,6 @@ export const AccountAPI = {
           affected: result.affected_rows,
         };
       } catch (err: any) {
-        console.error("❌ ERROR AccountAPI.create_update:", err);
         return { success: false, message: err.message };
       }
     } else {

@@ -1,6 +1,7 @@
 import { useLoaderData, type LoaderFunction } from "react-router";
 import { requireAuth } from "~/utils/session.server";
 import EmailCampaignFeature from "~/components/features/email/EmailCampaignFeature";
+import { API } from "~/nexus/index.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const auth = await requireAuth(request);
@@ -11,15 +12,15 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   let mailbox = null;
   let fetchError = null;
-  try {
-    const url = isCEO
-      ? "https://data.kinau.id/mailbox.php?email=official@kinau.id"
-      : "https://data.kinau.id/mailbox.php";
-    const response = await fetch(url);
-    if (!response.ok) throw new Error("Failed to fetch mailbox");
-    mailbox = await response.json();
-  } catch (error) {
-    console.error("Mailbox fetch error:", error);
+
+  const result = await API.EMAIL.getMailbox({
+    session: null,
+    req: { query: isCEO ? { email: "official@kinau.id" } : {} },
+  });
+
+  if (result.status) {
+    mailbox = result.data;
+  } else {
     fetchError = "Gagal memuat email";
   }
 

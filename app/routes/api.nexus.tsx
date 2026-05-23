@@ -33,12 +33,16 @@ interface NexusRequest {
 }
 
 /**
- * Validates and extracts nexus request parameters
+ * Validates and extracts nexus request parameters from URL search params.
+ * For POST requests, also accepts module/action from parsed body as fallback.
  */
-function parseNexusRequest(request: Request): NexusRequest {
+function parseNexusRequest(
+  request: Request,
+  body?: Record<string, any>
+): NexusRequest {
   const url = new URL(request.url);
-  const module = url.searchParams.get("module") as keyof typeof API;
-  const action = url.searchParams.get("action") || "get";
+  const module = (url.searchParams.get("module") || body?.module) as keyof typeof API;
+  const action = url.searchParams.get("action") || body?.action || "get";
   const requiresAuth = url.searchParams.get("auth") !== "false";
 
   if (!module) {
@@ -176,8 +180,21 @@ export const loader: LoaderFunction = async ({ request }) => {
  */
 export const action: ActionFunction = async ({ request }) => {
   try {
-    const { module, action: actionName, requiresAuth } = parseNexusRequest(request);
     const queryParams = extractQueryParams(request);
+
+    // Parse body FIRST so we can extract module/action from it as fallback
+    let body: Record<string, any> = {};
+    const contentType = request.headers.get("content-type");
+
+    if (contentType?.includes("application/json")) {
+      body = await request.json();
+    } else if (contentType?.includes("application/x-www-form-urlencoded")) {
+      const formData = await request.formData();
+      body = Object.fromEntries(formData);
+    }
+
+    // Parse nexus request — supports module/action from URL or body
+    const { module, action: actionName, requiresAuth } = parseNexusRequest(request, body);
 
     // Handle authentication
     let auth;
@@ -189,23 +206,15 @@ export const action: ActionFunction = async ({ request }) => {
 
     const { user = {}, token = null } = auth || {};
 
-    // Parse body for POST requests
-    let body = {};
-    const contentType = request.headers.get("content-type");
-
-    if (contentType?.includes("application/json")) {
-      body = await request.json();
-    } else if (contentType?.includes("application/x-www-form-urlencoded")) {
-      const formData = await request.formData();
-      body = Object.fromEntries(formData);
-    }
+    // Remove nexus-routing fields from body before passing to module
+    const { module: _m, action: _a, auth: _auth, ...cleanBody } = body;
 
     // Execute the API call
     const result = await executeModuleAction(module, actionName, {
       session: { user, token },
       req: {
         query: queryParams,
-        body,
+        body: cleanBody,
       },
     });
 

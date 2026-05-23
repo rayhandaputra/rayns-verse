@@ -14,6 +14,7 @@ import { CommodityAPI } from "./modules/commodity";
 import { CommodityStockAPI } from "./modules/commodity_stock";
 import { ComponentsAPI } from "./modules/components";
 import { DiscountAPI } from "./modules/discount_codes";
+import { EmailAPI } from "./modules/email";
 import { EmployeeAPI } from "./modules/employee";
 import { EmployeeAttendanceAPI } from "./modules/employee_attendance";
 import { EmployeeSalaryAPI } from "./modules/employee_salary";
@@ -82,4 +83,5 @@ export const API = {
   SHIRT_COLOR: ShirtColorAPI,
   TWIBBON_TEMPLATE: TwibbonTemplateAPI,
   TWIBBON_ASSIGNMENT: OrderAssignmentAPI,
+  EMAIL: EmailAPI,
 };
