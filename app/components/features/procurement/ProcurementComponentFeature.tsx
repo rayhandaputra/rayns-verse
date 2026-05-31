@@ -352,13 +352,23 @@ export default function ProcurementComponentFeature() {
                                     {+(m?.is_affected_side ?? 0) === 1 ? "Ya" : "Tidak"}
                                 </td>
                                 <td className="px-8 py-6 text-center">
-                                    <div className="flex justify-center gap-2">
-                                        <button onClick={() => handleEdit(m)} className="text-blue-600 hover:bg-blue-100 p-2.5 bg-blue-50 rounded-2xl transition">
-                                            <Edit2 size={18} />
-                                        </button>
-                                        <button onClick={() => handleDelete(m.id, m.commodity_name)} className="text-red-400 hover:bg-red-100 p-2.5 bg-red-50 rounded-2xl transition">
-                                            <Trash2 size={18} />
-                                        </button>
+                                    <div className="flex items-center justify-end gap-2">
+                                        <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-slate-100">
+                                            <button
+                                                title="Edit"
+                                                onClick={() => handleEdit(m)}
+                                                className="p-2 text-slate-500 hover:text-blue-500 hover:bg-white rounded transition-all"
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                title="Hapus"
+                                                onClick={() => handleDelete(m.id, m.commodity_name)}
+                                                className="p-2 text-slate-500 hover:text-red-500 hover:bg-white rounded transition-all"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>

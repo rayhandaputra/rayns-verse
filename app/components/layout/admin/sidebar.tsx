@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useState } from "react";
 import { cn } from "~/lib/utils";
 import { ChevronRight, Menu } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { Icons } from "~/components/icon/asset";
+import { Icons } from "~/components/shared/icon/asset";
 import { Link, useLocation } from "react-router"; // FIXED: harus dari react-router-dom
 
 type NavItem = {

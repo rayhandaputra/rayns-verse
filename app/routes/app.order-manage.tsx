@@ -32,7 +32,6 @@ export const action: ActionFunction = async ({ request }) => {
       },
     });
   } catch (error) {
-    console.log(error);
     return Response.json({
       success: false,
       error_message: "Terjadi kesalahan saat menyimpan pesanan",

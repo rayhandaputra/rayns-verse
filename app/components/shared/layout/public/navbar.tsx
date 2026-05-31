@@ -30,7 +30,6 @@ export default function Navbar({ session }: { session: any }) {
   };
 
   useEffect(() => {
-    console.log("Fetcher State:", fetcher.state);
     if (fetcher.state === "idle" && fetcher.data) {
       if (fetcher.data.error) {
         toast.error(fetcher.data.error);

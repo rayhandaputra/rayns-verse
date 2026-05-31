@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Folder, PencilLineIcon, Plus, PlusCircleIcon, Trash2Icon, X } from "lucide-react";
+import { Edit2, Folder, Plus, PlusCircleIcon, Trash2, X } from "lucide-react";
 import { useFetcher, useLoaderData } from "react-router";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
@@ -8,7 +8,7 @@ import { useModal } from "~/hooks/use-modal";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Modal } from "~/components/shared/modal/Modal";
+import ModalShell from "~/components/modal/ModalShell";
 import TableComponent from "~/components/shared/table/Table";
 
 type DriveFolder = {
@@ -162,25 +162,25 @@ export default function ProductCategoryManager() {
     {
       name: "Aksi",
       cell: (row: any) => (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="text-blue-700"
-            onClick={() =>
-              setModal({ ...modal, open: true, key: "update", data: row })
-            }
-          >
-            <PencilLineIcon className="w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="text-red-700"
-            onClick={() => handleDelete(row)}
-          >
-            <Trash2Icon className="w-4" />
-          </Button>
+        <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-slate-100">
+            <button
+              title="Edit"
+              onClick={() =>
+                setModal({ ...modal, open: true, key: "update", data: row })
+              }
+              className="p-2 text-slate-500 hover:text-blue-500 hover:bg-white rounded transition-all"
+            >
+              <Edit2 className="w-4 h-4" />
+            </button>
+            <button
+              title="Hapus"
+              onClick={() => handleDelete(row)}
+              className="p-2 text-slate-500 hover:text-red-500 hover:bg-white rounded transition-all"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       ),
     },
@@ -201,7 +201,7 @@ export default function ProductCategoryManager() {
       <TableComponent columns={columns} data={table} />
 
       {(modal?.key === "create" || modal?.key === "update") && (
-        <Modal
+        <ModalShell
           open={modal?.open}
           onClose={() => setModal({ ...modal, open: false })}
           title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Kategori Produk`}
@@ -338,7 +338,7 @@ export default function ProductCategoryManager() {
               </Button>
             </div>
           </fetcher.Form>
-        </Modal>
+        </ModalShell>
       )}
     </>
   );

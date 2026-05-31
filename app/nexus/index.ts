@@ -1,5 +1,6 @@
 export * from "./core/callApi";
 export * from "./core/api-provider";
+export * from "./core/api-provider-v2";
 export * from "./core/config";
 export * from "./core/helpers";
 export * from "./core/types";
@@ -23,7 +24,6 @@ import { InventoryAssetAPI } from "./modules/inventory_assets";
 import { OrderAPI } from "./modules/order";
 import { OrderItemAPI } from "./modules/order_item";
 import { OrderUploadAPI } from "./modules/order_upload";
-import { OverviewAPI } from "./modules/overview";
 import { ProductAPI } from "./modules/product";
 import { ProductCategoryAPI } from "./modules/product_category";
 import { ProductComponentAPI } from "./modules/product_component";
@@ -67,7 +67,6 @@ export const API = {
   PRODUCT_PACKAGE_ITEM: ProductPackageItemsAPI,
   PRODUCT_PRICE_RULES: ProductPriceRulesAPI,
   CMS_CONTENT: CmsContentAPI,
-  OVERVIEW: OverviewAPI,
   DISCOUNT: DiscountAPI,
   TESTIMONIAL: TestimonialAPI,
   TRANSACTION: TransactionAPI,

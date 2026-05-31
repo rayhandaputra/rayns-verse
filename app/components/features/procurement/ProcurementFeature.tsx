@@ -39,7 +39,6 @@ export default function ProcurementFeature() {
                 label: v?.name
             }))
         } catch (err) {
-            console.log(err)
             return []
         }
     };

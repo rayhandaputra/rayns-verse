@@ -128,9 +128,9 @@ export default function CustomerOrderFeature({
   }, [state, pricePerUnit, fetcher, updateState]);
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-background max-w-md mx-auto relative overflow-hidden">
+    <div className="flex flex-col bg-background relative min-h-[calc(100vh-8rem)]">
       {/* Main Content Area */}
-      <div className="flex-1 overflow-hidden pb-14">
+      <div className="flex-1 overflow-hidden pb-16 md:pb-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={state.step}

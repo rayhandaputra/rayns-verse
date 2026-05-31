@@ -180,7 +180,6 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
         label: `${item?.name}`,
       }));
     } catch (error) {
-      console.log(error);
       return [];
     }
   };
@@ -204,7 +203,6 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
         label: `${item?.abbr ? item?.abbr + " - " : ""}${item?.name}`,
       }));
     } catch (error) {
-      console.log(error);
       return [];
     }
   };

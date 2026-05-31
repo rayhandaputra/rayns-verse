@@ -22,7 +22,6 @@ export const loader: LoaderFunction = async () => {
             },
         };
     } catch (err) {
-        console.log(err);
         return { table: { items: [], total: 0 } };
     }
 };

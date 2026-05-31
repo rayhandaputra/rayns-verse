@@ -1,90 +1,81 @@
 
 import React from 'react';
-import { Upload, X, Loader2, Trash2 } from 'lucide-react';
+import { Upload, X, Loader2 } from 'lucide-react';
 import { dateFormat } from '~/utils/dateFormatter';
 import { uploadFile } from '~/utils/utils';
+import ModalShell from '~/components/modal/ModalShell';
 
 export const ProofModals = ({ modal, setModal, handleSubmitPaymentProof, actionLoading }: any) => {
     if (!modal.open) return null;
 
-    if (modal.type === "upload_payment_proof") {
-        const isKaos = modal.data?.target_field?.includes("kaos");
-        const isDP = modal.data?.target_field?.includes("dp");
-        const title = `Upload Bukti ${isKaos ? "Kaos" : "Sablon"} (${isDP ? "DP" : "Lunas"})`;
+    const isKaos = modal.data?.target_field?.includes("kaos");
+    const isDP = modal.data?.target_field?.includes("dp");
 
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8">
-                    <h3 className="text-lg font-black text-gray-800 mb-6">{title}</h3>
-                    <form onSubmit={handleSubmitPaymentProof} className="space-y-6">
-                        <div>
-                            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">File Bukti Pembayaran</label>
-                            <input type="file" accept="image/*" className={`w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase outline-none ${isKaos ? 'file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100' : 'file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100'}`}
-                                onChange={async (e) => {
-                                    const file = e.target.files?.[0];
-                                    if (!file) return;
-                                    const url = await uploadFile(file);
-                                    if (url) setModal({ ...modal, data: { ...modal.data, file: url } });
-                                }}
-                                required
-                            />
-                        </div>
-                        <div className="flex gap-3 pt-2">
-                            <button type="button" onClick={() => setModal({ ...modal, open: false, type: "" })} className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-black uppercase">Batal</button>
-                            <button type="submit" disabled={actionLoading} className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-black uppercase flex items-center justify-center gap-2">
-                                {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />} Simpan
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        );
-    }
+    return (
+        <>
+            <ModalShell
+                open={modal.open && modal.type === "upload_payment_proof"}
+                onClose={() => setModal({ ...modal, open: false, type: "" })}
+                title={`Upload Bukti ${isKaos ? "Kaos" : "Sablon"} (${isDP ? "DP" : "Lunas"})`}
+                size="sm"
+            >
+                <form onSubmit={handleSubmitPaymentProof} className="space-y-6">
+                    <div>
+                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">File Bukti Pembayaran</label>
+                        <input type="file" accept="image/*" className={`w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase outline-none ${isKaos ? 'file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100' : 'file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100'}`}
+                            onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const url = await uploadFile(file);
+                                if (url) setModal({ ...modal, data: { ...modal.data, file: url } });
+                            }}
+                            required
+                        />
+                    </div>
+                    <div className="flex gap-3 pt-2">
+                        <button type="button" onClick={() => setModal({ ...modal, open: false, type: "" })} className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-black uppercase">Batal</button>
+                        <button type="submit" disabled={actionLoading} className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-black uppercase flex items-center justify-center gap-2">
+                            {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />} Simpan
+                        </button>
+                    </div>
+                </form>
+            </ModalShell>
 
-    if (modal.type === "view_payment_proof") {
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 animate-fade-in" onClick={() => setModal({ ...modal, open: false, type: "" })}>
-                <div className="bg-white rounded-3xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-                        <h3 className="font-black text-xl text-gray-800">Galeri Bukti Pembayaran</h3>
-                        <button onClick={() => setModal({ ...modal, open: false, type: "" })} className="p-2 hover:bg-gray-100 rounded-full text-gray-400"><X size={24} /></button>
+            <ModalShell
+                open={modal.open && modal.type === "view_payment_proof"}
+                onClose={() => setModal({ ...modal, open: false, type: "" })}
+                title="Galeri Bukti Pembayaran"
+                size="4xl"
+            >
+                <div className="space-y-6">
+                    <div>
+                        <h4 className="text-sm font-black text-blue-600 uppercase tracking-widest mb-4 border-b border-blue-50 pb-2">Bukti Pembayaran Kaos</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <ProofImageCard label="Bukti DP Kaos" url={modal?.data?.kaos_payment_proof_dp} date={modal.data?.modified_on} onZoom={() => setModal({ open: true, type: "zoom_payment_proof", data: { payment_proof: modal.data.kaos_payment_proof_dp } })} />
+                            <ProofImageCard label="Bukti Lunas Kaos" url={modal?.data?.kaos_payment_proof_paid} date={modal.data?.modified_on} onZoom={() => setModal({ open: true, type: "zoom_payment_proof", data: { payment_proof: modal.data.kaos_payment_proof_paid } })} />
+                        </div>
                     </div>
 
-                    <div className="space-y-6">
-                        {/* Area Bukti Kaos */}
+                    {(modal?.data?.sablon_payment_proof_dp || modal?.data?.sablon_payment_proof_paid || modal?.data?.sablon_supplier_id) && (
                         <div>
-                            <h4 className="text-sm font-black text-blue-600 uppercase tracking-widest mb-4 border-b border-blue-50 pb-2">Bukti Pembayaran Kaos</h4>
+                            <h4 className="text-sm font-black text-orange-600 uppercase tracking-widest mb-4 border-b border-orange-50 pb-2 mt-8">Bukti Pembayaran Sablon</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <ProofImageCard label="Bukti DP Kaos" url={modal?.data?.kaos_payment_proof_dp} date={modal.data.modified_on} onZoom={() => setModal({ open: true, type: "zoom_payment_proof", data: { payment_proof: modal.data.kaos_payment_proof_dp } })} />
-                                <ProofImageCard label="Bukti Lunas Kaos" url={modal?.data?.kaos_payment_proof_paid} date={modal.data.modified_on} onZoom={() => setModal({ open: true, type: "zoom_payment_proof", data: { payment_proof: modal.data.kaos_payment_proof_paid } })} />
+                                <ProofImageCard label="Bukti DP Sablon" url={modal?.data?.sablon_payment_proof_dp} date={modal.data?.modified_on} onZoom={() => setModal({ open: true, type: "zoom_payment_proof", data: { payment_proof: modal.data.sablon_payment_proof_dp } })} />
+                                <ProofImageCard label="Bukti Lunas Sablon" url={modal?.data?.sablon_payment_proof_paid} date={modal.data?.modified_on} onZoom={() => setModal({ open: true, type: "zoom_payment_proof", data: { payment_proof: modal.data.sablon_payment_proof_paid } })} />
                             </div>
                         </div>
-
-                        {/* Area Bukti Sablon (Jika Ada) */}
-                        {(modal?.data?.sablon_payment_proof_dp || modal?.data?.sablon_payment_proof_paid || modal?.data?.sablon_supplier_id) && (
-                            <div>
-                                <h4 className="text-sm font-black text-orange-600 uppercase tracking-widest mb-4 border-b border-orange-50 pb-2 mt-8">Bukti Pembayaran Sablon</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <ProofImageCard label="Bukti DP Sablon" url={modal?.data?.sablon_payment_proof_dp} date={modal.data.modified_on} onZoom={() => setModal({ open: true, type: "zoom_payment_proof", data: { payment_proof: modal.data.sablon_payment_proof_dp } })} />
-                                    <ProofImageCard label="Bukti Lunas Sablon" url={modal?.data?.sablon_payment_proof_paid} date={modal.data.modified_on} onZoom={() => setModal({ open: true, type: "zoom_payment_proof", data: { payment_proof: modal.data.sablon_payment_proof_paid } })} />
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    )}
                 </div>
-            </div>
-        );
-    }
+            </ModalShell>
 
-    if (modal.type === "zoom_payment_proof") {
-        return (
-            <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-fade-in" onClick={() => setModal({ ...modal, open: false, type: "" })}>
-                <button onClick={() => setModal({ ...modal, open: false, type: "" })} className="absolute top-6 right-6 text-white hover:text-gray-300 z-50 p-2 bg-black/50 rounded-full"><X size={32} /></button>
-                <img src={modal?.data?.payment_proof} className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()} />
-            </div>
-        );
-    }
-    return null;
+            {modal.type === "zoom_payment_proof" && (
+                <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-fade-in" onClick={() => setModal({ ...modal, open: false, type: "" })}>
+                    <button onClick={() => setModal({ ...modal, open: false, type: "" })} className="absolute top-6 right-6 text-white hover:text-gray-300 z-50 p-2 bg-black/50 rounded-full"><X size={32} /></button>
+                    <img src={modal?.data?.payment_proof} className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()} alt="Bukti Pembayaran" />
+                </div>
+            )}
+        </>
+    );
 };
 
 const ProofImageCard = ({ label, url, date, onZoom }: any) => (

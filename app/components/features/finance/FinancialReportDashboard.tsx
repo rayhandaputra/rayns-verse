@@ -340,33 +340,38 @@ export const FinancialReportDashboard: React.FC<FinanceReportDashboardProps> = (
                         )}
                       </td>
                       <td className="px-6 py-3 text-center">
-                        <button
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                          onClick={() => {
-                            Swal.fire({
-                              title: "Hapus Transaksi?",
-                              text: `Yakin ingin menghapus Transaksi ${t.account_name}?`,
-                              icon: "warning",
-                              showCancelButton: true,
-                              confirmButtonText: "Ya, Hapus",
-                              cancelButtonText: "Batal",
-                              customClass: {
-                                confirmButton: "bg-red-600 text-white px-4 py-2 rounded-md",
-                                cancelButton: "bg-gray-200 text-gray-800 px-4 py-2 rounded-md",
-                              },
-                            }).then((result) => {
-                              if (result.isConfirmed) {
-                                submitAction({
-                                  intent: "delete_transaction",
-                                  id: t.id,
-                                  journal_code: t.journal_code,
+                        <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-slate-100">
+                            <button
+                              title="Hapus"
+                              className="p-2 text-slate-500 hover:text-red-500 hover:bg-white rounded transition-all"
+                              onClick={() => {
+                                Swal.fire({
+                                  title: "Hapus Transaksi?",
+                                  text: `Yakin ingin menghapus Transaksi ${t.account_name}?`,
+                                  icon: "warning",
+                                  showCancelButton: true,
+                                  confirmButtonText: "Ya, Hapus",
+                                  cancelButtonText: "Batal",
+                                  customClass: {
+                                    confirmButton: "bg-red-600 text-white px-4 py-2 rounded-md",
+                                    cancelButton: "bg-gray-200 text-gray-800 px-4 py-2 rounded-md",
+                                  },
+                                }).then((result) => {
+                                  if (result.isConfirmed) {
+                                    submitAction({
+                                      intent: "delete_transaction",
+                                      id: t.id,
+                                      journal_code: t.journal_code,
+                                    });
+                                  }
                                 });
-                              }
-                            });
-                          }}
-                        >
-                          <Trash2Icon size={16} />
-                        </button>
+                              }}
+                            >
+                              <Trash2Icon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   );

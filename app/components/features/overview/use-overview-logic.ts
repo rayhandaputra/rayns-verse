@@ -1,7 +1,6 @@
 
 import { useMemo } from "react";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
-import { nexus } from "~/nexus/nexus-client";
 import type { Order, StockState, PriceList } from "~/types";
 import {
     mlPerPaket,
@@ -19,35 +18,42 @@ import {
 
 export function useOverviewLogic() {
     const { data: overviewData, loading: loadingOverview } = useFetcherData({
-        endpoint: nexus().module("OVERVIEW").action("summary").build(),
+        endpoint: "/api/nexus",
+        params: {
+            module: "OVERVIEW",
+            action: "summary",
+        },
     });
 
     const { data: ordersData, loading: loadingOrders } = useFetcherData({
-        endpoint: nexus()
-            .module("ORDERS")
-            .action("get")
-            .params({
-                pagination: "true",
-                page: 0,
-                size: 5,
-            })
-            .build(),
+        endpoint: "/api/nexus",
+        params: {
+            module: "ORDERS",
+            action: "get",
+            pagination: "true",
+            page: 0,
+            size: 5,
+        },
     });
 
     const { data: stockData } = useFetcherData({
-        endpoint: nexus()
-            .module("COMMODITY_STOCK")
-            .action("get")
-            .params({ size: 100, pagination: "false" })
-            .build(),
+        endpoint: "/api/nexus",
+        params: {
+            module: "COMMODITY_STOCK",
+            action: "get",
+            size: 100,
+            pagination: "false",
+        },
     });
 
     const { data: supplierCommodityData } = useFetcherData({
-        endpoint: nexus()
-            .module("SUPPLIER_COMMODITY")
-            .action("get")
-            .params({ size: 1000, pagination: "false" })
-            .build(),
+        endpoint: "/api/nexus",
+        params: {
+            module: "SUPPLIER_COMMODITY",
+            action: "get",
+            size: 1000,
+            pagination: "false",
+        },
     });
 
     const overview = overviewData?.data || {};
@@ -174,17 +180,23 @@ export function useOverviewLogic() {
     }, [stock, prices]);
 
     const monthlyData = useMemo(() => {
-        const report = (overview?.report_six_months || {}) as Record<string, string>;
+        const report = (overview?.report_six_months || {}) as Record<string, number>;
         const now = new Date();
         const result = [];
 
         for (let i = 5; i >= 0; i--) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const m = d.getMonth() + 1;
+            const y = d.getFullYear();
+            // Support both old format (total_M, paid_M) and new format (omzet_Y_M, lunas_Y_M)
+            const totalKey = `omzet_${y}_${m}`;
+            const paidKey = `lunas_${y}_${m}`;
+            const totalLegacy = `total_${m}`;
+            const paidLegacy = `paid_${m}`;
             result.push({
                 name: d.toLocaleDateString("id-ID", { month: "long" }),
-                total: parseFloat(report[`total_${m}`] || "0") || 0,
-                paid: parseFloat(report[`paid_${m}`] || "0") || 0,
+                total: Number(report[totalKey] || report[totalLegacy] || 0),
+                paid: Number(report[paidKey] || report[paidLegacy] || 0),
             });
         }
         return result;

@@ -1,10 +1,10 @@
 
 import React from "react";
-import { PencilLineIcon, PlusCircleIcon, Trash2Icon } from "lucide-react";
+import { Edit2, PlusCircleIcon, Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Modal } from "~/components/shared/modal/Modal";
+import ModalShell from "~/components/modal/ModalShell";
 import { CustomDataTable } from "~/components/shared/table/CustomDataTable";
 import { AppBreadcrumb } from "~/components/core/AppBreadcrumb";
 import { useInstitutionLogic } from "./use-institution-logic";
@@ -54,23 +54,23 @@ export default function InstitutionFeature() {
       name: "Aksi",
       width: "120px",
       cell: (row: any) => (
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="h-9 w-9 text-blue-600 border-gray-200 hover:bg-blue-50 hover:border-blue-200 transition-all shadow-sm" 
-            onClick={() => setModal({ ...modal, open: true, key: "update", data: row })}
-          >
-            <PencilLineIcon className="w-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="h-9 w-9 text-red-600 border-gray-200 hover:bg-red-50 hover:border-red-200 transition-all shadow-sm" 
-            onClick={() => handleDelete(row)}
-          >
-            <Trash2Icon className="w-4" />
-          </Button>
+        <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-slate-100">
+            <button
+              title="Edit"
+              onClick={() => setModal({ ...modal, open: true, key: "update", data: row })}
+              className="p-2 text-slate-500 hover:text-blue-500 hover:bg-white rounded transition-all"
+            >
+              <Edit2 className="w-4 h-4" />
+            </button>
+            <button
+              title="Hapus"
+              onClick={() => handleDelete(row)}
+              className="p-2 text-slate-500 hover:text-red-500 hover:bg-white rounded transition-all"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       ),
     },
@@ -128,60 +128,57 @@ export default function InstitutionFeature() {
         }}
       />
 
-      {(modal?.key === "create" || modal?.key === "update") && (
-        <Modal 
-          open={modal?.open} 
-          onClose={() => setModal({ ...modal, open: false })} 
-          title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Instansi`}
-          className="max-w-md rounded-2xl"
-        >
-          <form onSubmit={handleSubmit} className="space-y-5 p-1 mt-2">
-            <input type="hidden" name="id" value={modal?.data?.id || ""} />
-            <div className="space-y-2">
-              <Label className="text-gray-700 font-semibold ml-1">Nama Instansi</Label>
-              <Input 
-                required 
-                type="text" 
-                name="name" 
-                placeholder="Misal: Universitas Itera" 
-                defaultValue={modal?.data?.name} 
-                className="h-11 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-gray-700 font-semibold ml-1">Singkatan / Abbr</Label>
-              <Input 
-                required 
-                type="text" 
-                name="abbr" 
-                placeholder="Misal: ITERA" 
-                defaultValue={modal?.data?.abbr} 
-                className="h-11 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              />
-            </div>
-            <div className="flex justify-end gap-3 pt-4">
-              <Button 
-                size="lg" 
-                type="button" 
-                variant="ghost" 
-                className="rounded-xl px-10 h-11 text-gray-500 hover:bg-gray-50"
-                onClick={() => setModal({ ...modal, open: false })} 
-                disabled={isSubmitting}
-              >
-                Batal
-              </Button>
-              <Button 
-                size="lg" 
-                type="submit" 
-                className="bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-100 rounded-xl px-10 h-11 transition-all active:scale-95" 
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Menyimpan..." : "Simpan Data"}
-              </Button>
-            </div>
-          </form>
-        </Modal>
-      )}
+      <ModalShell
+        open={modal?.open && (modal?.key === "create" || modal?.key === "update")}
+        onClose={() => setModal({ ...modal, open: false })}
+        title={`${modal?.key === "create" ? "Tambah" : "Ubah"} Instansi`}
+      >
+        <form onSubmit={handleSubmit} className="space-y-5 mt-2">
+          <input type="hidden" name="id" value={modal?.data?.id || ""} />
+          <div className="space-y-2">
+            <Label className="text-gray-700 font-semibold ml-1">Nama Instansi</Label>
+            <Input 
+              required 
+              type="text" 
+              name="name" 
+              placeholder="Misal: Universitas Itera" 
+              defaultValue={modal?.data?.name} 
+              className="h-11 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-gray-700 font-semibold ml-1">Singkatan / Abbr</Label>
+            <Input 
+              required 
+              type="text" 
+              name="abbr" 
+              placeholder="Misal: ITERA" 
+              defaultValue={modal?.data?.abbr} 
+              className="h-11 rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button 
+              size="lg" 
+              type="button" 
+              variant="ghost" 
+              className="rounded-xl px-10 h-11 text-gray-500 hover:bg-gray-50"
+              onClick={() => setModal({ ...modal, open: false })} 
+              disabled={isSubmitting}
+            >
+              Batal
+            </Button>
+            <Button 
+              size="lg" 
+              type="submit" 
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-100 rounded-xl px-10 h-11 transition-all active:scale-95" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Menyimpan..." : "Simpan Data"}
+            </Button>
+          </div>
+        </form>
+      </ModalShell>
     </div>
   );
 }

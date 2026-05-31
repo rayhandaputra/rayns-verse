@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useFetcherData } from "~/hooks";
 import { nexus } from "~/nexus/nexus-client";
 import { useQueryParams } from "~/hooks/use-query-params";
-import ModalSecond from "~/components/shared/modal/ModalSecond";
+import ModalShell from "~/components/modal/ModalShell";
 import { useModal } from "~/hooks";
 import { DriveBreadcrumb } from "~/components/shared/breadcrumb/DriveBreadcrumb";
 import { DriveItem } from "~/types";
@@ -311,7 +311,7 @@ export default function DriveInternalFeature({ initialItems, current_folder }: D
           url: window.location.href,
         });
       } catch (err) {
-        console.log("Share dibatalkan");
+        // Share cancelled by user
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
@@ -436,7 +436,7 @@ export default function DriveInternalFeature({ initialItems, current_folder }: D
         )}
       </div>
 
-      <ModalSecond
+      <ModalShell
         open={modal.open && modal.type === "create_folder"}
         title="Buat Folder Baru"
         onClose={() => setModal({ ...modal, open: false })}
@@ -456,7 +456,7 @@ export default function DriveInternalFeature({ initialItems, current_folder }: D
             <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Buat Folder</button>
           </div>
         </form>
-      </ModalSecond>
+      </ModalShell>
     </div>
   );
 }

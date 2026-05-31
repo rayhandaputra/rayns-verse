@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Form, useActionData, useSearchParams } from "react-router";
-import { Edit2, Trash2, X, Shield, Upload, UserPlus } from "lucide-react";
+import { Edit2, Trash2, Shield, Upload, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
@@ -8,6 +8,7 @@ import { nexus } from "~/nexus/nexus-client";
 import { safeParseArray, uploadFile } from "~/utils/utils";
 import { CustomDataTable } from "~/components/shared/table/CustomDataTable";
 import { Button } from "~/components/ui/button";
+import ModalShell from "~/components/modal/ModalShell";
 
 export default function UserManagementFeature() {
   const actionData = useActionData() as any;
@@ -196,23 +197,23 @@ export default function UserManagementFeature() {
       name: "Aksi",
       width: "120px",
       cell: (user: any) => (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-9 w-9 text-blue-600 border-gray-200 hover:bg-blue-50 hover:border-blue-200 transition-all shadow-sm"
-            onClick={() => handleEdit(user)}
-          >
-            <Edit2 size={16} />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-9 w-9 text-red-600 border-gray-200 hover:bg-red-50 hover:border-red-200 transition-all shadow-sm"
-            onClick={() => handleDelete(user.id)}
-          >
-            <Trash2 size={16} />
-          </Button>
+        <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-slate-100">
+            <button
+              title="Edit"
+              onClick={() => handleEdit(user)}
+              className="p-2 text-slate-500 hover:text-blue-500 hover:bg-white rounded transition-all"
+            >
+              <Edit2 className="w-4 h-4" />
+            </button>
+            <button
+              title="Hapus"
+              onClick={() => handleDelete(user.id)}
+              className="p-2 text-slate-500 hover:text-red-500 hover:bg-white rounded transition-all"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       ),
     },
@@ -370,118 +371,106 @@ export default function UserManagementFeature() {
         </div>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-black text-gray-900 tracking-tight">
-                  {editingId ? "Ubah Data Pengguna" : "Daftarkan Pengguna Baru"}
-                </h3>
-                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                  <X className="text-gray-400 w-5 h-5" />
-                </button>
-              </div>
-              <Form method="post" className="space-y-5" autoComplete="off">
-                {editingId && <input type="hidden" name="id" value={editingId} />}
+      <ModalShell open={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Ubah Data Pengguna" : "Daftarkan Pengguna Baru"} size="md">
+        <Form method="post" className="space-y-5" autoComplete="off">
+          {editingId && <input type="hidden" name="id" value={editingId} />}
 
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700 ml-1">
-                    Nama Lengkap
-                  </label>
-                  <input
-                    name="fullname"
-                    className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                    value={formData.fullname || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, fullname: e.target.value })
-                    }
-                    required
-                    placeholder="Contoh: Budi Santoso"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-700 ml-1">
-                      Email
-                    </label>
-                    <input
-                      name="email"
-                      autoComplete="off"
-                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                      value={formData.email || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                      required
-                      placeholder="email@perusahaan.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-700 ml-1">
-                      Password
-                    </label>
-                    <input
-                      name="password"
-                      type="password"
-                      autoComplete="off"
-                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
-                      value={formData.password || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
-                      required={!editingId}
-                      placeholder={editingId ? "Isi untuk ubah" : "********"}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700 ml-1">
-                    Posisi / Role
-                  </label>
-                  <div className="relative">
-                    <select
-                      name="role"
-                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none appearance-none bg-white"
-                      value={formData.role}
-                      onChange={(e) =>
-                        setFormData({ ...formData, role: e.target.value as any })
-                      }
-                    >
-                      <option value="staff">Staff (Absensi Only)</option>
-                      <option value="ceo">CEO (Full Access)</option>
-                      <option value="developer">Developer (Full Access)</option>
-                      <option value="admin">Admin</option>
-                      <option value="customer">Customer (Dashboard Order)</option>
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                      <Shield size={16} className="text-gray-400" />
-                    </div>
-                  </div>
-                  <p className="text-[11px] text-gray-400 mt-2 px-1 leading-relaxed">
-                    * Perhatian: Staff hanya memiliki hak akses terbatas ke modul absensi dan tidak dapat melihat data finansial atau produksi.
-                  </p>
-                </div>
-
-                <div className="pt-6 flex gap-3">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setIsModalOpen(false)}
-                    className="flex-1 rounded-xl h-12 font-bold text-gray-500 hover:bg-gray-50"
-                  >
-                    Batal
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="flex-1 bg-gray-900 hover:bg-black text-white rounded-xl h-12 font-bold shadow-xl shadow-gray-100 transition-all active:scale-95"
-                  >
-                    {editingId ? "Update User" : "Simpan User"}
-                  </Button>
-                </div>
-            </Form>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-700 ml-1">
+              Nama Lengkap
+            </label>
+            <input
+              name="fullname"
+              className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+              value={formData.fullname || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, fullname: e.target.value })
+              }
+              required
+              placeholder="Contoh: Budi Santoso"
+            />
           </div>
-        </div>
-      )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-700 ml-1">
+                Email
+              </label>
+              <input
+                name="email"
+                autoComplete="off"
+                className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                value={formData.email || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                required
+                placeholder="email@perusahaan.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-700 ml-1">
+                Password
+              </label>
+              <input
+                name="password"
+                type="password"
+                autoComplete="off"
+                className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                value={formData.password || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                required={!editingId}
+                placeholder={editingId ? "Isi untuk ubah" : "********"}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-700 ml-1">
+              Posisi / Role
+            </label>
+            <div className="relative">
+              <select
+                name="role"
+                className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none appearance-none bg-white"
+                value={formData.role}
+                onChange={(e) =>
+                  setFormData({ ...formData, role: e.target.value as any })
+                }
+              >
+                <option value="staff">Staff (Absensi Only)</option>
+                <option value="ceo">CEO (Full Access)</option>
+                <option value="developer">Developer (Full Access)</option>
+                <option value="admin">Admin</option>
+                <option value="customer">Customer (Dashboard Order)</option>
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <Shield size={16} className="text-gray-400" />
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-2 px-1 leading-relaxed">
+              * Perhatian: Staff hanya memiliki hak akses terbatas ke modul absensi dan tidak dapat melihat data finansial atau produksi.
+            </p>
+          </div>
+
+          <div className="pt-6 flex gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 rounded-xl h-12 font-bold text-gray-500 hover:bg-gray-50"
+            >
+              Batal
+            </Button>
+            <Button
+              type="submit"
+              className="flex-1 bg-gray-900 hover:bg-black text-white rounded-xl h-12 font-bold shadow-xl shadow-gray-100 transition-all active:scale-95"
+            >
+              {editingId ? "Update User" : "Simpan User"}
+            </Button>
+          </div>
+        </Form>
+      </ModalShell>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useParams, useNavigate, useFetcher } from "react-router";
 import OrderFormComponent from "~/components/features/order/EditOrderForm";
-import ModalSecond from "~/components/shared/modal/ModalSecond";
+import ModalShell from "~/components/modal/ModalShell";
 import { useFetcherData } from "~/hooks";
 import { nexus } from "~/nexus/nexus-client";
 import { safeParseArray } from "~/utils/utils";
@@ -57,7 +57,7 @@ export default function OrderEditFeature() {
 
   return (
     <div>
-      <ModalSecond
+      <ModalShell
         open={true}
         onClose={() => {
           navigate(`/app/order-list`);
@@ -76,7 +76,7 @@ export default function OrderEditFeature() {
             );
           }}
         />
-      </ModalSecond>
+      </ModalShell>
     </div>
   );
 }

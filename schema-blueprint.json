@@ -1,0 +1,138 @@
+{
+  "database": "kinn6844_convections",
+  "engine": "MySQL/MariaDB",
+  "api_endpoint": "https://data.kinau.id/api2",
+  "global_contract": {
+    "required_columns": ["id", "created_on", "modified_on", "deleted_on"],
+    "soft_delete": true,
+    "id_type": "INT AUTO_INCREMENT"
+  },
+  "entities": {
+    "orders": {
+      "description": "Order utama (ID card, lanyard, kaos, custom, paket)",
+      "properties": {
+        "id": { "type": "int", "primary": true },
+        "uid": { "type": "varchar(50)" },
+        "order_number": { "type": "varchar(50)", "unique": true },
+        "institution_id": { "type": "int", "references": "institutions.id" },
+        "institution_name": { "type": "varchar(200)" },
+        "order_type": { "type": "enum", "values": ["package", "id_card", "lanyard", "custom", "service"] },
+        "status": { "type": "enum", "values": ["ordered", "confirmed", "in_production", "qc", "ready", "shipped", "delivered", "done", "rejected", "cancelled", "pending"] },
+        "payment_status": { "type": "enum", "values": ["none", "unpaid", "paid", "down_payment", "refunded", "cancelled"] },
+        "grand_total": { "type": "decimal(15,2)" },
+        "order_date": { "type": "date" },
+        "deadline": { "type": "date" }
+      },
+      "relations": {
+        "order_items": { "type": "hasMany", "foreign_key": "order_number", "reference_key": "order_number" },
+        "order_upload_folders": { "type": "hasMany", "foreign_key": "order_number", "reference_key": "order_number" }
+      }
+    },
+    "order_items": {
+      "description": "Item dalam order (produk, qty, harga)",
+      "properties": {
+        "id": { "type": "int", "primary": true },
+        "order_number": { "type": "varchar(50)", "references": "orders.order_number" },
+        "product_id": { "type": "int", "references": "products.id" },
+        "product_name": { "type": "varchar(200)" },
+        "product_type": { "type": "enum", "values": ["single", "package", "material", "custom", "addon"] },
+        "qty": { "type": "int" },
+        "unit_price": { "type": "decimal(15,2)" },
+        "total_after_tax": { "type": "decimal(15,2)" }
+      }
+    },
+    "products": {
+      "description": "Katalog produk (single, package, material)",
+      "properties": {
+        "id": { "type": "int", "primary": true },
+        "category_id": { "type": "int", "references": "product_categories.id" },
+        "code": { "type": "varchar(50)", "unique": true },
+        "name": { "type": "varchar(200)" },
+        "type": { "type": "enum", "values": ["single", "package", "material"] },
+        "total_price": { "type": "decimal(15,2)" }
+      },
+      "relations": {
+        "product_components": { "type": "hasMany", "foreign_key": "product_id", "reference_key": "id" },
+        "product_variants": { "type": "hasMany", "foreign_key": "product_id", "reference_key": "id" },
+        "product_price_rules": { "type": "hasMany", "foreign_key": "product_id", "reference_key": "id" }
+      }
+    },
+    "users": {
+      "description": "User sistem (admin, staff, manager)",
+      "properties": {
+        "id": { "type": "int", "primary": true },
+        "fullname": { "type": "varchar(200)" },
+        "email": { "type": "varchar(200)", "unique": true },
+        "role": { "type": "enum", "values": ["admin", "user", "manager", "staff", "developer", "ceo"] },
+        "is_active": { "type": "tinyint(1)" }
+      }
+    },
+    "suppliers": {
+      "description": "Supplier bahan baku",
+      "properties": {
+        "id": { "type": "int", "primary": true },
+        "name": { "type": "varchar(200)" },
+        "category": { "type": "enum", "values": ["id_card_with_lanyard", "cotton_combed_premium"] },
+        "type": { "type": "enum", "values": ["online", "offline"] }
+      },
+      "relations": {
+        "supplier_commodities": { "type": "hasMany", "foreign_key": "supplier_id", "reference_key": "id" }
+      }
+    },
+    "commodities": {
+      "description": "Bahan baku / komoditas",
+      "properties": {
+        "id": { "type": "int", "primary": true },
+        "code": { "type": "varchar(50)" },
+        "name": { "type": "varchar(200)" },
+        "unit": { "type": "varchar(20)" },
+        "base_price": { "type": "decimal(15,2)" }
+      }
+    },
+    "stock_logs": {
+      "description": "Log pergerakan stok (IN/OUT)",
+      "properties": {
+        "id": { "type": "int", "primary": true },
+        "trx_code": { "type": "varchar(50)", "unique": true },
+        "direction": { "type": "enum", "values": ["IN", "OUT"] },
+        "supplier_id": { "type": "int", "references": "suppliers.id" },
+        "final_amount": { "type": "decimal(15,2)" },
+        "payment_status": { "type": "enum", "values": ["none", "unpaid", "paid", "down_payment"] }
+      },
+      "relations": {
+        "stock_log_items": { "type": "hasMany", "foreign_key": "stock_log_id", "reference_key": "id" }
+      }
+    },
+    "accounts": {
+      "description": "Chart of Accounts (COA)",
+      "properties": {
+        "id": { "type": "int", "primary": true },
+        "code": { "type": "varchar(20)" },
+        "name": { "type": "varchar(200)" },
+        "group_type": { "type": "enum", "values": ["asset", "liability", "equity", "income", "expense"] }
+      }
+    },
+    "employees": {
+      "description": "Data karyawan",
+      "properties": {
+        "id": { "type": "int", "primary": true },
+        "name": { "type": "varchar(200)" },
+        "structural": { "type": "varchar(100)" },
+        "status": { "type": "enum", "values": ["active", "inactive", "on_leave"] }
+      },
+      "relations": {
+        "employee_salaries": { "type": "hasOne", "foreign_key": "employee_id", "reference_key": "id" },
+        "employee_salary_slips": { "type": "hasMany", "foreign_key": "employee_id", "reference_key": "id" }
+      }
+    },
+    "institutions": {
+      "description": "Institusi pelanggan (kampus, sekolah, organisasi)",
+      "properties": {
+        "id": { "type": "int", "primary": true },
+        "uid": { "type": "varchar(50)" },
+        "name": { "type": "varchar(200)" },
+        "abbr": { "type": "varchar(50)" }
+      }
+    }
+  }
+}

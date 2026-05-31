@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { useFetcherData, useModal } from "~/hooks";
 import { nexus } from "~/nexus/nexus-client";
-import ModalSecond from "~/components/shared/modal/ModalSecond";
+import ModalShell from "~/components/modal/ModalShell";
 import { Form } from "react-router";
 import { Label } from "~/components/ui/label";
 import { Button } from "~/components/ui/button";
@@ -203,26 +203,30 @@ export default function AccountCoaPage() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       {+account?.is_bank > 0 ? (
-                        <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() =>
-                              setModal({
-                                ...modal,
-                                open: true,
-                                type: "add_account_bank",
-                                data: account,
-                              })
-                            }
-                            className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          <button
-                            onClick={() => onDelete(account)}
-                            className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-200"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-slate-100">
+                            <button
+                              title="Edit"
+                              onClick={() =>
+                                setModal({
+                                  ...modal,
+                                  open: true,
+                                  type: "add_account_bank",
+                                  data: account,
+                                })
+                              }
+                              className="p-2 text-slate-500 hover:text-blue-500 hover:bg-white rounded transition-all"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              title="Hapus"
+                              onClick={() => onDelete(account)}
+                              className="p-2 text-slate-500 hover:text-red-500 hover:bg-white rounded transition-all"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <span className="text-[10px] text-gray-300 font-bold italic">System Fixed</span>
@@ -242,7 +246,7 @@ export default function AccountCoaPage() {
         </div>
 
         {modal?.type === "add_account_bank" && (
-          <ModalSecond
+          <ModalShell
             open={modal?.open}
             onClose={() => setModal({ ...modal, open: false })}
             title={modal.data?.id ? "Edit Rekening" : "Tambah Rekening Bank"}
@@ -316,7 +320,7 @@ export default function AccountCoaPage() {
                 </Button>
               </div>
             </Form>
-          </ModalSecond>
+          </ModalShell>
         )}
       </div>
     </div>

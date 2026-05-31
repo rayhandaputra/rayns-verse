@@ -1,15 +1,16 @@
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Form } from "react-router";
-import { Star, Edit, Upload, Check, X, Plus } from "lucide-react";
+import { Star, Edit, Upload, Check, X, Plus, ImageIcon } from "lucide-react";
 import { formatFullDate } from "~/constants";
 import DataTable, { type ColumnDef } from "~/components/ui/data-table";
 import { Button } from "~/components/ui/button";
 import TableHeader from "~/components/shared/table/TableHeader";
-import ModalSecond from "~/components/shared/modal/ModalSecond";
+import ModalShell from "~/components/modal/ModalShell";
 import OrderFormComponent from "~/components/features/order/OrderForm";
 import { safeParseArray, safeParseObject } from "~/utils/utils";
 import { useOrderHistoryLogic } from "./use-order-history-logic";
+import PortfolioUploadFeature from "~/components/features/portfolio-upload/PortfolioUploadFeature";
 
 export default function OrderHistoryFeature() {
   const {
@@ -119,9 +120,17 @@ export default function OrderHistoryFeature() {
         headerClassName: "text-center",
         cellClassName: "text-center",
         cell: (row) => (
-          <Button variant="ghost" size="icon" className="text-blue-600 hover:bg-blue-50" onClick={() => setModal({ ...modal, open: true, data: { ...row, images: safeParseArray(row?.images) }, type: "update" })}>
-            <Edit size={16} />
-          </Button>
+          <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-slate-100">
+              <button
+                title="Edit Portfolio"
+                onClick={() => setModal({ ...modal, open: true, data: { ...row, images: safeParseArray(row?.images) }, type: "update" })}
+                className="p-2 text-slate-500 hover:text-blue-500 hover:bg-white rounded transition-all"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         ),
       },
     ],
@@ -146,10 +155,18 @@ export default function OrderHistoryFeature() {
       )}
 
       {modal.type === "update" && (
-        <ModalSecond open={modal.open} onClose={() => setModal({ open: false, type: "" })} title="Edit Detail Portfolio" size="xl">
+        <ModalShell open={modal.open} onClose={() => setModal({ open: false, type: "" })} title="Edit Detail Portfolio" size="xl">
           <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
             <div>
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Foto Hasil Produksi</label>
+              <div className="flex items-center justify-between mb-4">
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Foto Hasil Produksi</label>
+                <button
+                  onClick={() => setModal({ ...modal, type: "portfolio_template" })}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 text-[10px] font-bold uppercase tracking-wide transition-all"
+                >
+                  <ImageIcon size={12} /> Upload Template 4 Foto
+                </button>
+              </div>
               <div className="flex flex-wrap gap-4 mb-3">
                 {(modal?.data?.images ?? [])?.map((img: string, idx: number) => (
                   <div key={idx} className="relative w-24 h-24 group">
@@ -190,7 +207,26 @@ export default function OrderHistoryFeature() {
               </button>
             </Form>
           </div>
-        </ModalSecond>
+        </ModalShell>
+      )}
+
+      {modal.type === "portfolio_template" && (
+        <ModalShell open={modal.open} onClose={() => setModal({ ...modal, open: false, type: "update" })} title="Upload Portfolio Template (4 Foto)" size="lg">
+          <div className="p-6">
+            <PortfolioUploadFeature
+              orderId={modal?.data?.id}
+              existingImages={modal?.data?.images || []}
+              onComplete={(uploadedImages) => {
+                setModal({
+                  ...modal,
+                  type: "update",
+                  data: { ...modal.data, images: uploadedImages },
+                });
+              }}
+              onCancel={() => setModal({ ...modal, type: "update" })}
+            />
+          </div>
+        </ModalShell>
       )}
     </div>
   );

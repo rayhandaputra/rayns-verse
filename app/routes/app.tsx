@@ -3,7 +3,9 @@ import { requireAuth } from "~/utils/session.server";
 import AppLayoutFeature from "~/components/core/AppLayoutFeature";
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const { user } = await requireAuth(request);
+  const { user: rawUser } = await requireAuth(request);
+
+  const user = typeof rawUser === "string" ? JSON.parse(rawUser) : rawUser;
 
   return {
     user: {

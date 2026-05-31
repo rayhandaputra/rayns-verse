@@ -1,5 +1,5 @@
 import { safeParseArray, safeParseObject } from "~/utils/utils";
-import { APIProvider } from "..";
+import { APIProvider, APIProviderV2 } from "..";
 import moment from "moment";
 
 const generateJournalCode = () =>
@@ -36,7 +36,7 @@ const createMutation = async (
 
 export const OrderAPI = {
   // ================================
-  // ✅ GET / LIST ORDERS
+  // ✅ GET / LIST ORDERS (Migrated to APIProviderV2)
   // ================================
   get: async ({ session, req }: any) => {
     const {
@@ -53,6 +53,7 @@ export const OrderAPI = {
       order_type,
       start_date,
       status_printed,
+      pic_phone,
       is_kkn = "",
       is_portfolio,
       kkn_period = "",
@@ -75,6 +76,7 @@ export const OrderAPI = {
     if (status) where.status = status;
     if (payment_status) where.payment_status = payment_status;
     if (order_type) where.order_type = order_type;
+    if (pic_phone) where.pic_phone = pic_phone;
     if (is_kkn?.toString() !== "") where.is_kkn = is_kkn;
     if (is_portfolio) where.is_portfolio = is_portfolio;
     if (kkn_period) where.kkn_period = kkn_period;
@@ -111,19 +113,11 @@ export const OrderAPI = {
     }
     where.deleted_on = deleted_on || "null";
 
-    // ✅ SEARCH MULTI FIELD (format OR)
-    const searchConfig = search
-      ? {
-        logic: "or",
-        fields: [
-          "order_number",
-          "institution_name",
-          "institution_abbr",
-          "institution_domain",
-        ],
-        keyword: search,
-      }
-      : undefined;
+    // ✅ SEARCH MULTI FIELD
+    let searchBy: string | undefined;
+    if (search) {
+      searchBy = "order_number,institution_name,institution_abbr,institution_domain,pic_name";
+    }
 
     let sort_by = "created_on";
     let sort_type = "desc";
@@ -158,6 +152,7 @@ export const OrderAPI = {
         "dp_payment_detail",
         "dp_payment_journal_code",
         "discount_value",
+        "discount_type",
         "tax_value",
         "order_date",
         "shipping_fee",
@@ -183,7 +178,9 @@ export const OrderAPI = {
         "deadline",
         "created_on",
         "created_by",
-        `(SELECT COUNT(id) FROM order_items) AS total_product`,
+        // ✅ Computed columns — fix data inefficiency by computing totals server-side
+        `(SELECT COUNT(oi.id) FROM order_items oi WHERE oi.order_number = orders.order_number AND oi.deleted_on IS NULL) AS total_product`,
+        `(SELECT COALESCE(SUM(COALESCE(oi.variant_final_price, oi.subtotal, 0)), 0) FROM order_items oi WHERE oi.order_number = orders.order_number AND oi.deleted_on IS NULL) AS computed_items_subtotal`,
         `
         (
           SELECT 1 
@@ -205,19 +202,17 @@ export const OrderAPI = {
         ) AS is_order_shirt
         `,
       ];
-      // if (extraColumns) columns.push(extraColumns);
-      const result = await APIProvider(session)
-        .Endpoint("POST", "select", "orders")
-        .Data({
+
+      const result = await APIProviderV2(session)
+        .Table("orders")
+        .Select({
           columns,
           where,
-          search: searchConfig,
+          ...(search && { search }),
+          ...(searchBy && { searchBy }),
           page: Number(page),
           size: Number(size),
-          pagination: pagination === "true",
-          // order_by: { created_on: "desc" },
           orderBy: [sort_by, sort_type],
-
           include: [
             {
               table: "order_items",
@@ -241,7 +236,6 @@ export const OrderAPI = {
                 "price_rule_id",
                 "price_rule_min_qty",
                 "price_rule_value",
-                // "total_amount",
               ],
             },
             ...(with_folders

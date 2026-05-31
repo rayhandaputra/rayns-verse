@@ -68,7 +68,7 @@ export const ProductComponentForm: React.FC = () => {
         name: v.name,
       }));
     } catch (error) {
-      console.log(error);
+      // silently fail
     }
   };
 

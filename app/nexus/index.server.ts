@@ -24,7 +24,7 @@ import { InventoryAssetAPI } from "./modules/inventory_assets";
 import { OrderAPI } from "./modules/order";
 import { OrderItemAPI } from "./modules/order_item";
 import { OrderUploadAPI } from "./modules/order_upload";
-import { OverviewAPI } from "./modules/overview";
+import { OverviewAPI } from "./modules/overview.server";
 import { ProductAPI } from "./modules/product";
 import { ProductCategoryAPI } from "./modules/product_category";
 import { ProductComponentAPI } from "./modules/product_component";
@@ -42,6 +42,7 @@ import { OrderAssignmentAPI } from "./modules/twibbon_assignment";
 import { TwibbonTemplateAPI } from "./modules/twibbon_template";
 import { UserAPI } from "./modules/user.server";
 import { AuthAPI } from "./modules/user_auth.server";
+import { AgentAPI } from "./modules/agent.server";
 
 
 // optional: unified API wrapper
@@ -84,4 +85,5 @@ export const API = {
   TWIBBON_TEMPLATE: TwibbonTemplateAPI,
   TWIBBON_ASSIGNMENT: OrderAssignmentAPI,
   EMAIL: EmailAPI,
+  AGENT: AgentAPI,
 };

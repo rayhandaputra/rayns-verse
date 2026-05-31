@@ -6,3 +6,10 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Neohive (auto-added by neohive init)
+.neohive/
+.mcp.json
+.cursor/mcp.json
+.codex/
+.gemini/

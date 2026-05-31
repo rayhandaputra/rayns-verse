@@ -5,7 +5,6 @@ import {
   Edit2,
   Trash2,
   Search,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency, formatFullDate } from "~/constants";
@@ -15,6 +14,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import ModalShell from "~/components/modal/ModalShell";
 
 interface InventoryAsset {
   id: string;
@@ -212,13 +212,23 @@ export const AssetInventoryDashboard: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-right font-bold text-indigo-600">{formatCurrency(asset.value)}</td>
                       <td className="px-6 py-4">
-                        <div className="flex justify-center gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(asset)} className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-                            <Edit2 size={14} />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(asset.id, asset.name)} className="h-8 w-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50">
-                            <Trash2 size={14} />
-                          </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-slate-100">
+                            <button
+                              title="Edit"
+                              onClick={() => handleEdit(asset)}
+                              className="p-2 text-slate-500 hover:text-blue-500 hover:bg-white rounded transition-all"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              title="Hapus"
+                              onClick={() => handleDelete(asset.id, asset.name)}
+                              className="p-2 text-slate-500 hover:text-red-500 hover:bg-white rounded transition-all"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -230,128 +240,118 @@ export const AssetInventoryDashboard: React.FC = () => {
         </CardContent>
       </Card>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
-          <Card className="w-full max-w-md shadow-2xl overflow-hidden border-none">
-            <CardHeader className="bg-gray-900 text-white flex flex-row items-center justify-between px-6 py-4">
-              <CardTitle className="text-lg font-bold">{editingId ? "Edit Aset" : "Tambah Aset Baru"}</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setIsModalOpen(false)} className="text-white hover:text-white hover:bg-white/10 h-8 w-8">
-                <X size={20} />
-              </Button>
-            </CardHeader>
-            <Form method="post" onSubmit={handleSubmit} className="p-6 space-y-4">
-              <input type="hidden" name="intent" value={editingId ? "update" : "create"} />
-              {editingId && <input type="hidden" name="id" value={editingId} />}
+      <ModalShell open={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Edit Aset" : "Tambah Aset Baru"} size="md">
+        <Form method="post" onSubmit={handleSubmit} className="space-y-4">
+          <input type="hidden" name="intent" value={editingId ? "update" : "create"} />
+          {editingId && <input type="hidden" name="id" value={editingId} />}
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase text-gray-400">Nama Aset</Label>
-                <Input
-                  name="name"
-                  value={formData.name || ""}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Printer Epson L3110"
-                  required
-                  className="bg-gray-50 border-gray-200"
-                />
-              </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-bold uppercase text-gray-400">Nama Aset</Label>
+            <Input
+              name="name"
+              value={formData.name || ""}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g. Printer Epson L3110"
+              required
+              className="bg-gray-50 border-gray-200"
+            />
+          </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase text-gray-400">Kategori</Label>
-                  <select
-                    name="category"
-                    className="w-full border border-gray-200 rounded-lg p-2 text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-indigo-100 transition-all font-medium"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  >
-                    <option>Elektronik</option>
-                    <option>Mesin Cetak</option>
-                    <option>Mesin Produksi</option>
-                    <option>Kendaraan</option>
-                    <option>Furniture</option>
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase text-gray-400">Tanggal Beli</Label>
-                  <Input
-                    name="purchaseDate"
-                    type="date"
-                    value={formData.purchaseDate}
-                    onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
-                    className="bg-gray-50 border-gray-200"
-                  />
-                </div>
-              </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold uppercase text-gray-400">Kategori</Label>
+              <select
+                name="category"
+                className="w-full border border-gray-200 rounded-lg p-2 text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-indigo-100 transition-all font-medium"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              >
+                <option>Elektronik</option>
+                <option>Mesin Cetak</option>
+                <option>Mesin Produksi</option>
+                <option>Kendaraan</option>
+                <option>Furniture</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold uppercase text-gray-400">Tanggal Beli</Label>
+              <Input
+                name="purchaseDate"
+                type="date"
+                value={formData.purchaseDate}
+                onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
+                className="bg-gray-50 border-gray-200"
+              />
+            </div>
+          </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase text-gray-400">Lokasi</Label>
-                <Input
-                  name="location"
-                  value={formData.location || ""}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="e.g. Kantor Utama / Gudang"
-                  className="bg-gray-50 border-gray-200"
-                />
-              </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-bold uppercase text-gray-400">Lokasi</Label>
+            <Input
+              name="location"
+              value={formData.location || ""}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              placeholder="e.g. Kantor Utama / Gudang"
+              className="bg-gray-50 border-gray-200"
+            />
+          </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase text-gray-400">Unit</Label>
-                  <Input
-                    name="unit"
-                    value={formData.unit || 1}
-                    type="number"
-                    min="1"
-                    onChange={(e) => setFormData({ ...formData, unit: Number(e.target.value) })}
-                    required
-                    className="bg-gray-50 border-gray-200 text-center"
-                  />
-                </div>
-                <div className="space-y-1.5 col-span-2">
-                  <Label className="text-xs font-bold uppercase text-gray-400">Nilai (Rp)</Label>
-                  <Input
-                    name="value"
-                    value={formData.value || ""}
-                    type="number"
-                    onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
-                    required
-                    placeholder="2000000"
-                    className="bg-gray-50 border-gray-200 font-bold"
-                  />
-                </div>
-              </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold uppercase text-gray-400">Unit</Label>
+              <Input
+                name="unit"
+                value={formData.unit || 1}
+                type="number"
+                min="1"
+                onChange={(e) => setFormData({ ...formData, unit: Number(e.target.value) })}
+                required
+                className="bg-gray-50 border-gray-200 text-center"
+              />
+            </div>
+            <div className="space-y-1.5 col-span-2">
+              <Label className="text-xs font-bold uppercase text-gray-400">Nilai (Rp)</Label>
+              <Input
+                name="value"
+                value={formData.value || ""}
+                type="number"
+                onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
+                required
+                placeholder="2000000"
+                className="bg-gray-50 border-gray-200 font-bold"
+              />
+            </div>
+          </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase text-gray-400">Kondisi</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { label: "Baik", value: "Good", color: "bg-emerald-50 text-emerald-600 border-emerald-200" },
-                    { label: "Service", value: "Maintenance", color: "bg-amber-50 text-amber-600 border-amber-200" },
-                    { label: "Rusak", value: "Damaged", color: "bg-rose-50 text-rose-600 border-rose-200" }
-                  ].map((s) => (
-                    <button
-                      key={s.value}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, status: s.value as any })}
-                      className={`py-2 text-[10px] font-bold rounded-lg border uppercase transition-all ${
-                        formData.status === s.value ? s.color : "bg-gray-50 text-gray-400 border-gray-100"
-                      }`}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                  <input type="hidden" name="status" value={formData.status} />
-                </div>
-              </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-bold uppercase text-gray-400">Kondisi</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: "Baik", value: "Good", color: "bg-emerald-50 text-emerald-600 border-emerald-200" },
+                { label: "Service", value: "Maintenance", color: "bg-amber-50 text-amber-600 border-amber-200" },
+                { label: "Rusak", value: "Damaged", color: "bg-rose-50 text-rose-600 border-rose-200" }
+              ].map((s) => (
+                <button
+                  key={s.value}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, status: s.value as any })}
+                  className={`py-2 text-[10px] font-bold rounded-lg border uppercase transition-all ${
+                    formData.status === s.value ? s.color : "bg-gray-50 text-gray-400 border-gray-100"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+              <input type="hidden" name="status" value={formData.status} />
+            </div>
+          </div>
 
-              <div className="pt-4 flex gap-3">
-                <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)} className="flex-1 h-10">Batal</Button>
-                <Button type="submit" className="flex-1 h-10 bg-indigo-600 hover:bg-indigo-700 text-white">Simpan Perubahan</Button>
-              </div>
-            </Form>
-          </Card>
-        </div>
-      )}
+          <div className="pt-4 flex gap-3">
+            <Button variant="outline" type="button" onClick={() => setIsModalOpen(false)} className="flex-1 h-10">Batal</Button>
+            <Button type="submit" className="flex-1 h-10 bg-indigo-600 hover:bg-indigo-700 text-white">Simpan Perubahan</Button>
+          </div>
+        </Form>
+      </ModalShell>
     </div>
   );
 };

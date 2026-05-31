@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-05-29T12:29:17.155Z",
+  "projectRoot": "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client",
+  "structure": {
+    "hasPackageJson": true,
+    "hasTsConfig": true,
+    "hasClaudeConfig": true,
+    "hasClaudeFlow": true
+  },
+  "scannedAt": 1780057757155
+}

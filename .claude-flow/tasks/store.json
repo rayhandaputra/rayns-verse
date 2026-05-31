@@ -1,0 +1,18 @@
+{
+  "tasks": {
+    "task-1780046176856-l2ag9f": {
+      "taskId": "task-1780046176856-l2ag9f",
+      "type": "research",
+      "description": "Gunakan tool execute_sql_query untuk mengeksekusi perintah 'SHOW TABLES LIMIT 3;', lalu buat file baru bernama audit_db.txt dan tuliskan daftar nama tabel tersebut di dalamnya.",
+      "priority": "normal",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [],
+      "createdAt": "2026-05-29T09:16:16.856Z",
+      "startedAt": null,
+      "completedAt": null
+    }
+  },
+  "version": "3.0.0"
+}

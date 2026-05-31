@@ -54,7 +54,7 @@ export default function ProductGrid({
               {
                 label: "Detail",
                 icon: <Eye className="w-4 h-4" />,
-                onClick: () => console.log("detail"),
+                onClick: () => {},
               },
               {
                 label: "Edit",

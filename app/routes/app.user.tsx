@@ -92,7 +92,6 @@ export const action: ActionFunction = async ({ request }) => {
       user: res.user,
     });
   } catch (error: any) {
-    console.log(error);
     return Response.json({
       success: false,
       error_message:

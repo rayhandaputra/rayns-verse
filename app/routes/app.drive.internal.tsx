@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import { useFetcherData } from "~/hooks";
 import { nexus } from "~/nexus/nexus-client";
 import { useQueryParams } from "~/hooks/use-query-params";
-import ModalSecond from "~/components/shared/modal/ModalSecond";
+import ModalShell from "~/components/modal/ModalShell";
 import { Button } from "~/components/ui/button";
 import { useModal } from "~/hooks";
 import { DriveBreadcrumb } from "~/components/shared/breadcrumb/DriveBreadcrumb";
@@ -596,7 +596,7 @@ export default function DriveInternalPage() {
           url: window.location.href,
         });
       } catch (err) {
-        console.log("Share dibatalkan");
+        // Share cancelled by user
       }
     } else {
       // fallback
@@ -904,7 +904,7 @@ export default function DriveInternalPage() {
 
       {/* New Folder Modal */}
       {modal?.type === "create_folder" && (
-        <ModalSecond
+        <ModalShell
           open={modal?.open}
           onClose={() => setModal({ ...modal, open: false })}
           title="Buat Folder Baru"
@@ -939,7 +939,7 @@ export default function DriveInternalPage() {
               </Button>
             </div>
           </form>
-        </ModalSecond>
+        </ModalShell>
       )}
     </>
   );

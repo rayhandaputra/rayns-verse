@@ -1,4 +1,4 @@
-import { APIProvider } from "..";
+import { APIProvider, APIProviderV2 } from "..";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 
@@ -171,10 +171,12 @@ export const AuthAPI = {
       .Result();
 
     let user = userRes.items?.[0];
+    let isNewUser = false;
 
     // 2. Jika tidak ada, buat user baru (sebagai customer secara default)
     if (!user) {
-      const newUserRes = await APIProvider(session)
+      isNewUser = true;
+      await APIProvider(session)
         .Endpoint("POST", "insert", "users")
         .Data({
           data: {
@@ -211,14 +213,13 @@ export const AuthAPI = {
     let auth = authRes.items?.[0];
 
     if (!auth) {
-      // Create a dummy auth record if missing (for session tracking)
       await APIProvider(session)
         .Endpoint("POST", "insert", "user_auth")
         .Data({
           data: {
             user_id: user.id,
             email,
-            password_hash: "GOOGLE_AUTH", // Placeholder
+            password_hash: "GOOGLE_AUTH",
             email_verified: 1,
             created_on: new Date().toISOString(),
           },
@@ -257,10 +258,67 @@ export const AuthAPI = {
 
     await AuthAPI.logLogin({ session, user_id: user.id, email, success: 1, ip });
 
+    // 5. Check if registration is complete (phone is required for customers)
+    const needsRegistration = isNewUser || !user.phone;
+
     return {
       success: true,
       token,
       user,
+      needsRegistration,
+    };
+  },
+
+  // ============================================================
+  // COMPLETE REGISTRATION (Customer — add phone number)
+  // ============================================================
+  completeRegistration: async ({ session, req }: any) => {
+    const { user_id, fullname, phone } = req.body || {};
+
+    if (!user_id || !phone) {
+      return { success: false, message: "User ID dan nomor HP wajib diisi" };
+    }
+
+    // Validate phone format (Indonesian)
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (cleanPhone.length < 10 || cleanPhone.length > 15) {
+      return { success: false, message: "Format nomor HP tidak valid" };
+    }
+
+    const updateData: any = { phone: cleanPhone };
+    if (fullname) updateData.fullname = fullname;
+    updateData.modified_on = new Date().toISOString();
+
+    try {
+      await APIProviderV2(session)
+        .Table("users")
+        .Update({ data: updateData, where: { id: user_id } })
+        .Result();
+    } catch (err: any) {
+      // Auto-migrate: if column doesn't exist, add it then retry
+      if (err?.message?.includes("Unknown column") && err?.message?.includes("phone")) {
+        const { AgentAPI } = await import("./agent.server");
+        await AgentAPI.query({ sql: "ALTER TABLE users ADD COLUMN phone VARCHAR(20) NULL AFTER email" });
+        // Retry after migration
+        await APIProviderV2(session)
+          .Table("users")
+          .Update({ data: updateData, where: { id: user_id } })
+          .Result();
+      } else {
+        throw err;
+      }
+    }
+
+    // Fetch updated user
+    const userRes = await APIProviderV2(session)
+      .Table("users")
+      .Select({ where: { id: user_id }, size: 1 })
+      .Result();
+
+    return {
+      success: true,
+      message: "Registrasi berhasil",
+      user: userRes.items?.[0],
     };
   },
 

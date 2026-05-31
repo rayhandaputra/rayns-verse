@@ -5,7 +5,7 @@
 
 @theme {
   --font-sans:
-    "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Geist", "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
@@ -138,4 +138,46 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* ─── Customer Portal Color Palette ───
+ * Derived from KINAU logo: dark teal + cyan accent
+ * Gunakan CSS variables ini di semua prefix customer.
+ * DILARANG hardcode hex di komponen customer.
+ *
+ * Usage di Tailwind:
+ *   bg-[var(--customer-primary)]
+ *   text-[var(--customer-accent)]
+ *   bg-[var(--customer-bg)]
+ *   dll.
+ */
+:root {
+  /* Primary — Dark Teal (dari logo KINAU) */
+  --customer-primary: #1E434C;
+  --customer-primary-hover: #163338;
+  --customer-primary-light: rgba(30, 67, 76, 0.1);
+
+  /* Accent — Cyan/Teal (highlight, link, indicator) */
+  --customer-accent: #0097B2;
+  --customer-accent-hover: #007A91;
+  --customer-accent-light: rgba(0, 151, 178, 0.1);
+
+  /* Background — Cool White-Blue */
+  --customer-bg: #F3F8FC;
+  --customer-card: #FFFFFF;
+  --customer-card-hover: #F8FBFE;
+
+  /* Text */
+  --customer-text: #1E293B;
+  --customer-text-muted: #64748B;
+  --customer-text-light: #94A3B8;
+
+  /* Borders */
+  --customer-border: #E2E8F0;
+  --customer-border-active: rgba(0, 151, 178, 0.3);
+
+  /* Status */
+  --customer-success: #10B981;
+  --customer-warning: #F59E0B;
+  --customer-danger: #EF4444;
 }

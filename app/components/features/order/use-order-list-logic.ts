@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { toast } from "sonner";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
@@ -6,6 +6,22 @@ import { useModal } from "~/hooks";
 import Swal from "sweetalert2";
 import QRCode from "qrcode";
 import { toBlob, toPng } from "html-to-image";
+
+export interface OrderFilters {
+  year: string;
+  status: string;
+  payment_status: string;
+  order_type: string;
+  kknInstitution: string;
+}
+
+const DEFAULT_FILTERS: OrderFilters = {
+  year: "",
+  status: "",
+  payment_status: "",
+  order_type: "",
+  kknInstitution: "",
+};
 
 export function useOrderListLogic() {
   const navigate = useNavigate();
@@ -18,33 +34,41 @@ export function useOrderListLogic() {
     }
   }, [location]);
 
+  // ── State ──
   const [viewMode, setViewMode] = useState<"reguler" | "kkn">("reguler");
-  const [filterYear, setFilterYear] = useState("");
-  const [filterKknInstitution, setFilterKknInstitution] = useState("");
-  const [sortBy, setSortBy] = useState("");
-  const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState<OrderFilters>(DEFAULT_FILTERS);
+  const [tempFilters, setTempFilters] = useState<OrderFilters>(DEFAULT_FILTERS);
+  const [sortBy, setSortBy] = useState("created_on:desc");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
   const [modal, setModal] = useModal();
   const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
 
-  // ✅ refactored: nexus() builder → useFetcherData langsung dengan params
+  // ── Data Fetching ──
   const { data: kknInstitutions, loading: loadingKknInstitutions } = useFetcherData({
     endpoint: "/api/nexus",
     params: { module: "OVERVIEW", action: "getKknInstitutions" },
   });
 
-  const ordersParams = {
+  const ordersParams = useMemo(() => ({
     module: "ORDERS",
     action: "get",
-    page: page ? page - 1 : 0,
-    size: 100,
+    page,
+    size: pageSize,
     pagination: "true",
     ...(viewMode === "kkn" ? { is_kkn: "1" } : { is_kkn: "0" }),
-    ...(filterYear && { year: filterYear }),
-    ...(viewMode === "kkn" && filterKknInstitution && { institution_id: filterKknInstitution }),
+    ...(filters.year && { year: filters.year }),
+    ...(filters.status && { status: filters.status }),
+    ...(filters.payment_status && { payment_status: filters.payment_status }),
+    ...(filters.order_type && { order_type: filters.order_type }),
+    ...(viewMode === "kkn" && filters.kknInstitution && { institution_id: filters.kknInstitution }),
     ...(sortBy && { sort: sortBy }),
-  };
+    ...(searchTerm && { search: searchTerm }),
+  }), [viewMode, filters, sortBy, searchTerm, page, pageSize]);
 
-  const { data: orders, reload } = useFetcherData({
+  const { data: orders, reload, loading: ordersLoading } = useFetcherData({
     endpoint: "/api/nexus",
     params: ordersParams,
   });
@@ -60,11 +84,61 @@ export function useOrderListLogic() {
     autoLoad: false,
   });
 
+  // ── Share / QR ──
   const cardRef = useRef<HTMLDivElement>(null);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [tempQr, setTempQr] = useState("");
   const [isProcessingShare, setIsProcessingShare] = useState<number | null>(null);
 
+  // ── Filter Helpers ──
+  const openFilterModal = useCallback(() => {
+    setTempFilters(filters);
+    setFilterModalOpen(true);
+  }, [filters]);
+
+  const applyFilters = useCallback(() => {
+    setFilters(tempFilters);
+    setPage(0);
+    setFilterModalOpen(false);
+  }, [tempFilters]);
+
+  const resetFilters = useCallback(() => {
+    setTempFilters(DEFAULT_FILTERS);
+  }, []);
+
+  const activeFilterCount = useMemo(() => {
+    return Object.values(filters).filter(Boolean).length;
+  }, [filters]);
+
+  // ── Tab Change ──
+  const handleTabChange = useCallback((tab: string) => {
+    setViewMode(tab as "reguler" | "kkn");
+    setPage(0);
+    setFilters(DEFAULT_FILTERS);
+    setSearchTerm("");
+  }, []);
+
+  // ── Search ──
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const handleSearch = useCallback((value: string) => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => {
+      setSearchTerm(value);
+      setPage(0);
+    }, 400);
+  }, []);
+
+  // ── Pagination ──
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage - 1);
+  }, []);
+
+  const handleRowsPerPageChange = useCallback((newSize: number) => {
+    setPageSize(newSize);
+    setPage(0);
+  }, []);
+
+  // ── Share Logic ──
   const handleShare = async (order: any) => {
     if (isProcessingShare !== null) return;
     try {
@@ -91,10 +165,7 @@ export function useOrderListLogic() {
         await navigator.share({
           files: [file],
           title: `Pesanan ${order.institution_name}`,
-          text: `Halo, berikut adalah QR Drive untuk *${order.institution_name}*.\n\n` +
-            `Nomor Pesanan: #${order.order_number}\n` +
-            `Link Drive: https://kinau.id/public/drive-link/${order.order_number}\n\n` +
-            `Silahkan scan atau klik link di atas.`,
+          text: `Halo, berikut adalah QR Drive untuk *${order.institution_name}*.\n\nNomor Pesanan: #${order.order_number}\nLink Drive: https://kinau.id/public/drive-link/${order.order_number}\n\nSilahkan scan atau klik link di atas.`,
         });
         toast.success("Berhasil dibagikan");
       } else {
@@ -108,7 +179,6 @@ export function useOrderListLogic() {
       }
     } catch (error: any) {
       if (error.name !== "AbortError") {
-        console.error(error);
         toast.error("Gagal memproses gambar");
       }
     } finally {
@@ -129,7 +199,7 @@ export function useOrderListLogic() {
       setTempQr(qrUrl);
       await new Promise((r) => setTimeout(r, 600));
 
-      if (!cardRef.current) throw new Error("Template tidak siap. Pastikan tab browser tetap aktif.");
+      if (!cardRef.current) throw new Error("Template tidak siap.");
 
       const captureOptions = { pixelRatio: 2, skipFonts: true, cacheBust: true };
       const blob = await toBlob(cardRef.current, captureOptions);
@@ -144,9 +214,8 @@ export function useOrderListLogic() {
         throw new Error("Browser tidak mendukung penyalinan gambar");
       }
     } catch (error: any) {
-      console.error(error);
       toast.dismiss(loadingToast);
-      toast.error("Gagal menyalin: " + (error.message || "Pastikan tab tetap aktif saat proses"));
+      toast.error("Gagal menyalin: " + (error.message || "Pastikan tab tetap aktif"));
     } finally {
       setIsProcessingShare(null);
       setTempQr("");
@@ -154,6 +223,7 @@ export function useOrderListLogic() {
     }
   };
 
+  // ── Actions ──
   const handleSubmitPaymentProof = (e: any) => {
     e.preventDefault();
     if (isUploadingFile) {
@@ -171,27 +241,27 @@ export function useOrderListLogic() {
     });
   };
 
-  const onUpdateStatus = (id: string, status: string) => {
+  const onUpdateStatus = useCallback((id: string, status: string) => {
     submitAction({ action: "update_status", id, status });
-  };
+  }, [submitAction]);
 
-  const onUpdateStatusPrinted = (id: string, status: string) => {
+  const onUpdateStatusPrinted = useCallback((id: string, status: string) => {
     submitAction({ action: "update_status_printed", id, status });
-  };
+  }, [submitAction]);
 
-  const onUpdateReview = (id: string, rating: number, review: string) => {
+  const onUpdateReview = useCallback((id: string, rating: number, review: string) => {
     submitAction({ action: "update_review", id, rating: String(rating), review });
-  };
+  }, [submitAction]);
 
-  const onUpdatePaymentProof = (id: string, proof: string) => {
+  const onUpdatePaymentProof = useCallback((id: string, proof: string) => {
     submitAction({ action: "update_payment_proof", id, proof });
-  };
+  }, [submitAction]);
 
-  const onDeletePaymentProof = (id: string, field: string) => {
+  const onDeletePaymentProof = useCallback((id: string, field: string) => {
     submitAction({ action: "delete_payment_proof", id, field });
-  };
+  }, [submitAction]);
 
-  const onDelete = (order: any) => {
+  const onDelete = useCallback((order: any) => {
     Swal.fire({
       title: "Hapus Pesanan?",
       text: `Yakin ingin menghapus pesanan ${order.institution_name}?`,
@@ -199,19 +269,19 @@ export function useOrderListLogic() {
       showCancelButton: true,
       confirmButtonText: "Ya, Hapus",
       cancelButtonText: "Batal",
-      customClass: { confirmButton: "bg-red-600 text-white", cancelButton: "bg-gray-200 text-gray-800" },
     }).then((result) => {
       if (result.isConfirmed) {
         submitAction({ action: "delete", id: order.id });
       }
     });
-  };
+  }, [submitAction]);
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = useCallback((text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("Disalin ke clipboard");
-  };
+  }, []);
 
+  // ── Action Response Handler ──
   const lastProcessedActionData = useRef<any>(null);
 
   useEffect(() => {
@@ -227,29 +297,47 @@ export function useOrderListLogic() {
     }
   }, [actionData, reload, setModal]);
 
+  // ── Derived Data ──
+  const orderItems = useMemo(() => orders?.data?.items || [], [orders]);
+  const totalItems = useMemo(() => orders?.data?.total_items || 0, [orders]);
+  const totalPages = useMemo(() => orders?.data?.total_pages || 0, [orders]);
+
   return {
     navigate,
-    location,
     viewMode,
-    setViewMode,
-    filterYear,
-    setFilterYear,
-    filterKknInstitution,
-    setFilterKknInstitution,
+    setViewMode: handleTabChange,
+    filters,
+    tempFilters,
+    setTempFilters,
     sortBy,
     setSortBy,
+    searchTerm,
+    handleSearch,
     page,
     setPage,
+    pageSize,
+    handlePageChange,
+    handleRowsPerPageChange,
     modal,
     setModal,
     isUploadingFile,
     setIsUploadingFile,
     orders,
+    orderItems,
+    totalItems,
+    totalPages,
+    ordersLoading,
     reload,
     kknInstitutions,
     loadingKknInstitutions,
     bankList,
     actionLoading,
+    filterModalOpen,
+    setFilterModalOpen,
+    openFilterModal,
+    applyFilters,
+    resetFilters,
+    activeFilterCount,
     handleShare,
     handleCopyImageQrCode,
     handleSubmitPaymentProof,

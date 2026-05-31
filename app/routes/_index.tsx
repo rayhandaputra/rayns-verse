@@ -40,10 +40,10 @@ import {
 import { API } from "~/nexus";
 import Navbar from "~/components/layout/public/navbar";
 import Footer from "~/components/layout/public/footer";
-import PublicHero from "~/components/section/PublicHero";
-import PublicStats from "~/components/section/PublicStats";
-import PublicPortfolio from "~/components/section/PublicPortfolio";
-import PublicProducts from "~/components/section/PublicProducts";
+import PublicHero from "~/components/shared/section/PublicHero";
+import PublicStats from "~/components/shared/section/PublicStats";
+import PublicPortfolio from "~/components/shared/section/PublicPortfolio";
+import PublicProducts from "~/components/shared/section/PublicProducts";
 import { Wave } from "~/components/shared/Wave";
 
 export async function loader() {

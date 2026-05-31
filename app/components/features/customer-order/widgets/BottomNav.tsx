@@ -26,8 +26,8 @@ export default function BottomNav({ currentStep, onStepChange, canProceed, hasOr
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-100 safe-area-bottom">
-      <div className="max-w-md mx-auto flex items-center justify-around px-2 py-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-100 safe-area-bottom md:hidden">
+      <div className="max-w-6xl mx-auto flex items-center justify-around px-2 py-2">
         {NAV_ITEMS.map(({ step, icon: Icon, label }) => {
           const isActive = currentStep === step;
           const accessible = isStepAccessible(step);

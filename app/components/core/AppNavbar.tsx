@@ -82,7 +82,7 @@ export const AppNavbar: React.FC<NavbarProps> = ({ currentUser, sidebar }) => {
         </button>
         <div className="hidden md:block">
           <h2 className="text-xl font-bold text-gray-800 leading-tight flex items-center gap-2">
-            {getGreeting()}, {currentUser?.name}
+            {getGreeting()}, {currentUser?.fullname || currentUser?.name || "User"}
             <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
               {currentUser?.role}
             </span>

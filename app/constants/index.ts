@@ -49,7 +49,12 @@ export function formatCurrencyUnprefix(value: number): string {
  */
 export function formatFullDate(date: string | Date | number): string {
   if (!date) return "-";
-  return moment(date).locale("id").format("DD MMMM YYYY");
+  const d = moment(date);
+  const bulan = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+  return `${d.format("DD")} ${bulan[d.month()]} ${d.format("YYYY")}`;
 }
 
 /**

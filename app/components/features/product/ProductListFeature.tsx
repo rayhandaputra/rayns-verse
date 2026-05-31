@@ -29,11 +29,10 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
 import { nexus } from "~/nexus/nexus-client";
-import { DataTable, type ColumnDef } from "~/components/ui/data-table";
+import { CustomDataTable } from "~/components/shared/table/CustomDataTable";
 import { Button } from "~/components/ui/button";
-import TableHeader from "~/components/shared/table/TableHeader";
 import { useModal } from "~/hooks";
-import ModalSecond from "~/components/shared/modal/ModalSecond";
+import ModalShell from "~/components/modal/ModalShell";
 import ReactSelect from "react-select";
 
 // ============================================
@@ -42,6 +41,15 @@ import ReactSelect from "react-select";
 
 const PriceInput = ({ value, placeholder = "0", className = "", onChange }: any) => {
   const [displayValue, setDisplayValue] = useState(formatNumberInput(value || ""));
+  const prevValueRef = useRef(value);
+
+  // Sync display when external value changes (e.g. from parent reset)
+  useEffect(() => {
+    if (prevValueRef.current !== value) {
+      setDisplayValue(formatNumberInput(value || ""));
+      prevValueRef.current = value;
+    }
+  }, [value]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/[^0-9]/g, "");
@@ -56,7 +64,7 @@ const PriceInput = ({ value, placeholder = "0", className = "", onChange }: any)
       </span>
       <input
         type="text"
-        className="w-full border border-gray-300 rounded p-1 pl-7 text-sm font-bold text-right outline-none focus:ring-1 focus:ring-blue-500 transition-all bg-white"
+        className="w-full border border-gray-300 rounded-lg p-2 pl-7 text-sm font-bold text-right outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white"
         value={displayValue}
         placeholder={placeholder}
         onChange={handleInputChange}
@@ -73,6 +81,8 @@ export const ProductListFeature: React.FC = () => {
   const actionData = useActionData() as any;
 
   // Fetch products
+  const [page, setPage] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
   const {
     data: productsData,
     loading: isLoading,
@@ -82,9 +92,10 @@ export const ProductListFeature: React.FC = () => {
       .module("PRODUCT")
       .action("get")
       .params({
-        page: 0,
+        page,
         size: 10,
         pagination: "true",
+        ...(searchTerm ? { search: searchTerm } : {}),
       })
       .build(),
   });
@@ -289,7 +300,6 @@ export const ProductListFeature: React.FC = () => {
           data: { ...modal?.data, image: response.url },
         });
       } catch (error: any) {
-        console.log(error)
         toast.error(error?.message || "Gagal mengupload gambar");
       } finally {
         setIsUploadingImage(false);
@@ -387,178 +397,165 @@ export const ProductListFeature: React.FC = () => {
       },
     });
 
-  // Column definitions for DataTable
-  const columns: ColumnDef<any>[] = useMemo(
+  // Column definitions for CustomDataTable (react-data-table-component format)
+  const columns = useMemo(
     () => [
       {
-        key: "name",
-        header: "Produk",
-        cellClassName:
-          "whitespace-nowrap text-xs text-gray-600 min-w-[180px] font-medium",
-        cell: (row) => (
-          <div className="flex items-start gap-3">
-            <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 flex-shrink-0 overflow-hidden">
+        name: "Produk",
+        minWidth: "260px",
+        cell: (row: any) => (
+          <div className="flex items-center gap-3 py-3">
+            <div className="w-11 h-11 rounded-xl bg-gray-100 border border-gray-200 flex-shrink-0 overflow-hidden">
               {row.image && row.image !== "undefined" ? (
-                <img
-                  src={row.image}
-                  className="w-full h-full object-cover"
-                  alt="row"
-                />
+                <img src={row.image} className="w-full h-full object-cover" alt="" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300">
-                  <Tag size={20} />
-                </div>
+                <div className="w-full h-full flex items-center justify-center text-gray-300"><Tag size={18} /></div>
               )}
             </div>
-            <div>
-              <div className="font-bold text-gray-900 text-base">
-                {row.name}
-              </div>
-              {row?.description !== "undefined" && !!row?.description ? (
-                <div className="text-xs text-gray-500 mt-1 max-w-xs">
-                  {row?.description || ""}
-                </div>
-              ) : (
-                ""
-              )}
-              {(!row.product_variants || row.product_variants.length === 0 || !row.product_variants.some((v: any) => +v.is_default === 1)) && (
-                <div className="text-[10px] text-red-500 font-bold mt-1 bg-red-50 px-2 py-0.5 rounded border border-red-100 w-fit">
-                  Variant default belum ditentukan!
-                </div>
+            <div className="min-w-0">
+              <div className="font-bold text-gray-900 text-sm truncate">{row.name}</div>
+              {row?.description && row.description !== "undefined" && (
+                <div className="text-[11px] text-gray-400 truncate max-w-[180px]">{row.description}</div>
               )}
             </div>
           </div>
         ),
       },
       {
-        key: "price_variant",
-        header: "Detail Harga & Variasi",
-        cellClassName: "max-w-[180px]",
-        cell: (row) => (
-          <>
-            <div className="flex flex-col gap-2">
-              {/* Tiers */}
-              {row.product_price_rules &&
-                row.product_price_rules?.length > 0 ? (
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">
-                    Grosir
-                  </span>
-                  {row.product_price_rules?.map((t: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className="flex justify-between items-center text-xs bg-gray-100 px-2 py-1 rounded w-48"
-                    >
-                      <span className="text-gray-600">≥ {t.min_qty} pcs</span>
-                      <span className="font-bold text-gray-800">
-                        {formatCurrency(t.price)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-xs text-gray-400 italic">
-                  Tidak ada aturan grosir
-                </span>
-              )}
-
-              {/* Variations */}
-              {row.product_variants && row.product_variants?.length > 0 && (
-                <div className="flex flex-col gap-1 mt-1">
-                  <span className="text-[10px] font-bold text-blue-400 uppercase">
-                    Variasi
-                  </span>
-                  {row.product_variants.map((v: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className={`flex justify-between items-center text-xs px-2 py-1 rounded w-48 border ${+v?.is_default === 1
-                        ? "bg-yellow-50 border-yellow-200"
-                        : "bg-blue-50 border-blue-100"
-                        }`}
-                    >
-                      <div className="flex items-center gap-1">
-                        {+v?.is_default === 1 && (
-                          <Star size={10} className="text-yellow-500 fill-yellow-500" />
-                        )}
-                        <span
-                          className={
-                            +v?.is_default === 1 ? "text-yellow-700 font-medium" : "text-blue-700"
-                          }
-                        >
-                          {v.variant_name}
-                        </span>
-                      </div>
-                      <span
-                        className={`font-bold ${+v?.is_default === 1 ? "text-yellow-800" : "text-blue-800"
-                          }`}
-                      >
-                        +{formatCurrency(v.base_price)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+        name: "Kategori",
+        width: "140px",
+        cell: (row: any) => {
+          const catLabel = categoryOptions.find((c: any) => c.value == row.category_id)?.label || row.category_name || "-";
+          return (
+            <span className="text-xs font-semibold text-[#0097B2] bg-[#E2EEF7] px-2.5 py-1 rounded-lg">
+              {catLabel}
+            </span>
+          );
+        },
+      },
+      {
+        name: "Harga Dasar",
+        width: "140px",
+        cell: (row: any) => {
+          const defaultVariant = row.product_variants?.find((v: any) => +v.is_default === 1);
+          const basePrice = defaultVariant ? defaultVariant.base_price : (row.product_price_rules?.[0]?.price || 0);
+          return (
+            <div>
+              <div className="font-bold text-[#1E293B] text-sm">{formatCurrency(basePrice)}</div>
+              {row.product_variants?.length > 0 && !defaultVariant && (
+                <span className="text-[9px] text-red-500 font-bold">⚠ Default belum diset</span>
               )}
             </div>
-          </>
-        ),
+          );
+        },
       },
       {
-        key: "show_in_dashboard",
-        header: "Tampil?",
-        headerClassName: "text-center",
-        cellClassName: "max-w-[150px]",
-        cell: (row) =>
-          +(row.show_in_dashboard ?? 0) > 0 ? (
-            <Eye size={18} className="text-blue-500 mx-auto" />
+        name: "Variasi",
+        width: "90px",
+        center: true,
+        cell: (row: any) => {
+          const count = row.product_variants?.length || 0;
+          return count > 0 ? (
+            <span className="text-xs font-bold text-[#1E434C] bg-[#E2EEF7] px-2.5 py-1 rounded-full">{count}</span>
           ) : (
-            <EyeOff size={18} className="text-gray-300 mx-auto" />
-          ),
+            <span className="text-xs text-gray-300">—</span>
+          );
+        },
       },
       {
-        key: "aksi",
-        header: "Aksi",
-        headerClassName: "text-center",
-        cellClassName: "text-center",
-        cell: (row) => (
-          <div className="flex justify-center gap-2 relative">
-            <Button
-              onClick={() => handleOpenEdit(row)}
-              className="text-blue-600 hover:text-blue-800 p-1.5 bg-blue-50 rounded-lg hover:bg-blue-100 transition"
-              title="Edit"
-            >
-              <Edit2 size={16} />
-            </Button>
-            <Button
-              onClick={() => handleDuplicate(row)}
-              className="text-orange-600 hover:text-orange-800 p-1.5 bg-orange-50 rounded-lg hover:bg-orange-100 transition"
-              title="Duplikat"
-            >
-              <Copy size={16} />
-            </Button>
-            <Button
-              onClick={() => handleDelete(row.id, row.name)}
-              className="text-red-600 hover:text-red-800 p-1.5 bg-red-50 rounded-lg hover:bg-red-100 transition"
-              title="Hapus"
-            >
-              <Trash2 size={16} />
-            </Button>
+        name: "Tampil",
+        width: "80px",
+        center: true,
+        cell: (row: any) => +(row.show_in_dashboard ?? 0) > 0
+          ? <Eye size={16} className="text-emerald-500" />
+          : <EyeOff size={16} className="text-gray-300" />,
+      },
+      {
+        name: "Aksi",
+        width: "150px",
+        right: true,
+        cell: (row: any) => (
+          <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-slate-100">
+              <button title="Edit" onClick={() => handleOpenEdit(row)} className="p-2 text-slate-500 hover:text-blue-500 hover:bg-white rounded transition-all">
+                <Edit2 className="w-4 h-4" />
+              </button>
+              <button title="Duplikat" onClick={() => handleDuplicate(row)} className="p-2 text-slate-500 hover:text-purple-500 hover:bg-white rounded transition-all">
+                <Copy className="w-4 h-4" />
+              </button>
+              <button title="Hapus" onClick={() => handleDelete(row.id, row.name)} className="p-2 text-slate-500 hover:text-red-500 hover:bg-white rounded transition-all">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         ),
       },
     ],
-    []
+    [categoryOptions]
+  );
+
+  // Expandable row component — detail harga & variasi
+  const ExpandedRow = ({ data: row }: { data: any }) => (
+    <div className="px-6 py-4 bg-[#F3F8FC] border-t border-slate-100">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
+        {/* Aturan Harga Grosir */}
+        <div>
+          <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Aturan Harga Grosir</h4>
+          {row.product_price_rules?.length > 0 ? (
+            <div className="space-y-1.5">
+              {row.product_price_rules.map((t: any, idx: number) => (
+                <div key={idx} className="flex justify-between items-center text-xs bg-white px-3 py-2 rounded-lg border border-gray-100 shadow-sm">
+                  <span className="text-gray-600">≥ <span className="font-bold text-[#1E293B]">{t.min_qty}</span> pcs</span>
+                  <span className="font-bold text-[#1E293B]">{formatCurrency(t.price)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 italic">Tidak ada aturan grosir</p>
+          )}
+        </div>
+
+        {/* Variasi Produk */}
+        <div>
+          <h4 className="text-[10px] font-bold text-[#0097B2] uppercase tracking-widest mb-2">Variasi Produk</h4>
+          {row.product_variants?.length > 0 ? (
+            <div className="space-y-1.5">
+              {row.product_variants.map((v: any, idx: number) => (
+                <div key={idx} className={`flex justify-between items-center text-xs px-3 py-2 rounded-lg border shadow-sm ${+v?.is_default === 1 ? "bg-amber-50 border-amber-200" : "bg-white border-gray-100"}`}>
+                  <div className="flex items-center gap-1.5">
+                    {+v?.is_default === 1 && <Star size={10} className="text-amber-500 fill-amber-500" />}
+                    <span className={+v?.is_default === 1 ? "text-amber-800 font-semibold" : "text-[#1E293B]"}>{v.variant_name}</span>
+                    {+v?.is_default === 1 && <span className="text-[8px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded font-bold uppercase">Default</span>}
+                  </div>
+                  <span className={`font-bold ${+v?.is_default === 1 ? "text-amber-800" : "text-[#1E293B]"}`}>+{formatCurrency(v.base_price)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 italic">Tidak ada variasi</p>
+          )}
+        </div>
+      </div>
+
+      {/* Deskripsi */}
+      {row.description && row.description !== "undefined" && (
+        <div className="mt-4 pt-3 border-t border-gray-200/50">
+          <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Deskripsi</h4>
+          <p className="text-xs text-gray-600">{row.description}</p>
+        </div>
+      )}
+    </div>
   );
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-
+    <div className="space-y-6">
       {/* ── TABS HEADER ── */}
-      <div className="flex border-b border-gray-200 px-4 pt-3 gap-1">
+      <div className="flex items-center gap-1 bg-gray-100 p-1.5 rounded-2xl w-fit">
         <button
           onClick={() => setActiveTab("products")}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-all ${activeTab === "products"
-            ? "border-blue-600 text-blue-600 bg-blue-50"
-            : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === "products"
+            ? "bg-white text-[#1E434C] shadow-sm"
+            : "text-gray-400 hover:text-gray-600"
             }`}
         >
           <LayoutList size={15} />
@@ -566,9 +563,9 @@ export const ProductListFeature: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab("categories")}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-all ${activeTab === "categories"
-            ? "border-blue-600 text-blue-600 bg-blue-50"
-            : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === "categories"
+            ? "bg-white text-[#1E434C] shadow-sm"
+            : "text-gray-400 hover:text-gray-600"
             }`}
         >
           <FolderCog size={15} />
@@ -581,37 +578,44 @@ export const ProductListFeature: React.FC = () => {
       {/* ═══════════════════════════════════════ */}
       {activeTab === "products" && (
         <>
-          <TableHeader
+          <CustomDataTable
             title="Daftar Produk"
             description="Atur jenis barang dan aturan harga."
-            buttonText="Tambah Produk"
-            onClick={() => {
-              setModal({
-                open: true,
-                type: "create",
-                data: {
-                  product_price_rules: [],
-                  product_variants: [],
-                },
-              });
-            }}
-            buttonIcon={Plus}
-          />
-          <DataTable
+            totalData={productsData?.data?.total_items || 0}
             columns={columns}
             data={products}
-            getRowKey={(product, _index) => product.id}
-            rowClassName={(product) =>
-              +(product.show_in_dashboard || 0) > 0 ? "bg-green-50/30" : ""
+            loading={isLoading}
+            onSearch={(val) => { setSearchTerm(val); setPage(0); }}
+            actions={
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm flex items-center gap-1.5 rounded-lg px-4 h-9"
+                onClick={() => {
+                  setModal({
+                    open: true,
+                    type: "create",
+                    data: {
+                      product_price_rules: [],
+                      product_variants: [],
+                    },
+                  });
+                }}
+              >
+                <Plus size={15} /> Tambah Produk
+              </Button>
             }
-            emptyMessage="Belum ada produk."
-            minHeight="400px"
+            expandableRows
+            expandableRowsComponent={ExpandedRow}
+            expandOnRowClicked
+            paginationServer
+            paginationTotalRows={productsData?.data?.total_items || 0}
+            onChangePage={(p) => setPage(p - 1)}
+            onChangeRowsPerPage={() => setPage(0)}
           />
         </>
       )}
 
       {modal?.type === "create" || modal?.type === "update" ? (
-        <ModalSecond
+        <ModalShell
           open={modal?.open}
           onClose={() => setModal({ ...modal, open: false })}
           title={modal?.data?.id ? "Edit Produk" : "Tambah Produk Baru"}
@@ -797,7 +801,6 @@ export const ProductListFeature: React.FC = () => {
                           Harga:
                         </span>
                         <PriceInput
-                          key={tier.price}
                           value={tier.price}
                           onChange={(val: number) => updateTier(idx, "price", val)}
                         />
@@ -879,7 +882,6 @@ export const ProductListFeature: React.FC = () => {
                         + Harga
                       </span>
                       <PriceInput
-                        key={v.base_price}
                         value={v.base_price}
                         onChange={(val: number) => updateVariation(idx, "base_price", val)}
                       />
@@ -933,7 +935,7 @@ export const ProductListFeature: React.FC = () => {
               </Button>
             </div>
           </div>
-        </ModalSecond>
+        </ModalShell>
       ) : (
         ""
       )}
@@ -1041,7 +1043,7 @@ export const ProductListFeature: React.FC = () => {
 
           {/* Category Modal */}
           {catModal.open && (
-            <ModalSecond
+            <ModalShell
               open={catModal.open}
               onClose={() => setCatModal({ open: false })}
               title={catModal.key === "create" ? "Tambah Kategori Produk" : "Edit Kategori Produk"}
@@ -1162,7 +1164,7 @@ export const ProductListFeature: React.FC = () => {
                   </Button>
                 </div>
               </div>
-            </ModalSecond>
+            </ModalShell>
           )}
         </>
       )}

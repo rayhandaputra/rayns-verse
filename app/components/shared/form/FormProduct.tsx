@@ -103,7 +103,7 @@ export default function ProductFullFormModal({
         name: v.name,
       }));
     } catch (error) {
-      console.log(error);
+      // silently fail
     }
   };
 

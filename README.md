@@ -470,6 +470,7 @@ export async function action({ request }) {
 | `console.log` tersisa di production code | Hapus sebelum commit |
 | `setState` di dalam `useEffect` tanpa guard | Gunakan `useMemo` untuk derived state |
 | File komponen > 150 baris | Pecah menjadi sub-komponen |
+| `ModalSecond`, `Modal`, atau modal custom lain | `ModalShell` dari `~/components/modal/ModalShell` |
 
 ---
 
@@ -664,6 +665,87 @@ Kombinasi `FolderCard` + `FileRow` untuk simulasi file explorer. Folder purpose:
 ### Financial Integrity
 Form transaksi (Income/Expense/Transfer) **wajib** mengakomodir input `account_id` (Wallet) dan `category_id`. Kalkulasi subtotal/total **wajib** dilakukan server-side di API module, bukan di client.
 
+### Modal Component — `ModalShell` (WAJIB)
+Semua modal di project ini **WAJIB** menggunakan `ModalShell` dari `app/components/modal/ModalShell.tsx`.
+
+```tsx
+import ModalShell from "~/components/modal/ModalShell";
+
+<ModalShell open={isOpen} onClose={() => setIsOpen(false)} title="Judul Modal" size="lg">
+  {/* Content */}
+</ModalShell>
+```
+
+**Props:**
+- `open: boolean` — Kontrol visibility
+- `onClose: () => void` — Callback saat ditutup
+- `title?: ReactNode` — Header (opsional, jika null maka close button di content area)
+- `size?: "sm" | "md" | "lg" | "xl" | "2xl" | ... | "full"` — Lebar modal (default: `"md"`)
+- `children: ReactNode` — Isi modal
+
+**Dilarang menggunakan:**
+- `ModalSecond` (`~/components/shared/modal/ModalSecond`) — Legacy, tanpa animasi
+- `Modal` (`~/components/modal/Modal.tsx`) — Wrapper Dialog shadcn, tidak konsisten
+- Modal custom inline — Gunakan `ModalShell` untuk konsistensi UX
+
+### Table Action Column — Standar UI
+
+Setiap kolom aksi di data table **WAJIB** mengikuti struktur berikut:
+
+**Aturan Visual:**
+- Wrapper: `flex items-center justify-end gap-2`
+- Inner pod: `flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-slate-100`
+- Tombol: `p-2 text-slate-500 hover:bg-white rounded transition-all`
+- Icon: `w-4 h-4`
+- Hover color sesuai aksi (amber = cetak, emerald = detail, red = hapus, blue = edit)
+- Setiap `<button>` wajib punya `title` sebagai tooltip
+
+**Reference Implementation:**
+```tsx
+<div className="flex items-center justify-end gap-2">
+  <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-slate-100">
+    <button
+      title="Cetak Dokumen"
+      onClick={() => {}}
+      className="p-2 text-slate-500 hover:text-amber-500 hover:bg-white rounded transition-all"
+    >
+      <Printer className="w-4 h-4" />
+    </button>
+    <button
+      title="Lihat Detail"
+      onClick={() => {}}
+      className="p-2 text-slate-500 hover:text-[#10B981] hover:bg-white rounded transition-all"
+    >
+      <Eye className="w-4 h-4" />
+    </button>
+    <button
+      title="Edit"
+      onClick={() => {}}
+      className="p-2 text-slate-500 hover:text-blue-500 hover:bg-white rounded transition-all"
+    >
+      <Edit2 className="w-4 h-4" />
+    </button>
+    <button
+      title="Hapus"
+      onClick={() => {}}
+      className="p-2 text-slate-500 hover:text-red-500 hover:bg-white rounded transition-all"
+    >
+      <Trash2 className="w-4 h-4" />
+    </button>
+  </div>
+</div>
+```
+
+**Warna hover per aksi:**
+| Aksi | Hover Color |
+| :--- | :--- |
+| Cetak/Print | `hover:text-amber-500` |
+| Detail/View | `hover:text-[#10B981]` (emerald) |
+| Edit | `hover:text-blue-500` |
+| Hapus/Delete | `hover:text-red-500` |
+| Download | `hover:text-indigo-500` |
+| Duplikat | `hover:text-purple-500` |
+
 ---
 
 ## 📋 Modul API yang Tersedia (`API` object)
@@ -687,4 +769,232 @@ API.TESTIMONIAL     API.SETTINGS          API.SHIRT_COLOR
 API.TWIBBON_TEMPLATE API.TWIBBON_ASSIGNMENT
 // Server-only:
 API.USER            API.USER_AUTH
+API.AGENT                                 // AI Agent Bridge (raw SQL)
 ```
+
+---
+
+## 🤖 AI Agent Bridge — Raw SQL Execution
+
+### Overview
+
+Module `AgentAPI` (`app/nexus/modules/agent.server.ts`) menyediakan akses langsung ke database via raw SQL melalui endpoint `https://data.kinau.id/apicore-latest/agent-query`.
+
+> ⚠️ **Server-only** — File ini `.server.ts`, tidak bisa diakses dari browser.
+> ⚠️ **Full DB access** — SELECT, INSERT, UPDATE, DELETE, ALTER, CREATE, DROP.
+
+### Autentikasi
+
+Dual-layer auth (sudah di-handle otomatis oleh module):
+```
+Authorization: Bearer REPLACE_WITH_STRONG_KEY
+x-agent-key: REPLACE_WITH_AGENT_KEY
+```
+
+### Cara Consume
+
+#### 1. Langsung di Route Loader/Action (Server-side)
+```ts
+import { API } from "~/nexus/index.server";
+
+// Single SELECT query
+const result = await API.AGENT.query({
+  sql: "SELECT * FROM orders WHERE status = 'pending' LIMIT 10"
+});
+// result: { success: true, type: "query", rows: [...], row_count: 10 }
+
+// DDL / DML
+const result = await API.AGENT.query({
+  sql: "UPDATE orders SET status = 'confirmed' WHERE id = 5"
+});
+// result: { success: true, type: "execute", affected_rows: 1 }
+
+// Batch queries (array)
+const result = await API.AGENT.query({
+  sql: [
+    "SHOW TABLES",
+    "DESCRIBE orders",
+    "SELECT COUNT(*) as total FROM orders WHERE status = 'pending'"
+  ]
+});
+// result: [{ success, type, rows, row_count }, { ... }, { ... }]
+```
+
+#### 2. Get Database Schema
+```ts
+// Semua tabel
+const schema = await API.AGENT.schema({});
+
+// Tabel tertentu
+const schema = await API.AGENT.schema({ tables: ["orders", "order_items"] });
+// result: { success: true, data: { orders: { columns: [...], indexes: [...] }, ... } }
+```
+
+#### 3. List All Tables
+```ts
+const tables = await API.AGENT.tables();
+// result: { success: true, data: [{ table: "orders", rows: 5000, data_size: 524288, comment: "" }, ...] }
+```
+
+#### 4. Via API Gateway (Client-side melalui useFetcherData)
+```ts
+// Di komponen — panggil via /api/nexus gateway
+const { data } = useFetcherData({
+  endpoint: "/api/nexus",
+  params: { module: "AGENT", action: "query" },
+  method: "POST",
+  body: { sql: "SELECT * FROM orders LIMIT 5" }
+});
+```
+
+### Response Format
+
+**SELECT / SHOW:**
+```json
+{ "success": true, "type": "query", "rows": [...], "row_count": 10 }
+```
+
+**INSERT / UPDATE / DELETE / DDL:**
+```json
+{ "success": true, "type": "execute", "affected_rows": 1 }
+```
+
+**Error:**
+```json
+{ "success": false, "error": "Table 'xyz' doesn't exist" }
+```
+
+### Kapan Menggunakan AgentAPI vs APIProvider
+
+| Gunakan `APIProvider` | Gunakan `AgentAPI` |
+| :--- | :--- |
+| CRUD standar (select, insert, update, delete) | Query kompleks (JOIN, subquery, aggregate) |
+| Operasi yang sudah ada module-nya | DDL (ALTER, CREATE TABLE) |
+| Kode production yang stabil | Debugging & investigasi data |
+| Semua kode baru yang bisa pakai CRUD | Migrasi schema, batch operations |
+| | AI-driven data analysis |
+
+---
+
+## 🚀 APIProviderV2 — RESTful Engine (apicore-latest)
+
+### Overview
+
+`APIProviderV2` adalah builder baru yang menargetkan endpoint RESTful `https://data.kinau.id/apicore-latest`. Ini adalah pengganti bertahap dari `APIProvider` (api2) yang masih menggunakan POST-only routing.
+
+**File:** `app/nexus/core/api-provider-v2.ts`
+**Config:** `API_URL_V2` di `app/nexus/core/config.ts`
+
+### Perbedaan dengan APIProvider (api2)
+
+| Aspek | APIProvider (api2) | APIProviderV2 (apicore-latest) |
+| :--- | :--- | :--- |
+| Routing | POST + `{ table, action }` di body | HTTP Method + `/{table}` di URL |
+| SELECT | `POST /api2` + `action: "select"` | `GET /{table}?filters` atau `POST /{table}` (auto-detect) |
+| INSERT | `POST /api2` + `action: "insert"` | `POST /{table}` + `{ data: {...} }` |
+| UPDATE | `POST /api2` + `action: "update"` | `PATCH /{table}` + `{ data, where }` |
+| DELETE | `POST /api2` + `action: "delete"` | `DELETE /{table}` + `{ where }` |
+| Include/Relasi | Didukung | Didukung (via POST auto-detect) |
+| Filter Operators | Sama | Sama (>=, !=, like:, null, dll) |
+| Response Format | Sama | Sama (`{ status, error_message, data: { items, total_items } }`) |
+
+### Cara Import
+
+```ts
+import { APIProviderV2 } from "~/nexus";
+// atau
+import { APIProviderV2 } from "~/nexus/core/api-provider-v2";
+```
+
+### Usage di Nexus Modules
+
+```ts
+// SELECT — simple (GET)
+const result = await APIProviderV2(session)
+  .Table("orders")
+  .Select({ page: 0, size: 10, where: { status: "pending", deleted_on: "null" } })
+  .Result();
+
+// SELECT — dengan include/relasi (POST auto-detect)
+const result = await APIProviderV2(session)
+  .Table("orders")
+  .Select({
+    where: { status: "active" },
+    columns: ["id", "order_number", "status"],
+    include: [{
+      table: "order_items",
+      alias: "items",
+      foreign_key: "order_number",
+      reference_key: "order_number",
+      columns: ["product_name", "qty", "price"],
+      where: { deleted_on: "null" }
+    }],
+    orderBy: ["created_on", "DESC"],
+    page: 0,
+    size: 10
+  })
+  .Result();
+
+// INSERT
+const result = await APIProviderV2(session)
+  .Table("orders")
+  .Insert({ order_number: "ORD-999", status: "pending" })
+  .Result();
+
+// BULK INSERT
+const result = await APIProviderV2(session)
+  .Table("order_items")
+  .BulkInsert({
+    rows: [{ order_number: "ORD-001", product_id: 1, qty: 10 }],
+    updateOnDuplicate: true,
+    with_id: false
+  })
+  .Result();
+
+// UPDATE
+const result = await APIProviderV2(session)
+  .Table("orders")
+  .Update({ data: { status: "confirmed" }, where: { id: 123 } })
+  .Result();
+
+// DELETE
+const result = await APIProviderV2(session)
+  .Table("orders")
+  .Delete({ where: { id: 123 } })
+  .Result();
+```
+
+### Strategi Migrasi per Modul
+
+Saat migrasi modul dari `APIProvider` ke `APIProviderV2`:
+
+1. Buka `app/nexus/modules/[module].ts`
+2. Ganti import: `APIProvider` → `APIProviderV2`
+3. Ganti pattern:
+
+```ts
+// ❌ SEBELUM (api2)
+await APIProvider(session)
+  .Endpoint("POST", "select", "orders")
+  .Data({ page: 0, size: 10, where: { status: "pending" } })
+  .Result();
+
+// ✅ SESUDAH (apicore-latest)
+await APIProviderV2(session)
+  .Table("orders")
+  .Select({ page: 0, size: 10, where: { status: "pending" } })
+  .Result();
+```
+
+4. Response format **identik** — tidak perlu ubah komponen/route yang mengkonsumsi data
+5. Fitur tambahan: retry + exponential backoff + timeout (sama seperti APIProvider)
+
+### Kapan Menggunakan APIProviderV2
+
+| Gunakan `APIProviderV2` | Tetap `APIProvider` |
+| :--- | :--- |
+| Modul baru yang sedang dibuat | Modul existing yang belum diminta migrasi |
+| Modul yang secara eksplisit diminta migrasi | Kode yang sudah stabil dan tidak disentuh |
+| Fitur yang butuh filter operator baru (EXISTS, raw:) | — |
+
+> **Catatan:** Kedua provider bisa hidup berdampingan. Migrasi dilakukan bertahap per modul, bukan big-bang.

@@ -85,8 +85,8 @@ export const useOrderColumns = ({
       {
         key: "no",
         header: "No",
-        headerClassName: "w-[60px] min-w-[60px] max-w-[60px] sticky left-0 z-20 bg-gray-100",
-        cellClassName: "bg-white group-hover:bg-gray-50 transition-colors w-[60px] min-w-[60px] max-w-[60px] whitespace-nowrap text-xs text-gray-600 font-medium sticky left-0 z-10",
+        headerClassName: "w-[40px] min-w-[40px] max-w-[40px] sticky left-0 z-20 bg-gray-100",
+        cellClassName: "bg-white group-hover:bg-gray-50 transition-colors w-[40px] min-w-[40px] max-w-[40px] whitespace-nowrap text-xs text-gray-600 font-medium sticky left-0 z-10",
         cell: (order, index) => {
           const pageNum = orders?.data?.current_page ?? 0;
           const pageSize = 100;
@@ -96,15 +96,15 @@ export const useOrderColumns = ({
       {
         key: "instansi",
         header: "Instansi/Pemesan",
-        headerClassName: "w-[240px] min-w-[240px] max-w-[240px] sticky left-[60px] z-20 bg-gray-100 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)]",
-        cellClassName: "w-[240px] min-w-[240px] max-w-[240px] bg-white group-hover:bg-gray-50 transition-colors sticky left-[60px] z-10 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)]",
+        headerClassName: "min-w-[260px] sticky left-[40px] z-20 bg-gray-100 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.06)]",
+        cellClassName: "min-w-[260px] bg-white group-hover:bg-gray-50 transition-colors sticky left-[40px] z-10 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.06)]",
         cell: (order) => (
-          <>
-            <div className="font-bold text-gray-900 w-[180px] flex items-center gap-2">
+          <div className="py-1">
+            <div className="font-bold text-gray-900 flex items-center gap-2 flex-wrap">
               {+(order?.is_kkn ?? 0) === 1
                 ? (
-                  <div className="flex items-center gap-1.5 whitespace-nowrap">
-                    <span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="whitespace-nowrap">
                       {order?.kkn_type?.toLowerCase() === "ppm" ? "Kelompok" : "Desa"}{" "}
                       {safeParseObject(order?.kkn_detail)?.value}
                     </span>
@@ -116,7 +116,7 @@ export const useOrderColumns = ({
                   </div>
                 )
                 : (
-                  <span className="font-medium text-slate-700 truncate w-full">
+                  <span className="font-medium text-slate-700 break-words">
                     {order.institution_name}
                   </span>
                 )
@@ -130,7 +130,7 @@ export const useOrderColumns = ({
                 </span>
               )}
             </div>
-            <div className="text-xs text-gray-500 whitespace-nowrap">
+            <div className="text-xs text-gray-500 mt-0.5">
               {+order?.is_kkn === 1 ? `${order?.institution_name} ${order?.kkn_year} -` : ""} {order.pic_name || "-"}{" "}
               <a
                 className="text-blue-600 hover:underline"
@@ -144,7 +144,7 @@ export const useOrderColumns = ({
                 ({order.pic_phone || "-"})
               </a>
             </div>
-          </>
+          </div>
         ),
       },
       {
@@ -206,17 +206,10 @@ export const useOrderColumns = ({
         header: "Total Bayar",
         cellClassName: "whitespace-nowrap text-sm font-bold text-gray-900",
         cell: (order) => {
-          const items = safeParseArray(order.order_items);
-          const computedItemsSubtotal = items.reduce((sum: number, item: any) => {
-            const itemTotal = Number(item?.variant_final_price) || 0;
-            if (itemTotal > 0) return sum + itemTotal;
-            const qty = Number(item?.qty) || 0;
-            const unitPrice = (Number(item?.price_rule_value) || 0) + (Number(item?.variant_price) || 0);
-            return sum + (unitPrice > 0 ? qty * unitPrice : Number(item?.subtotal) || 0);
-          }, 0);
-
+          // ✅ Use server-computed subtotal (fixes data inefficiency)
+          const computedSubtotal = Number(order.computed_items_subtotal) || 0;
           const dAmount = Number(order.discount_value) || 0;
-          const subtotal = computedItemsSubtotal > 0 ? computedItemsSubtotal : ((Number(order.total_amount) || 0) + dAmount);
+          const subtotal = computedSubtotal > 0 ? computedSubtotal : (Number(order.total_amount) || 0) + dAmount;
           const total = subtotal - dAmount;
 
           return (
@@ -484,9 +477,9 @@ export const useOrderColumns = ({
         headerClassName: "text-center",
         cellClassName: "text-center",
         cell: (order) => (
-          <div className="max-w-[150px]">
-            <div className="flex justify-center gap-2 relative">
-              {+order?.is_archive !== 1 ? (
+          <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-slate-100">
+              {+order?.is_archive !== 1 && (
                 <button
                   title="Nota"
                   onClick={() =>
@@ -497,26 +490,24 @@ export const useOrderColumns = ({
                       data: order,
                     })
                   }
-                  className="p-1.5 text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition"
+                  className="p-2 text-slate-500 hover:text-amber-500 hover:bg-white rounded transition-all"
                 >
-                  <FileText size={16} />
+                  <FileText className="w-4 h-4" />
                 </button>
-              ) : (
-                ""
               )}
               <button
                 title="Edit"
                 onClick={() => navigate(`/app/order-edit/${order.id}`)}
-                className="p-1.5 text-orange-500 bg-orange-50 rounded hover:bg-orange-100 transition"
+                className="p-2 text-slate-500 hover:text-blue-500 hover:bg-white rounded transition-all"
               >
-                <Pencil size={16} />
+                <Pencil className="w-4 h-4" />
               </button>
               <button
                 title="Hapus"
                 onClick={() => onDelete(order)}
-                className="p-1.5 text-red-600 bg-red-50 rounded hover:bg-red-100 transition"
+                className="p-2 text-slate-500 hover:text-red-500 hover:bg-white rounded transition-all"
               >
-                <Trash2 size={16} />
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           </div>
