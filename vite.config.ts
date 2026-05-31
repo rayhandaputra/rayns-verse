@@ -41,6 +41,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
         navigateFallback: null, // Disable navigate fallback for SSR
         runtimeCaching: [
           {
