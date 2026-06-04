@@ -1,0 +1,74 @@
+objective: >
+  Selaraskan global Tailwind color palette dengan brand warna login.tsx
+  (primary #103557, accent #0097B2) dengan memutakhirkan token CSS di app/app.css.
+
+context:
+  # --- Mekanisme styling ---
+  - "Tailwind v4 (tailwindcss ^4.1.12, @tailwindcss/vite, @tailwindcss/postcss). Token warna didefinisikan via CSS @theme, BUKAN tailwind.config.ts (src: package.json deps; app/app.css:6,27,65)"
+  - "Token warna global hidup di app/app.css. @theme (app.css:6) hanya --font-sans; @theme inline (app.css:27-63) memetakan --color-* -> var(--*); nilai mentah di :root (app.css:65-97) & .dark (app.css:100-~152) (src: app/app.css)"
+  - "app/tailwind.css HANYA berisi @import tailwindcss + keyframes/util (animate-float, no-scrollbar) — TIDAK ada token warna (src: app/tailwind.css:1-34)"
+  - "root.tsx meng-import './app.css' lalu './tailwind.css' (src: app/root.tsx:21-22) — app.css sumber token"
+  # --- Nilai token yang ADA sekarang (PENTING: BUKAN Finance Blue) ---
+  - "Nilai :root sekarang = shadcn neutral default OKLCH, BUKAN biru. --primary: oklch(0.21 0.006 285.885) (zinc near-black) (app.css:73); --accent: oklch(0.967 0.001 286.375) (zinc-100) (app.css:79); --background: oklch(1 0 0) putih (app.css:67); --destructive: oklch(0.577 0.245 27.325) (app.css:81)"
+  - ".dark block ada (app.css:100-152): --primary: oklch(0.92 0.004 286.32) (app.css:107); --accent: oklch(0.274 ...) (app.css:113)"
+  - "Ada blok :root KEDUA di app.css:154 (kemungkinan token sidebar/lain) — executor wajib cek sebelum edit agar tidak salah blok"
+  # --- README 'Finance Blue' = aspirational, TIDAK match implementasi ---
+  - "README mendokumentasikan Design System 'Finance Blue' OKLCH (README.md:477-489): primary=#1E434C (:483), accent=#0097B2 (:485), background=#F3F8FC (:482), foreground=#1E293B (:487). README rule: 'Warna: token Tailwind' (CLAUDE.md:22 / README §Aturan Wajib AI Agent)"
+  - "MISMATCH ter-grounding: README primary #1E434C != token css aktual (zinc) != login #103557. Tiga sumber, tiga warna primary berbeda."
+  # --- login.tsx (sumber warna brand yang diminta) ---
+  - "login primary #103557 (hardcoded hex, BUKAN token): hero bg (login.tsx:216), tombol submit (:359,:474), checkbox text/ring (:465), staff-login text+border (:492)"
+  - "login accent #0097B2: hover staff-login text (login.tsx:492)"
+  - "Teks hero 'Kreativitas Tanpa Batas Bersama Kinau' (login.tsx:231)"
+  - "login.tsx MELANGGAR README rule 'Warna: token Tailwind' — pakai bg-[#103557] hardcoded, bukan bg-primary"
+
+tasks:
+  - id: t0
+    do: "RESOLVE open_questions Q1 & Q2 bersama user SEBELUM edit — scope (replace total vs hanya primary/accent) & format (oklch vs hex) menentukan semua task di bawah. Jangan tebak."
+    files: []
+    depends_on: []
+    verify: "User menjawab: (a) warna primary final = #103557 atau #1E434C(README) ?; (b) ubah hanya primary+accent atau seluruh palette Finance Blue ?; (c) token disimpan oklch atau hex."
+
+  - id: t1
+    do: "Konversi #103557 -> oklch dan #0097B2 -> oklch dengan presisi (jika Q2=oklch). Referensi kasar (WAJIB verifikasi pakai converter): #103557 ~ oklch(0.33 0.07 247); #0097B2 ~ oklch(0.62 0.11 210). Jangan commit angka kira-kira."
+    files: []
+    depends_on: [t0]
+    verify: "Round-trip oklch->hex (mis. via culori / oklch.com) menghasilkan #103557 & #0097B2 (toleransi <=1 digit hex)."
+
+  - id: t2
+    do: "Update token --primary & --accent (dan --primary-foreground/--accent-foreground untuk kontras teks putih) di blok :root app/app.css. Edit blok :root yang BENAR (app.css:65), bukan blok :root kedua di :154."
+    files: [app/app.css]
+    depends_on: [t1]
+    verify: "grep '--primary:' app/app.css menunjukkan nilai baru; komponen ber-class bg-primary/text-primary/bg-accent berubah ke navy/teal di browser; foreground tetap kontras (AA)."
+
+  - id: t3
+    do: "Sesuaikan blok .dark (app.css:100) untuk --primary/--accent agar konsisten dengan tema baru (mis. primary lebih terang di dark). HANYA jika app punya dark mode aktif — cek pemakaian class 'dark' dulu."
+    files: [app/app.css]
+    depends_on: [t2]
+    verify: "Toggle dark mode tidak menghasilkan kontras buruk; nilai .dark --primary/--accent terdefinisi."
+
+  - id: t4
+    do: "(Patuh README 'Warna: token Tailwind') Refactor login.tsx: ganti hardcoded bg-[#103557]/text-[#103557]/hover:text-[#0097B2] -> token (bg-primary, text-primary, hover:text-accent, ring-primary). Hanya jika Q2 scope mencakup penyelarasan token."
+    files: [app/routes/login.tsx]
+    depends_on: [t2]
+    verify: "Tidak ada lagi literal '#103557'/'#0097B2' di login.tsx (grep kosong); tampilan login identik secara visual; mematuhi README §Aturan Wajib AI Agent."
+
+  - id: t5
+    do: "Sinkronkan dokumentasi: update tabel 'Finance Blue' README.md:480-489 agar nilai primary/accent cocok dengan token css final (hilangkan mismatch #1E434C vs #103557). Hanya jika user setuju nilai final."
+    files: [README.md]
+    depends_on: [t2]
+    verify: "README primary hex == nilai token css final; tidak ada lagi konflik tiga-sumber."
+
+open_questions:
+  - "Q1 (BLOCKER, ambiguous): Ganti palette global = ubah SELURUH tema app (bukan hanya login). User mau REPLACE TOTAL Finance Blue, atau HANYA selaraskan --primary/--accent ke warna login? README §Design System sudah mendefinisikan 'Finance Blue'."
+  - "Q2 (BLOCKER): Warna primary final yang mana — login #103557 (yang diminta task) ATAU README #1E434C (yang terdokumentasi)? Keduanya beda; tidak bisa keduanya jadi --primary."
+  - "Q3: Token disimpan sebagai OKLCH (konsisten sistem eksisting di app.css) atau hex langsung? Rekomendasi: OKLCH agar seragam."
+  - "Q4: Apakah ikut menyertakan background #F3F8FC & foreground #1E293B dari Finance Blue, atau pertahankan --background putih (oklch(1 0 0)) yang ada sekarang?"
+  - "Q5: Apakah blok :root kedua (app.css:154) menyimpan token warna lain yang juga perlu disesuaikan? Executor wajib baca penuh sebelum edit."
+
+risks:
+  - "Mengubah --primary/--accent global mengubah SETIAP komponen ber-class bg-primary/text-accent di seluruh app, bukan hanya login -> mitigasi: konfirmasi scope (Q1) + review visual halaman utama setelah edit."
+  - "README 'Finance Blue' saat ini TIDAK match implementasi css (token aktual = zinc neutral) -> mengganti ke navy bisa jadi perubahan tema besar yang tak diharapkan; sebagian UI mungkin didesain untuk neutral -> mitigasi: screenshot before/after, libatkan reviewer."
+  - "Konversi hex->oklch yang asal bisa menggeser hue/lightness -> warna brand meleset -> mitigasi: t1 round-trip verify wajib."
+  - "Salah edit blok (:root :65 vs :root :154) -> token tak berubah / token lain rusak -> mitigasi: baca penuh app.css sebelum Edit."
+  - "Refactor login.tsx ke token mengubah perilaku hover (hover:bg-black saat ini -> perlu keputusan apakah jadi hover:bg-primary/90) -> mitigasi: sepakati mapping hover sebelum edit."
+  - "Patuh CLAUDE.md 150-Line Rule: app.css 184 baris & login.tsx besar — edit tidak boleh menambah file >150 atau langgar rule; bila refactor membengkak, pertimbangkan ekstraksi (catatan untuk reviewer)."

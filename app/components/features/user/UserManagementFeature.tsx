@@ -1,5 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Form, useActionData, useSearchParams } from "react-router";
+import {
+  Form,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useRevalidator,
+  useSearchParams,
+} from "react-router";
 import { Edit2, Trash2, Shield, Upload, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
@@ -12,10 +19,10 @@ import ModalShell from "~/components/modal/ModalShell";
 
 export default function UserManagementFeature() {
   const actionData = useActionData() as any;
+  const { usersData } = useLoaderData() as any;
+  const navigation = useNavigation();
+  const revalidator = useRevalidator();
   const [searchParams, setSearchParams] = useSearchParams();
-  const page = Number(searchParams.get("page")) || 0;
-  const size = Number(searchParams.get("size")) || 10;
-  const search = searchParams.get("search") || "";
 
   const { data: cmsContentData, reload: reloadCmsContent } = useFetcherData({
     endpoint: nexus()
@@ -30,20 +37,6 @@ export default function UserManagementFeature() {
       .build(),
   });
 
-  const { data: usersData, reload, loading: isLoading } = useFetcherData({
-    endpoint: nexus()
-      .module("USER")
-      .action("get")
-      .params({
-        pagination: "true",
-        page,
-        size,
-        search,
-        role: searchParams.get("role") || undefined,
-      })
-      .build(),
-  });
-
   const roles = [
     { label: "Semua", value: "" },
     { label: "Internal Team", value: "staff,admin,ceo,developer" },
@@ -51,10 +44,15 @@ export default function UserManagementFeature() {
   ];
 
   const currentRole = searchParams.get("role") || "";
+  const isLoading =
+    navigation.state === "loading" || revalidator.state === "loading";
 
   const users = usersData?.data?.items || [];
   const [settings, setSettings] = useState<any>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const headerBackground = safeParseArray(
+    cmsContentData?.data?.items?.[0]?.image_gallery
+  )?.[0] as string | undefined;
 
   const { data: deleteData, load: submitDelete } = useFetcherData({
     endpoint: "",
@@ -84,7 +82,7 @@ export default function UserManagementFeature() {
         setTimeout(() => {
           setIsModalOpen(false);
           reloadCmsContent()
-          reload();
+          revalidator.revalidate();
         }, 0);
         toast.success("Berhasil", {
           description: actionData?.message || fetcherDataAction?.message || "Berhasil",
@@ -101,7 +99,7 @@ export default function UserManagementFeature() {
   useEffect(() => {
     if (deleteData?.success) {
       toast.success("User berhasil dihapus");
-      reload();
+      revalidator.revalidate();
     } else if (deleteData?.success === false) {
       toast.error("Gagal menghapus user");
     }
@@ -308,15 +306,9 @@ export default function UserManagementFeature() {
 
         <div className="flex items-center gap-4">
           <div className="w-48 h-24 bg-gray-100 rounded-lg border border-gray-300 flex items-center justify-center overflow-hidden relative">
-            {safeParseArray(
-              cmsContentData?.data?.items?.[0]?.image_gallery
-            )?.[0] ? (
+            {headerBackground ? (
               <img
-                src={
-                  safeParseArray(
-                    cmsContentData?.data?.items?.[0]?.image_gallery
-                  )?.[0]
-                }
+                src={headerBackground}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -330,9 +322,7 @@ export default function UserManagementFeature() {
             >
               <Upload size={16} /> Upload Background
             </button>
-            {(safeParseArray(
-              cmsContentData?.data?.items?.[0]?.image_gallery
-            )?.[0] || settings.headerBackground) && (
+            {(headerBackground || settings.headerBackground) && (
               <button
                 onClick={() => {
                   submitAction({

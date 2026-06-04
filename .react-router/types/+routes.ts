@@ -32,9 +32,6 @@ type Pages = {
   "/resources/image-proxy": {
     params: {};
   };
-  "/dashboard/customer": {
-    params: {};
-  };
   "/media/event/:slug": {
     params: {
       "slug": string;
@@ -209,7 +206,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/server/drive/:folder_id/download" | "/public/design-link/:domain" | "/public/drive-link/:domain" | "/resources/image-proxy" | "/dashboard/customer" | "/media/event/:slug" | "/api/fix-error" | "/logout" | "/api/nexus" | "/api/nexus/example" | "/api/nexus/demo" | "/customer" | "/customer/configure" | "/customer/dashboard" | "/customer/profile" | "/customer/support" | "/customer/orders" | "/katalog" | "/login" | "/order" | "/app" | "/app/finance/salary-employee" | "/app/procurement/:category" | "/app/procurement/:category/catalog-color" | "/app/procurement/:category/shopping-kaos" | "/app/procurement/:category/component" | "/app/procurement/:category/capacity" | "/app/procurement/:category/shopping" | "/app/procurement/:category/supplier" | "/app/procurement/:category/vendor" | "/app/orders/:id/download" | "/app/setting/recycle-bin" | "/app/master/institution" | "/app/finance/inventory" | "/app/finance/cashflow" | "/app/asset/inventory" | "/app/finance/account" | "/app/master/supplier" | "/app/setting/account" | "/app/finance" | "/app/order-edit/:id" | "/app/setting/design" | "/app/order-history" | "/app/order-manage" | "/app/product-list" | "/app/order-form" | "/app/order-list" | "/app/print-area" | "/app/overview" | "/app/drive" | "/app/drive/customer" | "/app/drive/internal" | "/app/email" | "/app/user";
+    page: "/" | "/server/drive/:folder_id/download" | "/public/design-link/:domain" | "/public/drive-link/:domain" | "/resources/image-proxy" | "/media/event/:slug" | "/api/fix-error" | "/logout" | "/api/nexus" | "/api/nexus/example" | "/api/nexus/demo" | "/customer" | "/customer/configure" | "/customer/dashboard" | "/customer/profile" | "/customer/support" | "/customer/orders" | "/katalog" | "/login" | "/order" | "/app" | "/app/finance/salary-employee" | "/app/procurement/:category" | "/app/procurement/:category/catalog-color" | "/app/procurement/:category/shopping-kaos" | "/app/procurement/:category/component" | "/app/procurement/:category/capacity" | "/app/procurement/:category/shopping" | "/app/procurement/:category/supplier" | "/app/procurement/:category/vendor" | "/app/orders/:id/download" | "/app/setting/recycle-bin" | "/app/master/institution" | "/app/finance/inventory" | "/app/finance/cashflow" | "/app/asset/inventory" | "/app/finance/account" | "/app/master/supplier" | "/app/setting/account" | "/app/finance" | "/app/order-edit/:id" | "/app/setting/design" | "/app/order-history" | "/app/order-manage" | "/app/product-list" | "/app/order-form" | "/app/order-list" | "/app/print-area" | "/app/overview" | "/app/drive" | "/app/drive/customer" | "/app/drive/internal" | "/app/email" | "/app/user";
   };
   "routes/server.drive.$folder_id.download.tsx": {
     id: "routes/server.drive.$folder_id.download";
@@ -226,10 +223,6 @@ type RouteFiles = {
   "routes/resources.image-proxy.tsx": {
     id: "routes/resources.image-proxy";
     page: "/resources/image-proxy";
-  };
-  "routes/dashboard.customer.tsx": {
-    id: "routes/dashboard.customer";
-    page: "/dashboard/customer";
   };
   "routes/media.event.$slug.tsx": {
     id: "routes/media.event.$slug";
@@ -439,7 +432,6 @@ type RouteModules = {
   "routes/public.design-link.$domain": typeof import("./app/routes/public.design-link.$domain.tsx");
   "routes/public.drive-link.$domain": typeof import("./app/routes/public.drive-link.$domain.tsx");
   "routes/resources.image-proxy": typeof import("./app/routes/resources.image-proxy.tsx");
-  "routes/dashboard.customer": typeof import("./app/routes/dashboard.customer.tsx");
   "routes/media.event.$slug": typeof import("./app/routes/media.event.$slug.tsx");
   "routes/api.fix-error": typeof import("./app/routes/api.fix-error.ts");
   "routes/_auth.logout": typeof import("./app/routes/_auth.logout.tsx");

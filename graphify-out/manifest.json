@@ -1,0 +1,2202 @@
+{
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/Chart/ChartLazy.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "1d83ff4143268daa7473a706b67676ce",
+    "semantic_hash": "1d83ff4143268daa7473a706b67676ce"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/Chart/ChartWrapper.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "ef9cd2575345cd9a948e245c7ef8db2f",
+    "semantic_hash": "ef9cd2575345cd9a948e245c7ef8db2f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/core/AppBreadcrumb.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a230932dff2dfa3a96a87e0601e86acd",
+    "semantic_hash": "a230932dff2dfa3a96a87e0601e86acd"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/core/AppLayoutFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "361a0947d1a47c1544b2bbcdcf407e9b",
+    "semantic_hash": "361a0947d1a47c1544b2bbcdcf407e9b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/core/AppNavbar.tsx": {
+    "mtime": 1780057417.1583774,
+    "ast_hash": "b82deecabb58a844a254b9574e4b1f73",
+    "semantic_hash": "b82deecabb58a844a254b9574e4b1f73"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/core/AppSidebar.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "ff04d7c4134ff6ba79b256a47ffd3fc1",
+    "semantic_hash": "ff04d7c4134ff6ba79b256a47ffd3fc1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/core/TitleHeader.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "bd762962fa563524288f5bf2eddf7870",
+    "semantic_hash": "bd762962fa563524288f5bf2eddf7870"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/core/sidebar.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "59304a63abad6a5d169113bdba071271",
+    "semantic_hash": "59304a63abad6a5d169113bdba071271"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/core/topbar.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "8fe90a619259b5ccf96d24d6d00db83e",
+    "semantic_hash": "8fe90a619259b5ccf96d24d6d00db83e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/drive/create-folder-modal.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "90dc843cc6ca4159bbead9f40558e94c",
+    "semantic_hash": "90dc843cc6ca4159bbead9f40558e94c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/drive/drive-layout.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "2a221304b59ca95475259081268ed415",
+    "semantic_hash": "2a221304b59ca95475259081268ed415"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/drive/file-row.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d698851e7bd3eb411b4fb520fe70181d",
+    "semantic_hash": "d698851e7bd3eb411b4fb520fe70181d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/drive/folder-card.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "38dabc269e708e96d3a517e917096e0b",
+    "semantic_hash": "38dabc269e708e96d3a517e917096e0b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/drive/recent-file-card.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "fe0d46f556e7fea3b5e68e2b9ec63a1b",
+    "semantic_hash": "fe0d46f556e7fea3b5e68e2b9ec63a1b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/drive/upload-file-modal.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "4861148864c342d05aa5003549bc02b2",
+    "semantic_hash": "4861148864c342d05aa5003549bc02b2"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/asset/AssetInventoryDashboard.tsx": {
+    "mtime": 1779780456.294564,
+    "ast_hash": "d9f9e79444c3af67c0f0b838adccce68",
+    "semantic_hash": "d9f9e79444c3af67c0f0b838adccce68"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/customer-order/CustomerOrderFeature.tsx": {
+    "mtime": 1779703321.281882,
+    "ast_hash": "0c00b49f9adc7975523c4665e8857756",
+    "semantic_hash": "0c00b49f9adc7975523c4665e8857756"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/customer-order/use-customer-order-logic.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "3b7509c34d6404cda059b50d6373db32",
+    "semantic_hash": "3b7509c34d6404cda059b50d6373db32"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/customer-order/widgets/BottomNav.tsx": {
+    "mtime": 1779703329.411243,
+    "ast_hash": "ec077aad259bab0b2a42b60baefb802e",
+    "semantic_hash": "ec077aad259bab0b2a42b60baefb802e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/customer-order/widgets/StepCheckout.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a06bb674153703bafbbf652e6c0ff270",
+    "semantic_hash": "a06bb674153703bafbbf652e6c0ff270"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/customer-order/widgets/StepDashboard.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "dbb7e54e3742c46e0f04cae8e29dfa6e",
+    "semantic_hash": "dbb7e54e3742c46e0f04cae8e29dfa6e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/customer-order/widgets/StepIdCardConfig.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "518d39a6bb79f24ad22888ca09e134af",
+    "semantic_hash": "518d39a6bb79f24ad22888ca09e134af"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/customer-order/widgets/StepLanding.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "8bf23e64dde917f7c4c88e199f738a22",
+    "semantic_hash": "8bf23e64dde917f7c4c88e199f738a22"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/customer-order/widgets/StepLanyardConfig.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d71b6265f4d5a6d730385d8fe31fd4ab",
+    "semantic_hash": "d71b6265f4d5a6d730385d8fe31fd4ab"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/design/DesignEditor.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "89be2179b5fb9329d82d894356a65cc1",
+    "semantic_hash": "89be2179b5fb9329d82d894356a65cc1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/design/DesignPreviewModal.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d46754cae5fa7205c0e7fb96bf325b52",
+    "semantic_hash": "d46754cae5fa7205c0e7fb96bf325b52"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/design/RuleConfigDialog.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "36209bbb7ecf7958dcdbd02b495afd5a",
+    "semantic_hash": "36209bbb7ecf7958dcdbd02b495afd5a"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/design/TemplateCard.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "0e1dc9a49ae35560cf012d27561724be",
+    "semantic_hash": "0e1dc9a49ae35560cf012d27561724be"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/ClientUseEditorPage.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "54b1348eab40b67ff2c2afa8322848d1",
+    "semantic_hash": "54b1348eab40b67ff2c2afa8322848d1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/DriveCustomerFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "bdf0a07e3391fa6ff1665fe19e395e6c",
+    "semantic_hash": "bdf0a07e3391fa6ff1665fe19e395e6c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/DriveInternalFeature.tsx": {
+    "mtime": 1779780626.3827546,
+    "ast_hash": "8a8e022e86e7201cafe6327434858414",
+    "semantic_hash": "8a8e022e86e7201cafe6327434858414"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/DriveLayoutFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "b1a40ce694c0829ca41eee6a6e65ba34",
+    "semantic_hash": "b1a40ce694c0829ca41eee6a6e65ba34"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/create-folder-modal.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "90dc843cc6ca4159bbead9f40558e94c",
+    "semantic_hash": "90dc843cc6ca4159bbead9f40558e94c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/drive-layout.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "2a221304b59ca95475259081268ed415",
+    "semantic_hash": "2a221304b59ca95475259081268ed415"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/file-row.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d698851e7bd3eb411b4fb520fe70181d",
+    "semantic_hash": "d698851e7bd3eb411b4fb520fe70181d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/folder-card.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "38dabc269e708e96d3a517e917096e0b",
+    "semantic_hash": "38dabc269e708e96d3a517e917096e0b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/public/CategoryOnboarding.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "f39ada9557f252ba20f423813cce508f",
+    "semantic_hash": "f39ada9557f252ba20f423813cce508f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/public/DriveFAB.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "ca727a64e322cd01a55c99f2e6cd702b",
+    "semantic_hash": "ca727a64e322cd01a55c99f2e6cd702b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/public/DriveGrid.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "0d4d083680a86735e6734aba3a981f54",
+    "semantic_hash": "0d4d083680a86735e6734aba3a981f54"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/public/DriveInfoBar.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c69ede3ded14d03f8cf9b5c20c5ef6a3",
+    "semantic_hash": "c69ede3ded14d03f8cf9b5c20c5ef6a3"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/public/DriveNotFound.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "ae19984edfc2ea3533193615c1b0e466",
+    "semantic_hash": "ae19984edfc2ea3533193615c1b0e466"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/public/DrivePublicHeader.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d694b504353f82c36d3a9583d44dbb4f",
+    "semantic_hash": "d694b504353f82c36d3a9583d44dbb4f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/public/DriveSkeleton.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "99cd7c7071ab7788d33f96975dbee72f",
+    "semantic_hash": "99cd7c7071ab7788d33f96975dbee72f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/public/DriveTabs.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "bb0d12aaf173d9aa43051378b89a3ce1",
+    "semantic_hash": "bb0d12aaf173d9aa43051378b89a3ce1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/public/FooterHint.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "3f8655c95149b066c0d03ddffd04aec0",
+    "semantic_hash": "3f8655c95149b066c0d03ddffd04aec0"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/public/GlobalModals.tsx": {
+    "mtime": 1779780579.8945262,
+    "ast_hash": "c1ebf550bb9d4ef6850f81eccd9cf6ae",
+    "semantic_hash": "c1ebf550bb9d4ef6850f81eccd9cf6ae"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/recent-file-card.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "fe0d46f556e7fea3b5e68e2b9ec63a1b",
+    "semantic_hash": "fe0d46f556e7fea3b5e68e2b9ec63a1b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/drive/upload-file-modal.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "4861148864c342d05aa5003549bc02b2",
+    "semantic_hash": "4861148864c342d05aa5003549bc02b2"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/eform/CardFolder.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d0bf6522d645911b17751ca59f70320b",
+    "semantic_hash": "d0bf6522d645911b17751ca59f70320b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/eform/SectionImageFolder.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "fcb074ef99c058f0b931a88674d50074",
+    "semantic_hash": "fcb074ef99c058f0b931a88674d50074"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/email/EmailCampaignFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "4fac794da1ec9c7df0ed90126c1533fb",
+    "semantic_hash": "4fac794da1ec9c7df0ed90126c1533fb"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/finance/AccountCoaPage.tsx": {
+    "mtime": 1779780469.2565145,
+    "ast_hash": "7d32625d2edb82e2f153fd78dc0e327f",
+    "semantic_hash": "7d32625d2edb82e2f153fd78dc0e327f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/finance/CashflowDashboard.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a247f7024feb35c691d930b6ae2e3f9b",
+    "semantic_hash": "a247f7024feb35c691d930b6ae2e3f9b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/finance/FinanceDashboard.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "9428d076428c75ab5bad2e7551d82299",
+    "semantic_hash": "9428d076428c75ab5bad2e7551d82299"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/finance/FinancialReportDashboard.tsx": {
+    "mtime": 1779780521.588931,
+    "ast_hash": "5f3e2b5c5905f8d423d5274b96889d8f",
+    "semantic_hash": "5f3e2b5c5905f8d423d5274b96889d8f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/finance/FinancialTransactionModal.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "6e4b3bf8a750eff64b851dd328a5a668",
+    "semantic_hash": "6e4b3bf8a750eff64b851dd328a5a668"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/finance/ProductCostTable.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a2d9ac2d3a97f762f295760cfbff45d3",
+    "semantic_hash": "a2d9ac2d3a97f762f295760cfbff45d3"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/finance/SalaryDashboard.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "ff68885da538c1d4a71d82d9654263dc",
+    "semantic_hash": "ff68885da538c1d4a71d82d9654263dc"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/institution/InstitutionFeature.tsx": {
+    "mtime": 1779780347.2002552,
+    "ast_hash": "980e673c0d092ed6bbd8260f4c798590",
+    "semantic_hash": "980e673c0d092ed6bbd8260f4c798590"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/institution/use-institution-logic.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "7a2b865f651b03875225dcd86394ac68",
+    "semantic_hash": "7a2b865f651b03875225dcd86394ac68"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/media/MediaEventFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "9fdbfde319da1669a7959914f6a85a2d",
+    "semantic_hash": "9fdbfde319da1669a7959914f6a85a2d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order-history/OrderHistoryFeature.tsx": {
+    "mtime": 1779779510.72739,
+    "ast_hash": "729efe929b2611ff6ebc2c5016819f8c",
+    "semantic_hash": "729efe929b2611ff6ebc2c5016819f8c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order-history/use-order-history-logic.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "0072b5bbbd4873212c3bf0d1e4e9eb65",
+    "semantic_hash": "0072b5bbbd4873212c3bf0d1e4e9eb65"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order-manage/InstitutionSection.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "0f6402475e5713eb1015fb44fe0a6861",
+    "semantic_hash": "0f6402475e5713eb1015fb44fe0a6861"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order-manage/OrderDetailSection.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "707d4c8c00f006503c0d5e37fd670c2b",
+    "semantic_hash": "707d4c8c00f006503c0d5e37fd670c2b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order-manage/OrderManageFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a5cecf683091fc80c6d441278ebbd50d",
+    "semantic_hash": "a5cecf683091fc80c6d441278ebbd50d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order-manage/ProductSection.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "e7aa492bf332940cfb07c2f95d5b8244",
+    "semantic_hash": "e7aa492bf332940cfb07c2f95d5b8244"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order-manage/SummarySection.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "dea49198cc7789bdc79413a0c332385f",
+    "semantic_hash": "dea49198cc7789bdc79413a0c332385f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order-manage/use-order-manage-logic.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "377ff579ee3ccb69d90a5d123dba95eb",
+    "semantic_hash": "377ff579ee3ccb69d90a5d123dba95eb"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order/EditOrderForm.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "88b19ef9fa7a4116df4de04914080e66",
+    "semantic_hash": "88b19ef9fa7a4116df4de04914080e66"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order/OrderEditFeature.tsx": {
+    "mtime": 1779779310.0875826,
+    "ast_hash": "563d5946d6eafaa2565b958ea8eaa8d2",
+    "semantic_hash": "563d5946d6eafaa2565b958ea8eaa8d2"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order/OrderForm.tsx": {
+    "mtime": 1779780772.7842727,
+    "ast_hash": "4d6c578b33abef114fe6a34e2449fca9",
+    "semantic_hash": "4d6c578b33abef114fe6a34e2449fca9"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order/OrderFormFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "acac70f7b8833b91af48bb57af9ad016",
+    "semantic_hash": "acac70f7b8833b91af48bb57af9ad016"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order/OrderListFeature.tsx": {
+    "mtime": 1779790211.6834054,
+    "ast_hash": "ca6e9f38adff73976ee90f72e5476097",
+    "semantic_hash": "ca6e9f38adff73976ee90f72e5476097"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order/order-columns.tsx": {
+    "mtime": 1779789871.95689,
+    "ast_hash": "6ef8a467df979cad8fcdd7e091ec5f45",
+    "semantic_hash": "6ef8a467df979cad8fcdd7e091ec5f45"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order/use-order-list-logic.ts": {
+    "mtime": 1779788968.8931663,
+    "ast_hash": "5d8010e6ab2ee43f60d18aee8546aace",
+    "semantic_hash": "5d8010e6ab2ee43f60d18aee8546aace"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order/widgets/OrderFilterModal.tsx": {
+    "mtime": 1779789051.7393148,
+    "ast_hash": "23699d159155537b8970c4ce7d07ca5e",
+    "semantic_hash": "23699d159155537b8970c4ce7d07ca5e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order/widgets/OrderMobileCard.tsx": {
+    "mtime": 1779790385.2665658,
+    "ast_hash": "f3289a511ee214b92539a1a276c0f6a9",
+    "semantic_hash": "f3289a511ee214b92539a1a276c0f6a9"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order/widgets/OrderPaymentProofModal.tsx": {
+    "mtime": 1779789087.4462578,
+    "ast_hash": "1de06bd2303a544df82d2b2b9cf8b9c0",
+    "semantic_hash": "1de06bd2303a544df82d2b2b9cf8b9c0"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order/widgets/OrderPaymentViewModal.tsx": {
+    "mtime": 1779789102.2658944,
+    "ast_hash": "8efdbad134c09761ddb22987eb9e9363",
+    "semantic_hash": "8efdbad134c09761ddb22987eb9e9363"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/overview/AccumulatedStats.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "dd3b5e1ad5a5e799336e69c52a000df8",
+    "semantic_hash": "dd3b5e1ad5a5e799336e69c52a000df8"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/overview/CustomerRankings.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d193e0624c69bf87ea2dcf7df9c824ed",
+    "semantic_hash": "d193e0624c69bf87ea2dcf7df9c824ed"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/overview/FinancialCards.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c4f5beb2e1bfa7441395ca54dd392e40",
+    "semantic_hash": "c4f5beb2e1bfa7441395ca54dd392e40"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/overview/OperationalMetrics.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "cec366b19e76595a56a29a14bd59020e",
+    "semantic_hash": "cec366b19e76595a56a29a14bd59020e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/overview/OrderStatusAndRevenue.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d64e8bd9f68d7b522d18aa9b2f6dba33",
+    "semantic_hash": "d64e8bd9f68d7b522d18aa9b2f6dba33"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/overview/OverviewFeature.tsx": {
+    "mtime": 1780029500.7817109,
+    "ast_hash": "6d537d3b16d0700243fd1e97d459c39e",
+    "semantic_hash": "6d537d3b16d0700243fd1e97d459c39e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/overview/use-overview-logic.ts": {
+    "mtime": 1780055614.7331822,
+    "ast_hash": "463233ab7346c51036317fd8523d6b94",
+    "semantic_hash": "463233ab7346c51036317fd8523d6b94"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/portfolio-upload/PortfolioUploadFeature.tsx": {
+    "mtime": 1779791812.8656135,
+    "ast_hash": "f62db2dc282aebb018265643fcae6b54",
+    "semantic_hash": "f62db2dc282aebb018265643fcae6b54"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/portfolio-upload/widgets/ImageCropper.tsx": {
+    "mtime": 1779705615.791096,
+    "ast_hash": "cd32b6e324e5ba27ee760e24db007820",
+    "semantic_hash": "cd32b6e324e5ba27ee760e24db007820"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/portfolio-upload/widgets/TemplateCodeBased.tsx": {
+    "mtime": 1779791867.1695564,
+    "ast_hash": "edb903e6e330c4f165fbe6ce1af15e70",
+    "semantic_hash": "edb903e6e330c4f165fbe6ce1af15e70"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/portfolio-upload/widgets/TemplatePreview.tsx": {
+    "mtime": 1779791323.9371066,
+    "ast_hash": "016c103c54ff0bbe7bda66031b7b4208",
+    "semantic_hash": "016c103c54ff0bbe7bda66031b7b4208"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/print-area/A4Sheet.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "229c6271cc42b65e9f523175d88a8e55",
+    "semantic_hash": "229c6271cc42b65e9f523175d88a8e55"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/print-area/LanyardSheet.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "af366ab9089761fc29cbf8d5966da7a8",
+    "semantic_hash": "af366ab9089761fc29cbf8d5966da7a8"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/print-area/PrintAreaDashboard.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "57eb464d964108b854af5317e19d0036",
+    "semantic_hash": "57eb464d964108b854af5317e19d0036"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/print-area/PrintSidebar.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "0ab1f4ab518a9115c061a4a6100404cf",
+    "semantic_hash": "0ab1f4ab518a9115c061a4a6100404cf"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/CapacityTable.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "86c7e3f1f681f0c9d8c936616e17ef88",
+    "semantic_hash": "86c7e3f1f681f0c9d8c936616e17ef88"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/LogTable.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "6834d6e48e86bf4ac6fe076dfdba8812",
+    "semantic_hash": "6834d6e48e86bf4ac6fe076dfdba8812"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/ProcurementCapacityFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "3fa0411e11496a50d0070bf4ef996807",
+    "semantic_hash": "3fa0411e11496a50d0070bf4ef996807"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/ProcurementCatalogColorFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "cadd39e0da1456f12b24bc5e4dec3bc0",
+    "semantic_hash": "cadd39e0da1456f12b24bc5e4dec3bc0"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/ProcurementComponentFeature.tsx": {
+    "mtime": 1779780479.054132,
+    "ast_hash": "e151c4e79b0104e9155e9c8553c584d5",
+    "semantic_hash": "e151c4e79b0104e9155e9c8553c584d5"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/ProcurementFeature.tsx": {
+    "mtime": 1779780624.540547,
+    "ast_hash": "859565b7641dafc30547c3bfc8587461",
+    "semantic_hash": "859565b7641dafc30547c3bfc8587461"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/ProcurementForm.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "2192db6bc27bdae4419890d1cb814a49",
+    "semantic_hash": "2192db6bc27bdae4419890d1cb814a49"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/ProcurementLayoutFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "bbf7d01b01f783081c8f8075bf5854a4",
+    "semantic_hash": "bbf7d01b01f783081c8f8075bf5854a4"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/ProcurementShoppingFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "027907d342c7d0679a1d699468dc1aca",
+    "semantic_hash": "027907d342c7d0679a1d699468dc1aca"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/ProcurementSupplierFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d8f6e77da48347d4d596968ae058bd55",
+    "semantic_hash": "d8f6e77da48347d4d596968ae058bd55"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/ProcurementVendorFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "51f68b2292abb19f908b3c832fb3dda0",
+    "semantic_hash": "51f68b2292abb19f908b3c832fb3dda0"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/ProofModals.tsx": {
+    "mtime": 1779780559.3171878,
+    "ast_hash": "c2afd980c0f593aa2e1cdf85d8f7827c",
+    "semantic_hash": "c2afd980c0f593aa2e1cdf85d8f7827c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/procurement-utils.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "cc921b10aa12ad0ac9412865b33a10f2",
+    "semantic_hash": "cc921b10aa12ad0ac9412865b33a10f2"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/types.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "5c76b20690ae7726f0004409d95daf20",
+    "semantic_hash": "5c76b20690ae7726f0004409d95daf20"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/procurement/use-procurement-logic.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c0df5e8344f8b404ad4c2d330e464bdc",
+    "semantic_hash": "c0df5e8344f8b404ad4c2d330e464bdc"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/product/ProductCategoryManager.tsx": {
+    "mtime": 1779781998.0701199,
+    "ast_hash": "9342b688ae27c39fcf564931cec49346",
+    "semantic_hash": "9342b688ae27c39fcf564931cec49346"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/product/ProductComponentForm.tsx": {
+    "mtime": 1779780700.3881044,
+    "ast_hash": "3c4276b3fbd3fba95d01a276228c6fae",
+    "semantic_hash": "3c4276b3fbd3fba95d01a276228c6fae"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/product/ProductGrid.tsx": {
+    "mtime": 1779780663.5609493,
+    "ast_hash": "dec1c9e50a70c5fb2b12ba6576983946",
+    "semantic_hash": "dec1c9e50a70c5fb2b12ba6576983946"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/product/ProductListFeature.tsx": {
+    "mtime": 1779788157.407555,
+    "ast_hash": "b602d73ff7812f7a87645610d4a86c6e",
+    "semantic_hash": "b602d73ff7812f7a87645610d4a86c6e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/product/ProductManagementDashboard.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "b9977b2d17085e28a99c084cd821fa93",
+    "semantic_hash": "b9977b2d17085e28a99c084cd821fa93"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/product/ProductPackageDashboard.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "0c4dfcc0bc9d987fcd9ad2538d4d4ca5",
+    "semantic_hash": "0c4dfcc0bc9d987fcd9ad2538d4d4ca5"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/product/ProductPackageForm.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "5bbb49b19bd2360e12afbc4c01769907",
+    "semantic_hash": "5bbb49b19bd2360e12afbc4c01769907"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/public/DesignGalleryFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "ba41d6289817c487c1e542127984a908",
+    "semantic_hash": "ba41d6289817c487c1e542127984a908"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/public/PublicDriveFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "79a46d5cd7ea329300a571240f76b4da",
+    "semantic_hash": "79a46d5cd7ea329300a571240f76b4da"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/settings/AccountSettingsFeature.tsx": {
+    "mtime": 1779782060.7920551,
+    "ast_hash": "23adc3b60fa7869c7d0855f4d01575c7",
+    "semantic_hash": "23adc3b60fa7869c7d0855f4d01575c7"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/settings/DesignDashboard.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "dea3b203c9e4e01e2d80f232dd84e788",
+    "semantic_hash": "dea3b203c9e4e01e2d80f232dd84e788"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/settings/RecycleBinFeature.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "36edee866aebadfa4458a4c9a4c1675c",
+    "semantic_hash": "36edee866aebadfa4458a4c9a4c1675c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/supplier/SupplierFeature.tsx": {
+    "mtime": 1779780304.5254405,
+    "ast_hash": "56476322e876d5a2fc67d6709d4548e1",
+    "semantic_hash": "56476322e876d5a2fc67d6709d4548e1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/supplier/use-supplier-logic.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "f444c737821aad1b00e4c51e68816314",
+    "semantic_hash": "f444c737821aad1b00e4c51e68816314"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/twibbon/ClientTwibbonEditor.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "7ae84ca32cdba6fe8e460b93cda78d77",
+    "semantic_hash": "7ae84ca32cdba6fe8e460b93cda78d77"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/twibbon/TwibbonEditor.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "874e3f011eaac41d646828ba1d4647a9",
+    "semantic_hash": "874e3f011eaac41d646828ba1d4647a9"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/user/UserManagementFeature.tsx": {
+    "mtime": 1779780399.3457775,
+    "ast_hash": "fefa99867f77393e2423adc364dbceae",
+    "semantic_hash": "fefa99867f77393e2423adc364dbceae"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/layout/admin/sidebar.tsx": {
+    "mtime": 1779782684.207988,
+    "ast_hash": "b4b9a2fcc0d7b9402f5156ef09061f01",
+    "semantic_hash": "b4b9a2fcc0d7b9402f5156ef09061f01"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/layout/admin/topbar.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "993d943687b9e52783850ff9e9d9b93b",
+    "semantic_hash": "993d943687b9e52783850ff9e9d9b93b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/layout/manage.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "dc51a17e9b5df8ebfffecdef96209aae",
+    "semantic_hash": "dc51a17e9b5df8ebfffecdef96209aae"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/layout/public/footer.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "5b224e921d392a5cd1ed2e3811b20e4b",
+    "semantic_hash": "5b224e921d392a5cd1ed2e3811b20e4b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/layout/public/navbar.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "feb9fb381a5eee06cc022fe4fcb25afc",
+    "semantic_hash": "feb9fb381a5eee06cc022fe4fcb25afc"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/modal/ModalShell.tsx": {
+    "mtime": 1779789478.3134205,
+    "ast_hash": "c8f7df492a90a31290f7bd51631177b1",
+    "semantic_hash": "c8f7df492a90a31290f7bd51631177b1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/print/order/NotaTemplate.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "7b42e100155f24e502c110b3ee8656fd",
+    "semantic_hash": "7b42e100155f24e502c110b3ee8656fd"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/print/order/NotaTemplateRenderer.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c23a25c4ce7a4923258a3e8538ea18ad",
+    "semantic_hash": "c23a25c4ce7a4923258a3e8538ea18ad"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/print/order/OrderShareTemplate.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "2c5671f7d993cd40cacf34fc55386014",
+    "semantic_hash": "2c5671f7d993cd40cacf34fc55386014"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/print/order/ReceiptTemplate.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a6ed7b5f304b1535206ff2c7b0af38c7",
+    "semantic_hash": "a6ed7b5f304b1535206ff2c7b0af38c7"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/NotaView.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "3fd00acaeb2ab839bd4dfd918b7aef90",
+    "semantic_hash": "3fd00acaeb2ab839bd4dfd918b7aef90"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/PrintButton.client.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "919273ddbf5aeadb5790c9ed6efb8e39",
+    "semantic_hash": "919273ddbf5aeadb5790c9ed6efb8e39"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/Wave.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "33f276155b84bb33df1d47016800416e",
+    "semantic_hash": "33f276155b84bb33df1d47016800416e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/breadcrumb/DriveBreadcrumb.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c44bad34d937614765f55c3e95d7a662",
+    "semantic_hash": "c44bad34d937614765f55c3e95d7a662"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/card/DescriptionCard.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "10bc12beaaa306b09e43af0dcd280b7e",
+    "semantic_hash": "10bc12beaaa306b09e43af0dcd280b7e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/card/ProductCard.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "9b8f53ff4c9b2ae289ee3c9f4c32ba2a",
+    "semantic_hash": "9b8f53ff4c9b2ae289ee3c9f4c32ba2a"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/chart/ChartLazy.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a8428c247e6966da0ca448c9d1a01d56",
+    "semantic_hash": "a8428c247e6966da0ca448c9d1a01d56"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/chart/ChartWrapper.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "ef9cd2575345cd9a948e245c7ef8db2f",
+    "semantic_hash": "ef9cd2575345cd9a948e245c7ef8db2f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/form/FormProduct.tsx": {
+    "mtime": 1779780706.9388435,
+    "ast_hash": "c0c13f00fa3d2be263d97e9d4fc91b2e",
+    "semantic_hash": "c0c13f00fa3d2be263d97e9d4fc91b2e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/icon/asset.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "9d97fd48b2bc907efb43bb2dcb3a5142",
+    "semantic_hash": "9d97fd48b2bc907efb43bb2dcb3a5142"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/icon/menu-icon.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "40bfefa4808748552aae94ff34001022",
+    "semantic_hash": "40bfefa4808748552aae94ff34001022"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/input/DateInput.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "8731e40465166cddc4a8b780948971f0",
+    "semantic_hash": "8731e40465166cddc4a8b780948971f0"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/input/DatePicker.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "b6fd98cfc04bf90fca3ac1146740e2c1",
+    "semantic_hash": "b6fd98cfc04bf90fca3ac1146740e2c1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/input/ImageUploadPreview.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a6362d62851b0eaa974988cb95840a2a",
+    "semantic_hash": "a6362d62851b0eaa974988cb95840a2a"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/input/MediaGalleryUploader.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "853f352d06aa0e956639d59f99555bf1",
+    "semantic_hash": "853f352d06aa0e956639d59f99555bf1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/layout/manage.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "2260204e058601e3db57fea6b9567b2a",
+    "semantic_hash": "2260204e058601e3db57fea6b9567b2a"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/layout/public/footer.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "07232a7d4fcafccb7dbc404294f22864",
+    "semantic_hash": "07232a7d4fcafccb7dbc404294f22864"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/layout/public/navbar.tsx": {
+    "mtime": 1779780708.2879958,
+    "ast_hash": "f2ebf5acfd9b5270f56a6b440e728544",
+    "semantic_hash": "f2ebf5acfd9b5270f56a6b440e728544"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/modal/ConfirmDialog.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "800acc91e53e0ea1c910cf49ece90599",
+    "semantic_hash": "800acc91e53e0ea1c910cf49ece90599"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/modal/SlideInModal.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "6179100be57161fff654821db4423b62",
+    "semantic_hash": "6179100be57161fff654821db4423b62"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/popover/PopoverMenu.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "7e2de547f038e3f6bdaa648fe87ca025",
+    "semantic_hash": "7e2de547f038e3f6bdaa648fe87ca025"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/print/order/NotaTemplate.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "ede60267e58ac48661433d723f62c524",
+    "semantic_hash": "ede60267e58ac48661433d723f62c524"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/print/order/NotaTemplateRenderer.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "7b196e6c4aa1c337ae21d4e3c225350d",
+    "semantic_hash": "7b196e6c4aa1c337ae21d4e3c225350d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/print/order/OrderShareTemplate.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d6d9b526e9582d4164bd041eaa428fab",
+    "semantic_hash": "d6d9b526e9582d4164bd041eaa428fab"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/print/order/ReceiptTemplate.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a9675b23c0699277ec40b45bb11a3d63",
+    "semantic_hash": "a9675b23c0699277ec40b45bb11a3d63"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/section/PublicHero.tsx": {
+    "mtime": 1779782771.2666142,
+    "ast_hash": "d9c4db8dc921dd338a789e9bf28126aa",
+    "semantic_hash": "d9c4db8dc921dd338a789e9bf28126aa"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/section/PublicPortfolio.tsx": {
+    "mtime": 1779782785.4230697,
+    "ast_hash": "d8aca1ed0c5f29dbfb7cc859793372da",
+    "semantic_hash": "d8aca1ed0c5f29dbfb7cc859793372da"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/section/PublicProducts.tsx": {
+    "mtime": 1779782785.425577,
+    "ast_hash": "97cf8ba93d2fa080ae976a31fe5cdc5a",
+    "semantic_hash": "97cf8ba93d2fa080ae976a31fe5cdc5a"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/section/PublicStats.tsx": {
+    "mtime": 1779782785.4206185,
+    "ast_hash": "5658c7d0488bd376d7ad788c5dee3b51",
+    "semantic_hash": "5658c7d0488bd376d7ad788c5dee3b51"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/section/feature-section.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "57affa8b99633a73d124840e88b55df1",
+    "semantic_hash": "57affa8b99633a73d124840e88b55df1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/section/hero-section.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "b57eed8cd39b982d77ce5bc6d96d225f",
+    "semantic_hash": "b57eed8cd39b982d77ce5bc6d96d225f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/section/highlight-event-section.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "404e811936f12c585410751562c7f05f",
+    "semantic_hash": "404e811936f12c585410751562c7f05f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/section/new-event-section.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c9dfd280e262ae5c7ff562ce7ce1d5c1",
+    "semantic_hash": "c9dfd280e262ae5c7ff562ce7ce1d5c1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/section/new-hero-section.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "b0380214e91c4dedd9b0146db050b610",
+    "semantic_hash": "b0380214e91c4dedd9b0146db050b610"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/section/stats-section.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "5fa057eebf9ddb8dd51ab03c255220c3",
+    "semantic_hash": "5fa057eebf9ddb8dd51ab03c255220c3"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/section/testimoni-seection.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "ac2b51d50ed30d9644589a4057649fdb",
+    "semantic_hash": "ac2b51d50ed30d9644589a4057649fdb"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/select/SelectBasic.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "1480d1d0704bfb819389fd62529b10fe",
+    "semantic_hash": "1480d1d0704bfb819389fd62529b10fe"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/table/CustomDataTable.tsx": {
+    "mtime": 1779787738.2342665,
+    "ast_hash": "25115d890ae78be95f2cb8e39f21afb9",
+    "semantic_hash": "25115d890ae78be95f2cb8e39f21afb9"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/table/PaginationOnly.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "949533a285e75180009509a13a6cca19",
+    "semantic_hash": "949533a285e75180009509a13a6cca19"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/table/Table.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "94f39421076679228675476df92df450",
+    "semantic_hash": "94f39421076679228675476df92df450"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/shared/table/TableHeader.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a9060bc6a466f8848161979e41c4c426",
+    "semantic_hash": "a9060bc6a466f8848161979e41c4c426"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/accordion.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "30c138aa801ef88528e576270abb7b8d",
+    "semantic_hash": "30c138aa801ef88528e576270abb7b8d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/alert-dialog.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "8aea4974e7f2b845513ae897f38cc13c",
+    "semantic_hash": "8aea4974e7f2b845513ae897f38cc13c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/alert.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "466c1cb0ff3bf98c893684eb3046b729",
+    "semantic_hash": "466c1cb0ff3bf98c893684eb3046b729"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/aspect-ratio.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "388087671038cf444fac31be9421d2f4",
+    "semantic_hash": "388087671038cf444fac31be9421d2f4"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/avatar.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "4b93d83cdc0d0f8815cea61915a437ff",
+    "semantic_hash": "4b93d83cdc0d0f8815cea61915a437ff"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/badge.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "aedd93eb6d05c67a3ecfa9aa19c954d5",
+    "semantic_hash": "aedd93eb6d05c67a3ecfa9aa19c954d5"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/breadcrumb.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "5d72b6e72765ac2ae59236da8e0e4b34",
+    "semantic_hash": "5d72b6e72765ac2ae59236da8e0e4b34"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/button.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "03cda35f09bcea8bbdbed7b2ee6eb1ad",
+    "semantic_hash": "03cda35f09bcea8bbdbed7b2ee6eb1ad"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/calendar.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "0056de6e6d4df3aa616e9529cfff9f8d",
+    "semantic_hash": "0056de6e6d4df3aa616e9529cfff9f8d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/card.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "576dc6462aea1e5c0e4d76eefcc4603b",
+    "semantic_hash": "576dc6462aea1e5c0e4d76eefcc4603b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/carousel.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "92e185a0b78b20d64abd06cd4c6fc974",
+    "semantic_hash": "92e185a0b78b20d64abd06cd4c6fc974"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/chart.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "17191e3390f49d1a0932957bebd6474e",
+    "semantic_hash": "17191e3390f49d1a0932957bebd6474e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/checkbox.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "defab7318451f2203842da4af0f0288c",
+    "semantic_hash": "defab7318451f2203842da4af0f0288c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/collapsible.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "e978727a4d734730f3b7bfd0c2e22ea6",
+    "semantic_hash": "e978727a4d734730f3b7bfd0c2e22ea6"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/command.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "e4d4464952766ab4cec2c23650c8cba3",
+    "semantic_hash": "e4d4464952766ab4cec2c23650c8cba3"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/context-menu.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "32dd3aef6036963dfd6ebc4091b47a37",
+    "semantic_hash": "32dd3aef6036963dfd6ebc4091b47a37"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/data-table.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "699da7bb4eea876f8c6592f4025c6af2",
+    "semantic_hash": "699da7bb4eea876f8c6592f4025c6af2"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/dialog.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "e5055b34216176bad892b9ebc260fbde",
+    "semantic_hash": "e5055b34216176bad892b9ebc260fbde"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/drawer.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "aaac6a58f76cfd800145ae5a1d053da7",
+    "semantic_hash": "aaac6a58f76cfd800145ae5a1d053da7"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/dropdown-menu.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c18db7bd9488d37e43a832f2c535ff31",
+    "semantic_hash": "c18db7bd9488d37e43a832f2c535ff31"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/form.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "3e409e1fd729f99d432612fda4d8155b",
+    "semantic_hash": "3e409e1fd729f99d432612fda4d8155b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/hover-card.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "b7e7ea4fbd68de8a75f3ddc6e163edf4",
+    "semantic_hash": "b7e7ea4fbd68de8a75f3ddc6e163edf4"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/input-otp.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "33aaa25e0e0dc02520a8793a3623ca65",
+    "semantic_hash": "33aaa25e0e0dc02520a8793a3623ca65"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/input.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "1c609b85acb83dcf1f48ed8e54cdcab3",
+    "semantic_hash": "1c609b85acb83dcf1f48ed8e54cdcab3"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/label.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "93650291a173bca560d408a53b30f314",
+    "semantic_hash": "93650291a173bca560d408a53b30f314"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/menubar.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "4bf9500d4b9fdd5480dcbd313ae50302",
+    "semantic_hash": "4bf9500d4b9fdd5480dcbd313ae50302"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/navigation-menu.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "28a13a2a26a24e18f435d3970dd143d7",
+    "semantic_hash": "28a13a2a26a24e18f435d3970dd143d7"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/pagination.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "700496814015f7de8f3de8db503120b3",
+    "semantic_hash": "700496814015f7de8f3de8db503120b3"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/popover.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "ba15fc0f5648a9f2c5f1cfdb6af30099",
+    "semantic_hash": "ba15fc0f5648a9f2c5f1cfdb6af30099"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/progress.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "cdd84fa892969c03917aa6c861e633b8",
+    "semantic_hash": "cdd84fa892969c03917aa6c861e633b8"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/radio-group.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "3bba0dce7750b4477850517f02c00c2e",
+    "semantic_hash": "3bba0dce7750b4477850517f02c00c2e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/resizable.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "97ead39d124a82beaa19ba3de10a3ae1",
+    "semantic_hash": "97ead39d124a82beaa19ba3de10a3ae1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/scroll-area.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "bdfbf854e1b6f984126f7f4ebba36eaa",
+    "semantic_hash": "bdfbf854e1b6f984126f7f4ebba36eaa"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/select.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "6d58de2a3965c7ba24931e72126a3e5e",
+    "semantic_hash": "6d58de2a3965c7ba24931e72126a3e5e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/separator.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "8ab03e71f1012d5747f13b9d5d9350f2",
+    "semantic_hash": "8ab03e71f1012d5747f13b9d5d9350f2"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/sheet.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "beaff06efdf1bc4e030342fcae456bfb",
+    "semantic_hash": "beaff06efdf1bc4e030342fcae456bfb"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/sidebar.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "442df5233198065684ad2eeab54100ae",
+    "semantic_hash": "442df5233198065684ad2eeab54100ae"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/skeleton.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "bc010f3dbbf603edecec16d136fd659e",
+    "semantic_hash": "bc010f3dbbf603edecec16d136fd659e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/slider.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c7bf2489f987c1ffe7735deb27ca254d",
+    "semantic_hash": "c7bf2489f987c1ffe7735deb27ca254d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/sonner.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "53f03f6d4dd1904895e03c2952047fe3",
+    "semantic_hash": "53f03f6d4dd1904895e03c2952047fe3"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/switch.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c8cccd1048567ea3335462c0dd8d49f8",
+    "semantic_hash": "c8cccd1048567ea3335462c0dd8d49f8"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/table.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "995ccb4c347160bed26f414f04776c02",
+    "semantic_hash": "995ccb4c347160bed26f414f04776c02"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/tabs.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "2144f75bede556fa92deae630c1dc700",
+    "semantic_hash": "2144f75bede556fa92deae630c1dc700"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/textarea.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "fd917b4a15fcdc4a00fed519cc7939c1",
+    "semantic_hash": "fd917b4a15fcdc4a00fed519cc7939c1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/toggle-group.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "97f2b166a53ecf14f4c0879110171581",
+    "semantic_hash": "97f2b166a53ecf14f4c0879110171581"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/toggle.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d663a11ea29a5f219e230479f4755f94",
+    "semantic_hash": "d663a11ea29a5f219e230479f4755f94"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/ui/tooltip.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "e7fbb7c1c724a37806bdecf07052b46f",
+    "semantic_hash": "e7fbb7c1c724a37806bdecf07052b46f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/config/firebase.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "993c5986aa9e09c609d018af35ecef45",
+    "semantic_hash": "993c5986aa9e09c609d018af35ecef45"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/config/index.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "fc16473b37a78c53bca9afe848ba0c82",
+    "semantic_hash": "fc16473b37a78c53bca9afe848ba0c82"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/config/supabase.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d7b87e3351a91d25d835b647d7d73cf0",
+    "semantic_hash": "d7b87e3351a91d25d835b647d7d73cf0"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/constants/index.ts": {
+    "mtime": 1779777142.92293,
+    "ast_hash": "9e84c6ebcff4a9f8c4186b223be65837",
+    "semantic_hash": "9e84c6ebcff4a9f8c4186b223be65837"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/constants/navigation.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "392915029c14d63767f753fd06498aff",
+    "semantic_hash": "392915029c14d63767f753fd06498aff"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/constants/navigation.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/context/index.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "4219e8f1ae3ddb7a3733c2e92b6be771",
+    "semantic_hash": "4219e8f1ae3ddb7a3733c2e92b6be771"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/entry.client.tsx": {
+    "mtime": 1779776899.4978538,
+    "ast_hash": "3d5697d23d0a2d11bb93bb3e6c2cc490",
+    "semantic_hash": "3d5697d23d0a2d11bb93bb3e6c2cc490"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/entry.server.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "3cf10cc60a935b8e9af0211277cf3d72",
+    "semantic_hash": "3cf10cc60a935b8e9af0211277cf3d72"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/hooks/index.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "6e198832b0ea300bef215e182692c5f7",
+    "semantic_hash": "6e198832b0ea300bef215e182692c5f7"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/hooks/use-clickaway.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "11f6977c38f2ed1ff374ed737c59d044",
+    "semantic_hash": "11f6977c38f2ed1ff374ed737c59d044"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/hooks/use-fetcher-data.example.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "128bdfbf86b430432175b8c6ac53a89a",
+    "semantic_hash": "128bdfbf86b430432175b8c6ac53a89a"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/hooks/use-fetcher-data.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c4026328e989c7790f81fc8631f6772d",
+    "semantic_hash": "c4026328e989c7790f81fc8631f6772d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/hooks/use-loading.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "8cf8d6767af2bf8dc226689c443d8054",
+    "semantic_hash": "8cf8d6767af2bf8dc226689c443d8054"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/hooks/use-mobile.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "597f9bf4b08a7a0a72be8f15165a8ac6",
+    "semantic_hash": "597f9bf4b08a7a0a72be8f15165a8ac6"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/hooks/use-modal.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "1ec6dff35f258218af7d6b4d1e798b91",
+    "semantic_hash": "1ec6dff35f258218af7d6b4d1e798b91"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/hooks/use-print-slots.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c7467a961cbba33be263935fa990f4fe",
+    "semantic_hash": "c7467a961cbba33be263935fa990f4fe"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/hooks/use-query-params.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "95fae9ec91ab875a9aff733b2ebb6885",
+    "semantic_hash": "95fae9ec91ab875a9aff733b2ebb6885"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/hooks/use-smooth-scroll.ts": {
+    "mtime": 1779702349.596535,
+    "ast_hash": "d04869b637ef8a606afbaa6aaac6e4d7",
+    "semantic_hash": "d04869b637ef8a606afbaa6aaac6e4d7"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/hooks/usePrintJS.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "9cfc74071ade622172aa5dceb82cd5ac",
+    "semantic_hash": "9cfc74071ade622172aa5dceb82cd5ac"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/hooks/useStockLogic.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "92bfad0ada649bb1ee9e8d711a8c3891",
+    "semantic_hash": "92bfad0ada649bb1ee9e8d711a8c3891"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api-client.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "2f71d84807c4bea6310348686a06fbab",
+    "semantic_hash": "2f71d84807c4bea6310348686a06fbab"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/client.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "12510066b9db800ab5d7d1ac07cbb9f7",
+    "semantic_hash": "12510066b9db800ab5d7d1ac07cbb9f7"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/core/callApi.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "11282283bd62b33c2812770a02053d83",
+    "semantic_hash": "11282283bd62b33c2812770a02053d83"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/core/config.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "24d549cf3f34855fce4507f055d13b8d",
+    "semantic_hash": "24d549cf3f34855fce4507f055d13b8d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/core/helpers.ts": {
+    "mtime": 1780055592.5437622,
+    "ast_hash": "b5b54725555cc34ff32b1ded06abdc04",
+    "semantic_hash": "b5b54725555cc34ff32b1ded06abdc04"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/core/types.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "bc691d6536a18c42da37ffe7616298dd",
+    "semantic_hash": "bc691d6536a18c42da37ffe7616298dd"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/index.server.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "b9cf93fe3118e9db988eb33f09eeafc8",
+    "semantic_hash": "b9cf93fe3118e9db988eb33f09eeafc8"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/index.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "f0f4f2194a5dd032cbd5efbafacaf141",
+    "semantic_hash": "f0f4f2194a5dd032cbd5efbafacaf141"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/account.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "284c72a46ccde59c56e138a0fbff999c",
+    "semantic_hash": "284c72a46ccde59c56e138a0fbff999c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/account_mutation.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "f81ab813648814850cfb035e94de5d24",
+    "semantic_hash": "f81ab813648814850cfb035e94de5d24"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/asset.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "1965d85a050425da95583f2ce7f04c79",
+    "semantic_hash": "1965d85a050425da95583f2ce7f04c79"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/bank_account.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "ef012cc0333c5a66153fd6a336034f4d",
+    "semantic_hash": "ef012cc0333c5a66153fd6a336034f4d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/cms_content.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c5b13839a69f6857162292ec42e62855",
+    "semantic_hash": "c5b13839a69f6857162292ec42e62855"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/commodities.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "54b472a3f9ce441fefabfefa32e0d391",
+    "semantic_hash": "54b472a3f9ce441fefabfefa32e0d391"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/commodity.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "e4fb970d9294f420df5d6c4054412b29",
+    "semantic_hash": "e4fb970d9294f420df5d6c4054412b29"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/commodity_stock.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "2cee95a73ba5dcda9f2ee5f6142eb74d",
+    "semantic_hash": "2cee95a73ba5dcda9f2ee5f6142eb74d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/components.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "3f658482253761ac836765bbb847a4fd",
+    "semantic_hash": "3f658482253761ac836765bbb847a4fd"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/discount_codes.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "1cca14ed752080be26dd8d49047828c2",
+    "semantic_hash": "1cca14ed752080be26dd8d49047828c2"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/employee.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "555ba60dcb9b80c56066638be0626b20",
+    "semantic_hash": "555ba60dcb9b80c56066638be0626b20"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/employee_attendance.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "fdc466fdc190efd3023f48435af75251",
+    "semantic_hash": "fdc466fdc190efd3023f48435af75251"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/employee_salary.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "02b976f97d53a7ad2d3981fff1094635",
+    "semantic_hash": "02b976f97d53a7ad2d3981fff1094635"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/employee_salary_slip.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c18315435265fa7c88aa13da067e51a7",
+    "semantic_hash": "c18315435265fa7c88aa13da067e51a7"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/institution.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "3199dcd8cd4c491e5fa288518211e55d",
+    "semantic_hash": "3199dcd8cd4c491e5fa288518211e55d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/inventory_assets.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "e99d7656e2bc6a9335b3aa0503779030",
+    "semantic_hash": "e99d7656e2bc6a9335b3aa0503779030"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/order.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "0562dfbea8d3892754985933f4dba612",
+    "semantic_hash": "0562dfbea8d3892754985933f4dba612"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/order_item.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "45f4014f12742660f1b9473e2e75e8b6",
+    "semantic_hash": "45f4014f12742660f1b9473e2e75e8b6"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/order_upload.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "dddf3096edf3b3deefcfcc9b110fc850",
+    "semantic_hash": "dddf3096edf3b3deefcfcc9b110fc850"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/overview.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "2382d460b3f1fe1ffc38b865af2880e1",
+    "semantic_hash": "2382d460b3f1fe1ffc38b865af2880e1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/product.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "935d7f4c70f5227334aefe3f38d1b6a7",
+    "semantic_hash": "935d7f4c70f5227334aefe3f38d1b6a7"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/product_category.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "6deb425e87b83e38654cb47d70495b3d",
+    "semantic_hash": "6deb425e87b83e38654cb47d70495b3d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/product_component.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "0201165fb2ca767260c9cf53986e73db",
+    "semantic_hash": "0201165fb2ca767260c9cf53986e73db"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/product_package_item.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "025cec9d6f72fec592bf6234afb305d9",
+    "semantic_hash": "025cec9d6f72fec592bf6234afb305d9"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/product_price_rules.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "134324b585c50e0df9fa1cce1f1c4324",
+    "semantic_hash": "134324b585c50e0df9fa1cce1f1c4324"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/restock.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "525495f390ba7611e07f978da3b93043",
+    "semantic_hash": "525495f390ba7611e07f978da3b93043"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/settings.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "3dc058fc29672e470c76f1eff42f945d",
+    "semantic_hash": "3dc058fc29672e470c76f1eff42f945d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/shirt_color.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a11b2bbc4569bea60ccd2ff089f9c49f",
+    "semantic_hash": "a11b2bbc4569bea60ccd2ff089f9c49f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/stock_log.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "9c6e602c3c4edab936d9956c7dadbc97",
+    "semantic_hash": "9c6e602c3c4edab936d9956c7dadbc97"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/supplier.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "40d1a42b53aa049dc6ad4b30cd9721b0",
+    "semantic_hash": "40d1a42b53aa049dc6ad4b30cd9721b0"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/supplier_commodity.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "da38e38450dba2bbfadb2bc018593c9d",
+    "semantic_hash": "da38e38450dba2bbfadb2bc018593c9d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/testimonial.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "14b17f91fa1b992ace7c13af0b82d34f",
+    "semantic_hash": "14b17f91fa1b992ace7c13af0b82d34f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/transaction.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "2825be31bb559f6da5956af424c003f3",
+    "semantic_hash": "2825be31bb559f6da5956af424c003f3"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/twibbon_assignment.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "0d9d94ea055b0699804a922141470aec",
+    "semantic_hash": "0d9d94ea055b0699804a922141470aec"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/twibbon_template.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "87307bc56d15486617b34c6184b1e0fd",
+    "semantic_hash": "87307bc56d15486617b34c6184b1e0fd"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/user.server.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "65aeb1cfa6dfa7038ac76dd97b49f223",
+    "semantic_hash": "65aeb1cfa6dfa7038ac76dd97b49f223"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/user.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "ef36b8eb49e270895d04fce1f51b7b6d",
+    "semantic_hash": "ef36b8eb49e270895d04fce1f51b7b6d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/user_auth.server.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "38494f8bb7f730c39595c10d16faf1be",
+    "semantic_hash": "38494f8bb7f730c39595c10d16faf1be"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/api/modules/user_auth.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "38494f8bb7f730c39595c10d16faf1be",
+    "semantic_hash": "38494f8bb7f730c39595c10d16faf1be"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/auth.server.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "f6457f56d81a228b6f7ea374a4c83b6c",
+    "semantic_hash": "f6457f56d81a228b6f7ea374a4c83b6c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/dateFormatter.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "1a565aec560101d77bada3e7b09b45c5",
+    "semantic_hash": "1a565aec560101d77bada3e7b09b45c5"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/firebase.client.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "57759d04795135869d1582296332428b",
+    "semantic_hash": "57759d04795135869d1582296332428b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/nexus-client.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "cc3f316392c822c405015de33be8fa7c",
+    "semantic_hash": "cc3f316392c822c405015de33be8fa7c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/nexus-client.types.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "cd3be2822abe080f14b329ad20399854",
+    "semantic_hash": "cd3be2822abe080f14b329ad20399854"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/pagination.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "b8129c6880c9231c3fb4e4ec8019f6dc",
+    "semantic_hash": "b8129c6880c9231c3fb4e4ec8019f6dc"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/pdf.server.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "44581873005ae4763f34538d86f63b4b",
+    "semantic_hash": "44581873005ae4763f34538d86f63b4b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/session.client.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "8202aa2ac02e36b89a687f7ade62a549",
+    "semantic_hash": "8202aa2ac02e36b89a687f7ade62a549"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/session.server.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "7d708bf58322102bc0c3d8d8e6ca4f0e",
+    "semantic_hash": "7d708bf58322102bc0c3d8d8e6ca4f0e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/swr-loader.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "4d91e322c8ea0fb09aac3cd931ac508c",
+    "semantic_hash": "4d91e322c8ea0fb09aac3cd931ac508c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/telegram-log.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "f124735d1ffc75d2236cbc311fe0a3df",
+    "semantic_hash": "f124735d1ffc75d2236cbc311fe0a3df"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/lib/utils.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "cb3dc61887f6355adb9fe604d3db481f",
+    "semantic_hash": "cb3dc61887f6355adb9fe604d3db481f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/middleware/auth.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "82290c060ab9b9bd1dc4458ccf08c264",
+    "semantic_hash": "82290c060ab9b9bd1dc4458ccf08c264"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/api-client.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "015ddad15e7aa4d0b99f3fc8b3cb5f93",
+    "semantic_hash": "015ddad15e7aa4d0b99f3fc8b3cb5f93"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/client.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "077607340e017e356caff6d7cc0b00be",
+    "semantic_hash": "077607340e017e356caff6d7cc0b00be"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/core/api-provider-v2.ts": {
+    "mtime": 1779783241.9078062,
+    "ast_hash": "552587847a46d2a81203a859a8db26b1",
+    "semantic_hash": "552587847a46d2a81203a859a8db26b1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/core/api-provider.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "8866689f82b38a60dc09c7ca4922297f",
+    "semantic_hash": "8866689f82b38a60dc09c7ca4922297f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/core/callApi.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "11282283bd62b33c2812770a02053d83",
+    "semantic_hash": "11282283bd62b33c2812770a02053d83"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/core/config.ts": {
+    "mtime": 1779783197.2888458,
+    "ast_hash": "85e160883ed71ae94e101fd50de42d18",
+    "semantic_hash": "85e160883ed71ae94e101fd50de42d18"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/core/helpers.ts": {
+    "mtime": 1780055587.9242582,
+    "ast_hash": "b5b54725555cc34ff32b1ded06abdc04",
+    "semantic_hash": "b5b54725555cc34ff32b1ded06abdc04"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/core/types.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "bc691d6536a18c42da37ffe7616298dd",
+    "semantic_hash": "bc691d6536a18c42da37ffe7616298dd"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/index.server.ts": {
+    "mtime": 1780028759.0570207,
+    "ast_hash": "8cb481d30ec880e4b1feb45e86f99c6b",
+    "semantic_hash": "8cb481d30ec880e4b1feb45e86f99c6b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/index.ts": {
+    "mtime": 1780028675.7579796,
+    "ast_hash": "14086bd618950e3ef1cc8e2d13ba054f",
+    "semantic_hash": "14086bd618950e3ef1cc8e2d13ba054f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/account.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "45ee5ef2339125b525d1b9ffaf99038b",
+    "semantic_hash": "45ee5ef2339125b525d1b9ffaf99038b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/account_mutation.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "5f3231d75547e3ae1e34acd592692a86",
+    "semantic_hash": "5f3231d75547e3ae1e34acd592692a86"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/agent.server.ts": {
+    "mtime": 1779699464.2948995,
+    "ast_hash": "547fdcf51a228eaf970cb07913507a90",
+    "semantic_hash": "547fdcf51a228eaf970cb07913507a90"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/asset.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "b5c66231bf9218dcf2cf1ee69e5f7f1b",
+    "semantic_hash": "b5c66231bf9218dcf2cf1ee69e5f7f1b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/bank_account.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "63e4c7b4a2f54d56929db6147918a0f9",
+    "semantic_hash": "63e4c7b4a2f54d56929db6147918a0f9"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/cms_content.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "9a181b9d5c501dd36c109e1a1daf5f83",
+    "semantic_hash": "9a181b9d5c501dd36c109e1a1daf5f83"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/commodities.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "daaca70fc47278b90ba72622bfdfb95e",
+    "semantic_hash": "daaca70fc47278b90ba72622bfdfb95e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/commodity.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "3e5a134102ab0dcaa1e7fda1edd801d8",
+    "semantic_hash": "3e5a134102ab0dcaa1e7fda1edd801d8"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/commodity_stock.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "5788968edce91c9de02346e0161b5bea",
+    "semantic_hash": "5788968edce91c9de02346e0161b5bea"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/components.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "6c4224f1cb82d233fb3eb48b7ef72ec8",
+    "semantic_hash": "6c4224f1cb82d233fb3eb48b7ef72ec8"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/discount_codes.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "2c775876ab7ff056ab284e001c70afb0",
+    "semantic_hash": "2c775876ab7ff056ab284e001c70afb0"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/email.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d2d7e9fa4961e02564de8a77d1b747a1",
+    "semantic_hash": "d2d7e9fa4961e02564de8a77d1b747a1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/employee.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "ec2cf1e2af890c0d267a69332f3aa0a8",
+    "semantic_hash": "ec2cf1e2af890c0d267a69332f3aa0a8"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/employee_attendance.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "011c6b7b6452bfef9b33af6487c9de18",
+    "semantic_hash": "011c6b7b6452bfef9b33af6487c9de18"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/employee_salary.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "4385288a4fb40ac6aea27ef6ef19d957",
+    "semantic_hash": "4385288a4fb40ac6aea27ef6ef19d957"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/employee_salary_slip.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "73aef80d3b963173e99baefff4e178d1",
+    "semantic_hash": "73aef80d3b963173e99baefff4e178d1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/institution.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "747979a4d6cc3140a66364f47ac41a74",
+    "semantic_hash": "747979a4d6cc3140a66364f47ac41a74"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/inventory_assets.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a666aab03802bfe9002e4b9033088a95",
+    "semantic_hash": "a666aab03802bfe9002e4b9033088a95"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/order.ts": {
+    "mtime": 1780027623.2709723,
+    "ast_hash": "0ae6fbd8de5e617b3020bd019d59ea66",
+    "semantic_hash": "0ae6fbd8de5e617b3020bd019d59ea66"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/order_item.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "dc160c07ba2ce5e07eeeb27540f3a1fc",
+    "semantic_hash": "dc160c07ba2ce5e07eeeb27540f3a1fc"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/order_upload.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c7fb9f768bcac804e89b4d86593e9db8",
+    "semantic_hash": "c7fb9f768bcac804e89b4d86593e9db8"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/overview.server.ts": {
+    "mtime": 1780037555.345499,
+    "ast_hash": "f56df4c47d4ce7dc1e237c7dbceacf40",
+    "semantic_hash": "f56df4c47d4ce7dc1e237c7dbceacf40"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/product.ts": {
+    "mtime": 1779786938.0879102,
+    "ast_hash": "08992a05d59275a092a6699f7b77d925",
+    "semantic_hash": "08992a05d59275a092a6699f7b77d925"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/product_category.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "8e822d73566696d66a1c3a776a3cbed9",
+    "semantic_hash": "8e822d73566696d66a1c3a776a3cbed9"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/product_component.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "611340e765f892a6dc1cfd485e446310",
+    "semantic_hash": "611340e765f892a6dc1cfd485e446310"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/product_package_item.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c922a810d3d70930cbd6719e9a23db7e",
+    "semantic_hash": "c922a810d3d70930cbd6719e9a23db7e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/product_price_rules.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "1369f35310e2139db99b14c3f1d4f985",
+    "semantic_hash": "1369f35310e2139db99b14c3f1d4f985"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/restock.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "2c21791c1c6b01bece9619537f6b289d",
+    "semantic_hash": "2c21791c1c6b01bece9619537f6b289d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/settings.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "53ad5531c0e053927778c99225a63216",
+    "semantic_hash": "53ad5531c0e053927778c99225a63216"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/shirt_color.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "0654a67a57b3ec1c7f7d2411fe37e4f4",
+    "semantic_hash": "0654a67a57b3ec1c7f7d2411fe37e4f4"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/stock_log.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "2a0b0b256d303bfd16b2215f86564c75",
+    "semantic_hash": "2a0b0b256d303bfd16b2215f86564c75"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/supplier.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a2d66cfeb2b8dafe9650e4ef3d3fb325",
+    "semantic_hash": "a2d66cfeb2b8dafe9650e4ef3d3fb325"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/supplier_commodity.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "8242a1e7036bfd0936bd1f9d67592509",
+    "semantic_hash": "8242a1e7036bfd0936bd1f9d67592509"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/testimonial.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "bf76dd945b3781c1efc8c0f1429deebe",
+    "semantic_hash": "bf76dd945b3781c1efc8c0f1429deebe"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/transaction.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "152bdf1a7e655d8ef8b9c033b7c70da7",
+    "semantic_hash": "152bdf1a7e655d8ef8b9c033b7c70da7"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/twibbon_assignment.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "803e93d17c6b4e868c8e7cfb96717eb0",
+    "semantic_hash": "803e93d17c6b4e868c8e7cfb96717eb0"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/twibbon_template.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "9f79fefc0bd34036a16bc4ef098895b0",
+    "semantic_hash": "9f79fefc0bd34036a16bc4ef098895b0"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/user.server.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "bed404b03eba55885d2e476c5015fd42",
+    "semantic_hash": "bed404b03eba55885d2e476c5015fd42"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/user.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "8e75b1cd92f9e6fea6f12cf1b0ffa3cf",
+    "semantic_hash": "8e75b1cd92f9e6fea6f12cf1b0ffa3cf"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/user_auth.server.ts": {
+    "mtime": 1779873929.9923365,
+    "ast_hash": "b7143cd56d1c958d1850437822b6f592",
+    "semantic_hash": "b7143cd56d1c958d1850437822b6f592"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/modules/user_auth.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "51533a02b6905debb8d8ae37917d3f5e",
+    "semantic_hash": "51533a02b6905debb8d8ae37917d3f5e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/nexus-client.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "1e941d2e67c7fedf6c310eaee5806703",
+    "semantic_hash": "1e941d2e67c7fedf6c310eaee5806703"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/nexus-client.types.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "c9c6a3c5b13cd2aed40992f4cfaa2cfd",
+    "semantic_hash": "c9c6a3c5b13cd2aed40992f4cfaa2cfd"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/nexus/swr-loader.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "4d91e322c8ea0fb09aac3cd931ac508c",
+    "semantic_hash": "4d91e322c8ea0fb09aac3cd931ac508c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/provider/modal-provider.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "b5b282e18f949876eb2fb6f5d90a3b63",
+    "semantic_hash": "b5b282e18f949876eb2fb6f5d90a3b63"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/root.tsx": {
+    "mtime": 1779874982.3078697,
+    "ast_hash": "4bbf5ed4aeebc083f0760b4d937d5c2c",
+    "semantic_hash": "4bbf5ed4aeebc083f0760b4d937d5c2c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "149bc3f60b78e0ffb95c36af315d27f8",
+    "semantic_hash": "149bc3f60b78e0ffb95c36af315d27f8"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/_auth.logout.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "0dedf506aa4a4e4a4be51f3710aa9d09",
+    "semantic_hash": "0dedf506aa4a4e4a4be51f3710aa9d09"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/_index.tsx": {
+    "mtime": 1779782847.6680622,
+    "ast_hash": "b0600792b1e5ee669784b7fd73d3aaa5",
+    "semantic_hash": "b0600792b1e5ee669784b7fd73d3aaa5"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/api.fix-error.ts": {
+    "mtime": 1779874907.7358494,
+    "ast_hash": "2f230311d43293491b5039e64bfbfa32",
+    "semantic_hash": "2f230311d43293491b5039e64bfbfa32"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/api.nexus.demo.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "6482e916c4447fe01e90509ed365ea63",
+    "semantic_hash": "6482e916c4447fe01e90509ed365ea63"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/api.nexus.example.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "9b3126d25b66ae701fa513d9a4f30ee0",
+    "semantic_hash": "9b3126d25b66ae701fa513d9a4f30ee0"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/api.nexus.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "fe51136d313e78af50e983c9b8f8e6bc",
+    "semantic_hash": "fe51136d313e78af50e983c9b8f8e6bc"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.asset.inventory.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "4305c69e2d66d9802c638cc560704c87",
+    "semantic_hash": "4305c69e2d66d9802c638cc560704c87"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.drive.customer.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "24dadd6b906e1b64115172b9607d7ab5",
+    "semantic_hash": "24dadd6b906e1b64115172b9607d7ab5"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.drive.internal.tsx": {
+    "mtime": 1779780661.123721,
+    "ast_hash": "9c52db9cab2ebab321a7e73e7f0defaa",
+    "semantic_hash": "9c52db9cab2ebab321a7e73e7f0defaa"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.drive.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "656ef687bc4f1f4ef8e285c1d6b2ef61",
+    "semantic_hash": "656ef687bc4f1f4ef8e285c1d6b2ef61"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.email.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "5f0497a50440f60f1d9865b275d1bb5d",
+    "semantic_hash": "5f0497a50440f60f1d9865b275d1bb5d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.finance._index.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d41e2bc23b0d070c135a9cffab97722d",
+    "semantic_hash": "d41e2bc23b0d070c135a9cffab97722d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.finance.account.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "28a89723e7854950de5a5977cc3961fa",
+    "semantic_hash": "28a89723e7854950de5a5977cc3961fa"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.finance.cashflow.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "67de15c39629d8d6ff2be884740418d9",
+    "semantic_hash": "67de15c39629d8d6ff2be884740418d9"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.finance.inventory.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "650206e3aed97d846f04f8620dd81715",
+    "semantic_hash": "650206e3aed97d846f04f8620dd81715"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.finance.salary-employee.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "aa6945f3cb5f68e50a3676689a6cbdef",
+    "semantic_hash": "aa6945f3cb5f68e50a3676689a6cbdef"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.master.institution.tsx": {
+    "mtime": 1779780596.995372,
+    "ast_hash": "730f72c1e559829278aa87b95174eff7",
+    "semantic_hash": "730f72c1e559829278aa87b95174eff7"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.master.supplier.tsx": {
+    "mtime": 1779780595.8133533,
+    "ast_hash": "a2c57a304c88128be9ca58b59e07aaa6",
+    "semantic_hash": "a2c57a304c88128be9ca58b59e07aaa6"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.order-edit.$id.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "3789bfba79e1903b0bff5dd4b0ea300f",
+    "semantic_hash": "3789bfba79e1903b0bff5dd4b0ea300f"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.order-form.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "b5f4074be0626315716ca5a3be1b64a6",
+    "semantic_hash": "b5f4074be0626315716ca5a3be1b64a6"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.order-history.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "994b7d40b8a04b7c2c8b226967ea7679",
+    "semantic_hash": "994b7d40b8a04b7c2c8b226967ea7679"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.order-list.tsx": {
+    "mtime": 1779789159.5462196,
+    "ast_hash": "3cd2e5ff083f229c5a284520f2ed1cd4",
+    "semantic_hash": "3cd2e5ff083f229c5a284520f2ed1cd4"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.order-manage.tsx": {
+    "mtime": 1779780623.3488598,
+    "ast_hash": "7acdb75f93201c9a92a8288d137b3e6d",
+    "semantic_hash": "7acdb75f93201c9a92a8288d137b3e6d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.orders.$id.download.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "82bb62c74498db5d16dd256ace95a048",
+    "semantic_hash": "82bb62c74498db5d16dd256ace95a048"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.overview.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "60fa044bd08a8462e285fa8f357d7d15",
+    "semantic_hash": "60fa044bd08a8462e285fa8f357d7d15"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.print-area.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "05c08b0aa2ef2c83c0ab94b011cf9133",
+    "semantic_hash": "05c08b0aa2ef2c83c0ab94b011cf9133"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.procurement.$category.capacity.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "5b52a65cb0b914e710fe0a77cc435545",
+    "semantic_hash": "5b52a65cb0b914e710fe0a77cc435545"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.procurement.$category.catalog-color.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "8c277420f4ce819b6f9336d9f6e9c779",
+    "semantic_hash": "8c277420f4ce819b6f9336d9f6e9c779"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.procurement.$category.component.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a2b2d50b2f705bcdd01db5a1c1cd43de",
+    "semantic_hash": "a2b2d50b2f705bcdd01db5a1c1cd43de"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.procurement.$category.shopping-kaos.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "1adf2408781c374d185aac13b20972bf",
+    "semantic_hash": "1adf2408781c374d185aac13b20972bf"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.procurement.$category.shopping.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "7c070b054ae8b98b827175f473b25f07",
+    "semantic_hash": "7c070b054ae8b98b827175f473b25f07"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.procurement.$category.supplier.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "0cc92bd1c43a53ca904f661f825bfd49",
+    "semantic_hash": "0cc92bd1c43a53ca904f661f825bfd49"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.procurement.$category.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "dacb455eab2058080469aebfcd3b1948",
+    "semantic_hash": "dacb455eab2058080469aebfcd3b1948"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.procurement.$category.vendor.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "400730797d3f6dd6fe28f7f72e8436e7",
+    "semantic_hash": "400730797d3f6dd6fe28f7f72e8436e7"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.product-list.tsx": {
+    "mtime": 1779786961.3154747,
+    "ast_hash": "4e5f0872868a5fd43edb86cb2585112a",
+    "semantic_hash": "4e5f0872868a5fd43edb86cb2585112a"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.setting.account.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "ce564c16dc0fbadada10e82cc0bf2e3b",
+    "semantic_hash": "ce564c16dc0fbadada10e82cc0bf2e3b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.setting.design.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "dd4459df5d10a8bd81ef568b30074ad0",
+    "semantic_hash": "dd4459df5d10a8bd81ef568b30074ad0"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.setting.recycle-bin.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "26833d3c0a3c8e0d6dce4c70364d187b",
+    "semantic_hash": "26833d3c0a3c8e0d6dce4c70364d187b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.tsx": {
+    "mtime": 1780057668.578806,
+    "ast_hash": "55188b51a15596d5f791f1f3901137f6",
+    "semantic_hash": "55188b51a15596d5f791f1f3901137f6"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/app.user.tsx": {
+    "mtime": 1779780598.959767,
+    "ast_hash": "482ccf90679bee93820fdd698947d42b",
+    "semantic_hash": "482ccf90679bee93820fdd698947d42b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/customer.configure.tsx": {
+    "mtime": 1779879852.0224698,
+    "ast_hash": "471838fc8832f0574f433da729784da7",
+    "semantic_hash": "471838fc8832f0574f433da729784da7"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/customer.dashboard.tsx": {
+    "mtime": 1779879640.869203,
+    "ast_hash": "20f0a3ed6f607fc05089bdc75fc1a194",
+    "semantic_hash": "20f0a3ed6f607fc05089bdc75fc1a194"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/customer.orders.tsx": {
+    "mtime": 1779879802.1395707,
+    "ast_hash": "07a6ec01f41aa22404561f6bab05d7ff",
+    "semantic_hash": "07a6ec01f41aa22404561f6bab05d7ff"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/customer.profile.tsx": {
+    "mtime": 1779879203.3696694,
+    "ast_hash": "450ee7e7f6efe55c15aada32778302ce",
+    "semantic_hash": "450ee7e7f6efe55c15aada32778302ce"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/customer.support.tsx": {
+    "mtime": 1779879385.8612123,
+    "ast_hash": "d48162b767729d7a0fed76c83bb01502",
+    "semantic_hash": "d48162b767729d7a0fed76c83bb01502"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/customer.tsx": {
+    "mtime": 1779879179.7193189,
+    "ast_hash": "3553b94599b06b9c407d0da95ae8e2a2",
+    "semantic_hash": "3553b94599b06b9c407d0da95ae8e2a2"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/dashboard.customer.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "9c1eb29bb7dcf41dc786e067d78439b1",
+    "semantic_hash": "9c1eb29bb7dcf41dc786e067d78439b1"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/katalog.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "eb9ec12755de6649605c0b131c115c1e",
+    "semantic_hash": "eb9ec12755de6649605c0b131c115c1e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/login.tsx": {
+    "mtime": 1779873163.8632114,
+    "ast_hash": "6c82a62c96d583c2b31fb0de683bc314",
+    "semantic_hash": "6c82a62c96d583c2b31fb0de683bc314"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/media.event.$slug.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "18b412994927bf1c93e2541ea2592edc",
+    "semantic_hash": "18b412994927bf1c93e2541ea2592edc"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/order.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "198aef4cbfb67efff439a041e7f735a8",
+    "semantic_hash": "198aef4cbfb67efff439a041e7f735a8"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/public.design-link.$domain.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "dc9c5dd071f1f288cd6f702eff4f584b",
+    "semantic_hash": "dc9c5dd071f1f288cd6f702eff4f584b"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/public.drive-link.$domain.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "715ba0d684765e12104221b1c5136bab",
+    "semantic_hash": "715ba0d684765e12104221b1c5136bab"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/resources.image-proxy.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "d86b101946868c747abeef8297d97fe6",
+    "semantic_hash": "d86b101946868c747abeef8297d97fe6"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/routes/server.drive.$folder_id.download.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "de565079ae694f66187d5c70aff1958a",
+    "semantic_hash": "de565079ae694f66187d5c70aff1958a"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/services/gemini.server.ts": {
+    "mtime": 1779702266.0973969,
+    "ast_hash": "703f9de4566b9afc7ce46411a8f5132d",
+    "semantic_hash": "703f9de4566b9afc7ce46411a8f5132d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/types/core-entities.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "12137d1fd5a8bdf352c183ea0151b275",
+    "semantic_hash": "12137d1fd5a8bdf352c183ea0151b275"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/types/design.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "e92747e049d618ebe76c57c1aae8311d",
+    "semantic_hash": "e92747e049d618ebe76c57c1aae8311d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/types/index.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "02317f113a1c72d7df6b697186246e53",
+    "semantic_hash": "02317f113a1c72d7df6b697186246e53"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/types/print.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "3e672cb2d481da04400fbb7e2f7dc576",
+    "semantic_hash": "3e672cb2d481da04400fbb7e2f7dc576"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/types/supporting-entities.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "0ac6dd6d908cdfa007891ca3aacc92d0",
+    "semantic_hash": "0ac6dd6d908cdfa007891ca3aacc92d0"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/utils/agent.server.ts": {
+    "mtime": 1779874892.7134655,
+    "ast_hash": "95180e6ff2c1f7e60b4ae21b7d80fcc6",
+    "semantic_hash": "95180e6ff2c1f7e60b4ae21b7d80fcc6"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/utils/api.server.ts": {
+    "mtime": 1779874862.3789175,
+    "ast_hash": "fb744fd1863f9b94296fc750e7082a08",
+    "semantic_hash": "fb744fd1863f9b94296fc750e7082a08"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/utils/auth.server.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "f6457f56d81a228b6f7ea374a4c83b6c",
+    "semantic_hash": "f6457f56d81a228b6f7ea374a4c83b6c"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/utils/dateFormatter.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "1a565aec560101d77bada3e7b09b45c5",
+    "semantic_hash": "1a565aec560101d77bada3e7b09b45c5"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/utils/design-helpers.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "e12e67bf418d96821de363b88df121db",
+    "semantic_hash": "e12e67bf418d96821de363b88df121db"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/utils/pagination.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "b8129c6880c9231c3fb4e4ec8019f6dc",
+    "semantic_hash": "b8129c6880c9231c3fb4e4ec8019f6dc"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/utils/pdf.server.tsx": {
+    "mtime": 1779535488.0,
+    "ast_hash": "874a8c083ea041a60167c00e9292d342",
+    "semantic_hash": "874a8c083ea041a60167c00e9292d342"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/utils/session.client.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "8202aa2ac02e36b89a687f7ade62a549",
+    "semantic_hash": "8202aa2ac02e36b89a687f7ade62a549"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/utils/session.server.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "24dcc2f4ae2ac232e71fc009b9734a7e",
+    "semantic_hash": "24dcc2f4ae2ac232e71fc009b9734a7e"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/utils/telegram-log.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "f124735d1ffc75d2236cbc311fe0a3df",
+    "semantic_hash": "f124735d1ffc75d2236cbc311fe0a3df"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/utils/utils.ts": {
+    "mtime": 1779535488.0,
+    "ast_hash": "b5a7479516d4838a1851ce01a13a6cd4",
+    "semantic_hash": "b5a7479516d4838a1851ce01a13a6cd4"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/customer-order/widgets/README.md": {
+    "mtime": 1779535488.0,
+    "ast_hash": "5672618a36dcef4fdaf36f29a1839cb7",
+    "semantic_hash": "5672618a36dcef4fdaf36f29a1839cb7"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/order/widgets/README.md": {
+    "mtime": 1779790335.5090737,
+    "ast_hash": "be0f5d84b1cb487184cf31fa62891bad",
+    "semantic_hash": "be0f5d84b1cb487184cf31fa62891bad"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/components/features/portfolio-upload/widgets/README.md": {
+    "mtime": 1779786724.3875043,
+    "ast_hash": "63dbd837d90346fe0216de10a9f918f5",
+    "semantic_hash": "63dbd837d90346fe0216de10a9f918f5"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/docs/api.nexus.README.md": {
+    "mtime": 1779535488.0,
+    "ast_hash": "3875afa470a2e6bad81d948fe6c6ac8d",
+    "semantic_hash": "3875afa470a2e6bad81d948fe6c6ac8d"
+  },
+  "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client/app/docs/audit-api-provider.md": {
+    "mtime": 1779535488.0,
+    "ast_hash": "a39c9ae0e38367f185bad5c5ac689f10",
+    "semantic_hash": "a39c9ae0e38367f185bad5c5ac689f10"
+  }
+}

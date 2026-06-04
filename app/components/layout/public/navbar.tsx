@@ -45,7 +45,7 @@ export default function Navbar({ session }: { session?: any }) {
                 onClick={() => {
                   const userData = typeof session === 'string' ? JSON.parse(session) : session;
                   if (userData?.role === "customer") {
-                    navigate("/dashboard/customer");
+                    navigate("/customer/dashboard");
                   } else {
                     navigate("/app/overview");
                   }

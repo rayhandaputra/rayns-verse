@@ -131,7 +131,7 @@ export const action: ActionFunction = async ({ request }) => {
     if (result.success && result.token) {
       const user = result.user;
       const redirectTo = user?.role === "customer"
-        ? (user?.phone ? "/customer/dashboard" : "/customer/register")
+        ? "/customer/dashboard"
         : "/app/overview";
 
       return createUserSession(result.token, redirectTo, JSON.stringify(user));

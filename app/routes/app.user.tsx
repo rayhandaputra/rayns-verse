@@ -1,19 +1,57 @@
 import { type ActionFunction, type LoaderFunction } from "react-router";
+import { APIProviderV2 } from "~/nexus/core/api-provider-v2";
 import { API } from "~/nexus/index.server";
 import { AuthAPI } from "~/nexus/modules/user_auth.server";
 import { requireAuth } from "~/utils/session.server";
 import UserManagementFeature from "~/components/features/user/UserManagementFeature";
 
 export const loader: LoaderFunction = async ({ request }) => {
-  await requireAuth(request);
-  return Response.json({ initialized: true });
+  const auth = (await requireAuth(request)) as any;
+  const url = new URL(request.url);
+  const page = Number(url.searchParams.get("page")) || 0;
+  const size = Number(url.searchParams.get("size")) || 10;
+  const search = url.searchParams.get("search") || "";
+  const role = url.searchParams.get("role") || "";
+
+  const users = await APIProviderV2({
+    user: auth.user,
+    token: auth.token,
+  })
+    .Table("users")
+    .Select({
+      page,
+      size,
+      search: search || undefined,
+      where: {
+        deleted: 0,
+        ...(role ? { role } : {}),
+      },
+      columns: ["id", "fullname", "email", "role", "is_active"],
+      orderBy: ["created_on", "DESC"],
+    })
+    .Result();
+
+  return Response.json({
+    initialized: true,
+    usersData: {
+      data: {
+        items: users?.items || [],
+        total_items: users?.total_items || 0,
+      },
+    },
+  });
 };
 
 export const action: ActionFunction = async ({ request }) => {
+  const auth = (await requireAuth(request)) as any;
   const formData = await request.formData();
   const data = Object.fromEntries(formData.entries()) as Record<string, any>;
 
-  const { id, ...payload } = data;
+  const { id, password, ...payload } = data;
+  const session = {
+    user: auth.user,
+    token: auth.token,
+  };
 
   try {
     let res: any = {};
@@ -34,51 +72,74 @@ export const action: ActionFunction = async ({ request }) => {
       }
     }
     if (request.method === "DELETE") {
-      res = await API.USER.update({
-        session: {},
-        req: {
-          body: {
-            id,
+      await APIProviderV2(session)
+        .Table("users")
+        .Update({
+          data: {
             ...payload,
-          } as any,
-        },
-      });
+            deleted: 1,
+            modified_on: new Date().toISOString(),
+          },
+          where: { id },
+        })
+        .Result();
+      res = { success: true, message: "User berhasil dihapus" };
     }
     if (request.method === "POST") {
       if (id) {
-        res = await API.USER.update({
-          session: {},
-          req: {
-            body: {
-              id,
-              ...payload,
-            } as any,
-          },
-        });
+        const updateData = {
+          ...payload,
+          ...(payload.deleted
+            ? { deleted: 1 }
+            : {}),
+          modified_on: new Date().toISOString(),
+        };
 
-        if (payload.password) {
+        await APIProviderV2(session)
+          .Table("users")
+          .Update({
+            data: updateData,
+            where: { id },
+          })
+          .Result();
+        res = { success: true, message: "User berhasil diperbarui" };
+
+        if (password) {
           await AuthAPI.upsertAuth({
             user_id: id,
             email: payload.email,
-            password: payload.password,
+            password,
           });
         }
       } else {
-        res = await API.USER.create({
-          session: {},
-          req: {
-            body: {
-              ...(payload as any),
-              role: payload.role || "admin",
-            },
-          },
-        });
+        const userPayload = {
+          fullname: payload.fullname,
+          email: payload.email,
+          role: payload.role || "admin",
+          deleted: 0,
+          created_on: new Date().toISOString(),
+          modified_on: new Date().toISOString(),
+        };
 
-        if (res.success && res.user?.id && payload.password) {
+        const created = await APIProviderV2(session)
+          .Table("users")
+          .Insert(userPayload)
+          .Result();
+
+        res = {
+          success: true,
+          message: "User baru berhasil dibuat",
+          user: {
+            id: created?.insert_id,
+            ...userPayload,
+          },
+        };
+
+        if (res.user?.id && password) {
           await AuthAPI.upsertAuth({
             user_id: res.user.id,
             email: payload.email,
-            password: payload.password,
+            password,
           });
         }
       }

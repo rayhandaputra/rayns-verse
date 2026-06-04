@@ -106,9 +106,9 @@ export async function requireRole(request: Request, allowedRoles: string[]) {
   const userData = typeof user === 'string' ? JSON.parse(user) : user;
   
   if (!userData?.role || !allowedRoles.includes(userData.role)) {
-    // If it's a customer trying to access admin, redirect to customer dashboard
+    // If it's a customer trying to access admin, redirect to the customer dashboard.
     if (userData?.role === 'customer') {
-      throw redirect("/dashboard/customer");
+      throw redirect("/customer/dashboard");
     }
     // Otherwise rediect to login
     throw redirect("/login");

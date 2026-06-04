@@ -1,89 +1,212 @@
-import { useOutletContext, useNavigate, Form } from "react-router";
-import { LogOut, Mail, Phone, User, Shield } from "lucide-react";
+import { useFetcher, useOutletContext } from "react-router";
+import {
+  Bell,
+  CircleHelp,
+  CreditCard,
+  Heart,
+  LogOut,
+  MessageCircle,
+  MessageSquareText,
+  MoreHorizontal,
+  Package,
+  type LucideIcon,
+} from "lucide-react";
+import type { ReactNode } from "react";
 import Swal from "sweetalert2";
 
+type CustomerContext = {
+  user: {
+    fullname?: string;
+    email?: string;
+    role?: string;
+  };
+};
+
+const quickActions = [
+  { label: "Favorit", icon: Heart },
+  { label: "Pesan", icon: MessageCircle },
+  { label: "Lainnya", icon: MoreHorizontal },
+];
+
+const primaryItems = [
+  { label: "Masukan", icon: MessageSquareText },
+  { label: "Pembayaran", icon: CreditCard },
+  { label: "Ulasan", icon: MessageCircle, active: true },
+  { label: "Pesanan", icon: Package },
+];
+
+function initials(name?: string) {
+  const source = name?.trim() || "Pelanggan Kinau";
+
+  return source
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function ProfileMenuCard({ children }: { children: ReactNode }) {
+  return (
+    <section className="rounded-[22px] border border-[var(--customer-border)] bg-white px-3 py-3 shadow-[0_18px_45px_rgba(30,67,76,0.06)]">
+      {children}
+    </section>
+  );
+}
+
+function ProfileMenuRow({
+  label,
+  icon: Icon,
+  active,
+  danger,
+  trailing,
+  onClick,
+}: {
+  label: string;
+  icon: LucideIcon;
+  active?: boolean;
+  danger?: boolean;
+  trailing?: ReactNode;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "flex min-h-12 w-full items-center gap-3 rounded-2xl px-3 text-left transition",
+        active ? "bg-[var(--customer-bg)]" : "hover:bg-[var(--customer-card-hover)]",
+      ].join(" ")}
+    >
+      <span
+        className={[
+          "grid h-8 w-8 shrink-0 place-items-center rounded-xl",
+          danger
+            ? "bg-red-50 text-red-500"
+            : active
+              ? "bg-white text-[var(--customer-accent)]"
+              : "bg-[var(--customer-bg)] text-[var(--customer-text-muted)]",
+        ].join(" ")}
+      >
+        <Icon size={16} strokeWidth={2.3} />
+      </span>
+      <span
+        className={[
+          "min-w-0 flex-1 text-xs font-black",
+          danger
+            ? "text-red-500"
+            : active
+              ? "text-[var(--customer-primary)]"
+              : "text-[var(--customer-text-muted)]",
+        ].join(" ")}
+      >
+        {label}
+      </span>
+      {trailing}
+    </button>
+  );
+}
+
+function NotificationSwitch() {
+  return (
+    <span className="relative h-4 w-8 rounded-full bg-[var(--customer-primary)]">
+      <span className="absolute right-0.5 top-0.5 h-3 w-3 rounded-full bg-white shadow-sm" />
+    </span>
+  );
+}
+
 export default function CustomerProfile() {
-  const { user, isDemo } = useOutletContext<{ user: any; isDemo: boolean }>();
-  const navigate = useNavigate();
+  const { user } = useOutletContext<CustomerContext>();
+  const fetcher = useFetcher();
+  const displayName = user.fullname || "Pelanggan Kinau";
 
   const handleLogout = async () => {
     const result = await Swal.fire({
-      title: "Keluar?",
-      text: "Yakin ingin keluar dari akun?",
+      title: "Konfirmasi Logout",
+      text: "Apakah Anda yakin ingin keluar dari akun ini?",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Ya, Keluar",
+      confirmButtonText: "Ya, Logout",
       cancelButtonText: "Batal",
       reverseButtons: true,
       customClass: {
-        confirmButton: "bg-red-600 text-white px-5 py-2.5 rounded-xl font-bold text-xs",
-        cancelButton: "bg-slate-100 text-slate-700 px-5 py-2.5 rounded-xl font-bold text-xs mr-2",
-        popup: "rounded-2xl",
+        confirmButton:
+          "bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg focus:outline-none",
+        cancelButton:
+          "bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg ml-2 mr-2",
+        popup: "rounded-2xl shadow-lg",
+        title: "text-lg font-semibold text-gray-800",
+        htmlContainer: "text-gray-600",
       },
       buttonsStyling: false,
     });
 
     if (result.isConfirmed) {
-      if (isDemo) {
-        navigate("/login");
-      } else {
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = "/logout";
-        document.body.appendChild(form);
-        form.submit();
-      }
+      fetcher.submit(null, { method: "post", action: "/logout" });
     }
   };
 
   return (
-    <div className="h-full flex flex-col px-5 py-6 overflow-y-auto">
-      {/* Avatar + Name */}
-      <div className="flex flex-col items-center mb-8">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#1E434C] to-[#0097B2] flex items-center justify-center text-white text-2xl font-black shadow-lg">
-          {(user?.fullname || "U").charAt(0).toUpperCase()}
+    <div className="pb-4">
+      <section className="pt-3 text-center">
+        <div className="mx-auto grid h-[72px] w-[72px] place-items-center rounded-full bg-[linear-gradient(135deg,var(--customer-accent),var(--customer-primary))] p-1 shadow-[0_18px_38px_rgba(0,151,178,0.22)]">
+          <div className="grid h-full w-full place-items-center rounded-full border-[3px] border-white bg-[var(--customer-bg)] text-lg font-black text-[var(--customer-primary)]">
+            {initials(displayName)}
+          </div>
         </div>
-        <h2 className="mt-3 text-lg font-bold text-slate-800">{user?.fullname || "Pelanggan"}</h2>
-        <span className="text-xs text-slate-400 font-medium capitalize">{user?.role || "customer"}</span>
+        <h1 className="mt-3 truncate text-base font-black text-[var(--customer-primary)]">
+          {displayName}
+        </h1>
+        <p className="mt-1 truncate text-[10px] font-semibold text-[var(--customer-text-light)]">
+          {user.email || "Email belum tersedia"}
+        </p>
+      </section>
+
+      <div className="mt-6 border-t border-dashed border-[var(--customer-border)] pt-5">
+        <div className="mx-auto flex w-fit items-center gap-4 rounded-full bg-white px-5 py-2 shadow-[0_14px_35px_rgba(30,67,76,0.06)] ring-1 ring-[var(--customer-border)]">
+          {quickActions.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <button
+                key={item.label}
+                type="button"
+                className="grid h-9 w-9 place-items-center rounded-full text-[var(--customer-text-muted)] transition hover:bg-[var(--customer-card-hover)] hover:text-[var(--customer-accent)]"
+                aria-label={item.label}
+              >
+                <Icon size={16} strokeWidth={2.2} />
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Info Cards */}
-      <div className="space-y-3 flex-1">
-        <InfoRow icon={Mail} label="Email" value={user?.email || "-"} verified />
-        <InfoRow icon={Phone} label="No. HP / WhatsApp" value={user?.phone || "-"} />
-        <InfoRow icon={User} label="Nama Lengkap" value={user?.fullname || "-"} />
-        <InfoRow icon={Shield} label="Status Akun" value={user?.is_active ? "Aktif" : "Nonaktif"} />
-      </div>
+      <div className="mt-6 space-y-5">
+        <ProfileMenuCard>
+          <div className="space-y-1">
+            {primaryItems.map((item) => (
+              <ProfileMenuRow key={item.label} {...item} />
+            ))}
+          </div>
+        </ProfileMenuCard>
 
-      {/* Logout Button */}
-      <div className="mt-6 pt-4 border-t border-slate-100">
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-red-50 text-red-600 font-bold text-sm hover:bg-red-100 transition-all active:scale-[0.98]"
-        >
-          <LogOut size={18} />
-          Keluar dari Akun
-        </button>
+        <ProfileMenuCard>
+          <div className="space-y-1">
+            <ProfileMenuRow label="Pusat Bantuan" icon={CircleHelp} />
+            <ProfileMenuRow
+              label="Notifikasi"
+              icon={Bell}
+              trailing={<NotificationSwitch />}
+            />
+            <ProfileMenuRow
+              label="Keluar"
+              icon={LogOut}
+              danger
+              onClick={handleLogout}
+            />
+          </div>
+        </ProfileMenuCard>
       </div>
-    </div>
-  );
-}
-
-function InfoRow({ icon: Icon, label, value, verified }: { icon: any; label: string; value: string; verified?: boolean }) {
-  return (
-    <div className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100">
-      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-        <Icon size={18} className="text-slate-500" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
-        <p className="text-sm font-semibold text-slate-700 truncate">{value}</p>
-      </div>
-      {verified && (
-        <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[9px] font-bold rounded-lg border border-green-100">
-          Verified
-        </span>
-      )}
     </div>
   );
 }
