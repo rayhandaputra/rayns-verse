@@ -161,10 +161,10 @@ export const AuthAPI = {
       return { success: false, message: "Email Google tidak ditemukan" };
     }
 
-    // 1. Cek apakah user sudah ada di users
-    const userRes = await APIProvider(session)
-      .Endpoint("POST", "select", "users")
-      .Data({
+    // 1. Cek apakah user sudah ada di users (termasuk soft-deleted)
+    const userRes = await APIProviderV2(session)
+      .Table("users")
+      .Select({
         where: { email },
         size: 1,
       })
@@ -173,27 +173,51 @@ export const AuthAPI = {
     let user = userRes.items?.[0];
     let isNewUser = false;
 
-    // 2. Jika tidak ada, buat user baru (sebagai customer secara default)
-    if (!user) {
+    // 2. Jika ada tapi terhapus, pulihkan. Jika tidak ada, buat baru.
+    if (user) {
+      if (user.deleted === 1) {
+        await APIProviderV2(session)
+          .Table("users")
+          .Update({
+            data: {
+              fullname: fullname || user.fullname || "Customer",
+              deleted: 0,
+              modified_on: new Date().toISOString(),
+            },
+            where: { id: user.id },
+          })
+          .Result();
+
+        // Ambil data user yang telah dipulihkan
+        const refreshUserRes = await APIProviderV2(session)
+          .Table("users")
+          .Select({
+            where: { id: user.id },
+            size: 1,
+          })
+          .Result();
+        user = refreshUserRes.items?.[0];
+      }
+    } else {
       isNewUser = true;
-      await APIProvider(session)
-        .Endpoint("POST", "insert", "users")
-        .Data({
-          data: {
-            fullname: fullname || "Customer",
-            email,
-            role: "customer",
-            is_active: 1,
-            created_on: new Date().toISOString(),
-          },
+      const created = await APIProviderV2(session)
+        .Table("users")
+        .Insert({
+          fullname: fullname || "Customer",
+          email,
+          role: "customer",
+          is_active: 1,
+          deleted: 0,
+          created_on: new Date().toISOString(),
+          modified_on: new Date().toISOString(),
         })
         .Result();
 
       // Get the newly created user
-      const refreshUserRes = await APIProvider(session)
-        .Endpoint("POST", "select", "users")
-        .Data({
-          where: { email },
+      const refreshUserRes = await APIProviderV2(session)
+        .Table("users")
+        .Select({
+          where: { id: created.insert_id },
           size: 1,
         })
         .Result();
@@ -202,9 +226,9 @@ export const AuthAPI = {
     }
 
     // 3. Pastikan ada record di user_auth (tanpa password jika google)
-    const authRes = await APIProvider(session)
-      .Endpoint("POST", "select", "user_auth")
-      .Data({
+    const authRes = await APIProviderV2(session)
+      .Table("user_auth")
+      .Select({
         where: { user_id: user.id },
         size: 1,
       })
@@ -213,22 +237,21 @@ export const AuthAPI = {
     let auth = authRes.items?.[0];
 
     if (!auth) {
-      await APIProvider(session)
-        .Endpoint("POST", "insert", "user_auth")
-        .Data({
-          data: {
-            user_id: user.id,
-            email,
-            password_hash: "GOOGLE_AUTH",
-            email_verified: 1,
-            created_on: new Date().toISOString(),
-          },
+      await APIProviderV2(session)
+        .Table("user_auth")
+        .Insert({
+          user_id: user.id,
+          email,
+          password_hash: "GOOGLE_AUTH",
+          email_verified: 1,
+          created_on: new Date().toISOString(),
+          modified_on: new Date().toISOString(),
         })
         .Result();
 
-      const refreshAuthRes = await APIProvider(session)
-        .Endpoint("POST", "select", "user_auth")
-        .Data({
+      const refreshAuthRes = await APIProviderV2(session)
+        .Table("user_auth")
+        .Select({
           where: { user_id: user.id },
           size: 1,
         })
@@ -240,9 +263,9 @@ export const AuthAPI = {
     const token = AuthAPI.generateToken();
     const tokenHash = AuthAPI.hashToken(token);
 
-    await APIProvider(session)
-      .Endpoint("POST", "update", "user_auth")
-      .Data({
+    await APIProviderV2(session)
+      .Table("user_auth")
+      .Update({
         data: {
           session_token_hash: tokenHash,
           session_expired_at: new Date(
@@ -251,6 +274,7 @@ export const AuthAPI = {
           session_ip: ip,
           session_user_agent: user_agent,
           last_login: new Date().toISOString(),
+          modified_on: new Date().toISOString(),
         },
         where: { id: auth.id },
       })

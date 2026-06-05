@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { APIProvider } from "..";
+import { APIProvider, APIProviderV2 } from "..";
 // AuthAPI is imported dynamically in methods that need it to ensure browser compatibility
 
 
@@ -7,9 +7,9 @@ export const UserAPI = {
   get: async ({ session, req }: any) => {
     const { page = 0, size = 10, search } = req.query || {};
 
-    return APIProvider(session)
-      .Endpoint("POST", "select", "users")
-      .Data({
+    return APIProviderV2(session)
+      .Table("users")
+      .Select({
         columns: ["id", "fullname", "email", "role"],
         where: { deleted: 0 },
         search,
@@ -19,29 +19,6 @@ export const UserAPI = {
       .Result();
   },
 
-  // create: async ({ req }: any) => {
-  //   const { fullname, email, role = "customer" } = req.body || {};
-
-  //   if (!fullname || !email) {
-  //     return { success: false, message: "Email dan fullname wajib diisi" };
-  //   }
-
-  //   const result = await APIProvider({
-  //     endpoint: "insert",
-  //     method: "POST",
-  //     table: "users",
-  //     action: "insert",
-  //     body: {
-  //       data: { fullname, email, role },
-  //     },
-  //   });
-
-  //   return {
-  //     success: true,
-  //     message: "User berhasil dibuat",
-  //     user: { id: result.insert_id, fullname, email, role },
-  //   };
-  // },
   create: async ({ session, req }: any) => {
     const { fullname, email, role = "customer", password } = req.body || {};
 
@@ -49,18 +26,55 @@ export const UserAPI = {
       return { success: false, message: "Email dan fullname wajib diisi" };
     }
 
-    const result = await APIProvider(session)
-      .Endpoint("POST", "insert", "users")
-      .Data({
-        data: { fullname, email, role },
+    const checkUser = await APIProviderV2(session)
+      .Table("users")
+      .Select({
+        where: { email },
+        size: 1,
       })
       .Result();
+
+    const existingUser = checkUser?.items?.[0];
+    let insertId;
+
+    if (existingUser) {
+      if (existingUser.deleted === 1) {
+        await APIProviderV2(session)
+          .Table("users")
+          .Update({
+            data: {
+              fullname,
+              role,
+              deleted: 0,
+              modified_on: new Date().toISOString(),
+            },
+            where: { id: existingUser.id },
+          })
+          .Result();
+        insertId = existingUser.id;
+      } else {
+        return { success: false, message: "Email sudah terdaftar" };
+      }
+    } else {
+      const result = await APIProviderV2(session)
+        .Table("users")
+        .Insert({
+          fullname,
+          email,
+          role,
+          deleted: 0,
+          created_on: new Date().toISOString(),
+          modified_on: new Date().toISOString(),
+        })
+        .Result();
+      insertId = result.insert_id;
+    }
 
     if (password) {
       const { AuthAPI } = await import("./user_auth.server");
       await AuthAPI.upsertAuth({
         session,
-        user_id: result.insert_id,
+        user_id: insertId,
         email,
         password,
       });
@@ -80,10 +94,9 @@ export const UserAPI = {
     }
 
     // check existing
-    const existing = await APIProvider(session)
-      .Endpoint("POST", "select", "users")
-      .Data({
-        columns: ["*"],
+    const existing = await APIProviderV2(session)
+      .Table("users")
+      .Select({
         where: { email },
         size: 1,
       })
@@ -94,9 +107,9 @@ export const UserAPI = {
     if (user) {
       if (user.deleted === 1) {
         // restore
-        const updated = await APIProvider(session)
-          .Endpoint("POST", "update", "users")
-          .Data({
+        await APIProviderV2(session)
+          .Table("users")
+          .Update({
             data: {
               fullname,
               email,
@@ -108,13 +121,25 @@ export const UserAPI = {
           })
           .Result();
 
+        const updatedUserRes = await APIProviderV2(session)
+          .Table("users")
+          .Select({
+            where: { id: user.id },
+            size: 1,
+          })
+          .Result();
+
         return {
           success: true,
           message: "User dipulihkan dan diperbarui",
-          user: updated,
+          user: updatedUserRes.items?.[0],
         };
       }
-      return { success: false, message: "Email sudah terdaftar" };
+      return {
+        success: true,
+        message: "User sudah aktif",
+        user,
+      };
     }
 
     // create new
@@ -122,13 +147,14 @@ export const UserAPI = {
       fullname,
       email,
       role,
+      deleted: 0,
       created_on: new Date().toISOString(),
       modified_on: new Date().toISOString(),
     };
 
-    const result = await APIProvider(session)
-      .Endpoint("POST", "insert", "users")
-      .Data({ data: newUser })
+    const result = await APIProviderV2(session)
+      .Table("users")
+      .Insert(newUser)
       .Result();
 
     return {
@@ -148,20 +174,21 @@ export const UserAPI = {
       modified_on: new Date().toISOString(),
     };
 
-    const result = await APIProvider(session)
-      .Endpoint("POST", "update", "users")
-      .Data({
+    const result = await APIProviderV2(session)
+      .Table("users")
+      .Update({
         data: updatedData,
         where: { id },
       })
       .Result();
 
     if (password) {
-      await APIProvider(session)
-        .Endpoint("POST", "update", "user_auth")
-        .Data({
+      await APIProviderV2(session)
+        .Table("user_auth")
+        .Update({
           data: {
             password_hash: await bcrypt.hash(password, 10),
+            modified_on: new Date().toISOString(),
           },
           where: { user_id: id },
         })

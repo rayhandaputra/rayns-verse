@@ -112,32 +112,70 @@ export const action: ActionFunction = async ({ request }) => {
           });
         }
       } else {
-        const userPayload = {
-          fullname: payload.fullname,
-          email: payload.email,
-          role: payload.role || "admin",
-          deleted: 0,
-          created_on: new Date().toISOString(),
-          modified_on: new Date().toISOString(),
-        };
-
-        const created = await APIProviderV2(session)
+        const checkUser = await APIProviderV2(session)
           .Table("users")
-          .Insert(userPayload)
+          .Select({
+            where: { email: payload.email },
+            size: 1,
+          })
           .Result();
+
+        const existingUser = checkUser?.items?.[0];
+        let userId;
+
+        if (existingUser) {
+          if (existingUser.deleted === 1) {
+            // Restore and update
+            await APIProviderV2(session)
+              .Table("users")
+              .Update({
+                data: {
+                  fullname: payload.fullname,
+                  role: payload.role || "admin",
+                  deleted: 0,
+                  modified_on: new Date().toISOString(),
+                },
+                where: { id: existingUser.id },
+              })
+              .Result();
+            userId = existingUser.id;
+          } else {
+            return Response.json(
+              { success: false, error_message: "Email sudah terdaftar" },
+              { status: 400 }
+            );
+          }
+        } else {
+          const userPayload = {
+            fullname: payload.fullname,
+            email: payload.email,
+            role: payload.role || "admin",
+            deleted: 0,
+            created_on: new Date().toISOString(),
+            modified_on: new Date().toISOString(),
+          };
+
+          const created = await APIProviderV2(session)
+            .Table("users")
+            .Insert(userPayload)
+            .Result();
+          userId = created?.insert_id;
+        }
 
         res = {
           success: true,
-          message: "User baru berhasil dibuat",
+          message: existingUser ? "User berhasil dipulihkan" : "User baru berhasil dibuat",
           user: {
-            id: created?.insert_id,
-            ...userPayload,
+            id: userId,
+            fullname: payload.fullname,
+            email: payload.email,
+            role: payload.role || "admin",
           },
         };
 
-        if (res.user?.id && password) {
+        if (userId && password) {
           await AuthAPI.upsertAuth({
-            user_id: res.user.id,
+            user_id: userId,
             email: payload.email,
             password,
           });
