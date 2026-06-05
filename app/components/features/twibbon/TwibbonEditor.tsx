@@ -339,8 +339,8 @@ const TwibbonEditor: React.FC<TwibbonEditorProps> = ({ template, onExport, onClo
     };
 
     const renderControls = () => (
-        <div className={`p-8 ${isLanyard ? 'flex gap-8 overflow-x-auto items-start' : 'space-y-8 overflow-y-auto custom-scrollbar flex-1'}`}>
-            <div className={`flex-shrink-0 ${isLanyard ? 'w-96' : 'w-full'} space-y-4`}>
+        <div className={`p-4 md:p-8 ${isLanyard ? 'flex flex-col md:flex-row gap-6 md:gap-8 overflow-y-auto md:overflow-x-auto items-stretch md:items-start flex-1' : 'space-y-6 md:space-y-8 overflow-y-auto custom-scrollbar flex-1'}`}>
+            <div className={`flex-shrink-0 ${isLanyard ? 'w-full md:w-96' : 'w-full'} space-y-4`}>
                 <div className="flex items-center gap-2 mb-2"><ImageIcon size={14} className="text-blue-600" /><span className="text-[10px] font-black uppercase text-gray-400">UPLOAD LOGO (OPSIONAL)</span></div>
                 {elements.filter(el => el.type === 'logo').map(el => {
                     const logos: LogoItem[] = JSON.parse(el.value || '[]');
@@ -413,7 +413,7 @@ const TwibbonEditor: React.FC<TwibbonEditorProps> = ({ template, onExport, onClo
                 </div>
             )}
 
-            <div className={`${isLanyard ? 'h-full w-px bg-gray-100' : 'w-full h-px bg-gray-100'}`}></div>
+            <div className={`${isLanyard ? 'hidden md:block h-full w-px bg-gray-100' : 'w-full h-px bg-gray-100'}`}></div>
 
             {elements.filter(el => el.type === 'text' || el.type === 'dropdown').map((el, idx) => {
                 const rule = template.rules.find(r => r.id === el.id);
@@ -422,7 +422,7 @@ const TwibbonEditor: React.FC<TwibbonEditorProps> = ({ template, onExport, onClo
                 if (isLanyard) displayLabel = isRightText ? 'MASUKKAN TEKS SISI KANAN' : 'MASUKKAN TEKS SISI KIRI';
 
                 return (
-                    <div key={el.id} className={`flex-shrink-0 ${isLanyard ? 'w-80' : 'w-full'} space-y-4`}>
+                    <div key={el.id} className={`flex-shrink-0 ${isLanyard ? 'w-full md:w-80' : 'w-full'} space-y-4`}>
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2"><Type size={14} className="text-indigo-600" /><span className="text-[10px] font-black uppercase text-gray-400">{displayLabel}</span></div>
                             {isLanyard && isRightText && (
@@ -448,8 +448,8 @@ const TwibbonEditor: React.FC<TwibbonEditorProps> = ({ template, onExport, onClo
 
             {!isStatic && (
                 <>
-                    <div className={`${isLanyard ? 'h-full w-px bg-gray-100' : 'w-full h-px bg-gray-100'}`}></div>
-                    <div className={`flex-shrink-0 ${isLanyard ? 'w-80' : 'w-full'} space-y-5`}>
+                    <div className={`${isLanyard ? 'hidden md:block h-full w-px bg-gray-100' : 'w-full h-px bg-gray-100'}`}></div>
+                    <div className={`flex-shrink-0 ${isLanyard ? 'w-full md:w-80' : 'w-full'} space-y-5`}>
                         <div className="flex items-center gap-2 mb-2"><Palette size={14} className="text-violet-600" /><span className="text-[10px] font-black uppercase text-gray-400">GANTI STYLE TEKS</span></div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -478,12 +478,12 @@ const TwibbonEditor: React.FC<TwibbonEditorProps> = ({ template, onExport, onClo
     );
 
     const renderPreviewArea = () => (
-        <div className="flex-1 bg-gray-300 flex items-center justify-center overflow-auto p-12 custom-scrollbar relative">
-            <div className="absolute top-6 left-6 z-50 flex gap-3 no-print">
-                <div className="bg-white/90 backdrop-blur shadow-lg rounded-2xl p-1.5 flex items-center gap-1 border border-gray-100">
-                    <button onClick={() => setZoom(Math.max(0.5, zoom - 0.2))} className="p-2 hover:bg-gray-100 rounded-xl text-gray-600 transition"><Minus size={18} /></button>
-                    <span className="text-[10px] font-black w-12 text-center text-gray-800">{zoom.toFixed(1)}x</span>
-                    <button onClick={() => setZoom(Math.min(3, zoom + 0.2))} className="p-2 hover:bg-gray-100 rounded-xl text-gray-600 transition"><Plus size={18} /></button>
+        <div className="flex-1 min-h-[280px] md:min-h-0 bg-gray-300 flex items-center justify-center overflow-auto p-4 md:p-12 custom-scrollbar relative order-1 md:order-2">
+            <div className="absolute top-3 left-3 md:top-6 md:left-6 z-50 flex gap-2 no-print">
+                <div className="bg-white/90 backdrop-blur shadow-lg rounded-2xl p-1 md:p-1.5 flex items-center gap-1 border border-gray-100">
+                    <button onClick={() => setZoom(Math.max(0.5, zoom - 0.2))} className="p-1.5 md:p-2 hover:bg-gray-100 rounded-xl text-gray-600 transition"><Minus size={14} className="md:w-[18px] md:h-[18px]" /></button>
+                    <span className="text-[9px] md:text-[10px] font-black w-10 md:w-12 text-center text-gray-800">{zoom.toFixed(1)}x</span>
+                    <button onClick={() => setZoom(Math.min(3, zoom + 0.2))} className="p-1.5 md:p-2 hover:bg-gray-100 rounded-xl text-gray-600 transition"><Plus size={14} className="md:w-[18px] md:h-[18px]" /></button>
                 </div>
             </div>
             <div className="relative shadow-2xl select-none overflow-hidden transition-all duration-300 ease-out flex-shrink-0" style={{ width: `${visualWidth}px`, height: `${visualHeight}px`, transform: `scale(${zoom})`, transformOrigin: 'center center', backgroundColor: previewBg }}>
@@ -537,33 +537,43 @@ const TwibbonEditor: React.FC<TwibbonEditorProps> = ({ template, onExport, onClo
                 })}
             </div>
             <canvas ref={canvasRef} className="hidden" />
-            <button onClick={onClose} className="absolute top-6 right-6 p-4 bg-white/50 hover:bg-white text-gray-800 rounded-full transition shadow-lg z-[60]"><X size={24} /></button>
+            <button onClick={onClose} className="absolute top-3 right-3 md:top-6 md:right-6 p-2 md:p-3 bg-white/70 hover:bg-white text-gray-800 rounded-full transition shadow-lg z-[60]"><X size={18} /></button>
         </div>
     );
 
     return (
-        <div className="bg-gray-100 rounded-[40px] border-4 border-white shadow-2xl overflow-hidden flex flex-col h-[85vh] animate-fade-in relative">
+        <div className="bg-gray-100 rounded-2xl md:rounded-[40px] border border-white shadow-2xl overflow-hidden flex flex-col h-full md:h-[85vh] animate-fade-in relative">
             {isLanyard ? (
-                <>
+                <div className="flex flex-col flex-1 overflow-hidden">
                     {renderPreviewArea()}
-                    <div className="bg-white border-t border-gray-200 h-80 flex flex-col shadow-lg z-30">
-                        <div className="px-10 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                            <div className="flex items-center gap-4"><h3 className="font-black text-gray-800 text-sm uppercase">EDIT LANYARD KAMU</h3><div className="h-4 w-px bg-gray-300"></div><p className="text-[10px] font-bold text-gray-400 uppercase">Masukkan logo dan text sesuai keinginanmu</p></div>
-                            <button onClick={generateResult} disabled={isExporting} className="bg-gray-900 text-white px-8 py-3 rounded-2xl font-black text-xs flex items-center gap-3 hover:bg-blue-600 transition shadow-lg disabled:opacity-50">{isExporting ? <Loader2 className="animate-spin" size={16} /> : <Printer size={16} />} SIMPAN HASIL CETAK</button>
+                    <div className="bg-white border-t border-gray-200 h-[320px] md:h-80 flex flex-col shadow-lg z-30 shrink-0">
+                        <div className="px-4 md:px-10 py-3 md:py-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center bg-gray-50 gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <h3 className="font-black text-gray-800 text-xs md:text-sm uppercase shrink-0">EDIT LANYARD KAMU</h3>
+                                <div className="hidden sm:block h-4 w-px bg-gray-300"></div>
+                                <p className="hidden sm:block text-[9px] md:text-[10px] font-bold text-gray-400 uppercase truncate">Masukkan logo dan text sesuai keinginanmu</p>
+                            </div>
+                            <button onClick={generateResult} disabled={isExporting} className="w-full sm:w-auto bg-gray-900 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs flex items-center justify-center gap-2 hover:bg-blue-600 transition shadow-lg disabled:opacity-50">
+                                {isExporting ? <Loader2 className="animate-spin" size={14} /> : <Printer size={14} />} 
+                                SIMPAN HASIL CETAK
+                            </button>
                         </div>
                         {renderControls()}
                     </div>
-                </>
+                </div>
             ) : (
-                <div className="flex flex-1 overflow-hidden">
-                    <div className="w-96 bg-white border-r border-gray-200 flex flex-col shadow-xl z-30">
-                        <div className="p-8 border-b border-gray-100 bg-gray-50">
-                            <h3 className="font-black text-gray-800 text-sm uppercase">EDIT ID CARD KAMU</h3>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase mt-1">Lengkapi data untuk hasil cetak ID Card</p>
+                <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+                    <div className="w-full md:w-96 bg-white border-t md:border-t-0 md:border-r border-gray-200 flex flex-col shadow-xl z-30 order-2 md:order-1 h-[380px] md:h-auto shrink-0">
+                        <div className="p-4 md:p-8 border-b border-gray-100 bg-gray-50 shrink-0">
+                            <h3 className="font-black text-gray-800 text-xs md:text-sm uppercase">EDIT ID CARD KAMU</h3>
+                            <p className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase mt-1">Lengkapi data untuk hasil cetak ID Card</p>
                         </div>
                         {renderControls()}
-                        <div className="p-8 border-t border-gray-100 bg-gray-50">
-                            <button onClick={generateResult} disabled={isExporting} className="w-full bg-gray-900 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-blue-600 transition shadow-lg disabled:opacity-50">{isExporting ? <Loader2 className="animate-spin" size={16} /> : <Printer size={16} />} SIMPAN HASIL CETAK</button>
+                        <div className="p-4 md:p-8 border-t border-gray-100 bg-gray-50 shrink-0">
+                            <button onClick={generateResult} disabled={isExporting} className="w-full bg-gray-900 text-white py-3 md:py-4 rounded-xl md:rounded-2xl font-black text-xs md:text-sm flex items-center justify-center gap-2 hover:bg-blue-600 transition shadow-lg disabled:opacity-50">
+                                {isExporting ? <Loader2 className="animate-spin" size={16} /> : <Printer size={16} />} 
+                                SIMPAN HASIL CETAK
+                            </button>
                         </div>
                     </div>
                     {renderPreviewArea()}
@@ -572,18 +582,24 @@ const TwibbonEditor: React.FC<TwibbonEditorProps> = ({ template, onExport, onClo
 
             {showPreview && previewData && (
                 <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-                    <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
-                        <div className="flex-1 bg-gray-200 p-8 flex items-center justify-center overflow-hidden">
+                    <div className="bg-white rounded-2xl md:rounded-[40px] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
+                        <div className="flex-1 bg-gray-200 p-4 md:p-8 flex items-center justify-center overflow-hidden min-h-[200px]">
                             <img src={previewData} className="max-w-full max-h-full object-contain shadow-xl rounded-lg" />
                         </div>
-                        <div className="w-full md:w-80 bg-white p-10 flex flex-col justify-center gap-6">
-                            <div className="text-center mb-4">
-                                <h4 className="text-xl font-black text-gray-900 uppercase">Preview Hasil</h4>
-                                <p className="text-xs font-bold text-gray-400 mt-2">Cek desain & konten sebelum diproses</p>
+                        <div className="w-full md:w-80 bg-white p-6 md:p-10 flex flex-col justify-center gap-4 md:gap-6 overflow-y-auto">
+                            <div className="text-center mb-2 md:mb-4">
+                                <h4 className="text-lg md:text-xl font-black text-gray-900 uppercase">Preview Hasil</h4>
+                                <p className="text-[10px] md:text-xs font-bold text-gray-400 mt-1 md:mt-2">Cek desain & konten sebelum diproses</p>
                             </div>
-                            <button onClick={handleConfirmSubmit} className="w-full bg-indigo-600 text-white py-5 rounded-[24px] font-black flex items-center justify-center gap-3 shadow-xl hover:bg-indigo-700 transition"><Save size={20} /> PROSES {isLanyard ? "LANYARD" : "ID CARD"}</button>
-                            <button onClick={() => { const link = document.createElement('a'); link.download = `Cetak_${template.name}.png`; link.href = previewData; link.click(); }} className="w-full bg-emerald-500 text-white py-5 rounded-[24px] font-black flex items-center justify-center gap-3 shadow-xl hover:bg-emerald-600 transition"><Download size={20} /> DOWNLOAD {isLanyard ? "LANYARD" : "ID CARD"}</button>
-                            <button onClick={() => setShowPreview(false)} className="w-full bg-white border-2 border-gray-100 text-gray-400 py-5 rounded-[24px] font-black flex items-center justify-center gap-3 hover:border-red-200 hover:text-red-500 transition"><Edit3 size={20} /> EDIT LAGI</button>
+                            <button onClick={handleConfirmSubmit} className="w-full bg-[var(--customer-accent)] text-white py-4 md:py-5 rounded-xl md:rounded-[24px] font-black text-xs md:text-sm flex items-center justify-center gap-2 shadow-xl hover:opacity-90 transition">
+                                <Save size={18} /> PROSES {isLanyard ? "LANYARD" : "ID CARD"}
+                            </button>
+                            <button onClick={() => { const link = document.createElement('a'); link.download = `Cetak_${template.name}.png`; link.href = previewData; link.click(); }} className="w-full bg-emerald-500 text-white py-4 md:py-5 rounded-xl md:rounded-[24px] font-black text-xs md:text-sm flex items-center justify-center gap-2 shadow-xl hover:bg-emerald-600 transition">
+                                <Download size={18} /> DOWNLOAD {isLanyard ? "LANYARD" : "ID CARD"}
+                            </button>
+                            <button onClick={() => setShowPreview(false)} className="w-full bg-white border border-gray-200 text-gray-400 py-4 md:py-5 rounded-xl md:rounded-[24px] font-black text-xs md:text-sm flex items-center justify-center gap-2 hover:border-red-200 hover:text-red-500 transition">
+                                <Edit3 size={18} /> EDIT LAGI
+                            </button>
                         </div>
                     </div>
                 </div>

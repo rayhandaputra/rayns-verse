@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   ArrowLeft,
   CalendarDays,
@@ -15,7 +16,9 @@ import {
   redirect,
   useLoaderData,
   useSearchParams,
+  useFetcher,
   type LoaderFunctionArgs,
+  type ActionFunctionArgs,
 } from "react-router";
 import { toast } from "sonner";
 import { APIProviderV2 } from "~/nexus/core/api-provider-v2";
@@ -58,6 +61,7 @@ type CustomerOrderRecord = {
   grand_total?: number | string;
   dp_amount?: number | string;
   order_items?: OrderItem[] | string | null;
+  order_designs?: any;
 };
 
 type LoaderData = {
@@ -91,6 +95,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .Select({
       page: 0,
       size: 50,
+      where: {
+        pic_phone: user?.phone,
+      },
       columns: [
         "id",
         "order_number",
@@ -129,6 +136,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
           ],
           where: { deleted_on: "null" },
         },
+        {
+          table: "order_designs",
+          alias: "order_designs",
+          foreign_key: "order_number",
+          reference_key: "order_number",
+          columns: [
+            "id",
+            "template_id",
+            "template_name",
+            "category",
+            "preview_image",
+          ],
+        },
       ],
       orderBy: ["created_on", "DESC"],
     })
@@ -140,9 +160,103 @@ export async function loader({ request }: LoaderFunctionArgs) {
   } satisfies LoaderData);
 }
 
+export async function action({ request }: ActionFunctionArgs) {
+  const authData = await getOptionalUser(request);
+  if (!authData?.user) {
+    return Response.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  const formData = await request.formData();
+  const actionType = formData.get("actionType") as string;
+  const id = formData.get("id") as string;
+
+  if (actionType === "update_payment_proof") {
+    const kind = formData.get("kind") as "dp" | "paid";
+    const url = formData.get("url") as string;
+
+    const payload: any = {};
+    if (kind === "dp") {
+      payload.dp_payment_proof = url;
+      payload.dp_payment_method = "manual_transfer";
+      payload.payment_status = "down_payment";
+      payload.dp_payment_proof_uploaded_on = new Date().toISOString().replace("T", " ").substring(0, 19);
+    } else {
+      payload.payment_proof = url;
+      payload.payment_method = "manual_transfer";
+      payload.payment_status = "paid";
+      payload.payment_proof_uploaded_on = new Date().toISOString().replace("T", " ").substring(0, 19);
+    }
+
+    try {
+      await APIProviderV2({ user: authData.user, token: authData.token })
+        .Table("orders")
+        .Update({ data: payload, where: { id: Number(id) } })
+        .Result();
+
+      return Response.json({
+        success: true,
+        message: "Bukti pembayaran berhasil diunggah",
+      });
+    } catch (err: any) {
+      return Response.json({
+        success: false,
+        error: err.message || "Gagal memperbarui bukti pembayaran",
+      });
+    }
+  }
+
+  if (actionType === "delete_payment_proof") {
+    const kind = formData.get("kind") as "dp" | "paid";
+
+    const payload: any = {};
+    if (kind === "dp") {
+      payload.dp_payment_proof = null;
+      payload.dp_payment_method = null;
+      payload.payment_status = "none";
+      payload.dp_payment_proof_uploaded_on = null;
+    } else {
+      payload.payment_proof = null;
+      payload.payment_method = null;
+      payload.payment_status = "down_payment";
+      payload.payment_proof_uploaded_on = null;
+    }
+
+    try {
+      await APIProviderV2({ user: authData.user, token: authData.token })
+        .Table("orders")
+        .Update({ data: payload, where: { id: Number(id) } })
+        .Result();
+
+      return Response.json({
+        success: true,
+        message: "Bukti pembayaran berhasil dihapus",
+      });
+    } catch (err: any) {
+      return Response.json({
+        success: false,
+        error: err.message || "Gagal menghapus bukti pembayaran",
+      });
+    }
+  }
+
+  return Response.json({ success: false, error: "Action not found" }, { status: 400 });
+}
+
 export default function CustomerOrders() {
   const { ordersData, total } = useLoaderData<typeof loader>() as LoaderData;
   const [searchParams, setSearchParams] = useSearchParams();
+  const fetcher = useFetcher();
+
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data) {
+      const data = fetcher.data as any;
+      if (data.success) {
+        toast.success(data.message);
+      } else if (data.error) {
+        toast.error(data.error);
+      }
+    }
+  }, [fetcher.state, fetcher.data]);
 
   const orders = ordersData.map(normalizeOrder);
   const selectedId = searchParams.get("detail");
@@ -171,6 +285,7 @@ export default function CustomerOrders() {
         }}
         onCopyTwibbon={() => copyTwibbonLink(selectedOrder)}
         onOpenNota={() => openNota(selectedOrder)}
+        fetcher={fetcher}
       />
     );
   }
@@ -364,14 +479,16 @@ function OrderDetail({
   onBack,
   onCopyTwibbon,
   onOpenNota,
+  fetcher,
 }: {
   order: NormalizedOrder;
   onBack: () => void;
   onCopyTwibbon: () => void;
   onOpenNota: () => void;
+  fetcher: any;
 }) {
   const items = safeParseArray<OrderItem>(order.order_items);
-  const previewImages = normalizeImages(order.images);
+  const previewImages = order.images || [];
   const paymentLabel = getPaymentStatusLabel(order.payment_status || "none");
   const productionLabel = getProductionStatusLabel(order.status || "pending");
   const isPrinted = Boolean(order.status_printed) && String(order.status_printed) !== "0";
@@ -540,11 +657,37 @@ function OrderDetail({
           kind="dp"
           amountLabel={order.dp_amount ? formatCurrency(Number(order.dp_amount)) : undefined}
           value={order.dp_payment_proof || ""}
+          onUploaded={(url) => {
+            if (url) {
+              fetcher.submit(
+                { actionType: "update_payment_proof", id: String(order.id), kind: "dp", url },
+                { method: "post" }
+              );
+            } else {
+              fetcher.submit(
+                { actionType: "delete_payment_proof", id: String(order.id), kind: "dp" },
+                { method: "post" }
+              );
+            }
+          }}
         />
         <CustomerPaymentProofUpload
           kind="paid"
           amountLabel={order.grand_total ? formatCurrency(Number(order.grand_total)) : undefined}
           value={order.payment_proof || ""}
+          onUploaded={(url) => {
+            if (url) {
+              fetcher.submit(
+                { actionType: "update_payment_proof", id: String(order.id), kind: "paid", url },
+                { method: "post" }
+              );
+            } else {
+              fetcher.submit(
+                { actionType: "delete_payment_proof", id: String(order.id), kind: "paid" },
+                { method: "post" }
+              );
+            }
+          }}
         />
       </section>
     </div>
@@ -593,20 +736,29 @@ function StatusCard({
   );
 }
 
-type NormalizedOrder = Omit<CustomerOrderRecord, "images" | "order_items"> & {
+type NormalizedOrder = Omit<CustomerOrderRecord, "images" | "order_items" | "order_designs"> & {
   images: string[];
   order_items: OrderItem[] | string | null;
+  order_designs?: any;
 };
 
 function normalizeOrder(order: CustomerOrderRecord): NormalizedOrder {
   return {
     ...order,
-    images: normalizeImages(order.images),
+    images: normalizeImages(order.images, order.order_designs),
     order_items: order.order_items || [],
   };
 }
 
-function normalizeImages(images: CustomerOrderRecord["images"]) {
+function normalizeImages(images: CustomerOrderRecord["images"], orderDesigns?: any) {
+  const designs = safeParseArray<any>(orderDesigns);
+  if (designs && designs.length > 0) {
+    const idCardDesign = designs.find((d: any) => d.category === "id_card" || d.category === "idcard")?.preview_image;
+    const lanyardDesign = designs.find((d: any) => d.category === "lanyard")?.preview_image;
+    const result = [idCardDesign, lanyardDesign].filter(Boolean);
+    if (result.length > 0) return result;
+  }
+
   if (Array.isArray(images)) {
     return images.filter(Boolean) as string[];
   }

@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ImageIcon, Move, Plus } from 'lucide-react';
+import { ImageIcon, Move, Plus, Scissors } from 'lucide-react';
 import { nexus } from "~/nexus/nexus-client";
 import { useFetcherData } from "~/hooks/use-fetcher-data";
 import { type DesignCategory, type DesignTemplate, type StyleMode } from "~/types/design";
 import { TemplateCard } from "~/components/features/design/TemplateCard";
 import { DesignPreviewModal } from "~/components/features/design/DesignPreviewModal";
 import { DesignEditor } from "~/components/features/design/DesignEditor";
+import { SelempangAssetManager } from "~/components/features/design/widgets/SelempangAssetManager";
 import { toast } from 'sonner';
 
 export const DesignDashboard: React.FC = () => {
@@ -46,7 +47,7 @@ export const DesignDashboard: React.FC = () => {
         createdAt: t.created_on
     })), [dbTemplates]);
 
-    const [activeTab, setActiveTab] = useState<DesignCategory>('twibbon-idcard');
+    const [activeTab, setActiveTab] = useState<'twibbon-idcard' | 'twibbon-lanyard' | 'selempang'>('twibbon-idcard');
     const [isCreating, setIsCreating] = useState(false);
     const [editingTemplate, setEditingTemplate] = useState<DesignTemplate | null>(null);
     const [previewTemplate, setPreviewTemplate] = useState<DesignTemplate | null>(null);
@@ -94,8 +95,14 @@ export const DesignDashboard: React.FC = () => {
                     >
                     <Move size={14} /> LANYARD
                     </button>
+                    <button 
+                    onClick={() => { setActiveTab('selempang'); setIsCreating(false); }} 
+                    className={`flex items-center gap-2 px-6 py-2 rounded-lg text-xs font-bold uppercase transition ${activeTab === 'selempang' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100'}`}
+                    >
+                    <Scissors size={14} /> SELEMPANG
+                    </button>
                 </div>
-                {!isCreating && (
+                {!isCreating && activeTab !== 'selempang' && (
                     <button 
                         onClick={() => setIsCreating(true)}
                         className="bg-gray-900 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase flex items-center gap-2 hover:bg-black transition-colors"
@@ -105,7 +112,9 @@ export const DesignDashboard: React.FC = () => {
                 )}
             </div>
 
-            {isCreating ? (
+            {activeTab === 'selempang' ? (
+                <SelempangAssetManager />
+            ) : isCreating ? (
                 <DesignEditor
                     activeCategory={activeTab}
                     templateId={editingTemplate?.id || null}

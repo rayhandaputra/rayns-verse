@@ -12,6 +12,7 @@ import {
   ShoppingCart,
   HardDrive,
   Mail,
+  Truck,
 } from "lucide-react";
 
 export type MenuItem = {
@@ -76,6 +77,13 @@ export const ADMIN_NAVIGATION: MenuItem[] = [
     href: "/app/drive/customer",
     icon: HardDrive,
     active: ["/app/drive", "/app/drive/internal", "/app/drive/customer"],
+  },
+  {
+    id: "vendor",
+    label: "Vendor",
+    href: "/app/vendor",
+    icon: Truck,
+    active: ["/app/vendor"],
   },
   {
     id: "email",

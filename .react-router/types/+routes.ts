@@ -186,6 +186,9 @@ type Pages = {
   "/app/overview": {
     params: {};
   };
+  "/app/vendor": {
+    params: {};
+  };
   "/app/drive": {
     params: {};
   };
@@ -206,7 +209,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/server/drive/:folder_id/download" | "/public/design-link/:domain" | "/public/drive-link/:domain" | "/resources/image-proxy" | "/media/event/:slug" | "/api/fix-error" | "/logout" | "/api/nexus" | "/api/nexus/example" | "/api/nexus/demo" | "/customer" | "/customer/configure" | "/customer/dashboard" | "/customer/profile" | "/customer/support" | "/customer/orders" | "/katalog" | "/login" | "/order" | "/app" | "/app/finance/salary-employee" | "/app/procurement/:category" | "/app/procurement/:category/catalog-color" | "/app/procurement/:category/shopping-kaos" | "/app/procurement/:category/component" | "/app/procurement/:category/capacity" | "/app/procurement/:category/shopping" | "/app/procurement/:category/supplier" | "/app/procurement/:category/vendor" | "/app/orders/:id/download" | "/app/setting/recycle-bin" | "/app/master/institution" | "/app/finance/inventory" | "/app/finance/cashflow" | "/app/asset/inventory" | "/app/finance/account" | "/app/master/supplier" | "/app/setting/account" | "/app/finance" | "/app/order-edit/:id" | "/app/setting/design" | "/app/order-history" | "/app/order-manage" | "/app/product-list" | "/app/order-form" | "/app/order-list" | "/app/print-area" | "/app/overview" | "/app/drive" | "/app/drive/customer" | "/app/drive/internal" | "/app/email" | "/app/user";
+    page: "/" | "/server/drive/:folder_id/download" | "/public/design-link/:domain" | "/public/drive-link/:domain" | "/resources/image-proxy" | "/media/event/:slug" | "/api/fix-error" | "/logout" | "/api/nexus" | "/api/nexus/example" | "/api/nexus/demo" | "/customer" | "/customer/configure" | "/customer/dashboard" | "/customer/profile" | "/customer/support" | "/customer/orders" | "/katalog" | "/login" | "/order" | "/app" | "/app/finance/salary-employee" | "/app/procurement/:category" | "/app/procurement/:category/catalog-color" | "/app/procurement/:category/shopping-kaos" | "/app/procurement/:category/component" | "/app/procurement/:category/capacity" | "/app/procurement/:category/shopping" | "/app/procurement/:category/supplier" | "/app/procurement/:category/vendor" | "/app/orders/:id/download" | "/app/setting/recycle-bin" | "/app/master/institution" | "/app/finance/inventory" | "/app/finance/cashflow" | "/app/asset/inventory" | "/app/finance/account" | "/app/master/supplier" | "/app/setting/account" | "/app/finance" | "/app/order-edit/:id" | "/app/setting/design" | "/app/order-history" | "/app/order-manage" | "/app/product-list" | "/app/order-form" | "/app/order-list" | "/app/print-area" | "/app/overview" | "/app/vendor" | "/app/drive" | "/app/drive/customer" | "/app/drive/internal" | "/app/email" | "/app/user";
   };
   "routes/server.drive.$folder_id.download.tsx": {
     id: "routes/server.drive.$folder_id.download";
@@ -290,7 +293,7 @@ type RouteFiles = {
   };
   "routes/app.tsx": {
     id: "routes/app";
-    page: "/app" | "/app/finance/salary-employee" | "/app/procurement/:category" | "/app/procurement/:category/catalog-color" | "/app/procurement/:category/shopping-kaos" | "/app/procurement/:category/component" | "/app/procurement/:category/capacity" | "/app/procurement/:category/shopping" | "/app/procurement/:category/supplier" | "/app/procurement/:category/vendor" | "/app/orders/:id/download" | "/app/setting/recycle-bin" | "/app/master/institution" | "/app/finance/inventory" | "/app/finance/cashflow" | "/app/asset/inventory" | "/app/finance/account" | "/app/master/supplier" | "/app/setting/account" | "/app/finance" | "/app/order-edit/:id" | "/app/setting/design" | "/app/order-history" | "/app/order-manage" | "/app/product-list" | "/app/order-form" | "/app/order-list" | "/app/print-area" | "/app/overview" | "/app/drive" | "/app/drive/customer" | "/app/drive/internal" | "/app/email" | "/app/user";
+    page: "/app" | "/app/finance/salary-employee" | "/app/procurement/:category" | "/app/procurement/:category/catalog-color" | "/app/procurement/:category/shopping-kaos" | "/app/procurement/:category/component" | "/app/procurement/:category/capacity" | "/app/procurement/:category/shopping" | "/app/procurement/:category/supplier" | "/app/procurement/:category/vendor" | "/app/orders/:id/download" | "/app/setting/recycle-bin" | "/app/master/institution" | "/app/finance/inventory" | "/app/finance/cashflow" | "/app/asset/inventory" | "/app/finance/account" | "/app/master/supplier" | "/app/setting/account" | "/app/finance" | "/app/order-edit/:id" | "/app/setting/design" | "/app/order-history" | "/app/order-manage" | "/app/product-list" | "/app/order-form" | "/app/order-list" | "/app/print-area" | "/app/overview" | "/app/vendor" | "/app/drive" | "/app/drive/customer" | "/app/drive/internal" | "/app/email" | "/app/user";
   };
   "routes/app.finance.salary-employee.tsx": {
     id: "routes/app.finance.salary-employee";
@@ -404,6 +407,10 @@ type RouteFiles = {
     id: "routes/app.overview";
     page: "/app/overview";
   };
+  "routes/app.vendor.tsx": {
+    id: "routes/app.vendor";
+    page: "/app/vendor";
+  };
   "routes/app.drive.tsx": {
     id: "routes/app.drive";
     page: "/app/drive" | "/app/drive/customer" | "/app/drive/internal";
@@ -477,6 +484,7 @@ type RouteModules = {
   "routes/app.order-list": typeof import("./app/routes/app.order-list.tsx");
   "routes/app.print-area": typeof import("./app/routes/app.print-area.tsx");
   "routes/app.overview": typeof import("./app/routes/app.overview.tsx");
+  "routes/app.vendor": typeof import("./app/routes/app.vendor.tsx");
   "routes/app.drive": typeof import("./app/routes/app.drive.tsx");
   "routes/app.drive.customer": typeof import("./app/routes/app.drive.customer.tsx");
   "routes/app.drive.internal": typeof import("./app/routes/app.drive.internal.tsx");

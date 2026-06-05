@@ -14,6 +14,7 @@ type CustomerShellUser = {
   fullname?: string;
   email?: string;
   role?: string;
+  phone?: string;
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -35,7 +36,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       fullname: user?.fullname || "Pelanggan",
       email: user?.email || "",
       role: user?.role || "customer",
+      phone: user?.phone || "",
     } satisfies CustomerShellUser,
+    token: authData?.token || "",
   };
 }
 
@@ -64,7 +67,7 @@ const notifications = [
 ];
 
 export default function CustomerLayout() {
-  const { user } = useLoaderData() as { user: CustomerShellUser };
+  const { user, token } = useLoaderData() as { user: CustomerShellUser; token: string };
   const location = useLocation();
   const isConfigurePage = location.pathname.includes("/customer/configure");
   const isOrderDetailPage =
@@ -149,7 +152,7 @@ export default function CustomerLayout() {
             isDetailPage ? "pt-6" : "",
           ].join(" ")}
         >
-          <Outlet context={{ user }} />
+          <Outlet context={{ user, token }} />
         </main>
 
         {!isConfigurePage && !isOrderDetailPage && (
