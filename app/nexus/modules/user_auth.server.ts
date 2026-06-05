@@ -166,6 +166,7 @@ export const AuthAPI = {
       .Table("users")
       .Select({
         where: { email },
+        columns: ["id", "fullname", "email", "role", "phone", "is_active", "deleted"],
         size: 1,
       })
       .Result();
@@ -193,6 +194,7 @@ export const AuthAPI = {
           .Table("users")
           .Select({
             where: { id: user.id },
+            columns: ["id", "fullname", "email", "role", "phone", "is_active", "deleted"],
             size: 1,
           })
           .Result();
@@ -218,6 +220,7 @@ export const AuthAPI = {
         .Table("users")
         .Select({
           where: { email },
+          columns: ["id", "fullname", "email", "role", "phone", "is_active", "deleted"],
           size: 1,
         })
         .Result();
@@ -230,6 +233,7 @@ export const AuthAPI = {
       .Table("user_auth")
       .Select({
         where: { user_id: user.id },
+        columns: ["id", "user_id", "email", "password_hash"],
         size: 1,
       })
       .Result();
@@ -253,6 +257,7 @@ export const AuthAPI = {
         .Table("user_auth")
         .Select({
           where: { user_id: user.id },
+          columns: ["id", "user_id", "email", "password_hash"],
           size: 1,
         })
         .Result();
@@ -336,7 +341,11 @@ export const AuthAPI = {
     // Fetch updated user
     const userRes = await APIProviderV2(session)
       .Table("users")
-      .Select({ where: { id: user_id }, size: 1 })
+      .Select({
+        where: { id: user_id },
+        columns: ["id", "fullname", "email", "role", "phone", "is_active", "deleted"],
+        size: 1,
+      })
       .Result();
 
     return {

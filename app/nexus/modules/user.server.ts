@@ -30,6 +30,7 @@ export const UserAPI = {
       .Table("users")
       .Select({
         where: { email },
+        columns: ["id", "fullname", "email", "role", "deleted"],
         size: 1,
       })
       .Result();
@@ -72,7 +73,11 @@ export const UserAPI = {
       if (!createdId) {
         const refresh = await APIProviderV2(session)
           .Table("users")
-          .Select({ where: { email }, size: 1 })
+          .Select({
+            where: { email },
+            columns: ["id"],
+            size: 1,
+          })
           .Result();
         createdId = refresh?.items?.[0]?.id;
       }
@@ -107,6 +112,7 @@ export const UserAPI = {
       .Table("users")
       .Select({
         where: { email },
+        columns: ["id", "fullname", "email", "role", "deleted"],
         size: 1,
       })
       .Result();
@@ -134,6 +140,7 @@ export const UserAPI = {
           .Table("users")
           .Select({
             where: { id: user.id },
+            columns: ["id", "fullname", "email", "role", "deleted"],
             size: 1,
           })
           .Result();
