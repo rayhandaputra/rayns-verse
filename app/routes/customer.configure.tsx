@@ -434,110 +434,127 @@ function DesignPickerSection({
   }, [templates, search, styleFilter]);
 
   return (
-    <div className="rounded-[24px] border border-[var(--customer-border)] bg-white p-4 shadow-sm space-y-4">
-      {/* Header Info */}
-      <div className="flex items-start gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--customer-accent-light)] text-[var(--customer-accent)]">
-          {icon}
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-xs font-black text-[var(--customer-primary)]">{title}</h3>
-          <p className="mt-0.5 text-[10px] font-semibold leading-4 text-[var(--customer-text-light)]">
-            {description}
-          </p>
+    <div className="relative rounded-[28px] border border-[var(--customer-border)] bg-gradient-to-br from-white via-white to-[var(--customer-bg)]/30 p-5 shadow-[0_8px_32px_rgba(30,67,76,0.06)] space-y-4 overflow-hidden before:absolute before:inset-0 before:rounded-[28px] before:pointer-events-none before:bg-gradient-to-br before:from-white/40 before:via-transparent before:to-transparent">
+      <div className="relative z-10">
+        {/* Header Info */}
+        <div className="flex items-start gap-4">
+          <span className="flex h-12 w-12 shrink-0 place-items-center justify-center rounded-[18px] bg-gradient-to-br from-[var(--customer-accent-light)] to-[var(--customer-accent-light)]/70 text-[var(--customer-accent)] shadow-[0_4px_16px_rgba(0,151,178,0.15)]">
+            {icon}
+          </span>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h3 className="text-sm font-black text-[var(--customer-primary)] tracking-tight">
+              {title}
+            </h3>
+            <p className="mt-1 text-[11px] font-medium leading-5 text-[var(--customer-text-light)]">
+              {description}
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* Trigger & Selected Design Card */}
-      {selectedTemplate ? (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-[var(--customer-border)] p-3 bg-gray-50/50">
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="relative block h-16 w-12 shrink-0 overflow-hidden rounded-lg bg-[var(--customer-bg)] border border-[var(--customer-border)]">
-              {savedPreview ? (
-                <img src={savedPreview} alt="" className="h-full w-full object-cover" />
-              ) : selectedTemplate.baseImage ? (
-                <img src={selectedTemplate.baseImage} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <span className="grid h-full place-items-center text-[var(--customer-text-light)]">
-                  <ImageIcon size={20} />
-                </span>
-              )}
-            </span>
-            <div className="min-w-0">
-              <p className="line-clamp-1 text-xs font-black text-[var(--customer-primary)]">
-                {selectedTemplate.name}
-              </p>
-              <p className="mt-1 text-[9px] font-bold uppercase tracking-widest text-[var(--customer-text-light)]">
-                {selectedTemplate.styleMode || "Dynamic"}
-              </p>
-              {savedPreview && (
-                <p className="mt-0.5 text-[9px] font-bold text-[var(--customer-success)]">
-                  Preview tersimpan
-                </p>
-              )}
+        {/* Trigger & Selected Design Card */}
+        {selectedTemplate ? (
+          <div className="mt-4 group relative">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-[var(--customer-accent)]/20 to-[var(--customer-accent)]/5 rounded-[20px] opacity-0 group-hover:opacity-100 transition duration-300 blur" />
+            <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[20px] border border-[var(--customer-border)]/60 p-4 bg-gradient-to-br from-white/95 to-[var(--customer-bg)]/40 backdrop-blur-sm hover:border-[var(--customer-accent)]/40 transition-all duration-300">
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="relative shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--customer-accent)]/10 to-transparent rounded-[14px]" />
+                  <span className="relative block h-20 w-16 overflow-hidden rounded-[14px] bg-[var(--customer-bg)] border border-[var(--customer-border)]/50 shadow-[0_6px_20px_rgba(0,151,178,0.08)]">
+                    {savedPreview ? (
+                      <img src={savedPreview} alt="" className="h-full w-full object-cover" />
+                    ) : selectedTemplate.baseImage ? (
+                      <img src={selectedTemplate.baseImage} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="grid h-full place-items-center text-[var(--customer-text-light)]">
+                        <ImageIcon size={22} />
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <p className="line-clamp-2 text-sm font-black text-[var(--customer-primary)] leading-4">
+                    {selectedTemplate.name}
+                  </p>
+                  <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-[var(--customer-text-light)]">
+                    {selectedTemplate.styleMode || "Dynamic"}
+                  </p>
+                  {savedPreview && (
+                    <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--customer-success)]/10 border border-[var(--customer-success)]/30">
+                      <Check size={10} className="text-[var(--customer-success)]" strokeWidth={3} />
+                      <span className="text-[9px] font-bold text-[var(--customer-success)]">Preview tersimpan</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 sm:shrink-0">
+                <button
+                  type="button"
+                  onClick={handleOpen}
+                  className="group/btn px-4 py-2.5 text-[11px] font-black rounded-[12px] border-1.5 border-[var(--customer-border)] bg-white text-[var(--customer-primary)] hover:border-[var(--customer-accent)]/40 hover:bg-gradient-to-br hover:from-white hover:to-[var(--customer-accent-light)]/5 transition-all duration-300 shadow-[0_2px_8px_rgba(30,67,76,0.04)]"
+                >
+                  Ganti Desain
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onEdit(selectedTemplate)}
+                  className="group/btn inline-flex items-center gap-1.5 px-4 py-2.5 text-[11px] font-black rounded-[12px] bg-gradient-to-br from-[var(--customer-primary)] to-[var(--customer-primary)]/90 text-white hover:shadow-[0_8px_20px_rgba(30,67,76,0.2)] hover:-translate-y-0.5 transition-all duration-300 shadow-[0_4px_12px_rgba(30,67,76,0.12)]"
+                >
+                  <Sparkles size={12} className="group-hover/btn:animate-pulse" strokeWidth={2.5} />
+                  Edit
+                </button>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleOpen}
-              className="px-3 py-2 text-[10px] font-black rounded-xl border border-[var(--customer-border)] bg-white text-[var(--customer-primary)] hover:bg-gray-50 transition shadow-sm"
-            >
-              Ganti Desain
-            </button>
-            <button
-              type="button"
-              onClick={() => onEdit(selectedTemplate)}
-              className="inline-flex items-center gap-1 px-3 py-2 text-[10px] font-black rounded-xl bg-[var(--customer-primary)] text-white hover:opacity-90 transition shadow-sm"
-            >
-              <Sparkles size={11} />
-              Edit
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={handleOpen}
-          className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--customer-border)] bg-white p-6 text-center hover:bg-gray-50/50 transition"
-        >
-          <span className="text-xs font-bold text-[var(--customer-text-muted)]">
-            Belum ada template dipilih.
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-2 bg-[var(--customer-accent)] hover:bg-[var(--customer-accent-hover)] text-white text-[10px] font-black rounded-xl transition shadow-md shadow-[rgba(0,151,178,0.2)]">
-            Pilih Template Desain
-          </span>
-        </button>
-      )}
+        ) : (
+          <button
+            type="button"
+            onClick={handleOpen}
+            className="relative mt-4 w-full group"
+          >
+            <div className="absolute -inset-1 bg-gradient-to-r from-[var(--customer-accent)]/20 to-[var(--customer-accent)]/5 rounded-[18px] opacity-0 group-hover:opacity-100 transition duration-300 blur-sm" />
+            <div className="relative flex w-full flex-col items-center justify-center gap-3 rounded-[18px] border-2 border-dashed border-[var(--customer-accent)]/30 bg-gradient-to-br from-[var(--customer-accent-light)]/5 to-[var(--customer-bg)]/40 p-8 text-center group-hover:from-[var(--customer-accent-light)]/10 group-hover:to-[var(--customer-bg)]/60 transition-all duration-300">
+              <span className="text-sm font-bold text-[var(--customer-text-muted)]">
+                Belum ada template dipilih.
+              </span>
+              <span className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[var(--customer-accent)] to-[var(--customer-accent)]/85 hover:shadow-[0_8px_24px_rgba(0,151,178,0.3)] hover:-translate-y-0.5 text-white text-[11px] font-black rounded-[12px] transition-all duration-300 shadow-[0_4px_12px_rgba(0,151,178,0.2)]">
+                <LayoutTemplate size={13} />
+                Pilih Template Desain
+              </span>
+            </div>
+          </button>
+        )}
+      </div>
 
       {/* Gallery selection modal */}
       <ModalShell open={isOpen} onClose={() => setIsOpen(false)} size="4xl">
-        <div className="p-4 flex flex-col h-full max-h-[85vh]">
-          <h2 className="text-lg font-black text-[var(--customer-primary)] mb-1">
-            Pilih Template Desain
-          </h2>
-          <p className="text-xs text-[var(--customer-text-light)] mb-4">
-            Pilih salah satu template visual dasar di bawah ini untuk Anda modifikasi.
-          </p>
+        <div className="p-6 flex flex-col h-full max-h-[90vh] bg-gradient-to-b from-white via-white to-[var(--customer-bg)]/20">
+          <div className="mb-6">
+            <h2 className="text-xl font-black text-[var(--customer-primary)] tracking-tight">
+              Pilih Template Desain
+            </h2>
+            <p className="text-sm text-[var(--customer-text-light)] mt-1 font-medium">
+              Pilih salah satu template visual dasar di bawah ini untuk Anda modifikasi dengan mudah.
+            </p>
+          </div>
 
           {/* Search/filter toolbar */}
-          <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <div className="relative flex-1 min-w-[180px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+          <div className="flex items-center gap-3 mb-5 flex-wrap">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--customer-text-light)]" />
               <input
                 type="text"
                 placeholder="Cari template desain..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-[var(--customer-accent)] focus:border-[var(--customer-accent)] outline-none font-bold"
+                className="w-full pl-10 pr-4 py-2.5 border border-[var(--customer-border)]/60 rounded-[12px] text-sm focus:ring-2 focus:ring-[var(--customer-accent)]/30 focus:border-[var(--customer-accent)] outline-none font-medium bg-white hover:border-[var(--customer-border)] transition-colors"
               />
             </div>
             {styles.length > 0 && (
-              <div className="relative min-w-[150px]">
+              <div className="relative min-w-[160px]">
                 <select
                   value={styleFilter}
                   onChange={(e) => setStyleFilter(e.target.value)}
-                  className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-xs font-bold focus:ring-1 focus:ring-[var(--customer-accent)] focus:border-[var(--customer-accent)] outline-none"
+                  className="w-full appearance-none bg-white border border-[var(--customer-border)]/60 rounded-[12px] px-4 py-2.5 pr-9 text-sm font-medium focus:ring-2 focus:ring-[var(--customer-accent)]/30 focus:border-[var(--customer-accent)] outline-none hover:border-[var(--customer-border)] transition-colors"
                 >
                   <option value="">Semua Gaya</option>
                   {styles.map((style) => (
@@ -546,7 +563,7 @@ function DesignPickerSection({
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--customer-text-light)] pointer-events-none" />
               </div>
             )}
             {(search || styleFilter) && (
@@ -556,7 +573,7 @@ function DesignPickerSection({
                   setSearch("");
                   setStyleFilter("");
                 }}
-                className="px-3 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 bg-gray-100 rounded-lg transition"
+                className="px-4 py-2.5 text-sm font-bold text-[var(--customer-accent)] hover:text-[var(--customer-accent)]/80 bg-[var(--customer-accent-light)]/30 hover:bg-[var(--customer-accent-light)]/50 rounded-[12px] transition-all duration-200"
               >
                 Reset
               </button>
@@ -564,15 +581,21 @@ function DesignPickerSection({
           </div>
 
           {/* Responsive Gallery Grid */}
-          <div className="flex-1 overflow-y-auto pr-1 min-h-[250px]">
+          <div className="flex-1 overflow-y-auto pr-2 min-h-[300px] mb-4">
             {filteredTemplates.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <span className="text-xs font-bold text-[var(--customer-text-muted)]">
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="mb-3 h-12 w-12 rounded-full bg-[var(--customer-accent-light)]/20 flex items-center justify-center">
+                  <ImageIcon size={24} className="text-[var(--customer-text-light)]" />
+                </div>
+                <span className="text-sm font-bold text-[var(--customer-text-muted)]">
                   Tidak ada template desain ditemukan.
+                </span>
+                <span className="text-xs text-[var(--customer-text-light)] mt-1">
+                  Coba ubah filter atau cari dengan kata kunci lain.
                 </span>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 pb-2">
                 {filteredTemplates.map((template) => {
                   const selected = tempSelected?.id === template.id;
 
@@ -582,35 +605,35 @@ function DesignPickerSection({
                       type="button"
                       onClick={() => setTempSelected(template)}
                       className={cn(
-                        "relative flex flex-col overflow-hidden rounded-2xl border bg-white text-left transition hover:scale-[1.01] active:scale-[0.99] p-2",
+                        "group relative flex flex-col overflow-hidden rounded-[16px] border text-left transition-all duration-300",
                         selected
-                          ? "border-[var(--customer-accent)] shadow-lg shadow-[rgba(0,151,178,0.1)] ring-1 ring-[var(--customer-accent)]"
-                          : "border-gray-200 hover:border-gray-300"
+                          ? "border-[var(--customer-accent)] shadow-[0_12px_32px_rgba(0,151,178,0.18)] ring-2 ring-[var(--customer-accent)]/30 bg-gradient-to-br from-white to-[var(--customer-accent-light)]/5"
+                          : "border-[var(--customer-border)]/40 bg-white hover:border-[var(--customer-accent)]/50 hover:shadow-[0_8px_20px_rgba(0,151,178,0.08)]"
                       )}
                     >
-                      <span className="relative block aspect-[3/4] w-full overflow-hidden rounded-xl bg-[var(--customer-bg)] border border-gray-100">
+                      <span className="relative block aspect-[3/4] w-full overflow-hidden rounded-t-[14px] bg-[var(--customer-bg)] border-b border-[var(--customer-border)]/30">
                         {template.baseImage ? (
                           <img
                             src={template.baseImage}
                             alt=""
-                            className="h-full w-full object-cover"
+                            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         ) : (
                           <span className="grid h-full place-items-center text-[var(--customer-text-light)]">
-                            <ImageIcon size={24} />
+                            <ImageIcon size={28} />
                           </span>
                         )}
                         {selected && (
-                          <span className="absolute right-2.5 top-2.5 grid h-6 w-6 place-items-center rounded-full bg-[var(--customer-accent)] text-white shadow-md">
-                            <Check size={12} strokeWidth={3.5} />
+                          <span className="absolute right-2 top-2 flex h-7 w-7 place-items-center justify-center rounded-full bg-[var(--customer-accent)] text-white shadow-[0_4px_12px_rgba(0,151,178,0.3)] animate-in zoom-in-50 duration-200">
+                            <Check size={14} strokeWidth={3.5} />
                           </span>
                         )}
                       </span>
-                      <span className="block pt-2">
-                        <span className="line-clamp-1 text-xs font-black text-[var(--customer-primary)]">
+                      <span className="block p-3 flex-1 flex flex-col justify-between">
+                        <span className="line-clamp-2 text-xs font-black text-[var(--customer-primary)] leading-tight">
                           {template.name}
                         </span>
-                        <span className="mt-0.5 block text-[8px] font-bold uppercase tracking-wider text-[var(--customer-text-light)]">
+                        <span className="mt-2 block text-[9px] font-bold uppercase tracking-wider text-[var(--customer-text-light)]">
                           {template.styleMode || "Dynamic"}
                         </span>
                       </span>
@@ -622,11 +645,11 @@ function DesignPickerSection({
           </div>
 
           {/* Footer actions */}
-          <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 shrink-0">
+          <div className="flex items-center justify-between pt-4 border-t border-[var(--customer-border)]/30 shrink-0 gap-4">
             <div>
               {tempSelected && (
-                <span className="text-xs text-gray-600 font-semibold">
-                  Terpilih: <span className="font-bold text-[var(--customer-accent)]">{tempSelected.name}</span>
+                <span className="text-sm text-[var(--customer-text-light)] font-medium">
+                  Terpilih: <span className="font-black text-[var(--customer-accent)]">{tempSelected.name}</span>
                 </span>
               )}
             </div>
@@ -634,7 +657,7 @@ function DesignPickerSection({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="px-4 py-2 text-xs font-bold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                className="px-5 py-2.5 text-sm font-bold text-[var(--customer-primary)] bg-white border border-[var(--customer-border)]/40 rounded-[12px] hover:border-[var(--customer-border)] hover:shadow-[0_4px_12px_rgba(30,67,76,0.08)] transition-all duration-200"
               >
                 Batal
               </button>
@@ -642,7 +665,7 @@ function DesignPickerSection({
                 type="button"
                 disabled={!tempSelected}
                 onClick={handleConfirm}
-                className="px-4 py-2 text-xs font-bold text-white bg-[var(--customer-accent)] hover:bg-[var(--customer-accent-hover)] rounded-lg transition disabled:opacity-50"
+                className="px-5 py-2.5 text-sm font-black text-white bg-gradient-to-r from-[var(--customer-accent)] to-[var(--customer-accent)]/85 rounded-[12px] hover:shadow-[0_8px_20px_rgba(0,151,178,0.25)] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
               >
                 Pilih Desain
               </button>
