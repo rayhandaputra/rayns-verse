@@ -217,7 +217,7 @@ export const AuthAPI = {
       const refreshUserRes = await APIProviderV2(session)
         .Table("users")
         .Select({
-          where: { id: created.insert_id },
+          where: { email },
           size: 1,
         })
         .Result();

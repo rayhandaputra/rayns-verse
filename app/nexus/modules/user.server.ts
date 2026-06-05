@@ -67,7 +67,16 @@ export const UserAPI = {
           modified_on: new Date().toISOString(),
         })
         .Result();
-      insertId = result.insert_id;
+      
+      let createdId = result.insert_id || result.id;
+      if (!createdId) {
+        const refresh = await APIProviderV2(session)
+          .Table("users")
+          .Select({ where: { email }, size: 1 })
+          .Result();
+        createdId = refresh?.items?.[0]?.id;
+      }
+      insertId = createdId;
     }
 
     if (password) {
