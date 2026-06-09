@@ -1,57 +1,77 @@
-import { motion } from "motion/react";
 import { CheckCircle, Layers, Building2, Handshake } from "lucide-react";
+
+interface StatsProps {
+  countFinished?: number;
+  countItems?: number;
+  uniqueClients?: number;
+  countSponsors?: number;
+}
 
 const fmt = (n: number) => n.toLocaleString("id-ID");
 
-export const PublicStats = ({
+export const Stats = ({
   countFinished,
   countItems,
   uniqueClients,
   countSponsors,
-}: {
-  countFinished: number;
-  countItems: number;
-  uniqueClients: number;
-  countSponsors: number;
-}) => {
-  const statItems = [
-    { icon: CheckCircle, value: countFinished || 578, label: "Pesanan Selesai", color: "#0097B2" },
-    { icon: Layers, value: countItems || 5120, label: "Produk Dibuat (Pcs)", color: "#1E434C" },
-    { icon: Building2, value: uniqueClients || 346, label: "Instansi / Event", color: "#0097B2" },
-    { icon: Handshake, value: countSponsors || 259, label: "Sponsor & Partner", color: "#1E434C" },
-  ];
-
+}: StatsProps = {}) => {
   return (
-    <section className="py-20 bg-[#F3F8FC]">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-          {statItems.map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="bg-white p-6 md:p-8 rounded-[32px] shadow-sm border border-[#1E434C]/5 hover:shadow-xl transition-all duration-500 group"
-            >
-              <div 
-                className="w-12 h-12 flex items-center justify-center rounded-2xl mb-4 group-hover:scale-110 transition-transform"
-                style={{ backgroundColor: `${item.color}10`, color: item.color }}
-              >
-                <item.icon size={26} />
-              </div>
-              <div className="text-3xl md:text-4xl font-black text-[#1E434C] mb-1">
-                {fmt(item.value)}
-              </div>
-              <div className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest leading-none">
-                {item.label}
-              </div>
-            </motion.div>
-          ))}
+    <section className="py-12 border-y border-gray-100 bg-white">
+      <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
+        {/* Kartu 1: Pesanan Selesai */}
+        <div className="p-4 rounded-xl hover:bg-gray-50 transition group text-center">
+          <div className="flex items-center justify-center text-blue-600 mb-2 opacity-80 group-hover:scale-110 transition">
+            <CheckCircle size={32} />
+          </div>
+          <div className="text-3xl font-bold text-gray-900 mb-1">
+            {fmt(578)}
+          </div>
+          <div className="text-sm text-gray-500 font-medium uppercase tracking-wide">
+            Pesanan Selesai
+          </div>
+        </div>
+
+        {/* Kartu 2: Produk Dibuat */}
+        <div className="p-4 rounded-xl hover:bg-gray-50 transition group text-center">
+          <div className="flex items-center justify-center text-purple-600 mb-2 opacity-80 group-hover:scale-110 transition">
+            <Layers size={32} />
+          </div>
+          <div className="text-3xl font-bold text-gray-900 mb-1">
+            {fmt(5120)}
+          </div>
+          <div className="text-sm text-gray-500 font-medium uppercase tracking-wide">
+            Produk Dibuat (Pcs)
+          </div>
+        </div>
+
+        {/* Kartu 3: Instansi / Event */}
+        <div className="p-4 rounded-xl hover:bg-gray-50 transition group text-center">
+          <div className="flex items-center justify-center text-orange-600 mb-2 opacity-80 group-hover:scale-110 transition">
+            <Building2 size={32} />
+          </div>
+          <div className="text-3xl font-bold text-gray-900 mb-1">
+            {fmt(346)}
+          </div>
+          <div className="text-sm text-gray-500 font-medium uppercase tracking-wide">
+            Instansi / Event
+          </div>
+        </div>
+
+        {/* Kartu 4: Sponsor & Partner */}
+        <div className="p-4 rounded-xl hover:bg-gray-50 transition group text-center">
+          <div className="flex items-center justify-center text-green-600 mb-2 opacity-80 group-hover:scale-110 transition">
+            <Handshake size={32} />
+          </div>
+          <div className="text-3xl font-bold text-gray-900 mb-1">
+            {fmt(259)}
+          </div>
+          <div className="text-sm text-gray-500 font-medium uppercase tracking-wide">
+            Sponsor & Partner
+          </div>
         </div>
       </div>
     </section>
   );
 };
 
-export default PublicStats;
+export default Stats;
