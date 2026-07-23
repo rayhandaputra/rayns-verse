@@ -158,7 +158,7 @@ const NotaView: React.FC<NotaViewProps> = ({
 
   const handleCopyAccountNumber = async () => {
     try {
-      await navigator.clipboard.writeText("90360019583");
+      await navigator.clipboard.writeText("7366544822");
       setCopiedToClipboard(true);
       toast.success("Nomor rekening berhasil disalin!");
       setTimeout(() => setCopiedToClipboard(false), 2000);
@@ -401,11 +401,11 @@ const NotaView: React.FC<NotaViewProps> = ({
           </h3>
           <div className="bg-white p-3 rounded border border-blue-100">
             <p className="text-sm font-semibold text-gray-800 mb-2">
-              Jenius (Bank SMBC Indonesia)
+              Bank Syariah Indonesia (BSI)
             </p>
             <div className="flex items-center justify-between gap-3">
               <p className="text-lg font-mono font-bold text-gray-900">
-                90360019583
+                7366544822
               </p>
               <button
                 type="button"
@@ -423,7 +423,7 @@ const NotaView: React.FC<NotaViewProps> = ({
                 )}
               </button>
             </div>
-            <p className="text-sm text-gray-600 mt-2">a.n Rizki Naufal</p>
+            <p className="text-sm text-gray-600 mt-2">a.n PT KINAU DIGITAL KREATIF</p>
           </div>
         </div>
 

@@ -413,15 +413,15 @@ export const NotaPdfTemplate = ({
             </Text>
             <View style={styles.paymentCard}>
               <Text style={{ fontSize: 8, fontWeight: "bold" }}>
-                Jenius (Bank SMBC Indonesia)
+                Bank Syariah Indonesia (BSI)
               </Text>
               <Text
                 style={{ fontSize: 13, fontWeight: "bold", marginVertical: 2 }}
               >
-                90360019583
+                7366544822
               </Text>
               <Text style={{ fontSize: 8, color: "#4b5563" }}>
-                a.n Rizki Naufal
+                a.n PT KINAU DIGITAL KREATIF
               </Text>
             </View>
           </View>

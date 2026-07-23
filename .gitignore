@@ -13,3 +13,6 @@ coverage/
 .cursor/mcp.json
 .codex/
 .gemini/
+
+# SOT tasks database
+.sot-tasks.db*
