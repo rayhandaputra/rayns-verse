@@ -309,9 +309,17 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
       item.product_price_rules ||
       products?.find((x) => +x?.id === +item?.product_id)?.product_price_rules
     ).sort((a, b) => b.min_qty - a.min_qty);
-    const rule = priceRules.find((r) => qty >= Number(r.min_qty));
+    const rule =
+      priceRules.find((r) => qty >= Number(r.min_qty)) ||
+      priceRules[priceRules.length - 1];
 
-    const basePrice = Number(rule?.price || 0);
+    const prod = products?.find((x) => +x?.id === +item?.product_id);
+    const basePrice = Number(
+      rule?.price ||
+      prod?.price ||
+      prod?.total_price ||
+      0
+    );
     const addonPrice = Number(item.variant_price || 0);
 
     item.price_rule_id = rule?.id || null;

@@ -16,3 +16,6 @@ coverage/
 
 # SOT tasks database
 .sot-tasks.db*
+
+# secrets
+antigravity-accounts.json

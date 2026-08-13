@@ -959,7 +959,7 @@ export default function CustomerConfigure() {
         variant_id: defaultVariant?.id ? Number(defaultVariant.id) : null,
         variant_name: defaultVariant?.variant_name || null,
         variant_price: defaultVariant?.base_price ? Number(defaultVariant.base_price) : 0,
-        variant_final_price: defaultVariant?.base_price ? Number(defaultVariant.base_price) : 0,
+        variant_final_price: subtotal,
         product_name: selectedProduct?.name,
         qty: Number(quantity) || 0,
         unit_price: getProductPrice(selectedProduct),

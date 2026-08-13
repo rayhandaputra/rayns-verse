@@ -154,6 +154,33 @@ export const ProductPriceRulesAPI = {
         };
       }
 
+      // If requested qty is below all tiers, fall back to the lowest min_qty tier
+      const fallbackResult = await APIProvider({
+        endpoint: "select",
+        method: "POST",
+        table: "product_price_rules",
+        action: "select",
+        body: {
+          columns: ["id", "min_qty", "price"],
+          where: {
+            product_id,
+            deleted_on: "null",
+          },
+          order_by: { min_qty: "asc" },
+          size: 1,
+        },
+      });
+
+      if (fallbackResult.items && fallbackResult.items.length > 0) {
+        const rule = fallbackResult.items[0];
+        return {
+          success: true,
+          price: Number(rule.price),
+          min_qty: Number(rule.min_qty),
+          rule_id: rule.id,
+        };
+      }
+
       // No rule found, return base price from product
       return {
         success: false,

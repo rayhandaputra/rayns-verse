@@ -992,11 +992,21 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                                 item?.product_price_rules
                               ).sort((a, b) => b.min_qty - a.min_qty);
 
-                              const matchedRule = priceRules.find(
-                                (rule) => qty >= Number(rule.min_qty)
-                              );
+                              const matchedRule =
+                                priceRules.find(
+                                  (rule) => qty >= Number(rule.min_qty)
+                                ) || priceRules[priceRules.length - 1];
 
-                              const basePrice = Number(matchedRule?.price || 0);
+                              const baseProd =
+                                selectedProductsData[item.productId] ||
+                                products.find((p) => p.id === item.productId);
+
+                              const basePrice = Number(
+                                matchedRule?.price ||
+                                baseProd?.price ||
+                                baseProd?.total_price ||
+                                0
+                              );
                               const addonPrice = Number(
                                 selected?.base_price || 0
                               );
@@ -1081,11 +1091,21 @@ const OrderFormComponent: React.FC<OrderFormProps> = ({
                                 item?.product_price_rules
                               ).sort((a, b) => b.min_qty - a.min_qty); // DESC
 
-                              const matchedRule = priceRules.find(
-                                (rule) => qty >= Number(rule.min_qty)
-                              );
+                              const matchedRule =
+                                priceRules.find(
+                                  (rule) => qty >= Number(rule.min_qty)
+                                ) || priceRules[priceRules.length - 1];
 
-                              const basePrice = Number(matchedRule?.price || 0);
+                              const baseProd =
+                                selectedProductsData[item.productId] ||
+                                products.find((p) => p.id === item.productId);
+
+                              const basePrice = Number(
+                                matchedRule?.price ||
+                                baseProd?.price ||
+                                baseProd?.total_price ||
+                                0
+                              );
                               const addonPrice = Number(
                                 item?.variant_price || 0
                               );

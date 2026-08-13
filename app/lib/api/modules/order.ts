@@ -659,13 +659,33 @@ export const OrderAPI = {
             }
 
             // ✅ Compute unit_price from price_rule + variant_price (never allow 0 if we have rule/variant data)
-            const priceRuleValue = Number(item?.price_rule_value) || 0;
+            let priceRuleValue = Number(item?.price_rule_value) || 0;
+            if (priceRuleValue === 0 && (item?.product_id || item?.productId)) {
+              const pId = item?.product_id || item?.productId;
+              try {
+                const rRes = await APIProvider({
+                  endpoint: "select",
+                  method: "POST",
+                  table: "product_price_rules",
+                  action: "select",
+                  body: {
+                    columns: ["price", "min_qty"],
+                    where: { product_id: pId, deleted_on: "null" },
+                    order_by: { min_qty: "asc" },
+                    size: 1,
+                  },
+                });
+                if (rRes?.items?.[0]?.price) {
+                  priceRuleValue = Number(rRes.items[0].price);
+                }
+              } catch {}
+            }
             const variantPrice = Number(defVariant?.base_price || item?.variant_price) || 0;
             const computedUnitPrice = priceRuleValue + variantPrice;
             const unit_price = computedUnitPrice > 0 ? computedUnitPrice : (Number(item?.unit_price || item?.price) || 0);
 
             const subtotal = qty * unit_price;
-            const variantFinalPrice = Number(item?.variant_final_price) || subtotal;
+            const variantFinalPrice = (Number(item?.variant_final_price) > 0 && Number(item?.variant_final_price) >= subtotal) ? Number(item?.variant_final_price) : subtotal;
 
             const discount_total =
               item?.discount_type === "percent"
@@ -1097,13 +1117,33 @@ export const OrderAPI = {
             }
 
             // ✅ Compute unit_price from price_rule + variant_price
-            const priceRuleValue = Number(item?.price_rule_value) || 0;
+            let priceRuleValue = Number(item?.price_rule_value) || 0;
+            if (priceRuleValue === 0 && (item?.product_id || item?.productId)) {
+              const pId = item?.product_id || item?.productId;
+              try {
+                const rRes = await APIProvider({
+                  endpoint: "select",
+                  method: "POST",
+                  table: "product_price_rules",
+                  action: "select",
+                  body: {
+                    columns: ["price", "min_qty"],
+                    where: { product_id: pId, deleted_on: "null" },
+                    order_by: { min_qty: "asc" },
+                    size: 1,
+                  },
+                });
+                if (rRes?.items?.[0]?.price) {
+                  priceRuleValue = Number(rRes.items[0].price);
+                }
+              } catch {}
+            }
             const variantPrice = Number(defVariant?.base_price || item?.variant_price) || 0;
             const computedUnitPrice = priceRuleValue + variantPrice;
             const unit_price = computedUnitPrice > 0 ? computedUnitPrice : (Number(item?.unit_price || item?.price) || 0);
 
             const subtotal = qty * unit_price;
-            const variantFinalPrice = Number(item?.variant_final_price) || subtotal;
+            const variantFinalPrice = (Number(item?.variant_final_price) > 0 && Number(item?.variant_final_price) >= subtotal) ? Number(item?.variant_final_price) : subtotal;
 
             const discount_total =
               item?.discount_type === "percent"
