@@ -4,7 +4,7 @@ export const CONFIG = {
   port: 3000,
   sessionSecret: "REPLACE_WITH_STRONG_KEY", // "super-secret-key-change-this"
   apiBaseUrl: {
-    server_api_url: "https://data.kinau.id/api2/",
+    server_api_url: "https://data.kinau.web.id/api2/",
   },
   //   databaseUrl: process.env.DATABASE_URL || "mongodb://localhost:27017/kinau",
   //   logLevel: process.env.LOG_LEVEL || "info",

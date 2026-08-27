@@ -15,10 +15,7 @@ import {
   Pencil,
   RefreshCw,
 } from "lucide-react";
-import {
-  formatFullDate,
-  getWhatsAppLink,
-} from "~/constants";
+import { formatFullDate, getWhatsAppLink } from "~/constants";
 import {
   getPaymentStatusLabel,
   safeParseArray,
@@ -48,7 +45,7 @@ function normalizeStatus(value?: string | null) {
 }
 
 const isValidUploadedProof = (proof?: unknown) =>
-  typeof proof === "string" && proof.includes("data.kinau.id");
+  typeof proof === "string" && proof.includes("data.kinau.web.id");
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -85,8 +82,10 @@ export const useOrderColumns = ({
       {
         key: "no",
         header: "No",
-        headerClassName: "w-[40px] min-w-[40px] max-w-[40px] sticky left-0 z-20 bg-gray-100",
-        cellClassName: "bg-white group-hover:bg-gray-50 transition-colors w-[40px] min-w-[40px] max-w-[40px] whitespace-nowrap text-xs text-gray-600 font-medium sticky left-0 z-10",
+        headerClassName:
+          "w-[40px] min-w-[40px] max-w-[40px] sticky left-0 z-20 bg-gray-100",
+        cellClassName:
+          "bg-white group-hover:bg-gray-50 transition-colors w-[40px] min-w-[40px] max-w-[40px] whitespace-nowrap text-xs text-gray-600 font-medium sticky left-0 z-10",
         cell: (order, index) => {
           const pageNum = orders?.data?.current_page ?? 0;
           const pageSize = 100;
@@ -96,31 +95,32 @@ export const useOrderColumns = ({
       {
         key: "instansi",
         header: "Instansi/Pemesan",
-        headerClassName: "min-w-[260px] sticky left-[40px] z-20 bg-gray-100 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.06)]",
-        cellClassName: "min-w-[260px] bg-white group-hover:bg-gray-50 transition-colors sticky left-[40px] z-10 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.06)]",
+        headerClassName:
+          "min-w-[260px] sticky left-[40px] z-20 bg-gray-100 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.06)]",
+        cellClassName:
+          "min-w-[260px] bg-white group-hover:bg-gray-50 transition-colors sticky left-[40px] z-10 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.06)]",
         cell: (order) => (
           <div className="py-1">
             <div className="font-bold text-gray-900 flex items-center gap-2 flex-wrap">
-              {+(order?.is_kkn ?? 0) === 1
-                ? (
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="whitespace-nowrap">
-                      {order?.kkn_type?.toLowerCase() === "ppm" ? "Kelompok" : "Desa"}{" "}
-                      {safeParseObject(order?.kkn_detail)?.value}
-                    </span>
-                    {!filterKknInstitution && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
-                        Periode {order.kkn_period}
-                      </span>
-                    )}
-                  </div>
-                )
-                : (
-                  <span className="font-medium text-slate-700 break-words">
-                    {order.institution_name}
+              {+(order?.is_kkn ?? 0) === 1 ? (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="whitespace-nowrap">
+                    {order?.kkn_type?.toLowerCase() === "ppm"
+                      ? "Kelompok"
+                      : "Desa"}{" "}
+                    {safeParseObject(order?.kkn_detail)?.value}
                   </span>
-                )
-              }
+                  {!filterKknInstitution && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                      Periode {order.kkn_period}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="font-medium text-slate-700 break-words">
+                  {order.institution_name}
+                </span>
+              )}
               {+(order?.is_sponsor ?? 0) === 1 && (
                 <span
                   title="Sponsor / Kerja Sama"
@@ -131,12 +131,15 @@ export const useOrderColumns = ({
               )}
             </div>
             <div className="text-xs text-gray-500 mt-0.5">
-              {+order?.is_kkn === 1 ? `${order?.institution_name} ${order?.kkn_year} -` : ""} {order.pic_name || "-"}{" "}
+              {+order?.is_kkn === 1
+                ? `${order?.institution_name} ${order?.kkn_year} -`
+                : ""}{" "}
+              {order.pic_name || "-"}{" "}
               <a
                 className="text-blue-600 hover:underline"
                 href={getWhatsAppLink(
                   order.pic_phone || "",
-                  `Halo ${order.pic_name}, saya ingin bertanya tentang pemesanan ${order.order_number}`
+                  `Halo ${order.pic_name}, saya ingin bertanya tentang pemesanan ${order.order_number}`,
                 )}
                 target="_blank"
                 rel="noreferrer"
@@ -155,10 +158,10 @@ export const useOrderColumns = ({
           <ul className="list-disc list-inside w-[140px] text-xs text-gray-600 break-words whitespace-normal">
             {safeParseArray(order.order_items)?.length > 0
               ? safeParseArray(order.order_items).map(
-                (item: any, idx: number) => (
-                  <li key={idx}>{item.product_name}</li>
+                  (item: any, idx: number) => (
+                    <li key={idx}>{item.product_name}</li>
+                  ),
                 )
-              )
               : "-"}
           </ul>
         ),
@@ -170,10 +173,10 @@ export const useOrderColumns = ({
           <ul className="list-disc list-inside w-[100px] text-xs text-gray-600 break-words whitespace-normal">
             {safeParseArray(order.order_items)?.length > 0
               ? safeParseArray(order.order_items).map(
-                (item: any, idx: number) => (
-                  <li key={idx}>{item.variant_name || "Caseless 1 Sisi"}</li>
+                  (item: any, idx: number) => (
+                    <li key={idx}>{item.variant_name || "Caseless 1 Sisi"}</li>
+                  ),
                 )
-              )
               : "-"}
           </ul>
         ),
@@ -186,10 +189,10 @@ export const useOrderColumns = ({
           <div className="space-y-1">
             {safeParseArray(order.order_items)?.length > 0
               ? safeParseArray(order.order_items).map(
-                (item: any, idx: number) => (
-                  <div key={idx}>{item?.qty ?? 0}</div>
+                  (item: any, idx: number) => (
+                    <div key={idx}>{item?.qty ?? 0}</div>
+                  ),
                 )
-              )
               : "-"}
           </div>
         ),
@@ -209,7 +212,10 @@ export const useOrderColumns = ({
           // ✅ Use server-computed subtotal (fixes data inefficiency)
           const computedSubtotal = Number(order.computed_items_subtotal) || 0;
           const dAmount = Number(order.discount_value) || 0;
-          const subtotal = computedSubtotal > 0 ? computedSubtotal : (Number(order.total_amount) || 0) + dAmount;
+          const subtotal =
+            computedSubtotal > 0
+              ? computedSubtotal
+              : (Number(order.total_amount) || 0) + dAmount;
           const total = subtotal - dAmount;
 
           return (
@@ -223,12 +229,13 @@ export const useOrderColumns = ({
                 </div>
               )}
               <span
-                className={`px-2 py-0.5 rounded text-[10px] font-medium mt-1 inline-block ${order.payment_status === "paid"
-                  ? "bg-green-100 text-green-700"
-                  : order.payment_status === "down_payment"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-red-100 text-red-600"
-                  }`}
+                className={`px-2 py-0.5 rounded text-[10px] font-medium mt-1 inline-block ${
+                  order.payment_status === "paid"
+                    ? "bg-green-100 text-green-700"
+                    : order.payment_status === "down_payment"
+                      ? "bg-yellow-100 text-yellow-700"
+                      : "bg-red-100 text-red-600"
+                }`}
               >
                 {getPaymentStatusLabel(order.payment_status)}
               </span>
@@ -254,7 +261,7 @@ export const useOrderColumns = ({
                 <button
                   onClick={() =>
                     copyToClipboard(
-                      `kinau.id/public/drive-link/${order.order_number}`
+                      `kinau.id/public/drive-link/${order.order_number}`,
                     )
                   }
                   className="flex items-center gap-1 text-[10px] font-medium text-gray-700 bg-white border border-gray-200 rounded px-2 py-1 hover:bg-gray-50 shadow-sm transition w-fit"
@@ -275,10 +282,11 @@ export const useOrderColumns = ({
                   title="Share Link"
                   disabled={isProcessingShare === order.id}
                   onClick={() => handleShare(order)}
-                  className={`p-1.5 rounded transition flex items-center justify-center min-w-[32px] ${isProcessingShare === order.id
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
-                    }`}
+                  className={`p-1.5 rounded transition flex items-center justify-center min-w-[32px] ${
+                    isProcessingShare === order.id
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
+                  }`}
                 >
                   {isProcessingShare === order.id ? (
                     <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
@@ -307,7 +315,7 @@ export const useOrderColumns = ({
           return (
             <select
               className={`text-xs border rounded py-1 px-2 font-medium ${getStatusColor(
-                order.status
+                order.status,
               )} cursor-pointer`}
               value={normalizeStatus(order.status)}
               onChange={(e) => onUpdateStatus(order.id, e.target.value as any)}
@@ -387,12 +395,13 @@ export const useOrderColumns = ({
                 <button
                   disabled={!canUploadDp}
                   onClick={() => openUploadModal("down_payment")}
-                  className={`${buttonBase} ${hasDpProof
-                    ? successBtn
-                    : canUploadDp
-                      ? activeBtn
-                      : disabledBtn
-                    }`}
+                  className={`${buttonBase} ${
+                    hasDpProof
+                      ? successBtn
+                      : canUploadDp
+                        ? activeBtn
+                        : disabledBtn
+                  }`}
                 >
                   {hasDpProof ? <Check size={10} /> : <Upload size={10} />}
                   Upload Bukti Bayar (DP)
@@ -401,12 +410,13 @@ export const useOrderColumns = ({
                 <button
                   disabled={!canUploadPaid}
                   onClick={() => openUploadModal("paid")}
-                  className={`${buttonBase} ${hasPaidProof
-                    ? successBtn
-                    : canUploadPaid
-                      ? activeBtn
-                      : disabledBtn
-                    }`}
+                  className={`${buttonBase} ${
+                    hasPaidProof
+                      ? successBtn
+                      : canUploadPaid
+                        ? activeBtn
+                        : disabledBtn
+                  }`}
                 >
                   {hasPaidProof ? <Check size={10} /> : <Upload size={10} />}
                   Upload Bukti Bayar (LUNAS)
@@ -527,6 +537,6 @@ export const useOrderColumns = ({
       onUpdateStatusPrinted,
       setModal,
       copyToClipboard,
-    ]
+    ],
   );
 };

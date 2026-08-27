@@ -16,7 +16,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 const GEMINI_MODEL = "gemini-2.0-flash";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
-const BRIDGE_ENDPOINT = "https://data.kinau.id/apicore-latest/agent-schema";
+const BRIDGE_ENDPOINT = "https://data.kinau.web.id/apicore-latest/agent-schema";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -54,7 +54,9 @@ OUTPUT (raw DDL only):`;
  * Queries Gemini Flash to generate a corrective DDL, then executes it
  * via the external bridge API.
  */
-export async function healDatabaseError(errorMessage: string): Promise<HealingResult> {
+export async function healDatabaseError(
+  errorMessage: string,
+): Promise<HealingResult> {
   if (!GEMINI_API_KEY) {
     return { success: false, error: "GEMINI_API_KEY is not configured" };
   }
@@ -98,9 +100,10 @@ export async function healDatabaseError(errorMessage: string): Promise<HealingRe
     if (!rawText || rawText === "SKIP") {
       return {
         success: false,
-        error: rawText === "SKIP"
-          ? "AI determined this is not a structural DB error"
-          : "AI returned empty response",
+        error:
+          rawText === "SKIP"
+            ? "AI determined this is not a structural DB error"
+            : "AI returned empty response",
       };
     }
 

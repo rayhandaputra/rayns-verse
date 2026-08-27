@@ -33,23 +33,25 @@ Shell utama:
   <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col bg-[var(--customer-bg)] shadow-[0_0_40px_rgba(30,67,76,0.08)]">
     <header className="shrink-0 px-5 pb-4 pt-6">...</header>
     <main className="flex-1 overflow-y-auto px-5 pb-24">...</main>
-    <nav className="fixed bottom-0 left-1/2 z-40 grid w-full max-w-[430px] -translate-x-1/2 grid-cols-3 border-t border-[var(--customer-border)] bg-white/95 px-6 pb-3 pt-2 shadow-[0_-16px_40px_rgba(30,67,76,0.08)] backdrop-blur">...</nav>
+    <nav className="fixed bottom-0 left-1/2 z-40 grid w-full max-w-[430px] -translate-x-1/2 grid-cols-3 border-t border-[var(--customer-border)] bg-white/95 px-6 pb-3 pt-2 shadow-[0_-16px_40px_rgba(30,67,76,0.08)] backdrop-blur">
+      ...
+    </nav>
   </div>
 </div>
 ```
 
 Ukuran penting:
 
-| Area | Class yang dipakai | Catatan |
-| --- | --- | --- |
-| App shell | `w-full max-w-[430px]` | Width master customer. Pakai ini, bukan `lg:max-w-*`. |
-| Main padding | `px-5 pb-24` | `pb-24` memberi ruang untuk bottom nav fixed. |
-| Header padding | `px-5 pb-4 pt-6` | Header hanya tampil di halaman non-detail. |
-| Bottom nav | `fixed bottom-0 left-1/2 w-full max-w-[430px] -translate-x-1/2` | Nav terkunci di bawah dan sejajar dengan shell. |
-| Bottom nav grid | `grid-cols-3 px-6 pb-3 pt-2` | Untuk `Beranda`, `Pesanan`, `Profil`. |
-| Nav item | `min-h-14 rounded-2xl px-2 text-[10px] font-black` | Ikon lucide 18px, label kecil tebal. |
-| Header action button | `h-11 w-11 rounded-2xl` | Dipakai untuk notifikasi/action icon. |
-| Notification popover | `w-[310px] rounded-[26px]` | Tetap di dalam shell sempit. |
+| Area                 | Class yang dipakai                                              | Catatan                                               |
+| -------------------- | --------------------------------------------------------------- | ----------------------------------------------------- |
+| App shell            | `w-full max-w-[430px]`                                          | Width master customer. Pakai ini, bukan `lg:max-w-*`. |
+| Main padding         | `px-5 pb-24`                                                    | `pb-24` memberi ruang untuk bottom nav fixed.         |
+| Header padding       | `px-5 pb-4 pt-6`                                                | Header hanya tampil di halaman non-detail.            |
+| Bottom nav           | `fixed bottom-0 left-1/2 w-full max-w-[430px] -translate-x-1/2` | Nav terkunci di bawah dan sejajar dengan shell.       |
+| Bottom nav grid      | `grid-cols-3 px-6 pb-3 pt-2`                                    | Untuk `Beranda`, `Pesanan`, `Profil`.                 |
+| Nav item             | `min-h-14 rounded-2xl px-2 text-[10px] font-black`              | Ikon lucide 18px, label kecil tebal.                  |
+| Header action button | `h-11 w-11 rounded-2xl`                                         | Dipakai untuk notifikasi/action icon.                 |
+| Notification popover | `w-[310px] rounded-[26px]`                                      | Tetap di dalam shell sempit.                          |
 
 Gunakan breakpoint Tailwind hanya jika konten memang butuh peningkatan layout di area yang lebih lebar. Untuk customer master, default-nya tetap `max-w-[430px]`; hindari `lg:max-w-*`, `xl:max-w-*`, atau `2xl:max-w-*` pada shell customer karena akan merusak rasa mobile app.
 
@@ -125,28 +127,28 @@ Palette master ada di `app/app.css`. Semua UI prefix customer wajib memakai CSS 
 
 ```css
 :root {
-  --customer-primary: #1E434C;
+  --customer-primary: #1e434c;
   --customer-primary-hover: #163338;
   --customer-primary-light: rgba(30, 67, 76, 0.1);
 
-  --customer-accent: #0097B2;
-  --customer-accent-hover: #007A91;
+  --customer-accent: #0097b2;
+  --customer-accent-hover: #007a91;
   --customer-accent-light: rgba(0, 151, 178, 0.1);
 
-  --customer-bg: #F3F8FC;
-  --customer-card: #FFFFFF;
-  --customer-card-hover: #F8FBFE;
+  --customer-bg: #f3f8fc;
+  --customer-card: #ffffff;
+  --customer-card-hover: #f8fbfe;
 
-  --customer-text: #1E293B;
-  --customer-text-muted: #64748B;
-  --customer-text-light: #94A3B8;
+  --customer-text: #1e293b;
+  --customer-text-muted: #64748b;
+  --customer-text-light: #94a3b8;
 
-  --customer-border: #E2E8F0;
+  --customer-border: #e2e8f0;
   --customer-border-active: rgba(0, 151, 178, 0.3);
 
-  --customer-success: #10B981;
-  --customer-warning: #F59E0B;
-  --customer-danger: #EF4444;
+  --customer-success: #10b981;
+  --customer-warning: #f59e0b;
+  --customer-danger: #ef4444;
 }
 ```
 
@@ -180,7 +182,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   const user =
-    typeof authData.user === "string" ? JSON.parse(authData.user) : authData.user;
+    typeof authData.user === "string"
+      ? JSON.parse(authData.user)
+      : authData.user;
 
   if (user?.role !== "customer") {
     throw redirect("/app/overview");
@@ -213,7 +217,7 @@ const { user, token } = useOutletContext<CustomerContext>();
 
 ## 7. APIProviderV2 Setup
 
-`APIProviderV2` adalah RESTful engine untuk `https://data.kinau.id/apicore-latest`.
+`APIProviderV2` adalah RESTful engine untuk `https://data.kinau.web.id/apicore-latest`.
 
 File yang perlu dibuat/disalin di project baru:
 
@@ -229,14 +233,15 @@ Config minimum:
 
 ```ts
 // app/nexus/core/config.ts
-export const API_URL_V2 = "https://data.kinau.id/apicore-latest";
+export const API_URL_V2 = "https://data.kinau.web.id/apicore-latest";
 export const API_KEY = "REPLACE_WITH_STRONG_KEY";
 ```
 
 Provider factory:
 
 ```ts
-export const APIProviderV2 = (session: any) => new APIProviderV2Builder(session);
+export const APIProviderV2 = (session: any) =>
+  new APIProviderV2Builder(session);
 ```
 
 Import:
@@ -345,9 +350,7 @@ Upload:
 const formData = new FormData();
 formData.append("file", file);
 
-await APIProviderV2(session)
-  .Upload(formData)
-  .Result();
+await APIProviderV2(session).Upload(formData).Result();
 ```
 
 Retry dan timeout:
@@ -451,9 +454,9 @@ export async function loader() {
 `AgentAPI` adalah bridge server-only untuk raw SQL ke:
 
 ```txt
-https://data.kinau.id/apicore-latest/agent-query
-https://data.kinau.id/apicore-latest/agent-schema
-https://data.kinau.id/apicore-latest/agent-tables
+https://data.kinau.web.id/apicore-latest/agent-query
+https://data.kinau.web.id/apicore-latest/agent-schema
+https://data.kinau.web.id/apicore-latest/agent-tables
 ```
 
 File:
@@ -507,7 +510,9 @@ Schema:
 
 ```ts
 const allSchema = await API.AGENT.schema({});
-const orderSchema = await API.AGENT.schema({ tables: ["orders", "order_items"] });
+const orderSchema = await API.AGENT.schema({
+  tables: ["orders", "order_items"],
+});
 ```
 
 Tables:

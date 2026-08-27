@@ -4,7 +4,7 @@ import { generateHeader } from "./helpers";
 /**
  * APIProviderV2Builder — RESTful builder for apicore-latest
  *
- * Endpoint baru: https://data.kinau.id/apicore-latest
+ * Endpoint baru: https://data.kinau.web.id/apicore-latest
  * Routing: HTTP Method + /{table} (bukan POST + action di body)
  *
  * Perbedaan dengan APIProvider (api2):
@@ -118,7 +118,8 @@ export class APIProviderV2Builder {
    * Auto-detects: jika ada include/columns/orderBy/groupBy → POST, else → GET
    */
   Select(params: SelectParams = {}): this {
-    const { include, columns, orderBy, groupBy, search, searchBy, ...rest } = params;
+    const { include, columns, orderBy, groupBy, search, searchBy, ...rest } =
+      params;
     const needsPost = include || columns || orderBy || groupBy || search;
 
     if (needsPost) {
@@ -136,8 +137,10 @@ export class APIProviderV2Builder {
       };
     } else {
       this.method = "GET";
-      if (params.page !== undefined) this.queryParams.page = String(params.page);
-      if (params.size !== undefined) this.queryParams.size = String(params.size);
+      if (params.page !== undefined)
+        this.queryParams.page = String(params.page);
+      if (params.size !== undefined)
+        this.queryParams.size = String(params.size);
       if (params.where) {
         for (const [key, value] of Object.entries(params.where)) {
           this.queryParams[key] = String(value);
@@ -247,7 +250,8 @@ export class APIProviderV2Builder {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          const errorMessage = errorData.error_message || errorData.error || response.statusText;
+          const errorMessage =
+            errorData.error_message || errorData.error || response.statusText;
 
           const errorObj = {
             status: response.status,
@@ -255,7 +259,12 @@ export class APIProviderV2Builder {
             attempt: attempt + 1,
           };
 
-          if (response.status >= 400 && response.status < 500 && response.status !== 408 && response.status !== 429) {
+          if (
+            response.status >= 400 &&
+            response.status < 500 &&
+            response.status !== 408 &&
+            response.status !== 429
+          ) {
             throw errorObj;
           }
           throw errorObj;
@@ -273,7 +282,13 @@ export class APIProviderV2Builder {
         clearTimeout(timeoutId);
         lastError = error;
 
-        if (error.status && error.status >= 400 && error.status < 500 && error.status !== 408 && error.status !== 429) {
+        if (
+          error.status &&
+          error.status >= 400 &&
+          error.status < 500 &&
+          error.status !== 408 &&
+          error.status !== 429
+        ) {
           break;
         }
 
@@ -320,4 +335,5 @@ export class APIProviderV2Builder {
  *   .Result();
  * ```
  */
-export const APIProviderV2 = (session: any) => new APIProviderV2Builder(session);
+export const APIProviderV2 = (session: any) =>
+  new APIProviderV2Builder(session);

@@ -12,7 +12,11 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { formatFullDate, getWhatsAppLink } from "~/constants";
-import { getPaymentStatusLabel, safeParseArray, safeParseObject } from "~/utils/utils";
+import {
+  getPaymentStatusLabel,
+  safeParseArray,
+  safeParseObject,
+} from "~/utils/utils";
 
 interface OrderMobileCardProps {
   order: any;
@@ -58,7 +62,10 @@ export function OrderMobileCard({
   const items = safeParseArray(order.order_items);
   const computedSubtotal = Number(order.computed_items_subtotal) || 0;
   const discount = Number(order.discount_value) || 0;
-  const subtotal = computedSubtotal > 0 ? computedSubtotal : (Number(order.total_amount) || 0) + discount;
+  const subtotal =
+    computedSubtotal > 0
+      ? computedSubtotal
+      : (Number(order.total_amount) || 0) + discount;
   const total = subtotal - discount;
 
   const status = statusConfig[order.status] || statusConfig.pending;
@@ -71,8 +78,12 @@ export function OrderMobileCard({
     ? `${order?.kkn_type?.toLowerCase() === "ppm" ? "Kelompok" : "Desa"} ${(kknDetail as any)?.value || ""}`
     : order.institution_name;
 
-  const hasDpProof = Boolean(order?.dp_payment_proof) && order.dp_payment_proof.includes("data.kinau.id");
-  const hasPaidProof = Boolean(order?.payment_proof) && order.payment_proof.includes("data.kinau.id");
+  const hasDpProof =
+    Boolean(order?.dp_payment_proof) &&
+    order.dp_payment_proof.includes("data.kinau.web.id");
+  const hasPaidProof =
+    Boolean(order?.payment_proof) &&
+    order.payment_proof.includes("data.kinau.web.id");
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -80,11 +91,17 @@ export function OrderMobileCard({
       <div className="px-4 py-3 flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-bold text-gray-400">#{page * 20 + index + 1}</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${status.color}`}>
+            <span className="text-[10px] font-bold text-gray-400">
+              #{page * 20 + index + 1}
+            </span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${status.color}`}
+            >
               {status.label}
             </span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${payment.color}`}>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${payment.color}`}
+            >
               {payment.label}
             </span>
           </div>
@@ -99,7 +116,10 @@ export function OrderMobileCard({
           <p className="text-xs text-gray-500 mt-0.5">
             {order.pic_name || "-"}{" "}
             <a
-              href={getWhatsAppLink(order.pic_phone || "", `Halo ${order.pic_name}`)}
+              href={getWhatsAppLink(
+                order.pic_phone || "",
+                `Halo ${order.pic_name}`,
+              )}
               target="_blank"
               rel="noreferrer"
               className="text-blue-600"
@@ -119,29 +139,44 @@ export function OrderMobileCard({
           </button>
           {menuOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setMenuOpen(false)}
+              />
               <div className="fixed right-4 mt-1 z-50 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-44">
                 <button
-                  onClick={() => { onViewNota(order); setMenuOpen(false); }}
+                  onClick={() => {
+                    onViewNota(order);
+                    setMenuOpen(false);
+                  }}
                   className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 hover:bg-gray-50 text-gray-700"
                 >
                   <FileText size={14} className="text-amber-500" /> Lihat Nota
                 </button>
                 <button
-                  onClick={() => { navigate(`/app/order-edit/${order.id}`); setMenuOpen(false); }}
+                  onClick={() => {
+                    navigate(`/app/order-edit/${order.id}`);
+                    setMenuOpen(false);
+                  }}
                   className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 hover:bg-gray-50 text-gray-700"
                 >
                   <Pencil size={14} className="text-blue-500" /> Edit Pesanan
                 </button>
                 <button
-                  onClick={() => { onUploadPayment(order); setMenuOpen(false); }}
+                  onClick={() => {
+                    onUploadPayment(order);
+                    setMenuOpen(false);
+                  }}
                   className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 hover:bg-gray-50 text-gray-700"
                 >
                   <Upload size={14} className="text-indigo-500" /> Upload Bukti
                 </button>
                 {(hasDpProof || hasPaidProof) && (
                   <button
-                    onClick={() => { onViewPayment(order); setMenuOpen(false); }}
+                    onClick={() => {
+                      onViewPayment(order);
+                      setMenuOpen(false);
+                    }}
                     className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 hover:bg-gray-50 text-gray-700"
                   >
                     <Image size={14} className="text-green-500" /> Lihat Bukti
@@ -154,11 +189,15 @@ export function OrderMobileCard({
                   className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 hover:bg-gray-50 text-gray-700"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <ExternalLink size={14} className="text-cyan-500" /> Buka Drive
+                  <ExternalLink size={14} className="text-cyan-500" /> Buka
+                  Drive
                 </a>
                 <div className="border-t border-gray-100 my-1" />
                 <button
-                  onClick={() => { onDelete(order); setMenuOpen(false); }}
+                  onClick={() => {
+                    onDelete(order);
+                    setMenuOpen(false);
+                  }}
                   className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 hover:bg-red-50 text-red-600"
                 >
                   <Trash2 size={14} /> Hapus
@@ -174,11 +213,17 @@ export function OrderMobileCard({
         <div className="flex-1 min-w-0">
           {/* Items */}
           <div className="flex flex-wrap gap-1.5">
-            {items.length > 0 ? items.slice(0, 3).map((item: any, idx: number) => (
-              <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded bg-gray-50 border border-gray-100 text-[11px] text-gray-600 font-medium">
-                {item.product_name} <span className="ml-1 text-gray-400">×{item.qty}</span>
-              </span>
-            )) : (
+            {items.length > 0 ? (
+              items.slice(0, 3).map((item: any, idx: number) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center px-2 py-0.5 rounded bg-gray-50 border border-gray-100 text-[11px] text-gray-600 font-medium"
+                >
+                  {item.product_name}{" "}
+                  <span className="ml-1 text-gray-400">×{item.qty}</span>
+                </span>
+              ))
+            ) : (
               <span className="text-xs text-gray-400">Belum ada item</span>
             )}
             {items.length > 3 && (

@@ -10,6 +10,7 @@
 **KINAU ID** adalah sistem ERP (Enterprise Resource Planning) berbasis web untuk bisnis konveksi. Dibangun di atas React Router v7 (Remix-based) dengan backend PHP REST API.
 
 **Domain bisnis yang dikelola:**
+
 - Manajemen order (ID card, lanyard, kaos, custom, paket)
 - Inventori & komoditas (bahan baku, stok, restock)
 - Procurement & supplier
@@ -22,17 +23,17 @@
 
 ## 🚀 Tech Stack
 
-| Layer | Teknologi |
-| :--- | :--- |
-| Framework | React Router v7 (Remix-based) + Vite |
-| Styling | Tailwind CSS (utility-first) |
-| UI Primitives | shadcn/UI (Radix + Tailwind) |
-| State Management | Zustand (global UI & feature state) |
-| Animasi | Motion (transisi & feedback interaktif) |
-| Auth | Session-based via cookie (`session.server.ts`) |
-| Notifikasi | Sonner (toast), SweetAlert2 (`app/utils/swal.ts`) |
-| Charts | ApexCharts via `ChartLazy` (SSR-safe) |
-| Backend | PHP REST API di `https://data.kinau.id/api2` |
+| Layer            | Teknologi                                         |
+| :--------------- | :------------------------------------------------ |
+| Framework        | React Router v7 (Remix-based) + Vite              |
+| Styling          | Tailwind CSS (utility-first)                      |
+| UI Primitives    | shadcn/UI (Radix + Tailwind)                      |
+| State Management | Zustand (global UI & feature state)               |
+| Animasi          | Motion (transisi & feedback interaktif)           |
+| Auth             | Session-based via cookie (`session.server.ts`)    |
+| Notifikasi       | Sonner (toast), SweetAlert2 (`app/utils/swal.ts`) |
+| Charts           | ApexCharts via `ChartLazy` (SSR-safe)             |
+| Backend          | PHP REST API di `https://data.kinau.web.id/api2`  |
 
 ---
 
@@ -106,6 +107,7 @@ app/
 Semua data fetching **wajib** melalui satu interface: `APIProvider` dari `app/nexus/core/api-provider.ts`.
 
 ### ✅ CANONICAL: `app/nexus/core/api-provider.ts`
+
 ```ts
 import { APIProvider } from "~/nexus";
 // atau
@@ -117,6 +119,7 @@ await APIProvider(session)
   .Data({ where: { id }, columns: [...] })
   .Result();
 ```
+
 - Menerima `session` sebagai parameter (auto-attach auth headers)
 - Builder pattern: `.Endpoint().Data().Retry().Timeout().Result()`
 - Retry logic + exponential backoff + timeout (15s default)
@@ -124,17 +127,18 @@ await APIProvider(session)
 
 ### ⚠️ DEPRECATED — Jangan Tambah Penggunaan Baru
 
-| File | Alasan Deprecated |
-| :--- | :--- |
-| `app/lib/api/client.ts` | Config-based pattern lama, duplikat fungsionalitas |
-| `app/nexus/client.ts` | Duplikat dari `app/lib/api/client.ts` |
-| `app/nexus/nexus-client.ts` | Builder URL (`nexus()`) — masih boleh dipakai di komponen existing, tapi untuk kode baru gunakan `useFetcherData` langsung dengan endpoint string |
-| `app/nexus/api-client.tsx` | SWR-based fetcher, tidak konsisten dengan pattern utama |
-| `app/nexus/swr-loader.ts` | SWR fetcher alternatif, redundan |
-| `app/nexus/core/callApi.ts` | Low-level fetcher tanpa retry/timeout |
-| `app/lib/api/core/callApi.ts` | Legacy callApi |
+| File                          | Alasan Deprecated                                                                                                                                 |
+| :---------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `app/lib/api/client.ts`       | Config-based pattern lama, duplikat fungsionalitas                                                                                                |
+| `app/nexus/client.ts`         | Duplikat dari `app/lib/api/client.ts`                                                                                                             |
+| `app/nexus/nexus-client.ts`   | Builder URL (`nexus()`) — masih boleh dipakai di komponen existing, tapi untuk kode baru gunakan `useFetcherData` langsung dengan endpoint string |
+| `app/nexus/api-client.tsx`    | SWR-based fetcher, tidak konsisten dengan pattern utama                                                                                           |
+| `app/nexus/swr-loader.ts`     | SWR fetcher alternatif, redundan                                                                                                                  |
+| `app/nexus/core/callApi.ts`   | Low-level fetcher tanpa retry/timeout                                                                                                             |
+| `app/lib/api/core/callApi.ts` | Legacy callApi                                                                                                                                    |
 
 ### Aturan Migrasi
+
 - Modul baru → **selalu** di `app/nexus/modules/` dengan `APIProvider(session)` dari `~/nexus`
 - Komponen yang masih import `~/lib/api` → migrasi ke `~/nexus` saat menyentuh file tersebut
 - `app/lib/api/modules/` adalah duplikat dari `app/nexus/modules/` — **jangan edit keduanya**, edit hanya yang di `nexus/`
@@ -145,6 +149,7 @@ await APIProvider(session)
 ## 🔌 Arsitektur API (3 Layer)
 
 ### Layer 1 — Core: `app/nexus/core/api-provider.ts`
+
 Satu-satunya fetcher. Semua module WAJIB menggunakan ini.
 
 ```ts
@@ -152,12 +157,13 @@ Satu-satunya fetcher. Semua module WAJIB menggunakan ini.
 await APIProvider(session)
   .Endpoint("POST", "action", "table")
   .Data(payload)
-  .Retry(3, 1000)      // opsional, default 3x
-  .Timeout(15000)      // opsional, default 15s
+  .Retry(3, 1000) // opsional, default 3x
+  .Timeout(15000) // opsional, default 15s
   .Result();
 ```
 
 ### Layer 2 — Modules: `app/nexus/modules/*.ts`
+
 Business logic per domain. Dipanggil dari route loaders/actions.
 
 ```ts
@@ -171,12 +177,14 @@ export const OrderAPI = {
 ```
 
 **Konvensi method yang wajib diikuti:**
+
 - `get` — select/listing (support pagination, search, filter)
 - `create` — insert (handle ID generation, defaults)
 - `update` — modifikasi
 - `delete` — soft delete (set `deleted_on`)
 
 ### Layer 3 — Gateway: `app/routes/api.nexus.tsx`
+
 Satu route untuk semua module. Menerima `module` dan `action` sebagai query params.
 
 ```
@@ -185,6 +193,7 @@ POST /api/nexus  { module: "ORDERS", action: "create", ...data }
 ```
 
 ### Response Format dari Backend PHP
+
 Semua response dari API mengikuti struktur ini:
 
 ```json
@@ -201,17 +210,20 @@ Semua response dari API mengikuti struktur ini:
 ```
 
 **Penting untuk debugging:**
+
 - Data aktual ada di `response.data.items` (array), **bukan** langsung di `response.data`
 - Jika data tidak muncul di UI, pastikan akses sampai level `.items`:
+
   ```ts
   // ❌ SALAH — data akan undefined/object bukan array
   const list = data;
-  
+
   // ✅ BENAR — akses items dari dalam data
   const list = data?.items;
   const total = data?.total_items;
   const pages = data?.total_pages;
   ```
+
 - `current_page` dimulai dari `0` (zero-indexed)
 - `error_message` berisi string kosong jika sukses, atau pesan error jika gagal
 - `status` mengikuti HTTP status code (200 = sukses)
@@ -220,9 +232,10 @@ Semua response dari API mengikuti struktur ini:
 
 ## � Backend API Specification (PHP REST API)
 
-**Endpoint:** `https://data.kinau.id/api2`
+**Endpoint:** `https://data.kinau.web.id/api2`
 
 ### Request Format
+
 Semua request ke backend PHP menggunakan POST dengan JSON body:
 
 ```json
@@ -241,6 +254,7 @@ Semua request ke backend PHP menggunakan POST dengan JSON body:
 ### CRUD Operations
 
 #### 1. SELECT (Read)
+
 ```ts
 // Request
 await APIProvider(session)
@@ -273,6 +287,7 @@ await APIProvider(session)
 ```
 
 **Filter Operators:**
+
 - `where: { id: 5 }` — Exact match
 - `where: { id: "!=5" }` — Not equal
 - `where: { id: "5,10,15" }` — IN clause
@@ -285,6 +300,7 @@ await APIProvider(session)
 - `where: { "month:created_on": 5 }` — Month filter
 
 **Includes (Subqueries/Joins):**
+
 ```ts
 include: [
   {
@@ -293,12 +309,13 @@ include: [
     foreign_key: "order_number",
     reference_key: "order_number",
     columns: ["id", "product_name", "qty"],
-    where: { deleted_on: "null" }
-  }
-]
+    where: { deleted_on: "null" },
+  },
+];
 ```
 
 #### 2. INSERT (Create)
+
 ```ts
 // Request
 await APIProvider(session)
@@ -323,6 +340,7 @@ await APIProvider(session)
 ```
 
 #### 3. UPDATE (Modify)
+
 ```ts
 // Request
 await APIProvider(session)
@@ -347,6 +365,7 @@ await APIProvider(session)
 ```
 
 #### 4. DELETE (Soft Delete)
+
 ```ts
 // Request
 await APIProvider(session)
@@ -367,6 +386,7 @@ await APIProvider(session)
 ```
 
 #### 5. BULK-INSERT (Batch Insert)
+
 ```ts
 // Request
 await APIProvider(session)
@@ -393,6 +413,7 @@ await APIProvider(session)
 ```
 
 ### Error Handling
+
 ```json
 {
   "status": 400,
@@ -402,6 +423,7 @@ await APIProvider(session)
 ```
 
 **Common Status Codes:**
+
 - `200` — Success
 - `201` — Created
 - `400` — Bad Request (missing params)
@@ -413,6 +435,7 @@ await APIProvider(session)
 ## �📡 Cara Konsumsi API
 
 ### Di Loaders/Actions (Server-side)
+
 ```ts
 // Import dari index.server.ts untuk akses UserAPI & AuthAPI
 import { API } from "~/nexus/index.server";
@@ -420,12 +443,16 @@ import { API } from "~/nexus/index.server";
 // Pola: await API.MODULE.method({ session, req: { body/query: data } })
 export async function loader({ request }: LoaderFunctionArgs) {
   const session = await getSession(request);
-  const data = await API.ORDERS.get({ session, req: { query: { page: 0, size: 10 } } });
+  const data = await API.ORDERS.get({
+    session,
+    req: { query: { page: 0, size: 10 } },
+  });
   return { data };
 }
 ```
 
 ### Di Components (Client-side)
+
 ```ts
 // WAJIB: useFetcherData — client-side data fetching
 import { useFetcherData } from "~/hooks/use-fetcher-data";
@@ -434,7 +461,7 @@ function OrderList() {
   // Cara langsung (recommended untuk kode baru)
   const { data, loading } = useFetcherData({
     endpoint: "/api/nexus",
-    params: { module: "ORDERS", action: "get", page: 0, size: 10 }
+    params: { module: "ORDERS", action: "get", page: 0, size: 10 },
   });
 
   // Akses data: data?.items, data?.total_items
@@ -442,6 +469,7 @@ function OrderList() {
 ```
 
 ### Form Submissions
+
 ```ts
 // Gunakan Remix Form atau fetcher.submit → trigger route action → panggil API module
 import { Form, useFetcher } from "react-router";
@@ -450,7 +478,10 @@ import { Form, useFetcher } from "react-router";
 export async function action({ request }) {
   const session = await getSession(request);
   const body = await request.formData();
-  return await API.ORDERS.create({ session, req: { body: Object.fromEntries(body) } });
+  return await API.ORDERS.create({
+    session,
+    req: { body: Object.fromEntries(body) },
+  });
 }
 ```
 
@@ -458,37 +489,39 @@ export async function action({ request }) {
 
 ## ❌ Anti-Pattern yang Dilarang
 
-| Anti-Pattern | Pengganti yang Benar |
-| :--- | :--- |
-| `fetch(url, {...})` langsung di komponen | `useFetcherData` dengan endpoint `/api/nexus` |
-| `axios.get(...)` | `useFetcherData` dengan endpoint `/api/nexus` |
-| Hardcode URL string: `"/api/nexus?module=ORDERS&..."` | `useFetcherData({ endpoint: "/api/nexus", params: { module: "ORDERS", action: "get" } })` |
-| Logic DB (where, join, filter) di route loader | Pindahkan ke `app/nexus/modules/` |
-| Import `~/lib/api` untuk kode baru | Import dari `~/nexus` |
-| `APIProvider({ endpoint, table, body })` (config-based) | `APIProvider(session).Endpoint().Data().Result()` |
-| `nexus().module().action().build()` untuk kode baru | `useFetcherData` langsung dengan params object |
-| `console.log` tersisa di production code | Hapus sebelum commit |
-| `setState` di dalam `useEffect` tanpa guard | Gunakan `useMemo` untuk derived state |
-| File komponen > 150 baris | Pecah menjadi sub-komponen |
-| `ModalSecond`, `Modal`, atau modal custom lain | `ModalShell` dari `~/components/modal/ModalShell` |
+| Anti-Pattern                                            | Pengganti yang Benar                                                                      |
+| :------------------------------------------------------ | :---------------------------------------------------------------------------------------- |
+| `fetch(url, {...})` langsung di komponen                | `useFetcherData` dengan endpoint `/api/nexus`                                             |
+| `axios.get(...)`                                        | `useFetcherData` dengan endpoint `/api/nexus`                                             |
+| Hardcode URL string: `"/api/nexus?module=ORDERS&..."`   | `useFetcherData({ endpoint: "/api/nexus", params: { module: "ORDERS", action: "get" } })` |
+| Logic DB (where, join, filter) di route loader          | Pindahkan ke `app/nexus/modules/`                                                         |
+| Import `~/lib/api` untuk kode baru                      | Import dari `~/nexus`                                                                     |
+| `APIProvider({ endpoint, table, body })` (config-based) | `APIProvider(session).Endpoint().Data().Result()`                                         |
+| `nexus().module().action().build()` untuk kode baru     | `useFetcherData` langsung dengan params object                                            |
+| `console.log` tersisa di production code                | Hapus sebelum commit                                                                      |
+| `setState` di dalam `useEffect` tanpa guard             | Gunakan `useMemo` untuk derived state                                                     |
+| File komponen > 150 baris                               | Pecah menjadi sub-komponen                                                                |
+| `ModalSecond`, `Modal`, atau modal custom lain          | `ModalShell` dari `~/components/modal/ModalShell`                                         |
 
 ---
 
 ## 🎨 Design System: "Finance Blue"
 
 ### Color Palette (OKLCH)
-| Token | Hex | Penggunaan |
-| :--- | :--- | :--- |
-| `background` | `#F3F8FC` | Latar halaman (Cool White-Blue) |
-| `primary` | `#1E434C` | Card utama, judul, hero section |
-| `primary-gradient` | `linear-gradient(135deg, #1E434C, #35606B)` | Hero section |
-| `accent` | `#0097B2` | FAB, indikator aktif, link |
-| `card` | `#FFFFFF` | Card surface dengan soft shadow |
-| `foreground` | `#1E293B` | Teks utama (dilarang `#000000`) |
-| `secondary` | `#E2EEF7` | Tombol filter tidak aktif |
-| `destructive` | — | Error, hapus, status kritis |
+
+| Token              | Hex                                         | Penggunaan                      |
+| :----------------- | :------------------------------------------ | :------------------------------ |
+| `background`       | `#F3F8FC`                                   | Latar halaman (Cool White-Blue) |
+| `primary`          | `#1E434C`                                   | Card utama, judul, hero section |
+| `primary-gradient` | `linear-gradient(135deg, #1E434C, #35606B)` | Hero section                    |
+| `accent`           | `#0097B2`                                   | FAB, indikator aktif, link      |
+| `card`             | `#FFFFFF`                                   | Card surface dengan soft shadow |
+| `foreground`       | `#1E293B`                                   | Teks utama (dilarang `#000000`) |
+| `secondary`        | `#E2EEF7`                                   | Tombol filter tidak aktif       |
+| `destructive`      | —                                           | Error, hapus, status kritis     |
 
 ### Visual Rules
+
 - **Rounded:** `rounded-2xl` (24px) untuk container besar, `rounded-lg` untuk card
 - **Glassmorphism:** `bg-white/10 backdrop-blur-md` untuk inner card di hero
 - **Shadow:** `shadow-sm` atau `shadow-md` (ambient, sangat halus)
@@ -496,30 +529,35 @@ export async function action({ request }) {
 - **Iconography:** Container `rounded-2xl` dengan latar pastel transparan per kategori
 
 ### Mobile-First Layout (App-Shell Pattern)
+
 - Desktop: `max-w-md mx-auto` — konten terpusat seperti native app
 - Mobile: `w-full` — full-width
 - Page background: `min-h-screen bg-[#F3F8FC]`
 - Bottom nav: `fixed bottom-0` dengan safe-area inset
 
 ### Z-Index Tokens
-| Layer | Value |
-| :--- | :--- |
-| Sidebar | 40 |
-| Navbar | 50 |
-| Modal | 70 |
-| Toast | 90 |
+
+| Layer   | Value |
+| :------ | :---- |
+| Sidebar | 40    |
+| Navbar  | 50    |
+| Modal   | 70    |
+| Toast   | 90    |
 
 ---
 
 ## 🤖 Aturan Wajib untuk AI Agent
 
 ### Sebelum Membuat Komponen Baru
+
 1. Cek `app/components/shared/widgets/` — apakah widget serupa sudah ada?
 2. Cek `app/components/features/[feature]/widgets/` — apakah sudah ada di fitur terkait?
 3. Cek `app/components/ui/` — apakah primitive shadcn sudah tersedia?
 
 ### Struktur Fitur Baru
+
 Setiap fitur baru di `app/components/features/[feature-name]/` harus mengikuti pola:
+
 ```
 features/[feature-name]/
 ├── [Feature]Feature.tsx      ← Entry point, max 150 baris
@@ -530,14 +568,17 @@ features/[feature-name]/
 ```
 
 **Widget README Format:**
+
 ```markdown
 ### Widget: [WidgetName]
+
 - File: `[FileName].tsx`
 - Function: [Deskripsi singkat]
 - Props: `[PropName]: [Type]`
 ```
 
 ### Coding Rules
+
 1. **150-Line Rule:** File > 150 baris harus dipecah
 2. **No Direct Fetch:** Selalu `useFetcherData` di komponen, `APIProvider(session).Result()` di modules
 3. **Slim Routes:** Route handler max 150 baris, logic di hooks/nexus
@@ -549,6 +590,7 @@ features/[feature-name]/
 9. **Satu Pintu API:** Semua fetch server-side HANYA via `APIProvider(session).Endpoint().Data().Result()`
 
 ### Audit Checklist (Wajib Sebelum Selesai)
+
 - [ ] Menggunakan `useFetcherData`? (wajib untuk client-side fetch)
 - [ ] Server-side fetch via `APIProvider(session).Endpoint().Data().Result()`?
 - [ ] Warna menggunakan variabel Tailwind? (wajib)
@@ -563,9 +605,11 @@ features/[feature-name]/
 ## 🗄️ Database Schema: `kinn6844_convections`
 
 ### Kontrak Global
+
 Setiap tabel WAJIB memiliki: `id`, `created_on`, `modified_on`, `deleted_on` (soft-delete).
 
 ### Core Tables
+
 - **orders**: `id, uid, order_number, institution_id, institution_name, institution_abbr, institution_domain, payment_status (none|unpaid|paid|down_payment|refunded|cancelled), payment_method, payment_reference, payment_proof, payment_proof_uploaded_on, payment_detail, payment_journal_code, dp_payment_method, dp_payment_detail, dp_payment_proof, dp_payment_proof_uploaded_on, dp_payment_journal_code, payment_due_date, discount_code, discount_type, discount_value, tax_percent, tax_value, shipping_fee, other_fee, subtotal, total_amount, dp_amount, grand_total, order_type (package|id_card|lanyard|custom|service), order_date, deadline, status (ordered|confirmed|in_production|qc|ready|shipped|delivered|done|rejected|cancelled|pending), status_printed, notes, images, drive_folder_id, pic_name, pic_phone, review, rating, shipping_address, shipping_contact, created_by, is_archive, is_portfolio, is_sponsor, is_kkn, kkn_source, kkn_period, kkn_year, is_personal, kkn_type, kkn_detail`
 - **order_items**: `id, order_number, product_id, category_id, category_name, price_rule_id, price_rule_min_qty, price_rule_value, variant_id, variant_name, variant_price, variant_final_price, product_name, product_type (single|package|material|custom|addon), qty, unit_price, discount_type, discount_value, tax_percent, subtotal, discount_total, tax_value, total_after_tax, notes`
 - **products**: `id, category_id, category_name, uid, code, name, image, description, type (single|package|material), show_in_dashboard, subtotal, hpp_price, discount_value, tax_fee, other_fee, total_price`
@@ -573,6 +617,7 @@ Setiap tabel WAJIB memiliki: `id`, `created_on`, `modified_on`, `deleted_on` (so
 - **user_auth**: `id, user_id, email, password_hash, email_verified, last_login, failed_attempt, locked_until, session_token_hash, session_expired_at, session_ip, session_user_agent`
 
 ### Supporting Tables
+
 - **accounts**: `id, uid, code, name, ref_account_number, ref_account_holder, is_bank, group_code, group_type (asset|liability|equity|income|expense), group_name, is_editable`
 - **account_groups**: `id, uid, code, name, level, parent_id`
 - **account_ledgers**: `id, uid, group_code, group_name, coa_code, coa_name, debit, credit, balance`
@@ -618,18 +663,22 @@ Setiap tabel WAJIB memiliki: `id`, `created_on`, `modified_on`, `deleted_on` (so
 Domain: `kinau.id` — menggunakan server Rumahweb.
 
 ### Kirim Email (SMTP)
+
 ```
-POST https://data.kinau.id/send_email.php
+POST https://data.kinau.web.id/send_email.php
 Content-Type: application/json
 
 { "to": "...", "subject": "...", "body": "<html>...</html>", "from_name": "..." }
 ```
+
 Response: `{ "status": true, "message": "Email berhasil dikirim ke ..." }`
 
 ### Baca Mailbox (IMAP)
+
 ```
-GET https://data.kinau.id/mailbox.php?email=admin@kinau.id&password=...
+GET https://data.kinau.web.id/mailbox.php?email=admin@kinau.id&password=...
 ```
+
 Response: `{ "status": true, "data": { "inbox": [...], "spam": [...] } }`
 
 ---
@@ -647,6 +696,7 @@ Response: `{ "status": true, "data": { "inbox": [...], "spam": [...] } }`
 ## 🔧 Implementasi Khusus
 
 ### SSR-Safe Charting
+
 ```tsx
 // Selalu gunakan ChartLazy untuk mencegah "window is not defined"
 import { ChartLazy } from "~/components/Chart/ChartLazy";
@@ -654,29 +704,40 @@ import { ChartLazy } from "~/components/Chart/ChartLazy";
 ```
 
 ### Breadcrumb System
+
 `AppBreadcrumb` otomatis collapse (ellipsis) jika depth > 3 level.
 
 ### Printing
+
 Gunakan `PrintButton.client.tsx` + template renderer di `app/components/print/`.
 
 ### Drive System
+
 Kombinasi `FolderCard` + `FileRow` untuk simulasi file explorer. Folder purpose: `id_card_front`, `id_card_back`, `lanyard`, `sablon_front`, `sablon_back`.
 
 ### Financial Integrity
+
 Form transaksi (Income/Expense/Transfer) **wajib** mengakomodir input `account_id` (Wallet) dan `category_id`. Kalkulasi subtotal/total **wajib** dilakukan server-side di API module, bukan di client.
 
 ### Modal Component — `ModalShell` (WAJIB)
+
 Semua modal di project ini **WAJIB** menggunakan `ModalShell` dari `app/components/modal/ModalShell.tsx`.
 
 ```tsx
 import ModalShell from "~/components/modal/ModalShell";
 
-<ModalShell open={isOpen} onClose={() => setIsOpen(false)} title="Judul Modal" size="lg">
+<ModalShell
+  open={isOpen}
+  onClose={() => setIsOpen(false)}
+  title="Judul Modal"
+  size="lg"
+>
   {/* Content */}
-</ModalShell>
+</ModalShell>;
 ```
 
 **Props:**
+
 - `open: boolean` — Kontrol visibility
 - `onClose: () => void` — Callback saat ditutup
 - `title?: ReactNode` — Header (opsional, jika null maka close button di content area)
@@ -684,6 +745,7 @@ import ModalShell from "~/components/modal/ModalShell";
 - `children: ReactNode` — Isi modal
 
 **Dilarang menggunakan:**
+
 - `ModalSecond` (`~/components/shared/modal/ModalSecond`) — Legacy, tanpa animasi
 - `Modal` (`~/components/modal/Modal.tsx`) — Wrapper Dialog shadcn, tidak konsisten
 - Modal custom inline — Gunakan `ModalShell` untuk konsistensi UX
@@ -693,6 +755,7 @@ import ModalShell from "~/components/modal/ModalShell";
 Setiap kolom aksi di data table **WAJIB** mengikuti struktur berikut:
 
 **Aturan Visual:**
+
 - Wrapper: `flex items-center justify-end gap-2`
 - Inner pod: `flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-slate-100`
 - Tombol: `p-2 text-slate-500 hover:bg-white rounded transition-all`
@@ -701,6 +764,7 @@ Setiap kolom aksi di data table **WAJIB** mengikuti struktur berikut:
 - Setiap `<button>` wajib punya `title` sebagai tooltip
 
 **Reference Implementation:**
+
 ```tsx
 <div className="flex items-center justify-end gap-2">
   <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-lg border border-slate-100">
@@ -778,7 +842,7 @@ API.AGENT                                 // AI Agent Bridge (raw SQL)
 
 ### Overview
 
-Module `AgentAPI` (`app/nexus/modules/agent.server.ts`) menyediakan akses langsung ke database via raw SQL melalui endpoint `https://data.kinau.id/apicore-latest/agent-query`.
+Module `AgentAPI` (`app/nexus/modules/agent.server.ts`) menyediakan akses langsung ke database via raw SQL melalui endpoint `https://data.kinau.web.id/apicore-latest/agent-query`.
 
 > ⚠️ **Server-only** — File ini `.server.ts`, tidak bisa diakses dari browser.
 > ⚠️ **Full DB access** — SELECT, INSERT, UPDATE, DELETE, ALTER, CREATE, DROP.
@@ -786,6 +850,7 @@ Module `AgentAPI` (`app/nexus/modules/agent.server.ts`) menyediakan akses langsu
 ### Autentikasi
 
 Dual-layer auth (sudah di-handle otomatis oleh module):
+
 ```
 Authorization: Bearer REPLACE_WITH_STRONG_KEY
 x-agent-key: REPLACE_WITH_AGENT_KEY
@@ -794,18 +859,19 @@ x-agent-key: REPLACE_WITH_AGENT_KEY
 ### Cara Consume
 
 #### 1. Langsung di Route Loader/Action (Server-side)
+
 ```ts
 import { API } from "~/nexus/index.server";
 
 // Single SELECT query
 const result = await API.AGENT.query({
-  sql: "SELECT * FROM orders WHERE status = 'pending' LIMIT 10"
+  sql: "SELECT * FROM orders WHERE status = 'pending' LIMIT 10",
 });
 // result: { success: true, type: "query", rows: [...], row_count: 10 }
 
 // DDL / DML
 const result = await API.AGENT.query({
-  sql: "UPDATE orders SET status = 'confirmed' WHERE id = 5"
+  sql: "UPDATE orders SET status = 'confirmed' WHERE id = 5",
 });
 // result: { success: true, type: "execute", affected_rows: 1 }
 
@@ -814,13 +880,14 @@ const result = await API.AGENT.query({
   sql: [
     "SHOW TABLES",
     "DESCRIBE orders",
-    "SELECT COUNT(*) as total FROM orders WHERE status = 'pending'"
-  ]
+    "SELECT COUNT(*) as total FROM orders WHERE status = 'pending'",
+  ],
 });
 // result: [{ success, type, rows, row_count }, { ... }, { ... }]
 ```
 
 #### 2. Get Database Schema
+
 ```ts
 // Semua tabel
 const schema = await API.AGENT.schema({});
@@ -831,48 +898,53 @@ const schema = await API.AGENT.schema({ tables: ["orders", "order_items"] });
 ```
 
 #### 3. List All Tables
+
 ```ts
 const tables = await API.AGENT.tables();
 // result: { success: true, data: [{ table: "orders", rows: 5000, data_size: 524288, comment: "" }, ...] }
 ```
 
 #### 4. Via API Gateway (Client-side melalui useFetcherData)
+
 ```ts
 // Di komponen — panggil via /api/nexus gateway
 const { data } = useFetcherData({
   endpoint: "/api/nexus",
   params: { module: "AGENT", action: "query" },
   method: "POST",
-  body: { sql: "SELECT * FROM orders LIMIT 5" }
+  body: { sql: "SELECT * FROM orders LIMIT 5" },
 });
 ```
 
 ### Response Format
 
 **SELECT / SHOW:**
+
 ```json
 { "success": true, "type": "query", "rows": [...], "row_count": 10 }
 ```
 
 **INSERT / UPDATE / DELETE / DDL:**
+
 ```json
 { "success": true, "type": "execute", "affected_rows": 1 }
 ```
 
 **Error:**
+
 ```json
 { "success": false, "error": "Table 'xyz' doesn't exist" }
 ```
 
 ### Kapan Menggunakan AgentAPI vs APIProvider
 
-| Gunakan `APIProvider` | Gunakan `AgentAPI` |
-| :--- | :--- |
+| Gunakan `APIProvider`                         | Gunakan `AgentAPI`                         |
+| :-------------------------------------------- | :----------------------------------------- |
 | CRUD standar (select, insert, update, delete) | Query kompleks (JOIN, subquery, aggregate) |
-| Operasi yang sudah ada module-nya | DDL (ALTER, CREATE TABLE) |
-| Kode production yang stabil | Debugging & investigasi data |
-| Semua kode baru yang bisa pakai CRUD | Migrasi schema, batch operations |
-| | AI-driven data analysis |
+| Operasi yang sudah ada module-nya             | DDL (ALTER, CREATE TABLE)                  |
+| Kode production yang stabil                   | Debugging & investigasi data               |
+| Semua kode baru yang bisa pakai CRUD          | Migrasi schema, batch operations           |
+|                                               | AI-driven data analysis                    |
 
 ---
 
@@ -880,23 +952,23 @@ const { data } = useFetcherData({
 
 ### Overview
 
-`APIProviderV2` adalah builder baru yang menargetkan endpoint RESTful `https://data.kinau.id/apicore-latest`. Ini adalah pengganti bertahap dari `APIProvider` (api2) yang masih menggunakan POST-only routing.
+`APIProviderV2` adalah builder baru yang menargetkan endpoint RESTful `https://data.kinau.web.id/apicore-latest`. Ini adalah pengganti bertahap dari `APIProvider` (api2) yang masih menggunakan POST-only routing.
 
 **File:** `app/nexus/core/api-provider-v2.ts`
 **Config:** `API_URL_V2` di `app/nexus/core/config.ts`
 
 ### Perbedaan dengan APIProvider (api2)
 
-| Aspek | APIProvider (api2) | APIProviderV2 (apicore-latest) |
-| :--- | :--- | :--- |
-| Routing | POST + `{ table, action }` di body | HTTP Method + `/{table}` di URL |
-| SELECT | `POST /api2` + `action: "select"` | `GET /{table}?filters` atau `POST /{table}` (auto-detect) |
-| INSERT | `POST /api2` + `action: "insert"` | `POST /{table}` + `{ data: {...} }` |
-| UPDATE | `POST /api2` + `action: "update"` | `PATCH /{table}` + `{ data, where }` |
-| DELETE | `POST /api2` + `action: "delete"` | `DELETE /{table}` + `{ where }` |
-| Include/Relasi | Didukung | Didukung (via POST auto-detect) |
-| Filter Operators | Sama | Sama (>=, !=, like:, null, dll) |
-| Response Format | Sama | Sama (`{ status, error_message, data: { items, total_items } }`) |
+| Aspek            | APIProvider (api2)                 | APIProviderV2 (apicore-latest)                                   |
+| :--------------- | :--------------------------------- | :--------------------------------------------------------------- |
+| Routing          | POST + `{ table, action }` di body | HTTP Method + `/{table}` di URL                                  |
+| SELECT           | `POST /api2` + `action: "select"`  | `GET /{table}?filters` atau `POST /{table}` (auto-detect)        |
+| INSERT           | `POST /api2` + `action: "insert"`  | `POST /{table}` + `{ data: {...} }`                              |
+| UPDATE           | `POST /api2` + `action: "update"`  | `PATCH /{table}` + `{ data, where }`                             |
+| DELETE           | `POST /api2` + `action: "delete"`  | `DELETE /{table}` + `{ where }`                                  |
+| Include/Relasi   | Didukung                           | Didukung (via POST auto-detect)                                  |
+| Filter Operators | Sama                               | Sama (>=, !=, like:, null, dll)                                  |
+| Response Format  | Sama                               | Sama (`{ status, error_message, data: { items, total_items } }`) |
 
 ### Cara Import
 
@@ -912,7 +984,11 @@ import { APIProviderV2 } from "~/nexus/core/api-provider-v2";
 // SELECT — simple (GET)
 const result = await APIProviderV2(session)
   .Table("orders")
-  .Select({ page: 0, size: 10, where: { status: "pending", deleted_on: "null" } })
+  .Select({
+    page: 0,
+    size: 10,
+    where: { status: "pending", deleted_on: "null" },
+  })
   .Result();
 
 // SELECT — dengan include/relasi (POST auto-detect)
@@ -921,17 +997,19 @@ const result = await APIProviderV2(session)
   .Select({
     where: { status: "active" },
     columns: ["id", "order_number", "status"],
-    include: [{
-      table: "order_items",
-      alias: "items",
-      foreign_key: "order_number",
-      reference_key: "order_number",
-      columns: ["product_name", "qty", "price"],
-      where: { deleted_on: "null" }
-    }],
+    include: [
+      {
+        table: "order_items",
+        alias: "items",
+        foreign_key: "order_number",
+        reference_key: "order_number",
+        columns: ["product_name", "qty", "price"],
+        where: { deleted_on: "null" },
+      },
+    ],
     orderBy: ["created_on", "DESC"],
     page: 0,
-    size: 10
+    size: 10,
   })
   .Result();
 
@@ -947,7 +1025,7 @@ const result = await APIProviderV2(session)
   .BulkInsert({
     rows: [{ order_number: "ORD-001", product_id: 1, qty: 10 }],
     updateOnDuplicate: true,
-    with_id: false
+    with_id: false,
   })
   .Result();
 
@@ -991,10 +1069,10 @@ await APIProviderV2(session)
 
 ### Kapan Menggunakan APIProviderV2
 
-| Gunakan `APIProviderV2` | Tetap `APIProvider` |
-| :--- | :--- |
-| Modul baru yang sedang dibuat | Modul existing yang belum diminta migrasi |
-| Modul yang secara eksplisit diminta migrasi | Kode yang sudah stabil dan tidak disentuh |
-| Fitur yang butuh filter operator baru (EXISTS, raw:) | — |
+| Gunakan `APIProviderV2`                              | Tetap `APIProvider`                       |
+| :--------------------------------------------------- | :---------------------------------------- |
+| Modul baru yang sedang dibuat                        | Modul existing yang belum diminta migrasi |
+| Modul yang secara eksplisit diminta migrasi          | Kode yang sudah stabil dan tidak disentuh |
+| Fitur yang butuh filter operator baru (EXISTS, raw:) | —                                         |
 
 > **Catatan:** Kedua provider bisa hidup berdampingan. Migrasi dilakukan bertahap per modul, bukan big-bang.

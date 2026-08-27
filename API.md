@@ -2,9 +2,9 @@
 
 > PHP Native RESTful Engine — Dynamic Table Routing
 >
-> Base URL: `https://data.kinau.id/apicore-latest`
+> Base URL: `https://data.kinau.web.id/apicore-latest`
 >
-> Dokumentasi resmi: https://data.kinau.id/apicore-latest/docs
+> Dokumentasi resmi: https://data.kinau.web.id/apicore-latest/docs
 
 ---
 
@@ -12,22 +12,22 @@
 
 URL = nama tabel, HTTP method = aksi CRUD:
 
-| Method | Endpoint | Aksi |
-| ------ | -------- | ---- |
-| GET | `/{table}` | Select (filter + pagination) |
-| POST | `/{table}` | Insert / Bulk Insert / Select (auto-detect) |
-| PATCH | `/{table}` | Update (wajib `where`) |
-| DELETE | `/{table}` | Delete (wajib `where`) |
+| Method | Endpoint   | Aksi                                        |
+| ------ | ---------- | ------------------------------------------- |
+| GET    | `/{table}` | Select (filter + pagination)                |
+| POST   | `/{table}` | Insert / Bulk Insert / Select (auto-detect) |
+| PATCH  | `/{table}` | Update (wajib `where`)                      |
+| DELETE | `/{table}` | Delete (wajib `where`)                      |
 
 ### POST Auto-Detect
 
 POST otomatis mendeteksi aksi berdasarkan isi body:
 
-| Kondisi Body | Aksi |
-| --- | --- |
-| Mengandung `include` / `columns` / `search` / `orderBy` / `groupBy` | → SELECT |
-| Mengandung `rows: [...]` | → BULK INSERT |
-| Mengandung `data: {...}` atau field langsung | → SINGLE INSERT |
+| Kondisi Body                                                        | Aksi            |
+| ------------------------------------------------------------------- | --------------- |
+| Mengandung `include` / `columns` / `search` / `orderBy` / `groupBy` | → SELECT        |
+| Mengandung `rows: [...]`                                            | → BULK INSERT   |
+| Mengandung `data: {...}` atau field langsung                        | → SINGLE INSERT |
 
 ---
 
@@ -57,16 +57,16 @@ GET /products?status=active,pending&stock=>0&deleted_at=null
 
 ### Query Parameters
 
-| Parameter | Default | Keterangan |
-| --------- | ------- | ---------- |
-| `page` | `0` | Halaman (0-indexed) |
-| `size` | `10` | Item per halaman |
-| `orderBy` | — | Sorting, format JSON array: `["col","DESC"]` |
-| `groupBy` | — | Group by, format JSON array: `["category_id"]` |
-| `columns` | — | Kolom yang diambil, format JSON: `["id","name"]` |
-| `search` | — | Keyword pencarian global |
-| `searchBy` | `name` | Kolom target search (comma-separated) |
-| `{kolom}` | — | Filter langsung (lihat bagian Filters) |
+| Parameter  | Default | Keterangan                                       |
+| ---------- | ------- | ------------------------------------------------ |
+| `page`     | `0`     | Halaman (0-indexed)                              |
+| `size`     | `10`    | Item per halaman                                 |
+| `orderBy`  | —       | Sorting, format JSON array: `["col","DESC"]`     |
+| `groupBy`  | —       | Group by, format JSON array: `["category_id"]`   |
+| `columns`  | —       | Kolom yang diambil, format JSON: `["id","name"]` |
+| `search`   | —       | Keyword pencarian global                         |
+| `searchBy` | `name`  | Kolom target search (comma-separated)            |
+| `{kolom}`  | —       | Filter langsung (lihat bagian Filters)           |
 
 ---
 
@@ -74,23 +74,23 @@ GET /products?status=active,pending&stock=>0&deleted_at=null
 
 Berlaku untuk **GET** (query string) dan **POST** body (key `where`):
 
-| Syntax | SQL Equivalent | Contoh Query String |
-| ------ | -------------- | ------------------- |
-| `"col": "value"` | `col = 'value'` | `?status=active` |
-| `"col": ">=18"` | `col >= 18` | `?age=>=18` |
-| `"col": "<=100"` | `col <= 100` | `?price=<=100000` |
-| `"col": ">5"` | `col > 5` | `?stock=>0` |
-| `"col": "<50"` | `col < 50` | `?qty=<50` |
-| `"col": "!=val"` | `col != 'val'` | `?status=!=deleted` |
-| `"col": "a,b,c"` | `col IN ('a','b','c')` | `?status=active,pending` |
-| `"col": "!=a,b"` | `col NOT IN ('a','b')` | `?role=!=admin,super` |
-| `"col": "null"` | `col IS NULL` | `?deleted_at=null` |
-| `"col": "is_not_null"` | `col IS NOT NULL` | `?verified_at=is_not_null` |
-| `"col": "like:val"` | `col LIKE '%val%'` | `?name=like:john` |
-| `"col": "like:a,b"` | `(col LIKE '%a%' OR col LIKE '%b%')` | `?name=like:john,jane` |
-| `"year:col": 2025` | `YEAR(col) = 2025` | `where: {"year:created_at": 2025}` |
-| `"month:col": 6` | `MONTH(col) = 6` | `where: {"month:created_at": 6}` |
-| `"raw:x": "expr"` | `(expr)` — raw SQL | `where: {"raw:calc": "price*qty>100000"}` |
+| Syntax                 | SQL Equivalent                       | Contoh Query String                       |
+| ---------------------- | ------------------------------------ | ----------------------------------------- |
+| `"col": "value"`       | `col = 'value'`                      | `?status=active`                          |
+| `"col": ">=18"`        | `col >= 18`                          | `?age=>=18`                               |
+| `"col": "<=100"`       | `col <= 100`                         | `?price=<=100000`                         |
+| `"col": ">5"`          | `col > 5`                            | `?stock=>0`                               |
+| `"col": "<50"`         | `col < 50`                           | `?qty=<50`                                |
+| `"col": "!=val"`       | `col != 'val'`                       | `?status=!=deleted`                       |
+| `"col": "a,b,c"`       | `col IN ('a','b','c')`               | `?status=active,pending`                  |
+| `"col": "!=a,b"`       | `col NOT IN ('a','b')`               | `?role=!=admin,super`                     |
+| `"col": "null"`        | `col IS NULL`                        | `?deleted_at=null`                        |
+| `"col": "is_not_null"` | `col IS NOT NULL`                    | `?verified_at=is_not_null`                |
+| `"col": "like:val"`    | `col LIKE '%val%'`                   | `?name=like:john`                         |
+| `"col": "like:a,b"`    | `(col LIKE '%a%' OR col LIKE '%b%')` | `?name=like:john,jane`                    |
+| `"year:col": 2025`     | `YEAR(col) = 2025`                   | `where: {"year:created_at": 2025}`        |
+| `"month:col": 6`       | `MONTH(col) = 6`                     | `where: {"month:created_at": 6}`          |
+| `"raw:x": "expr"`      | `(expr)` — raw SQL                   | `where: {"raw:calc": "price*qty>100000"}` |
 
 ### EXISTS / NOT EXISTS
 
@@ -174,14 +174,14 @@ Content-Type: application/json
 
 ### Include Parameters
 
-| Parameter | Required | Keterangan |
-| --------- | -------- | ---------- |
-| `table` | ✅ | Nama tabel relasi |
-| `foreign_key` | ✅ | Kolom FK di tabel relasi |
-| `reference_key` | ✅ | Kolom PK di tabel utama |
-| `columns` | ✅ | Array kolom yang diambil |
-| `alias` | ❌ | Nama field di response (default: nama tabel) |
-| `where` | ❌ | Filter tambahan (equality, IN, IS NULL) |
+| Parameter       | Required | Keterangan                                   |
+| --------------- | -------- | -------------------------------------------- |
+| `table`         | ✅       | Nama tabel relasi                            |
+| `foreign_key`   | ✅       | Kolom FK di tabel relasi                     |
+| `reference_key` | ✅       | Kolom PK di tabel utama                      |
+| `columns`       | ✅       | Array kolom yang diambil                     |
+| `alias`         | ❌       | Nama field di response (default: nama tabel) |
+| `where`         | ❌       | Filter tambahan (equality, IN, IS NULL)      |
 
 ### Response Include
 
@@ -261,10 +261,10 @@ Content-Type: application/json
 
 ### Options
 
-| Parameter | Default | Keterangan |
-| --------- | ------- | ---------- |
-| `updateOnDuplicate` | `false` | Jika `true` → ON DUPLICATE KEY UPDATE (upsert) |
-| `with_id` | `false` | Jika `true` → sertakan kolom id (default diabaikan) |
+| Parameter           | Default | Keterangan                                          |
+| ------------------- | ------- | --------------------------------------------------- |
+| `updateOnDuplicate` | `false` | Jika `true` → ON DUPLICATE KEY UPDATE (upsert)      |
+| `with_id`           | `false` | Jika `true` → sertakan kolom id (default diabaikan) |
 
 ### Response (201)
 
@@ -365,11 +365,11 @@ file: [binary data]
 
 ### Batasan
 
-| Item | Nilai |
-| ---- | ----- |
-| Ukuran maksimal | 20 MB |
+| Item            | Nilai                               |
+| --------------- | ----------------------------------- |
+| Ukuran maksimal | 20 MB                               |
 | Format didukung | png, jpg, jpeg, gif, webp, pdf, zip |
-| Nama file | Random (bin2hex 20 char) |
+| Nama file       | Random (bin2hex 20 char)            |
 
 ### Response
 
@@ -495,13 +495,13 @@ CREATE TABLE IF NOT EXISTS nama_tabel (
 
 **Struktur wajib:**
 
-| Posisi | Kolom | Tipe | Keterangan |
-| ------ | ----- | ---- | ---------- |
-| Pertama | `id` | `INT AUTO_INCREMENT PRIMARY KEY` | Primary key |
-| Tengah | `{fields}` | sesuai kebutuhan | Kolom bisnis |
-| Akhir-3 | `created_on` | `DATETIME DEFAULT CURRENT_TIMESTAMP` | Waktu pembuatan |
-| Akhir-2 | `modified_on` | `DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP` | Waktu update terakhir |
-| Akhir-1 | `deleted` | `TINYINT(1) DEFAULT 0` | Soft-delete flag (0 = aktif, 1 = dihapus) |
+| Posisi  | Kolom         | Tipe                                                | Keterangan                                |
+| ------- | ------------- | --------------------------------------------------- | ----------------------------------------- |
+| Pertama | `id`          | `INT AUTO_INCREMENT PRIMARY KEY`                    | Primary key                               |
+| Tengah  | `{fields}`    | sesuai kebutuhan                                    | Kolom bisnis                              |
+| Akhir-3 | `created_on`  | `DATETIME DEFAULT CURRENT_TIMESTAMP`                | Waktu pembuatan                           |
+| Akhir-2 | `modified_on` | `DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP` | Waktu update terakhir                     |
+| Akhir-1 | `deleted`     | `TINYINT(1) DEFAULT 0`                              | Soft-delete flag (0 = aktif, 1 = dihapus) |
 
 **Contoh:**
 
@@ -621,15 +621,15 @@ List semua tabel dengan row count & ukuran:
 
 ### HTTP Status Codes
 
-| Code | Keterangan |
-| ---- | ---------- |
-| 200 | Success |
-| 201 | Created (insert) |
-| 400 | Bad Request (missing params) |
-| 401 | Unauthorized (invalid/missing Bearer Token) |
-| 404 | Route not found |
-| 405 | Method not allowed |
-| 500 | Server error |
+| Code | Keterangan                                  |
+| ---- | ------------------------------------------- |
+| 200  | Success                                     |
+| 201  | Created (insert)                            |
+| 400  | Bad Request (missing params)                |
+| 401  | Unauthorized (invalid/missing Bearer Token) |
+| 404  | Route not found                             |
+| 405  | Method not allowed                          |
+| 500  | Server error                                |
 
 ---
 
@@ -638,7 +638,7 @@ List semua tabel dengan row count & ukuran:
 ### Contoh Fetch (JavaScript)
 
 ```javascript
-const BASE_URL = "https://data.kinau.id/apicore-latest";
+const BASE_URL = "https://data.kinau.web.id/apicore-latest";
 const API_KEY = "your-api-key";
 
 // GET — Select dengan filter
@@ -706,6 +706,6 @@ const res = await fetch(`${BASE_URL}/users`, {
 
 ---
 
-> **Sumber**: https://data.kinau.id/apicore-latest/docs
+> **Sumber**: https://data.kinau.web.id/apicore-latest/docs
 >
 > Core REST API Engine © 2026 — PHP Native • PDO MySQL • Zero Dependencies
