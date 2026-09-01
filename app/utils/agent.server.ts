@@ -16,7 +16,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 const GEMINI_MODEL = "gemini-2.0-flash";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
-const BRIDGE_ENDPOINT = "https://data.kinau.web.id/apicore-latest/agent-schema";
+const BRIDGE_ENDPOINT = "https://data.kinau.web.id/apicore/agent-schema";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

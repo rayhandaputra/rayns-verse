@@ -1,7 +1,7 @@
 import { argv } from "process";
 
 async function main() {
-  const url = "https://data.kinau.web.id/apicore-latest/agent-query";
+  const url = "https://data.kinau.web.id/apicore/agent-query";
   const queryStr = argv.slice(2).join(" ");
 
   if (!queryStr) {

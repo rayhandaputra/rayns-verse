@@ -10,7 +10,7 @@
 const https = require("https");
 
 // --- Configuration ---
-const ENDPOINT = "https://data.kinau.web.id/apicore-latest/agent-query";
+const ENDPOINT = "https://data.kinau.web.id/apicore/agent-query";
 const AGENT_KEY = "REPLACE_WITH_AGENT_KEY";
 const AUTH_TOKEN = "REPLACE_WITH_STRONG_KEY";
 

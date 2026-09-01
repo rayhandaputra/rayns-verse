@@ -10,7 +10,7 @@ const http = require("http");
 // =========================================================================
 // CONFIGURATION (SESUAIKAN DENGAN URL CPANEL & TOKEN ANDA)
 // =========================================================================
-const BRIDGE_URL = "https://data.kinau.web.id/agent-bridge.php";
+const BRIDGE_URL = "https://data.kinau.web.id/apicore/agent-bridge";
 const AUTH_TOKEN =
   "GANTI_DENGAN_TOKEN_RAHASIA_ANDA_YANG_SANGAT_PANJANG_DAN_ACAK";
 

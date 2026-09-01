@@ -4,13 +4,13 @@
  * Provides functions for AI to execute raw SQL queries against the database
  * via the Core REST API Engine's Agent endpoints.
  *
- * Base URL: https://data.kinau.web.id/apicore-latest
+ * Base URL: https://data.kinau.web.id/apicore
  * Requires dual auth: Bearer API_KEY + x-agent-key AGENT_KEY
  *
  * ⚠️ FULL DB ACCESS — Use with extreme caution.
  */
 
-const AGENT_BASE_URL = "https://data.kinau.web.id/apicore-latest";
+const AGENT_BASE_URL = "https://data.kinau.web.id/apicore";
 const AGENT_API_KEY = "REPLACE_WITH_STRONG_KEY";
 const AGENT_KEY = "REPLACE_WITH_AGENT_KEY";
 

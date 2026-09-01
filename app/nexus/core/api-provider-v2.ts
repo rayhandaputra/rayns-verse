@@ -2,9 +2,9 @@ import { API_URL_V2, API_KEY } from "./config";
 import { generateHeader } from "./helpers";
 
 /**
- * APIProviderV2Builder — RESTful builder for apicore-latest
+ * APIProviderV2Builder — RESTful builder for apicore
  *
- * Endpoint baru: https://data.kinau.web.id/apicore-latest
+ * Endpoint: https://data.kinau.web.id/apicore
  * Routing: HTTP Method + /{table} (bukan POST + action di body)
  *
  * Perbedaan dengan APIProvider (api2):

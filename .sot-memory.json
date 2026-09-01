@@ -1,0 +1,50 @@
+{
+  "version": 2,
+  "entries": [
+    {
+      "type": "decision",
+      "content": "Database `kinn6844_convections` (MySQL, endpoint https://data.kinau.web.id/apicore-latest) sempat di-drop oleh user dan belum di-recreate. Schema lengkap 44 tabel yang dibutuhkan project dibuat di `db/schema.sql` (root client, 2026-08-29). Sumber utama: schema-blueprint.json, README \"Database Schema\" (baris 605-657), app/types/core-entities.ts, app/types/supporting-entities.ts, dan nama tabel dari app/nexus/modules/* (pola .Endpoint(\"POST\", action, \"tabel\")).\n\nCatatan penting:\n- Global contract tiap tabel: id INT PK AUTO_INCREMENT, created_on, modified_on, + soft-delete. Mayoritas tabel pakai `deleted_on DATETIME NULL`, TAPI `users` dan `cms_contents` memakai `deleted TINYINT(1) DEFAULT 0` (kode filter/restore via where {deleted: 0}).\n- Tabel `transaction` (singular, backtick) adalah tabel legacy cashflow terpisah dari account_ledger_mutations.\n- `users.role` enum mencakup 'customer' (ditambahkan login Google).\n- Soft-delete payload `deleted: 1` di beberapa modul (employee_salary_slip, product_package_item, product_component, accounts) kemungkinan diterjemahkan engine PHP jadi deleted_on.\n- DB belum dieksekusi (belum dibuat). Langkah berikut bila diminta: jalankan db/schema.sql via mysql CLI atau scripts/agent-query.ts batch + seeder users/institutions/settings.",
+      "summary": "DB kinn6844_convections di-drop; schema ulang ada di db/schema.sql",
+      "tags": [],
+      "project": "/home/rayhan/Workspaces/Project/portofolio/rayns-verse/client",
+      "sessionId": "manual",
+      "id": "mem-1787992561217-n0daj7",
+      "timestamp": "2026-08-29T08:36:01.217Z"
+    },
+    {
+      "type": "fact",
+      "content": "Imported 38 orders into local Docker MySQL (db `kinau_convections`, container `mysql` 0.0.0.0:3306, root/root; adminer on localhost:8001). Source: client/payment_proofs_all.csv (56 proof rows) → deduped: 10 labeled-DUPLICATE dropped, 14 grouped by transaction_id, identical (amount,date,time) collapsed (incl 22000x5, 442000x3) → 38 unique orders. Mapping decision (user-confirmed): orders only (no order_items), grand_total=amount excl bank fee (fee appended to notes), status='done', payment_status='paid', payment_method=platform, payment_proof='/api/resource/<renamed>', order_type inferred from notes (id_card/lanyard/package/custom/service), institution_name=sender_name or 'Perorangan', order_number ORD-YYYYMMDD-NNN. Seed SQL at client/db/seed_orders_from_payment_proofs.sql. Verified spot-checks: fee notes, uploaded_on datetime, proof paths.",
+      "summary": "Imported 38 deduped orders from payment_proofs_all.csv into local MySQL kinau_convections",
+      "tags": [
+        "import",
+        "orders",
+        "mysql",
+        "kinau_convections",
+        "seed",
+        "payment-proofs"
+      ],
+      "project": "client",
+      "sessionId": "manual",
+      "id": "mem-1788017531528-l7pa0k",
+      "timestamp": "2026-08-29T15:32:11.529Z"
+    },
+    {
+      "type": "fact",
+      "content": "Created admin login for local dev in kinau_convections: users id=1 fullname 'Rayhan Putra' email rayhandaputra10@gmail.com role='admin' is_active=1 deleted=0; user_auth rows with bcryptjs $2b$ hash of 'rayns1234', email_verified=1. Verified bcrypt.compareSync('rayns1234', stored_hash)=true. Login flow: AuthAPI.login (app/nexus/modules/user_auth.server.ts) reads user_auth by email, bcrypt.compare password, stores sha256 token in session_token_hash, sets cookie 'session' with token+user via createUserSession; app.tsx requireAuth only checks cookie presence (no DB re-check). Other DBs in mysql container: app_db (empty), academic dbs, kinau_convections holds 44 schema tables.",
+      "summary": "Seeded admin user rayhandaputra10@gmail.com (pw rayns1234) for local login",
+      "tags": [
+        "users",
+        "user_auth",
+        "login",
+        "admin",
+        "bcrypt",
+        "kinau_convections"
+      ],
+      "project": "client",
+      "sessionId": "manual",
+      "id": "mem-1788018146577-szz4ls",
+      "timestamp": "2026-08-29T15:42:26.577Z"
+    }
+  ],
+  "lastUpdated": "2026-08-29T15:42:26.578Z"
+}
