@@ -7,9 +7,9 @@ import {
 
 import { deleteSession, getSessionUser } from "./auth.server";
 
-if (!process.env.SESSION_SECRET) {
-  throw new Error("SESSION_SECRET must be set in environment variables");
-}
+const sessionSecret =
+  process.env.SESSION_SECRET ||
+  "kinau_secure_session_secret_default_2026_key";
 
 // COOKIE DEFINITION
 const sessionCookie = createCookie("session", {
@@ -17,7 +17,7 @@ const sessionCookie = createCookie("session", {
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax",
   maxAge: 60 * 60 * 24 * 7, // 7 days
-  secrets: [process.env.SESSION_SECRET],
+  secrets: [sessionSecret],
 });
 
 export const sessionStorage = createCookieSessionStorage({

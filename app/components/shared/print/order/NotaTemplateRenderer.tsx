@@ -14,36 +14,20 @@ import {
   getPaymentStatusLabel,
   safeParseObject,
 } from "~/utils/utils";
-// import path from "path"; // Impor di bagian paling atas
+import path from "path";
 
-// Di dalam komponen NotaPdfTemplate:
-// Pastikan kode ini berjalan di sisi server
-// const logoPath = path.join(process.cwd(), "public", "kinau-logo.png");
-
-// Registrasi Font agar mendukung ketebalan dan gaya mono
-// Font.register({
-//   family: "Inter",
-//   fonts: [
-//     {
-//       src: "https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff",
-//       fontWeight: 400,
-//     },
-//     {
-//       src: "https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hjp-Ek-_EeA.woff",
-//       fontWeight: 700,
-//     },
-//     {
-//       src: "https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuMZ9hjp-Ek-_EeA.woff",
-//       fontWeight: 900,
-//     },
-//   ],
-// });
+// Registrasi Font Inter lokal agar tidak membutuhkan Helvetica.cjs dari pdfkit di runtime serverless Vercel
+const fontPath = path.join(process.cwd(), "public", "fonts", "Inter-Regular.ttf");
+Font.register({
+  family: "Inter",
+  src: fontPath,
+});
 
 const styles = StyleSheet.create({
   page: {
     padding: 30,
     fontSize: 9,
-    fontFamily: "Helvetica",
+    fontFamily: "Inter",
     color: "#1f2937",
     display: "flex",
     flexDirection: "column",
@@ -269,10 +253,10 @@ export const NotaPdfTemplate = ({
               <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#111827' }}>
                 PT Kinau Digital Kreatif
               </Text>
-              <Text style={{ fontSize: 7, color: '#6b7280', fontFamily: 'Courier' }}>
+              <Text style={{ fontSize: 7, color: '#6b7280' }}>
                 NIB: 0204260115049
               </Text>
-              <Text style={{ fontSize: 7, color: '#6b7280', fontFamily: 'Courier' }}>
+              <Text style={{ fontSize: 7, color: '#6b7280' }}>
                 NPWP: 05.091.550.3-232.3000
               </Text>
             </View>

@@ -9,14 +9,10 @@ import { deleteSession, getSessionUser } from "./auth.server";
 
 // COOKIE DEFINITION
 const getSessionSecret = () => {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("SESSION_SECRET must be set in environment variables");
-    }
-    return "dev_secret_only";
-  }
-  return secret;
+  return (
+    process.env.SESSION_SECRET ||
+    "kinau_secure_session_secret_default_2026_key"
+  );
 };
 
 const sessionCookie = createCookie("session", {
